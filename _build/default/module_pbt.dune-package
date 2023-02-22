@@ -1,4 +1,0 @@
-(lang dune 3.6)
-(name module_pbt)
-(sections (lib .) (bin ../../bin) (doc ../../doc/module_pbt))
-(files (lib (META dune-package opam)) (bin (module_pbt)) (doc (README.md)))
