@@ -1,4 +1,4 @@
-open Base
+open! Core
 
 module type Stack = sig
   type 'a t

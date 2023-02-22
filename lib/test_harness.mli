@@ -69,5 +69,5 @@ sig
       when interpreted from the model's initial state and the [sut]'s initial state.
       Cleans up after itself by calling [Spec.cleanup] *) 
 
-    val agree_test : int -> unit   
+    val agree_test : trials:int -> unit   
 end

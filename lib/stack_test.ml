@@ -1,4 +1,4 @@
-open Core
+open! Core
 open Core.Poly
 open Core.Quickcheck
 
@@ -63,9 +63,6 @@ struct
 end
 
 module StT = Test_harness.Make(StConf);;
-StT.agree_test 1000
 
-
-(* QCheck_runner.run_tests ~verbose:true
-  [StT.consistency_test ~count:1000 ~name:"stack-consistency";
-   StT.agree_test ~count:10_000 ~name:"stack-model"] *)
+let%test_unit "consistency" = StT.consistency_test ~trials:1000;;
+let%test_unit "agreement" = StT.agree_test ~trials:1000;;

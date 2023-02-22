@@ -1,0 +1,11 @@
+lib: [
+  "_build/install/default/lib/module_pbt/META"
+  "_build/install/default/lib/module_pbt/dune-package"
+  "_build/install/default/lib/module_pbt/opam"
+]
+bin: [
+  "_build/install/default/bin/module_pbt"
+]
+doc: [
+  "_build/install/default/doc/module_pbt/README.md"
+]

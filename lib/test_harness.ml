@@ -105,8 +105,8 @@ module Make(Spec : Spec) = struct
       when interpreted from the model's initial state and the [sut]'s initial state.
       Cleans up after itself by calling [Spec.cleanup] *)
     
-  let agree_test ?(trials=1000) =
-    Quickcheck.test ~trials:trials (arb_cmds Spec.init_state) 
+  let agree_test ~trials =
+    Quickcheck.test ~trials (arb_cmds Spec.init_state) 
       ~f:(fun cmds -> 
         [%test_result: bool] ~expect:true (agree_prop cmds))
   (** An actual agreement test (for convenience). Accepts an optional count parameter
