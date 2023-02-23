@@ -16,6 +16,8 @@ module M (P : Comparable) (V : Comparable) :
   S with type priority = P.t and type value = V.t = struct
   type value = V.t
   type priority = P.t
+
+  (* Map from P.t to V.t list*)
   type t = V.t list Map.M(P).t
 
   let empty = Map.empty (module P)

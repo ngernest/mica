@@ -4,6 +4,8 @@ open Core.Quickcheck
 
 (* NB: need to open Core.Poly for polymorphic comparison *)
 
+(* TODO: figure out how to specify invariants *)
+
 module StConf = struct
   type cmd =
     | Push of char

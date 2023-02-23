@@ -59,12 +59,11 @@ module Make(Spec : Spec) = struct
   let rec cmds_ok st cmds = 
     match cmds with
     | [] -> true
-    | c::cs ->
-      Spec.precond c st &&
+    | c::cs -> Spec.precond c st &&
       let s' = Spec.next_state c st in
-      cmds_ok s' cs
+        cmds_ok s' cs
   (** A precondition check (stops early due to short-circuit Boolean evaluation).
-      Accepts the initial state & the command sequnece as parameters. *)
+      Accepts the initial state [st] & the command sequnece [cmds] as parameters. *)
 
   (* arb_cmds : Spec.state -> Spec.cmd list Base_quickcheck.Generator.t *)
   let arb_cmds (st : Spec.state) = 

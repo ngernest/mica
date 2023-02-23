@@ -4,6 +4,9 @@ open Core.Quickcheck
 
 module G = Generator
 
+(* TODO: fix failing bugs when [dune runtest] is invoked! *)
+(* TODO: figure out how to specify invariants *)
+
 module HConf =
 struct
   (** For simplicity, we test hashtables with string keys & int values *)
@@ -78,7 +81,7 @@ struct
     | Add (k,v)     -> Hashtbl.add_exn table ~key:k ~data:v; true
     | Remove k      -> Hashtbl.remove table k; true
     | Find k        -> 
-        (List.Assoc.find_exn st ~equal:String.equal k) = (Hashtbl.find_exn table k)
+        (List.Assoc.find st ~equal:String.equal k) = (Hashtbl.find table k)
     | Replace (k,v) -> Hashtbl.set table ~key:k ~data:v; true
     | Mem k         -> 
         List.Assoc.mem st ~equal:String.equal k = Hashtbl.mem table k
@@ -89,7 +92,7 @@ struct
     | Add (k, _) -> 
         not (List.Assoc.mem st ~equal:String.equal k)
     | Remove k | Find k | Replace (k, _) -> 
-        List.Assoc.mem st ~equal:String.equal k
+        st <> [] && List.Assoc.mem st ~equal:String.equal k
     | _ -> true
 end
 
