@@ -1,7 +1,0 @@
-(library
- (name module_ppx)
- (libraries core stdio ppxlib)
- (kind ppx_deriver)
- (preprocess
-  (pps ppx_jane ppxlib.metaquot))
- (inline_tests))
