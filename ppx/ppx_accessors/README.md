@@ -4,8 +4,7 @@
 
 This folder contains an example of a very simple ppx deriver that will generate
 accessors for record fields from the record type definition.
-**Note** (EN): still need to get the executable to work in UTOP        
-(see [Running in Utop](#running-in-utop) section below)
+**Note**: still need to get the executable to work in Utop  (see [Running in Utop](#running-in-utop) section below)
 
 E.g. the following:
 
