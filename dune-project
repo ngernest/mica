@@ -5,7 +5,7 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github ngernest/module_pbt))
 
 (authors "Ernest Ng")
 
