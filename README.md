@@ -15,7 +15,10 @@ The `lib` directory also contains examples of the test harness adapted to work w
 
 The `ppx` directory contains examples of experimental code related to creating
 PPX preprocessors using the `ppxlib` library (in particular the `Metaquot` &
-`Ast_builder` modules). 
+`Ast_builder` modules).          
+Currently, there are two examples in the `ppx` directory:
+- `ppx_accessors`: Deriver for generating accessors/selectors from a record type definition
+- `ppx_stringify`: Deriver for generating string representations of lists
 
 ## References
 - Jane Street's [Base_quickcheck](https://opensource.janestreet.com/base_quickcheck/)
