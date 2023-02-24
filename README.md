@@ -13,6 +13,9 @@ The `lib` directory also contains examples of the test harness adapted to work w
 - Fqueue (purely functional queues, code from Real World OCaml, WIP)
 - Foldable (aka Container in Jane Street's Core library) (code from Real World OCaml, WIP)
 
+The `ppx` directory contains examples of experimental code related to creating
+PPX preprocessors using the `ppxlib` library (in particular the `Metaquot` &
+`Ast_builder` modules). 
 
 ## References
 - Jane Street's [Base_quickcheck](https://opensource.janestreet.com/base_quickcheck/)
