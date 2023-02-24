@@ -26,6 +26,7 @@ Currently, there are two examples in the `ppx` directory:
 - [Model_quickcheck](https://github.com/suttonshire/model_quickcheck)
 - ATTAPL Chapter 8
 - Real World OCaml (Chapters 5, 10, 11, 15, 17)
+- [Cornell CS 3110 OCaml textbook](https://cs3110.github.io/textbook/chapters/ds/hash_tables.html#maps-as-hash-tables)
 - [An Introduction to the OCaml PPX Ecosystem (Tarides)](https://tarides.com/blog/2019-05-09-an-introduction-to-ocaml-ppx-ecosystem)
 - [Ppxlib user manual](https://ocaml-ppx.github.io/ppxlib/ppxlib/index.html)
 
