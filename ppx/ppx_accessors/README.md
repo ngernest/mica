@@ -1,4 +1,4 @@
-# ppx_deriving_accessors
+# ppx_accessors
 
 (Code adapted from the [ppxlib Github repo](https://github.com/ocaml-ppx/ppxlib/tree/main/examples/simple-extension-rewriter))
 
@@ -29,7 +29,16 @@ It can also be used in `.mli` files to generate the corresponding signatures:
 val a : t -> string
 val b : t -> int
 ```
-## Running in Utop
+
+To use the deriver, run `dune build`, and then run the following in the terminal:
+```shell
+$ dune exec -- ./example/main.exe
+
+a x = hello
+b x = 5
+```
+
+## Running in Utop (Work in progress)
 To test in a OCaml REPL, be sure to use `utop-full` instead of `utop` 
 (only the former works with OCaml's compiler libraries).
 
@@ -43,3 +52,4 @@ After starting up `utop-full`, load in the dependencies in the following order:
 ```
 See https://discuss.ocaml.org/t/adding-attributes-using-ppxlib-metaquot/9142/8 for more
 
+**TODO**: figure out why this doesn't work in Utop 

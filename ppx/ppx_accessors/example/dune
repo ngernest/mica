@@ -1,4 +1,4 @@
 (executable
  (name main)
  (preprocess
-  (pps ppx_deriving_accessors)))
+  (pps ppx_accessors)))
