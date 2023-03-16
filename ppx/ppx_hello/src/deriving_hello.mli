@@ -1,4 +1,4 @@
-val module_name_of_type : Ppxlib.type_declaration -> string Location.loc
+val module_name_of_type : Ppxlib.type_declaration -> string option Location.loc
 
 val str_gen :
   loc:Warnings.loc ->
@@ -9,4 +9,4 @@ val sig_gen :
   loc:Warnings.loc ->
   path:'a -> 'b * Ppxlib.type_declaration list -> Ppxlib.signature_item list
 
-  val name : string
+val name : string

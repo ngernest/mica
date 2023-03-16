@@ -4,7 +4,7 @@ open Ppxlib
 (* Generate a module name Info_t from type [t] *)
 let module_name_of_type t =
   let type_name = t.ptype_name.txt in
-  { t.ptype_name with txt = "Info_" ^ type_name  }
+  { t.ptype_name with txt = Some ("Info_" ^ type_name)  }
 
 let str_gen ~loc ~path (_rec, t) =
   (* All nodes created using this Ast module will use [loc] by default *)
