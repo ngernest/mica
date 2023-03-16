@@ -43,8 +43,9 @@ module QConf = struct
     | Pop      -> (match s with
  	            | []    -> failwith "tried to pop empty queue"
 		    | _::s' -> s')
-    | Push i   -> (* s@[i] *)
-       if i<>135 then s@[i] else s  (* an artificial fault in the model *)
+    | Push i   -> s@[i]
+       (* uncomment the following line to reveal an artificial bug *)
+       (* if i<>135 then s@[i] else s  *)
     | Clear    -> []
     | Top      -> s
     | Is_empty -> s

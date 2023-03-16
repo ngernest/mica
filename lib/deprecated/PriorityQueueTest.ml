@@ -1,7 +1,7 @@
-open! Core
+(* open! Core
 open! Core.Poly
 open! Core.Quickcheck
-open PriorityQueue
+open! PriorityQueue
 
 (* TODO: complete this module signature *)
 
@@ -15,4 +15,4 @@ module PQTest = struct
 end
 
 
-module PQT = TestHarness.Make(PQTest);;
+module PQT = TestHarness.Make(PQTest);; *)
