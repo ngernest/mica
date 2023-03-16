@@ -1,6 +1,6 @@
 (* Code from Real World OCaml, Chapter 11 *)
 
-open Base
+open! Base
 
 type 'a t = 'a list * 'a list
 
