@@ -67,6 +67,9 @@ module StackTest = struct
     | Is_empty -> (Stack.is_empty sut) = (st = [])
     | Length   -> (Stack.length sut = List.length st)
 
+  (** The [precond] function acts as a de-facto invariant function -- this is invoked every time we generate [cmds] 
+  in the module StT below    
+  *)
   let precond (cmd : cmd) (st : state) : bool = 
     match cmd with
     | Pop | Top                          -> st <> []
@@ -74,6 +77,8 @@ module StackTest = struct
 
 end
 
+(** The TestHarness.Make functor returns a module containing
+    functions that check for consistency and ensure that invariants are held *)
 module StT = TestHarness.Make(StackTest);;
 
 let%test_unit "consistency" = StT.consistency_test ~trials:1000;;
