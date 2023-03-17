@@ -2,6 +2,7 @@
  * https://cs3110.github.io/textbook/chapters/ds/hash_tables.html#maps-as-hash-tables
  *)
 
+(** Module signature / interface for hash tables *)
 module type HashTableInf = sig
   (** [('k, 'v) t] is the type of mutable table-based maps that bind
       keys of type ['k] to values of type ['v]. *)
@@ -26,8 +27,7 @@ module type HashTableInf = sig
       runs in constant time. *)
   val create : ('k -> int) -> int -> ('k, 'v) t
 
-  (** [bindings m] is an association list containing the same bindings
-      as [m]. *)
+  (** [bindings m] is an association list containing the same bindings as [m]. *)
   val bindings : ('k, 'v) t -> ('k * 'v) list
 
   (** [of_list hash lst] creates a map with the same bindings as [lst],

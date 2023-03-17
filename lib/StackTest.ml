@@ -1,12 +1,15 @@
 open! Core
+(* NB: need to open Core.Poly for polymorphic comparison *)
 open Core.Poly
 open Core.Quickcheck
 
-(* NB: need to open Core.Poly for polymorphic comparison *)
 
-(* TODO: figure out how to specify invariants *)
 
+(* NB: This module tests Core.Stack, although in reality we would be testing 
+   Stack.ml *)
 module StackTest = struct
+
+  (** Definitions from the original module omitted here *)
 
   (** Symbolic commands *)
   type cmd =
@@ -24,7 +27,8 @@ module StackTest = struct
   (** Type of the system under test *)
   type sut = char Stack.t
 
-  (**  Generator of symbolic commands (takes in a state argument for state-dependent command generation) *)
+  (** Generator of symbolic commands 
+      (takes in a state argument for state-dependent command generation) *)
   let gen_cmd (st : state) : cmd Generator.t =
     Generator.union ((if List.is_empty st
                 then []
