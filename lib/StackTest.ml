@@ -1,21 +1,17 @@
-open! Core
-(* NB: need to open Core.Poly for polymorphic comparison *)
-open Core.Poly
-open Core.Quickcheck
+open Base_quickcheck
+open Stack
+open Sexplib.Std
 
-
-
-(* NB: This module tests Core.Stack, although in reality we would be testing 
-   Stack.ml *)
+(** Testing harness for the [ListStack] module defined in [Stack.ml]*)
 module StackTest = struct
 
-  (** Definitions from the original module omitted here *)
+  include ListStack
 
   (** Symbolic commands *)
   type cmd =
     | Push of char
     | Pop
-    | Top
+    | Peek
     | Clear
     | Is_empty
     | Length 
@@ -25,15 +21,15 @@ module StackTest = struct
   type state = char list
 
   (** Type of the system under test *)
-  type sut = char Stack.t
+  type sut = char ListStack.t
 
   (** Generator of symbolic commands 
       (takes in a state argument for state-dependent command generation) *)
   let gen_cmd (st : state) : cmd Generator.t =
-    Generator.union ((if List.is_empty st
+    Generator.union ((if Base.List.is_empty st
                 then []
                 else [Generator.return Pop;
-                      Generator.return Top])
+                      Generator.return Peek])
                @
                [Generator.map ~f:(fun c -> Push c) Generator.char;
                 Generator.return Clear;
@@ -47,36 +43,37 @@ module StackTest = struct
   let next_state (cmd : cmd) (st : state) : state = 
     match cmd with
     | Push e     -> e::st
-    | Pop        -> Option.value (List.tl st) ~default:[] 
+    | Pop        -> Option.value (Base.List.tl st) ~default:[] 
     | Clear      -> []
-    | Top | Is_empty | Length -> st
+    | Peek | Is_empty | Length -> st
   
-  let init_sut   = Stack.create
+  let init_sut   = ListStack.create
   let cleanup _  = ()
 
   (** Interprets the command [cmd] over the system under test
       Here, [st] refers to the model's state prior to executing [cmd] *)
   let run_cmd (cmd : cmd) (st : state) (sut : sut) : bool = 
+    let module B = Base in 
     match cmd with
-    | Push e   -> Stack.push sut e; true
-    | Pop      -> (match Stack.pop sut, List.hd st with 
+    | Push e   -> ListStack.(push e sut |> length) = B.List.length (e :: st)
+    | Pop      -> (match ListStack.pop sut, B.List.hd st with 
                   | None, None -> true 
                   | _, None | None, _ -> false 
                   | Some e, Some e' -> e = e')
-    | Top      -> (match Stack.top sut, List.hd st with 
+    | Peek      -> (match ListStack.peek sut, B.List.hd st with 
                   | None, None -> true 
                   | _, None | None, _ -> false 
                   | Some e, Some e' -> e = e')
-    | Clear    -> Stack.clear sut; true
-    | Is_empty -> (Stack.is_empty sut) = (st = [])
-    | Length   -> (Stack.length sut = List.length st)
+    | Clear    -> ListStack.clear sut; true
+    | Is_empty -> (ListStack.is_empty sut) = (st = [])
+    | Length   -> (ListStack.length sut = B.List.length st)
 
-  (** The [precond] function acts as a de-facto invariant function -- this is invoked every time we generate [cmds] 
-  in the module StT below    
+  (** The [precond] function acts as a de-facto invariant function -- 
+      this is invoked every time we generate [cmds] in the module StT below    
   *)
   let precond (cmd : cmd) (st : state) : bool = 
     match cmd with
-    | Pop | Top                          -> st <> []
+    | Pop | Peek                          -> st <> []
     | Push _ | Clear | Is_empty | Length -> true
 
 end
