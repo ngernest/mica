@@ -283,3 +283,30 @@ module BSTSet : Set = struct
         (inorder t1) = (inorder t2)
   
   end
+(*******************************************************************************)
+(** Functor that returns a test harness 
+    comparing two modules that both implement the [Set] signature *)
+module CompareSetImpls (A : Set) (B : Set) = struct 
+    open! Base
+    open! Base_quickcheck
+
+    (** Type of the model's state *)
+    type state = Set.M(Int).t
+
+    (** The respective types of the systems under test *)
+    type sutA = int A.t 
+    type sutB = int B.t
+    
+    (** Symbolic commands for the set ADT *)
+    type cmd = 
+      | Mem of int 
+      | Add of int 
+      | Remove of int 
+      | Union 
+      | Intersection
+      | Length 
+      | Is_empty 
+      [@@deriving sexp_of, quickcheck]
+
+    (* TODO: add functions *)
+end 

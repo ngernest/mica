@@ -2,6 +2,8 @@ open Base_quickcheck
 open Stack
 open Sexplib.Std
 
+(* TODO: rewrite to support exceptions instead of options *)
+
 (** Testing harness for the [ListStack] module defined in [Stack.ml]*)
 module StackTest = struct
 
