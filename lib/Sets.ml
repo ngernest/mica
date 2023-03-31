@@ -13,13 +13,16 @@
 *)
 
 (** A set is an unordered collection in which multiplicity is ignored. *)
-module type Set = sig
+module type SetIntf = sig
 
   (** ['a t] represents a set whose elements are of type ['a] *)
   type 'a t
 
   (** [empty] is the set containing no elements *)
   val empty : 'a t
+
+  (** Checks if the set is currently empty *)
+  val is_empty : 'a t -> bool 
 
   (** [mem x s] is whether [x] is a member of set [s] *)
   val mem : 'a -> 'a t -> bool
@@ -70,7 +73,7 @@ let string_of_list string_of_elt s =
       | h :: t -> "{" ^ interior string_of_elt h t ^ "}"
 
 (** Implementation of sets as lists with duplicates *)
-module ListSetDups : Set = struct
+module ListSetDups : SetIntf = struct
     (** Abstraction function (AF): The list [a1; ...; an] represents the set {b1, ..., bm},
         where [b1; ...; bm] is the same list as [a1; ...; an] but with duplicates removed. 
         The empty list [[]] represents the empty set [{}].
@@ -79,7 +82,9 @@ module ListSetDups : Set = struct
     type 'a t = 'a list
     
     let empty = []
-    
+
+    let is_empty s = s == []
+
     let mem = List.mem
     
     let add = List.cons
@@ -102,7 +107,7 @@ end
 
 
 (** Implementation of sets as lists without duplicates *)
-module ListSetNoDups : Set = struct 
+module ListSetNoDups : SetIntf = struct 
     (** AF: The list [a1; ...; an] represents the set {a1, ..., an}. 
             The empty list [[]] represents the empty set. 
         RI: The list must not contain duplicates. *)
@@ -115,6 +120,8 @@ module ListSetNoDups : Set = struct
         else failwith "RI" *)
 
     let empty = rep_ok []
+
+    let is_empty lst = (rep_ok lst) == []
     
     let mem x lst = List.mem x (rep_ok lst)
     
@@ -196,7 +203,7 @@ let print_tree (t: int tree) : unit =
     in print_string @@ "\n" ^ (aux t 0) ^ "\n"
 
 
-module BSTSet : Set = struct
+module BSTSet : SetIntf = struct
     (* AF: [Leaf] represents the empty set.
           [Node (lt, x, rt)] represents the set containing [x] & 
           all elements in the sets represented by [lt] and [rt] respectively. 
@@ -206,6 +213,11 @@ module BSTSet : Set = struct
     type 'a t = 'a tree
   
     let empty = Empty
+
+    let is_empty t = 
+      match t with 
+      | Empty -> true 
+      | Node _ -> false 
 
     (** [add x t] inserts [x] into the BST [t] *)
     let rec add (x: 'a) (t: 'a t) : 'a t =
@@ -286,16 +298,20 @@ module BSTSet : Set = struct
 (*******************************************************************************)
 (** Functor that returns a test harness 
     comparing two modules that both implement the [Set] signature *)
-module CompareSetImpls (A : Set) (B : Set) = struct 
+module CompareSetImpls (A : SetIntf) (B : SetIntf) = struct 
     open! Base
     open! Base_quickcheck
 
-    (** Type of the model's state *)
+    (** Type of the model's state 
+        Note: Set.M(Int).t == (String.t, String.comparator_witness) Set.t *)
     type state = Set.M(Int).t
 
-    (** The respective types of the systems under test *)
+    (** The respective types of the systems under test (SUTs) *)
     type sutA = int A.t 
     type sutB = int B.t
+
+    (** Generic SUT type *)
+    type sut = AImpl of sutA | BImpl of sutB 
     
     (** Symbolic commands for the set ADT *)
     type cmd = 
@@ -304,9 +320,65 @@ module CompareSetImpls (A : Set) (B : Set) = struct
       | Remove of int 
       | Union 
       | Intersection
-      | Length 
+      | Size 
       | Is_empty 
       [@@deriving sexp_of, quickcheck]
 
+     (** Generate symbolic commands based on the model's current state 
+      *  TODO: figure out what to do about binary operations eg. [Union] *)
+     let gen_cmd (st : state) : cmd Generator.t = 
+      let module G = Generator in 
+        G.union ((if Set.is_empty st
+          then []
+          else [G.return Union;
+                  G.return Intersection])
+          @
+        [G.map ~f:(fun x -> Mem x) G.int;
+          G.map ~f:(fun x -> Add x) G.int; 
+          G.map ~f:(fun x -> Remove x) G.int;
+          G.return Is_empty;
+          G.return Size])
+
     (* TODO: add functions *)
+    let init_state = Set.empty (module Int)
+
+    let init_sutA = A.empty 
+    let init_sutB = B.empty 
+
+    
+    let next_state (cmd : cmd) (s : state) : state = 
+      match cmd with 
+      | Add x -> Set.add s x
+      | Remove x -> Set.remove s x
+      | Mem _ | Is_empty | Size -> s
+      | Union | Intersection -> failwith "TODO: handle binary operations"
+
+    (** Interprets the symbolic command [cmd] over the SUT 
+        Here, [st] refers to the model's state prior to executing [cmd] *)
+    (* let run_cmd_sut (cmd : cmd) (s : state) : bool = 
+      match cmd with 
+      | Size -> sut.size   *)
+
+
+    (** Checks whether the result of interpreting [cmd] over [sutA] 
+        & [sutB] agree with each other *)
+    let compare_cmd (cmd : cmd) (sutA : sutA) (sutB : sutB): bool = 
+      match cmd with 
+      | Size -> A.size sutA = B.size sutB
+      | Is_empty -> Bool.equal (A.is_empty sutA) (B.is_empty sutB)
+      | Mem x -> Bool.equal (A.mem x sutA) (B.mem x sutB)
+      | Add x -> A.(add x sutA |> size) = B.(add x sutB |> size) 
+      (* TODO: need some way of dealing with exceptions for [remove] *)
+      | Remove x -> A.(rem x sutA |> size) = B.(rem x sutB |> size) 
+      | _ -> failwith "TODO"
+
+    let compare_cmd (cmd : cmd) (s : state) : bool = 
+        failwith "Call run_cmd_sut on both SUTs"
+
+
+
+
+    (* Nothing to do for cleanup *)
+    let cleanup _ = ()
+
 end 
