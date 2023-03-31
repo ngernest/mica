@@ -328,24 +328,24 @@ module CompareSetImpls (A : SetIntf) (B : SetIntf) = struct
       *  TODO: figure out what to do about binary operations eg. [Union] *)
      let gen_cmd (st : state) : cmd Generator.t = 
       let module G = Generator in 
-        G.union ((if Set.is_empty st
-          then []
+        G.union @@ (
+          if Set.is_empty st then []
           else [G.return Union;
-                  G.return Intersection])
+                G.return Intersection])
           @
         [G.map ~f:(fun x -> Mem x) G.int;
           G.map ~f:(fun x -> Add x) G.int; 
           G.map ~f:(fun x -> Remove x) G.int;
           G.return Is_empty;
-          G.return Size])
+          G.return Size]
 
-    (* TODO: add functions *)
     let init_state = Set.empty (module Int)
 
     let init_sutA = A.empty 
     let init_sutB = B.empty 
 
-    
+    (** Given a command [cmd] and the current state [st], move 
+      the model's state to the next state by interpreting [cmd] *)
     let next_state (cmd : cmd) (s : state) : state = 
       match cmd with 
       | Add x -> Set.add s x
@@ -353,32 +353,41 @@ module CompareSetImpls (A : SetIntf) (B : SetIntf) = struct
       | Mem _ | Is_empty | Size -> s
       | Union | Intersection -> failwith "TODO: handle binary operations"
 
-    (** Interprets the symbolic command [cmd] over the SUT 
-        Here, [st] refers to the model's state prior to executing [cmd] *)
-    (* let run_cmd_sut (cmd : cmd) (s : state) : bool = 
+    (** Interprets the symbolic command [cmd] over the two SUTs,
+        & checks whether the result of interpreting [cmd] over [sutA] 
+        & [sutB] agree with each other. 
+        Here, [st] refers to the model's state prior to executing [cmd]. *)
+    let compare_cmd (cmd : cmd) (st : state) (sutA : sutA) (sutB : sutB): bool = 
+      (* Use polymorphic comparison for simplicity *)
+      let open Base.Poly in 
       match cmd with 
-      | Size -> sut.size   *)
-
-
-    (** Checks whether the result of interpreting [cmd] over [sutA] 
-        & [sutB] agree with each other *)
-    let compare_cmd (cmd : cmd) (sutA : sutA) (sutB : sutB): bool = 
-      match cmd with 
-      | Size -> A.size sutA = B.size sutB
-      | Is_empty -> Bool.equal (A.is_empty sutA) (B.is_empty sutB)
-      | Mem x -> Bool.equal (A.mem x sutA) (B.mem x sutB)
-      | Add x -> A.(add x sutA |> size) = B.(add x sutB |> size) 
+      | Size -> 
+        let (sa, sb, ss) = (A.size sutA, B.size sutB, Set.length st) in 
+          sa = sb && sa = ss && sb = ss
+      | Is_empty -> 
+        let (ea, eb, es) = (A.is_empty sutA, B.is_empty sutB, Set.is_empty st) in 
+          ea = eb && ea = es && eb = es
+      | Mem x -> 
+        let (memA, memB, memS) = (A.mem x sutA, B.mem x sutB, Set.mem st x) in 
+          memA = memB && memA = memS && memB = memS
+      | Add x -> 
+        let (sa, sb, ss) = (A.(add x sutA |> size), B.(add x sutB |> size), Set.(add st x |> length)) in 
+          sa = sb && sa = ss && sb = ss
       (* TODO: need some way of dealing with exceptions for [remove] *)
-      | Remove x -> A.(rem x sutA |> size) = B.(rem x sutB |> size) 
+      | Remove x -> 
+        let (sa, sb, ss) = (A.(rem x sutA |> size), B.(rem x sutB |> size), Set.(remove st x |> length)) in 
+          sa = sb && sa = ss && sb = ss
       | _ -> failwith "TODO"
 
-    let compare_cmd (cmd : cmd) (s : state) : bool = 
-        failwith "Call run_cmd_sut on both SUTs"
-
-
-
+    let precond (cmd : cmd) (st : state) : bool = 
+    match cmd with
+    | Mem _ | Remove _ -> not (Set.is_empty st)
+    | Add _ | Is_empty | Size -> true
+    | Union | Intersection -> failwith "TODO"
+    
 
     (* Nothing to do for cleanup *)
     let cleanup _ = ()
 
+    (** TODO: work on TestHarness.Make *)
 end 
