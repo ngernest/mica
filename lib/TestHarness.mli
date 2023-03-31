@@ -1,15 +1,14 @@
-module type Spec =
-sig
+open Core.Quickcheck
+
+(** Base signature that PBT harness must satisfy *)
+module type SpecBase = sig
   type cmd
   (** The type of commands *)
 
   type state
   (** The type of the model's state *)
 
-  type sut
-  (** The type of the system under test *)
-
-  val gen_cmd : state -> cmd Base_quickcheck.Generator.t
+  val gen_cmd : state -> cmd Generator.t
   (** A command generator. Accepts a state parameter to enable state-dependent {!cmd} generation. *)
 
   val init_state : state
@@ -20,18 +19,26 @@ sig
       model's internal state machine from the state [s] to the next state.
       Ideally a [next_state] function is pure. *)
 
+  val precond : cmd -> state -> bool
+  (** [precond c s] expresses preconditions for command [c] in terms of the model state [s].
+      A [precond] function should be pure.
+      [precond] is useful, e.g., to prevent the shrinker from breaking invariants when minimizing
+      counterexamples. *)
+end 
+
+(** Extension of [SpecBase] for testing one module wrt a signature *)
+module type Spec = sig
+  include SpecBase
+
+  type sut
+  (** The type of the system under test *)
+
   val init_sut : unit -> sut
   (** Initialize the system under test. *)
 
   val cleanup : sut -> unit
   (** Utility function to clean up the {!sut} after each test instance,
       e.g., for closing sockets, files, or resetting global parameters*)
-
-  val precond : cmd -> state -> bool
-  (** [precond c s] expresses preconditions for command [c] in terms of the model state [s].
-      A [precond] function should be pure.
-      [precond] is useful, e.g., to prevent the shrinker from breaking invariants when minimizing
-      counterexamples. *)
 
   val run_cmd : cmd -> state -> sut -> bool
   (** [run_cmd c s i] should interpret the command [c] over the system under test (typically side-effecting).
@@ -40,8 +47,32 @@ sig
       and in case [c] returns a value: whether the returned value agrees with the model's result. *)
 end
 
-module Make (Spec : Spec) :
-sig
+(** Extension of [SpecBase] for comparing two modules that implement the same interface *)
+module type Spec2 = sig 
+  include SpecBase
+  
+  (** Types of the two systems under tests (SUTs) *)
+  type sutA 
+  type sutB
+  
+  (** Initialization functions for the two SUTs *)
+  val init_sutA : unit -> sutA 
+  val init_sutB : unit -> sutB 
+
+  (** Cleanup functions for the two SUTs *)
+  val cleanupA : sutA -> unit 
+  val cleanupB : sutB -> unit
+
+  (** [compare_cmd cmd st sutA sutB] interprets the 
+      symbolic command [cmd] over the two SUTs,
+      and checks whether the result of interpreting [cmd] over [sutA] 
+      & [sutB] agree with each other. 
+      Here, [st] refers to the model's state prior to executing [cmd]. *)
+  val compare_cmd : cmd -> state -> sutA -> sutB -> bool   
+end 
+
+
+module Make (Spec : Spec) : sig
   (** {3 The resulting test framework derived from a state machine specification} *)
 
     val gen_cmds : Spec.state -> int -> Spec.cmd list Base_quickcheck.Generator.t

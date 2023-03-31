@@ -12,6 +12,8 @@
 
 *)
 
+open TestHarness
+
 (** A set is an unordered collection in which multiplicity is ignored. *)
 module type SetIntf = sig
 
@@ -298,7 +300,7 @@ module BSTSet : SetIntf = struct
 (*******************************************************************************)
 (** Functor that returns a test harness 
     comparing two modules that both implement the [Set] signature *)
-module CompareSetImpls (A : SetIntf) (B : SetIntf) = struct 
+module CompareSetImpls (A : SetIntf) (B : SetIntf) : Spec2 = struct 
     open! Base
     open! Base_quickcheck
 
@@ -341,8 +343,8 @@ module CompareSetImpls (A : SetIntf) (B : SetIntf) = struct
 
     let init_state = Set.empty (module Int)
 
-    let init_sutA = A.empty 
-    let init_sutB = B.empty 
+    let init_sutA () = A.empty 
+    let init_sutB () = B.empty 
 
     (** Given a command [cmd] and the current state [st], move 
       the model's state to the next state by interpreting [cmd] *)
@@ -387,7 +389,8 @@ module CompareSetImpls (A : SetIntf) (B : SetIntf) = struct
     
 
     (* Nothing to do for cleanup *)
-    let cleanup _ = ()
+    let cleanupA _ = ()
+    let cleanupB _ = ()
 
     (** TODO: work on TestHarness.Make *)
 end 
