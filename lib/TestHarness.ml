@@ -27,7 +27,7 @@ module type SpecBase = sig
 end 
 
 
-module type Spec = sig
+module type Spec1 = sig
   include SpecBase
 
   type sut
@@ -72,73 +72,190 @@ module type Spec2 = sig
 end 
 
 
-module Make(Spec : Spec) = struct
+module type HarnessBase = sig 
+  type state 
+  type cmd 
 
-  (* gen_cmds : Spec.state -> int -> cSpec.md list Base_quickcheck.Generator.t *)
-  let rec gen_cmds st fuel =
+  val gen_cmds : state -> int -> cmd list Base_quickcheck.Generator.t
+  (** A fueled command list generator.
+    Accepts a state parameter to enable state-dependent [cmd] generation. *)
+
+  val cmds_ok : state -> cmd list -> bool
+  (** A precondition checker (stops early, thanks to short-circuit Boolean evaluation).
+      Accepts the initial state and the command sequence as parameters.  *)
+
+  val arb_cmds : state -> cmd list Base_quickcheck.Generator.t
+  (** A generator of command sequences. Accepts the initial state as parameter. *)
+
+  val consistency_test : trials:int -> unit
+  (** A consistency test that generates a number of [cmd] sequences and
+      checks that all contained [cmd]s satisfy the precondition [precond].
+      Accepts a labeled parameters [trials], which is the no. of trials *)
+end 
+
+
+(** Extension of [HarnessBase], specialized for testing one module *)
+module type Harness1 = sig 
+  include HarnessBase 
+
+  type sut
+
+  val interp_agree : state -> sut -> cmd list -> bool
+  (** Checks agreement between the model and the system under test
+      (stops early, thanks to short-circuit Boolean evaluation). *)
+
+  val agree_prop : cmd list -> bool
+  (** The agreement property: the command sequence [cs] yields the same observations
+    when interpreted from the model's initial state and the [sut]'s initial state.
+    Cleans up after itself by calling relevant functions in other modules. *)   
+end 
+
+(** Extension of [HarnessBase], specialized for comparing two modules *)
+module type Harness2 = sig 
+  include HarnessBase 
+
+  (** Types of the two systems under tests (SUTs) *)
+  type sutA 
+  type sutB
+
+  val interp_agree : state -> sutA -> sutB -> cmd list -> bool
+  (** Checks agreement between the model and the two SUTs *)
+
+end
+
+(** Given a PBT specification, creates a test harness that tests if a module 
+    implements its signature properly *)
+module Make1 (Spec : Spec1) : 
+  (Harness1 with type state := Spec.state and 
+  type cmd := Spec.cmd and type sut := Spec.sut) = struct
+
+  open Spec
+
+  (** A fueled command list generator.
+    * Accepts a state parameter to enable state-dependent [cmd] generation. *)
+  let rec gen_cmds (st : state) (fuel : int) : cmd list Generator.t =
     let open Quickcheck.Generator in 
     if fuel = 0 then return []
     else Spec.gen_cmd st >>= fun cmd ->
-	   (gen_cmds (Spec.next_state cmd st) (fuel - 1)) >>= fun cmds -> 
+      (gen_cmds (Spec.next_state cmd st) (fuel - 1)) >>= fun cmds -> 
         return (cmd::cmds)
-  (** A fueled command list generator.
-      Accepts a state parameter to enable state-dependent [cmd] generation. *)
 
-
-  let rec cmds_ok st cmds = 
+  (** A precondition check (stops early due to short-circuit Boolean evaluation).
+    * Accepts the initial state [st] & the command sequnece [cmds] as parameters. *)
+  let rec cmds_ok (st : state) (cmds : cmd list) = 
     match cmds with
     | [] -> true
     | c::cs -> Spec.precond c st &&
       let s' = Spec.next_state c st in
         cmds_ok s' cs
-  (** A precondition check (stops early due to short-circuit Boolean evaluation).
-      Accepts the initial state [st] & the command sequnece [cmds] as parameters. *)
-
-  (* arb_cmds : Spec.state -> Spec.cmd list Base_quickcheck.Generator.t *)
-  let arb_cmds (st : Spec.state) = 
+  
+  (** A generator of command sequences. Accepts the initial state as parameter. *)
+  (* TODO: handle shrinking later *)
+  let arb_cmds (st : state) = 
     let open Generator.Monad_infix in 
     Int.gen_incl 0 10 >>= fun size -> gen_cmds st size
 
-  (* TODO: handle shrinking later *)
-  (** A generator of command sequences. Accepts the initial state as parameter. *)
-
+  (** A consistency test that generates a number of [cmd] sequences and
+      checks that all contained [cmd]s satisfy the precondition [precond]. 
+      Accepts an optional [count] parameter and a test name as a labeled parameter [name]. *)
   let consistency_test ~trials =
     Quickcheck.test ~trials (arb_cmds Spec.init_state) 
       ~f:(fun cmds -> 
         [%test_result: bool] ~expect:true (cmds_ok Spec.init_state cmds))
-  (** A consistency test that generates a number of [cmd] sequences and
-      checks that all contained [cmd]s satisfy the precondition [precond]. 
-      Accepts an optional [count] parameter and a test name as a labeled parameter [name]. *)
 
-  let rec interp_agree s sut cs = match cs with
-  | [] -> true
-  | c::cs ->
-    let b = Spec.run_cmd c s sut in
-    let s' = Spec.next_state c s in
-    b && interp_agree s' sut cs
   (** Checks agreement between the model and the system under test
-      (stops early, thanks to short-circuit Boolean evaluation). *)
-
-  (* agree_prop : Spec.cmd list -> bool *)
-  let agree_prop : Spec.cmd list -> bool =
-    fun cs ->
-        assert (cmds_ok Spec.init_state cs);
-        let sut = Spec.init_sut () in (* reset system's state *)
-        let res = interp_agree Spec.init_state sut cs in
-        let ()  = Spec.cleanup sut in
-        res
-        (* if res then Ok res 
-        else Or_error.error "Model & SUT don't agree!" res Bool.sexp_of_t *)
-  (** The agreement property: the command sequence [cs] yields the same observations
-      when interpreted from the model's initial state and the [sut]'s initial state.
-      Cleans up after itself by calling [Spec.cleanup] *)
+   * (stops early, thanks to short-circuit Boolean evaluation). *)
+  let rec interp_agree (s : Spec.state) (sut : Spec.sut) (cs : Spec.cmd list) : bool = 
+    match cs with
+    | [] -> true
+    | c::cs ->
+      let b = Spec.run_cmd c s sut in
+      let s' = Spec.next_state c s in
+      b && interp_agree s' sut cs
     
+
+  (** The agreement property: the command sequence [cs] yields the same observations
+    * when interpreted from the model's initial state and the [sut]'s initial state.
+    * Cleans up after itself by calling [Spec.cleanup] *)
+  let agree_prop (cs : Spec.cmd list) : bool =
+    assert (cmds_ok Spec.init_state cs);
+    let sut = Spec.init_sut () in (* reset system's state *)
+    let res = interp_agree Spec.init_state sut cs in
+    let ()  = Spec.cleanup sut in
+    res
+    (* if res then Ok res 
+    else Or_error.error "Model & SUT don't agree!" res Bool.sexp_of_t *)
+  
+  (** An actual agreement test (for convenience). Accepts an optional count parameter
+   * and a test name as a labeled parameter [name]. *)
   let agree_test ~trials =
     Quickcheck.test ~trials (arb_cmds Spec.init_state) 
       ~f:(fun cmds -> 
         [%test_result: bool] ~expect:true (agree_prop cmds))
-  (** An actual agreement test (for convenience). Accepts an optional count parameter
-      and a test name as a labeled parameter [name]. *)
 end
 
-(** TODO: work on Make2 functor *)
+
+module Make2 (Spec : Spec2) : (Harness2 with 
+  type state := Spec.state and 
+  type cmd := Spec.cmd and 
+  type sutA := Spec.sutA and 
+  type sutB := Spec.sutB) = struct
+
+  open Spec
+
+  (** A fueled command list generator.
+      Accepts a state parameter to enable state-dependent [cmd] generation. *)
+  let rec gen_cmds (st : state) (fuel : int) : cmd list Generator.t =
+    let open Quickcheck.Generator in 
+    if fuel = 0 then return []
+    else Spec.gen_cmd st >>= fun cmd ->
+	   (gen_cmds (Spec.next_state cmd st) (fuel - 1)) >>= fun cmds -> 
+        return (cmd::cmds)
+
+  (** A precondition check (stops early due to short-circuit Boolean evaluation).
+      Accepts the initial state [st] & the command sequnece [cmds] as parameters. *)
+  let rec cmds_ok (st : state) (cmds : cmd list) = 
+    match cmds with
+    | [] -> true
+    | c::cs -> Spec.precond c st &&
+      let s' = Spec.next_state c st in
+        cmds_ok s' cs
+  
+  (** A generator of command sequences. Accepts the initial state as parameter. *)
+  (* TODO: handle shrinking later *)
+  let arb_cmds (st : state) = 
+    let open Generator.Monad_infix in 
+    Int.gen_incl 0 10 >>= fun size -> gen_cmds st size
+
+  (** A consistency test that generates a number of [cmd] sequences and
+      checks that all contained [cmd]s satisfy the precondition [precond]. 
+      Accepts an optional [count] parameter and a test name as a labeled parameter [name]. *)
+  let consistency_test ~trials =
+    Quickcheck.test ~trials (arb_cmds Spec.init_state) 
+      ~f:(fun cmds -> 
+        [%test_result: bool] ~expect:true (cmds_ok Spec.init_state cmds))
+
+  (** Checks agreement between the model and the system under test
+      (stops early, thanks to short-circuit Boolean evaluation). *)
+  let rec interp_agree (st : state) (sutA : sutA) (sutB : sutB) (cmds : cmd list) : bool = 
+    match cmds with 
+    | [] -> true 
+    | c :: cs -> 
+      let b = Spec.compare_cmd c st sutA sutB in
+      let s' = Spec.next_state c st in
+      b && interp_agree s' sutA sutB cs 
+  
+  (** Agreement property: checks if the command sequence [cs] yields the same observations
+    when interpreted from the model's initial state and the [sut]'s initial state.
+    Cleans up after itself by calling relevant functions in other modules. *)   
+  let agree_prop (cmds : cmd list) : bool = 
+    assert (cmds_ok Spec.init_state cmds);
+    (* reset system's state *)
+    let sutA = Spec.init_sutA () in 
+    let sutB = Spec.init_sutB () in 
+    let res = interp_agree Spec.init_state sutA sutB cmds in
+    Spec.cleanupA sutA;
+    Spec.cleanupB sutB;
+    res
+
+end

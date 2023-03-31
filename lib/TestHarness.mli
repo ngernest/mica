@@ -27,7 +27,7 @@ module type SpecBase = sig
 end 
 
 (** Extension of [SpecBase] for testing one module wrt a signature *)
-module type Spec = sig
+module type Spec1 = sig
   include SpecBase
 
   type sut
@@ -71,34 +71,73 @@ module type Spec2 = sig
   val compare_cmd : cmd -> state -> sutA -> sutB -> bool   
 end 
 
+(** Base module type for the PBT harness *)
+module type HarnessBase = sig 
+  type state 
+  type cmd 
 
-module Make (Spec : Spec) : sig
-  (** {3 The resulting test framework derived from a state machine specification} *)
+  val gen_cmds : state -> int -> cmd list Base_quickcheck.Generator.t
+  (** A fueled command list generator.
+    Accepts a state parameter to enable state-dependent [cmd] generation. *)
 
-    val gen_cmds : Spec.state -> int -> Spec.cmd list Base_quickcheck.Generator.t
-    (** A fueled command list generator.
-      Accepts a state parameter to enable state-dependent [cmd] generation. *)
+  val cmds_ok : state -> cmd list -> bool
+  (** A precondition checker (stops early, thanks to short-circuit Boolean evaluation).
+      Accepts the initial state and the command sequence as parameters.  *)
 
-    val cmds_ok : Spec.state -> Spec.cmd list -> bool
-    (** A precondition checker (stops early, thanks to short-circuit Boolean evaluation).
-        Accepts the initial state and the command sequence as parameters.  *)
+  val arb_cmds : state -> cmd list Base_quickcheck.Generator.t
+  (** A generator of command sequences. Accepts the initial state as parameter. *)
 
-    val arb_cmds : Spec.state -> Spec.cmd list Base_quickcheck.Generator.t
-    (** A generator of command sequences. Accepts the initial state as parameter. *)
+  val consistency_test : trials:int -> unit
+  (** A consistency test that generates a number of [cmd] sequences and
+      checks that all contained [cmd]s satisfy the precondition [precond].
+      Accepts a labeled parameters [trials], which is the no. of trials *)
 
-    val consistency_test : trials:int -> unit
-    (** A consistency test that generates a number of [cmd] sequences and
-        checks that all contained [cmd]s satisfy the precondition [precond].
-        Accepts a labeled parameters [trials], which is the no. of trials *)
+  val agree_test : trials:int -> unit 
+  (** An actual agreement test (for convenience). Accepts an optional count parameter
+      and a test name as a labeled parameter [name]. *)
+end 
 
-    val interp_agree : Spec.state -> Spec.sut -> Spec.cmd list -> bool
-    (** Checks agreement between the model and the system under test
-        (stops early, thanks to short-circuit Boolean evaluation). *)
+(** Extension of [HarnessBase], specialized for testing one module *)
+module type Harness1 = sig 
+  include HarnessBase 
 
-    val agree_prop : Spec.cmd list -> bool
-    (** The agreement property: the command sequence [cs] yields the same observations
-      when interpreted from the model's initial state and the [sut]'s initial state.
-      Cleans up after itself by calling [Spec.cleanup] *) 
+  type sut
 
-    val agree_test : trials:int -> unit   
+  val interp_agree : state -> sut -> cmd list -> bool
+  (** Checks agreement between the model and the system under test
+      (stops early, thanks to short-circuit Boolean evaluation). *)
+
+  val agree_prop : cmd list -> bool
+  (** Agreement property: checks if the command sequence [cs] yields the same observations
+    when interpreted from the model's initial state and the [sut]'s initial state.
+    Cleans up after itself by calling relevant functions in other modules. *)   
+end 
+
+(** Extension of [HarnessBase], specialized for comparing two modules *)
+module type Harness2 = sig 
+  include HarnessBase 
+
+  (** Types of the two systems under tests (SUTs) *)
+  type sutA 
+  type sutB
+
+  val interp_agree : state -> sutA -> sutB -> cmd list -> bool
+  (** Checks agreement between the model and the two SUTs *)
 end
+
+
+(** Given a PBT specification, creates a test harness that tests if a module 
+    implements its signature properly *)
+module Make1 (Spec : Spec1) : Harness1 with 
+  type state := Spec.state and 
+  type cmd := Spec.cmd and 
+  type sut := Spec.sut 
+
+(** Given a PBT specification, creates a test harness that compares if two
+    modules implement the same signature *)
+module Make2 (Spec : Spec2) : Harness2 with 
+  type state := Spec.state and 
+  type cmd := Spec.cmd and 
+  type sutA := Spec.sutA and 
+  type sutB := Spec.sutB
+
