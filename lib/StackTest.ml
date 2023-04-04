@@ -1,6 +1,6 @@
 open Base_quickcheck
-open Stack
 open Sexplib.Std
+open Stack
 
 (* TODO: rewrite to support exceptions instead of options *)
 

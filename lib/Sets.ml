@@ -392,5 +392,4 @@ module CompareSetImpls (A : SetIntf) (B : SetIntf) : Spec2 = struct
     let cleanupA _ = ()
     let cleanupB _ = ()
 
-    (** TODO: work on TestHarness.Make *)
 end 

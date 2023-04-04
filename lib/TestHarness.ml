@@ -1,6 +1,7 @@
 open! Core
 open Core.Quickcheck
 
+(** Base signature that the PBT harness must satisfy *)
 module type SpecBase = sig
   type cmd
   (** The type of commands *)
@@ -27,6 +28,7 @@ module type SpecBase = sig
 end 
 
 
+(** Extension of [SpecBase] for testing one module wrt a signature *)
 module type Spec1 = sig
   include SpecBase
 
@@ -71,7 +73,7 @@ module type Spec2 = sig
   val compare_cmd : cmd -> state -> sutA -> sutB -> bool   
 end 
 
-
+(** Base module type for the PBT harness *)
 module type HarnessBase = sig 
   type state 
   type cmd 
@@ -123,7 +125,7 @@ module type Harness2 = sig
 
 end
 
-(** Given a PBT specification, creates a test harness that tests if a module 
+(** Given a PBT specification, the functor [Make1] creates a test harness that tests if a module 
     implements its signature properly *)
 module Make1 (Spec : Spec1) : 
   (Harness1 with type state := Spec.state and 
@@ -194,7 +196,8 @@ module Make1 (Spec : Spec1) :
         [%test_result: bool] ~expect:true (agree_prop cmds))
 end
 
-
+(** Given a PBT specification, the functor [Make2] creates a test harness that compares if two
+    modules implement the same signature *)
 module Make2 (Spec : Spec2) : (Harness2 with 
   type state := Spec.state and 
   type cmd := Spec.cmd and 
