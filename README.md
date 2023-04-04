@@ -3,10 +3,13 @@
 This repo contains experimental code related to property-based testing for OCaml modules.
 
 ## Description of repo
-`TestHarness.ml` contains a minimal port of QCSTM to Jane Street infrastructure is located in. 
+`TestHarness.ml` contains a minimal port of QCSTM to Jane Street infrastructure.
 
 The `lib` directory also contains examples of the test harness adapted to work with the following modules (work in progress):
-- Stack
+- Stack (three implementations of the same signature)
+- Sets (three implementations of the same signature)
+
+The `lib/deprecated` sub-directory cotnains some work in progress examples:
 - Hash tables
 - Queue
 - PriorityQueue (implementation by Harry Goldstein, WIP)
