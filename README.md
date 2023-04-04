@@ -9,7 +9,7 @@ The `lib` directory also contains examples of the test harness adapted to work w
 - Stack (three implementations of the same signature)
 - Sets (three implementations of the same signature)
 
-The `lib/deprecated` sub-directory cotnains some work in progress examples:
+The `lib/deprecated` sub-directory contains some work in progress examples (deprecated):
 - Hash tables
 - Queue
 - PriorityQueue (implementation by Harry Goldstein, WIP)
