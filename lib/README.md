@@ -25,5 +25,10 @@ This directory also contains examples of the PBT harness adapted to work with th
       `StackIntf` signature & uses PBT to check for correctness 
 
 
+Addendum:
+- The `Articheck.ml` file contains code associated with the paper 
+  "ArtiCheck: well-typed generic fuzzing for module interfaces"
+  (Braibant et al, 2014), which we are currently reading. 
+
 
 
