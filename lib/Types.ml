@@ -5,12 +5,14 @@ open Sets
 
 (** Revised definition of expressions *)
 type expr = 
+  (* Base cases *)
+  | Empty
+  | EInt of int
   (* Commands that change the underlying state *)
   | Add of int * expr
   | Remove of int * expr
   | Union of expr * expr 
   | Intersection of expr * expr 
-  | Empty
   (* Observable commands *)
   | Mem of int * expr 
   | Size of expr
@@ -19,6 +21,7 @@ type expr =
 
 (** ADT representing types, where [T] is the abstract type of the module *)
 type ty = T | Int | Bool
+  [@@deriving sexp_of, quickcheck]
 
 
 (** Functor relating [expr] to the actual module [M] implementing [SetIntf] *)
@@ -28,44 +31,60 @@ module ExprToImpl (M : SetIntf) = struct
   type value = ValT of int M.t | ValInt of int | ValBool of bool
 
 
-  (** TODO: find a way to extract the abstract type [T] from the [expr] 
-       similar to "bind" in Haskell ?? *)
-  let extract (e : expr) : int M.t = failwith "TODO"
-
   (** [interp expr] interprets the expression [expr] wrt the module 
-      implementation [M], and returns the result as a [value] *)
-  let interp (expr : expr) : value =
+      implementation [M], and returns the result as a [value] *)     
+  let rec interp (expr : expr) : value = 
     match expr with 
-    | Add (x, s) -> ValT (M.add x (extract s))
-    | Remove (x, s) -> ValT (M.rem x (extract s))
-    | Union (s1, s2) -> ValT (M.union (extract s1) (extract s2))
-    | Intersection (s1, s2) -> ValT (M.inter (extract s1) (extract s2))
+    | EInt n -> ValInt n
     | Empty -> ValT M.empty
-    | Mem (x, s) -> ValBool (M.mem x (extract s))
-    | Size s -> ValInt (M.size (extract s))
-    | Is_empty e -> ValBool (M.is_empty (extract s))
+    (* TODO: figure out how to combine the nested pattern-matches??? *)
+    | Add (x, e) -> 
+      (match interp e with 
+      | ValT v -> ValT (M.add x v)
+      | _ -> failwith "ill-typed")
+    | Remove (x, e) -> 
+      (match interp e with 
+      | ValT v -> ValT (M.rem x v)
+      | _ -> failwith "ill-typed")
+    | Union (e1, e2) -> 
+      (match interp e1, interp e2 with 
+      | ValT v1, ValT v2 -> ValT (M.union v1 v2)
+      | _ -> failwith "ill-typed")
+    | Intersection (e1, e2) ->
+      (match interp e1, interp e2 with 
+      | ValT v1, ValT v2 -> ValT (M.inter v1 v2)
+      | _ -> failwith "ill-typed")
+    | Mem (x, e) -> 
+      (match interp e with 
+      | ValT v -> ValBool (M.mem x v)
+      | _ -> failwith "ill-typed")
+    | Size e -> 
+      (match interp e with 
+      | ValT v -> ValInt (M.size v)
+      | _ -> failwith "ill-typed")
+    | Is_empty e ->
+      (match interp e with 
+      | ValT v -> ValBool (M.is_empty v)
+      | _ -> failwith "ill-typed")
+
 end
 
 
-
 (** Generator for expressions *)  
-let gen_expr (ty : ty) : expr Generator.t = 
-  let module M = ListSetNoDups in 
-  let s = Empty in 
+let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
+  let open Generator.Let_syntax in 
   match ty with 
-  (** TODO: how to generate [T]'s ?? *)
-  | T -> G.(union @@ 
-    [ small_positive_or_zero_int >>= (fun x -> return @@ Add (x, s));
-      small_positive_or_zero_int >>= (fun x -> return @@ Remove (x, s));
-      return Empty
-    ])
-  | Int -> G.return @@ Size s
-  | Bool -> G.(union @@ 
-    [ small_positive_or_zero_int >>= (fun x -> return @@ Mem (x, s));
-      return @@ Is_empty s
-    ])
-    
-
-
+  | Int -> let%map n = G.int_uniform in EInt n
+  | Bool -> 
+    let memGen = 
+      let%bind x = G.int_uniform in
+      let%map e = gen_expr T in 
+        Mem (x, e) in
+    let isEmptyGen = 
+      let%map e = gen_expr T in 
+        Is_empty e in
+      G.union [memGen; isEmptyGen]
+  | T -> failwith "TODO"
+  
 
