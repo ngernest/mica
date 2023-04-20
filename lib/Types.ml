@@ -2,7 +2,6 @@ open Core
 open Base_quickcheck 
 open Sets
 
-
 (** Revised definition of expressions *)
 type expr = 
   (* Base cases *)
@@ -68,8 +67,7 @@ module ExprToImpl (M : SetIntf) = struct
 end
 
 (** Generator for expressions: 
-  * [gen_expr ty] produces an generator of [expr]s that have return type [ty]
-  *)  
+  * [gen_expr ty] produces an generator of [expr]s that have return type [ty] *)  
 let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
   let open Generator.Let_syntax in 
@@ -109,6 +107,25 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let%bind e2 = gen_expr T in 
         G.return @@ Intersect (e1, e2) in 
     G.union [add; remove; union; intersect]
+
+
+module I1 = ExprToImpl(ListSetNoDups)
+module I2 = ExprToImpl(ListSetDups)
+module I3 = ExprToImpl(BSTSet)
+    
+(** TODO: not sure if [test] in [Core.Quickcheck] is a perfect substitute for 
+    QC.forall in Haskell *)
+let () = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
+  match I1.interp e, I2.interp e with 
+  | ValBool b1, ValBool b2 -> 
+    if Bool.equal b1 b2 then () 
+      else failwith @@ Printf.sprintf "Test failed: %b != %b\n" b1 b2
+  | ValInt n1, ValInt n2 -> 
+    if Int.equal n1 n2 then ()
+      else failwith @@ Printf.sprintf "Test failed: %d != %d\n" n1 n2 
+  | _, _ -> failwith "ill-typed")
+
+    
     
   
 
