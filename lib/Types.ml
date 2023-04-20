@@ -12,7 +12,7 @@ type expr =
   | Add of int * expr
   | Remove of int * expr
   | Union of expr * expr 
-  | Intersection of expr * expr 
+  | Intersect of expr * expr 
   (* Observable commands *)
   | Mem of int * expr 
   | Size of expr
@@ -23,13 +23,11 @@ type expr =
 type ty = T | Int | Bool
   [@@deriving sexp_of, quickcheck]
 
-
 (** Functor relating [expr] to the actual module [M] implementing [SetIntf] *)
 module ExprToImpl (M : SetIntf) = struct 
   
   (** Type representing values, i.e. observations made *)
   type value = ValT of int M.t | ValInt of int | ValBool of bool
-
 
   (** [interp expr] interprets the expression [expr] wrt the module 
       implementation [M], and returns the result as a [value] *)     
@@ -37,7 +35,7 @@ module ExprToImpl (M : SetIntf) = struct
     match expr with 
     | EInt n -> ValInt n
     | Empty -> ValT M.empty
-    (* TODO: figure out how to combine the nested pattern-matches??? *)
+    (* TODO: make the nested pattern-matches more succint *)
     | Add (x, e) -> 
       (match interp e with 
       | ValT v -> ValT (M.add x v)
@@ -50,7 +48,7 @@ module ExprToImpl (M : SetIntf) = struct
       (match interp e1, interp e2 with 
       | ValT v1, ValT v2 -> ValT (M.union v1 v2)
       | _ -> failwith "ill-typed")
-    | Intersection (e1, e2) ->
+    | Intersect (e1, e2) ->
       (match interp e1, interp e2 with 
       | ValT v1, ValT v2 -> ValT (M.inter v1 v2)
       | _ -> failwith "ill-typed")
@@ -69,22 +67,48 @@ module ExprToImpl (M : SetIntf) = struct
 
 end
 
-
-(** Generator for expressions *)  
+(** Generator for expressions: 
+  * [gen_expr ty] produces an generator of [expr]s that have return type [ty]
+  *)  
 let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
   let open Generator.Let_syntax in 
   match ty with 
-  | Int -> let%map n = G.int_uniform in EInt n
+  | Int -> 
+      let intExpr = 
+        let%map n = G.int_uniform in 
+          EInt n in 
+      let size = 
+        let%map e = gen_expr T in 
+          (Size e) in 
+      G.union [intExpr; size]
   | Bool -> 
-    let memGen = 
+    let mem = 
       let%bind x = G.int_uniform in
       let%map e = gen_expr T in 
         Mem (x, e) in
-    let isEmptyGen = 
+    let isEmpty = 
       let%map e = gen_expr T in 
         Is_empty e in
-      G.union [memGen; isEmptyGen]
-  | T -> failwith "TODO"
+      G.union [mem; isEmpty]
+  | T -> 
+    let add = 
+      let%bind x = G.int_uniform in 
+      let%map e = gen_expr T in 
+        Add (x, e) in 
+    let remove = 
+      let%bind x = G.int_uniform in 
+      let%map e = gen_expr T in 
+        Remove (x, e) in 
+    let union = 
+      let%bind e1 = gen_expr T in 
+      let%bind e2 = gen_expr T in 
+        G.return @@ Union (e1, e2) in 
+    let intersect = 
+      let%bind e1 = gen_expr T in 
+      let%bind e2 = gen_expr T in 
+        G.return @@ Intersect (e1, e2) in 
+    G.union [add; remove; union; intersect]
+    
   
 
