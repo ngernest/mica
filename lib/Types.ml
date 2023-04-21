@@ -1,4 +1,4 @@
-open Core
+open Base
 open Base_quickcheck 
 open Sets
 
@@ -24,6 +24,8 @@ type ty = T | Int | Bool
 
 (** Functor relating [expr] to the actual module [M] implementing [SetIntf] *)
 module ExprToImpl (M : SetIntf) = struct 
+
+  include M
   
   (** Type representing values, i.e. observations made *)
   type value = ValT of int M.t | ValInt of int | ValBool of bool
@@ -111,19 +113,19 @@ let rec gen_expr (ty : ty) : expr Generator.t =
 
 module I1 = ExprToImpl(ListSetNoDups)
 module I2 = ExprToImpl(ListSetDups)
-module I3 = ExprToImpl(BSTSet)
     
+
 (** TODO: not sure if [test] in [Core.Quickcheck] is a perfect substitute for 
     QC.forall in Haskell *)
-let () = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
+
+(** TODO: for some reason, Dune doesn't like the [let%test_unit] annotation *)
+let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
   | ValBool b1, ValBool b2 -> 
-    if Bool.equal b1 b2 then () 
-      else failwith @@ Printf.sprintf "Test failed: %b != %b\n" b1 b2
+      [%test_eq: bool] b1 b2
   | ValInt n1, ValInt n2 -> 
-    if Int.equal n1 n2 then ()
-      else failwith @@ Printf.sprintf "Test failed: %d != %d\n" n1 n2 
-  | _, _ -> failwith "ill-typed")
+      [%test_eq: int] n1 n2
+  | _, _ -> (failwith "ill-typed"))
 
     
     
