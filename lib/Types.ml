@@ -65,23 +65,21 @@ module ExprToImpl (M : SetIntf) = struct
       (match interp e with 
       | ValT v -> ValBool (M.is_empty v)
       | _ -> failwith "ill-typed")
-
 end
 
 (** Generator for expressions: 
   * [gen_expr ty] produces an generator of [expr]s that have return type [ty] *)  
+
+(** TODO: repeat this paradigm for another family of examples *)  
 let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
   let open Generator.Let_syntax in 
   match ty with 
   | Int -> 
-      let intExpr = 
-        let%map n = G.int_uniform in 
-          EInt n in 
-      let size = 
-        let%map e = gen_expr T in 
-          (Size e) in 
-      G.union [intExpr; size]
+      (* Note how we've remove the case for [EInt] & 
+       * used [let%bind] instead of [let%bind] *)
+      let%bind e = gen_expr T in 
+      G.return @@ Size e
   | Bool -> 
     let mem = 
       let%bind x = G.int_uniform in
@@ -110,6 +108,14 @@ let rec gen_expr (ty : ty) : expr Generator.t =
         G.return @@ Intersect (e1, e2) in 
     G.union [add; remove; union; intersect]
 
+(** Calling [gen_expr T] should always generate a tree 
+  * [gen_expr Int] should be "give me a tree abstract type [t], and give me an [int]"    
+  * [gen_expr] is always gonna go through the abstract type [T]
+  * the test case corresponding to [size] should take the size of a tree after a bunch of unions/adds
+  * When implementing the examples, do the ones that throw exceptions first (instead of ones that use Maybe)
+  * think about what it woudl take to go from the sig -> generating the PBT code
+  * 
+*)    
 
 module I1 = ExprToImpl(ListSetNoDups)
 module I2 = ExprToImpl(ListSetDups)
@@ -118,16 +124,15 @@ module I2 = ExprToImpl(ListSetDups)
 (** TODO: not sure if [test] in [Core.Quickcheck] is a perfect substitute for 
     QC.forall in Haskell *)
 
-(** TODO: for some reason, Dune doesn't like the [let%test_unit] annotation *)
+(** TODO: for some reason, Dune doesn't like the [let%test_unit] annotation
+  * TODO: fix this in Dune *)
 let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
   | ValBool b1, ValBool b2 -> 
       [%test_eq: bool] b1 b2
-  | ValInt n1, ValInt n2 -> 
-      [%test_eq: int] n1 n2
   | _, _ -> (failwith "ill-typed"))
 
-    
+  
     
   
 
