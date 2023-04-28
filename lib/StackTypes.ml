@@ -77,18 +77,16 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   let module G = Generator in 
   let open G.Let_syntax in 
   match ty with 
-  | Int -> let%map e = gen_expr T in 
-    Length e
+  | Int -> let%map e = gen_expr T in Length e
   
-  | Bool -> let%map e = gen_expr T in 
-    Is_empty e 
+  | Bool -> let%map e = gen_expr T in Is_empty e 
   
   | Char -> 
     let pop = 
       let%map e = gen_expr T in Pop e in 
     let peek = 
       let%map e = gen_expr T in Peek e in 
-    G.union [pop; peek]
+    G.weighted_union [(3.0, pop); (1.0, peek)]
 
   | Unit -> 
     let%map e = gen_expr T in Clear e
@@ -98,7 +96,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let%bind x = G.char_alpha in 
       let%map e = gen_expr T in 
       Push (x, e) in 
-    G.union [push; G.return @@ Create ()]
+    G.weighted_union [(4.0, push); (1.0, G.return @@ Create ())]
 
 module I1 = ExprToImpl(ListStack)
 module I2 = ExprToImpl(VariantStack)

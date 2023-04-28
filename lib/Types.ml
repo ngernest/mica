@@ -70,16 +70,14 @@ end
 (** Generator for expressions: 
   * [gen_expr ty] produces an generator of [expr]s that have return type [ty] *)  
 
-(** TODO: repeat this paradigm for another family of examples *)  
 let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
-  let open Generator.Let_syntax in 
+  let open G.Let_syntax in 
   match ty with 
   | Int -> 
-      (* Note how we've remove the case for [EInt] & 
-       * used [let%bind] instead of [let%bind] *)
-      let%bind e = gen_expr T in 
-      G.return @@ Size e
+      (* Note how we've remove the case for [EInt]*)
+      let%map e = gen_expr T in Size e
+  
   | Bool -> 
     let mem = 
       let%bind x = G.int_uniform in
@@ -88,7 +86,8 @@ let rec gen_expr (ty : ty) : expr Generator.t =
     let isEmpty = 
       let%map e = gen_expr T in 
         Is_empty e in
-      G.union [mem; isEmpty]
+      G.weighted_union [(3.0, mem); (1.0, isEmpty)]
+  
   | T -> 
     let add = 
       let%bind x = G.int_uniform in 
@@ -106,7 +105,12 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let%bind e1 = gen_expr T in 
       let%bind e2 = gen_expr T in 
         G.return @@ Intersect (e1, e2) in 
-    G.union [add; remove; union; intersect]
+    G.weighted_union [
+      (3.0, add); 
+      (2.0, remove); 
+      (3.0, union); 
+      (2.0, intersect)
+    ]
 
 (** Calling [gen_expr T] should always generate a tree 
   * [gen_expr Int] should be "give me a tree abstract type [t], and give me an [int]"    
@@ -126,12 +130,18 @@ module I2 = ExprToImpl(ListSetDups)
 
 (** TODO: for some reason, Dune doesn't like the [let%test_unit] annotation
   * TODO: fix this in Dune *)
-let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
+(* let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
   | ValBool b1, ValBool b2 -> 
       [%test_eq: bool] b1 b2
-  | _, _ -> (failwith "ill-typed"))
+  | _, _ -> (failwith "ill-typed")) *)
 
+(* let%expect_test "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
+  match I1.interp e, I2.interp e with 
+  | ValBool b1, ValBool b2 -> 
+      [%test_eq: bool] b1 b2
+  | _, _ -> (failwith "ill-typed"));
+  [%expect {| () |}]  *)
   
     
   
