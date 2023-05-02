@@ -1,6 +1,6 @@
 (library
  (name module_pbt)
- (libraries base_quickcheck base core stdio ppxlib qcheck-core)
+ (libraries base_quickcheck base core stdio)
  (preprocess
   (pps ppx_jane))
  (inline_tests))
