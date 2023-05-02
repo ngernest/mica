@@ -44,17 +44,20 @@ module type SetIntf = sig
       are in either [s1] or [s2]. *)
   val union: 'a t -> 'a t -> 'a t
 
-  (** [inter s1 s2] is the set containing all the elements that
+  (** [intersection s1 s2] is the set containing all the elements that
       are in both [s1] and [s2]. *)
-  val inter: 'a t -> 'a t -> 'a t
+  val intersection: 'a t -> 'a t -> 'a t
 
   (** [string f s] is a representation of [s] as a string, using [f] 
       to represent elements as strings. *)
   val string: ('a -> string) -> 'a t -> string 
+
+  (** [invariant s] checks if [s] only contains unique elements *)
+  val invariant: 'a t -> bool
   
   (** [rep_ok s] checks if the representation invariant holds for [s],
       and throws an exception if the RI doesn't hold *)
-  val rep_ok : 'a t -> 'a t 
+  (* val rep_ok : 'a t -> 'a t  *)
 end
 
 (** [dedup lst] is [lst] but with duplicates removed. 
@@ -97,13 +100,17 @@ module ListSetDups : SetIntf = struct
     
     let union = List.append
 
-    let inter lst1 lst2 = List.filter (fun h -> mem h lst2) lst1
+    let intersection lst1 lst2 = List.filter (fun h -> mem h lst2) lst1
 
     let string f s = 
         s |> dedup |> string_of_list f
 
+    (* No invariant when we represent sets as lists w/ duplicates *)
+    let invariant _ = true 
+
     (* No RI for representing sets as lists w/ duplicates, so [rep_ok] is trivial *)
-    let rep_ok s = s
+    (* let rep_ok s = s *)
+
 end
 
 
@@ -139,10 +146,16 @@ module ListSetNoDups : SetIntf = struct
     let union s1 s2 = 
         (rep_ok s1) @ (rep_ok s2) |> dedup |> rep_ok
     
-    let inter lst1 lst2 = rep_ok (List.filter (fun h -> mem h lst2) (rep_ok lst1))
+    let intersection lst1 lst2 = 
+        rep_ok (List.filter (fun h -> mem h lst2) (rep_ok lst1))
 
     let string f s = 
         string_of_list f (rep_ok s)
+
+    (* Invariant: list can only contain unique elements *)
+    let invariant s = 
+      let open Base in 
+      not @@ List.contains_dup ~compare:Poly.compare s
 end
 
 (*******************************************************************************)
@@ -212,6 +225,7 @@ module BSTSet : SetIntf = struct
           
        RI: for every [Node (lt, x, rt)], all the values in [lt] are strictly
         less than [x], and all values in [rt] are strictly greater than [x]. *)
+    
     type 'a t = 'a tree
   
     let empty = Empty
@@ -253,18 +267,29 @@ module BSTSet : SetIntf = struct
       | Empty -> 0
       | Node (lt, _, rt) -> size lt + 1 + size rt
   
-    let union = failwith "TODO"
+    (* Union: convert [s2] to a list and do a fold over it, 
+       inserting each element into [s1] *)
+    let union s1 s2 = 
+        let open Base.List in 
+        let lst2 = inorder s2 in 
+        fold lst2 ~init:s1 ~f:(fun acc x -> add x acc)
 
-    let inter = failwith "TODO"
+    (* Intersection: Extracts the common elements of the two BSTs 
+       in a list, and populates a new BST with the common elements *)
+    let intersection s1 s2 = 
+        let open Base in 
+        let lst2 = inorder s2 in 
+        let commonElts = List.filter lst2 ~f:(fun x -> mem x s1) in
+        List.fold commonElts ~init:empty ~f:(fun acc x -> add x acc)
 
-    (** [rep_ok t] checks if the BST invariant holds for the tree [t]
+    (** [invariant t] checks if the BST invariant holds for the tree [t]
         The main recursive sub-function walk works by “growing” a predicate p 
         that applies to each node further down the tree, making sure that it is 
         correctly positioned with regard to all its parents. At the top level p 
         is instantiated with (fun _ -> true), as there are no restrictions 
         imposed for the root of the tree, but more and more conjuncts added, 
         as the checking proceeds recursively. *)
-    let rep_ok t = 
+    let invariant t = 
         let rec walk node p =
             match node with 
             | Empty -> true 
@@ -280,9 +305,9 @@ module BSTSet : SetIntf = struct
               (p x && res_left && res_right)
           in
         match t with
-        | Empty -> t
+        | Empty -> true
         | Node (_, _, _) -> 
-            if walk t (fun _ -> true) then t else failwith "RI"
+            if walk t (fun _ -> true) then true else false
 
     let string = failwith "TODO"
     
@@ -297,6 +322,8 @@ module BSTSet : SetIntf = struct
         (inorder t1) = (inorder t2) *)
   
   end
+
+
 (*******************************************************************************)
 (** Functor that returns a test harness 
     comparing two modules that both implement the [Set] signature *)

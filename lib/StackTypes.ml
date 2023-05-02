@@ -1,6 +1,6 @@
-open! Base
-open! Base_quickcheck
 open StackSig
+open Base_quickcheck
+open Base
 
 (** ADT for expressions *)
 type expr = 
@@ -101,9 +101,25 @@ let rec gen_expr (ty : ty) : expr Generator.t =
 module I1 = ExprToImpl(ListStack)
 module I2 = ExprToImpl(VariantStack)
 
+
+(** TODO: write more tests, try out [gen_expr] with different types *)
+
+(** TODO: figure out how to inspect the trees that [gen_expr T] produces *)
+
 let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) 
   ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
   | ValBool b1, ValBool b2 ->
       [%test_eq: bool] b1 b2
   | _, _ -> failwith "ill-typed")
+
+
+
+(** TODO: figure out how to compare the types M1.t & M2.t which are 
+    sealed within the modules? *)  
+(* let%test_unit "T_expr" = Core.Quickcheck.test (gen_expr T) 
+~f:(fun e -> 
+match I1.interp e, I2.interp e with 
+| ValT t1, ValT t2 ->
+    [%test_eq: T] t1 t2
+| _, _ -> failwith "ill-typed")   *)

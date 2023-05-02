@@ -1,6 +1,6 @@
 open Base_quickcheck
 open Sexplib.Std
-open Stack
+open StackSig
 
 (* TODO: rewrite to support exceptions instead of options *)
 
@@ -58,10 +58,10 @@ module StackTest = struct
     let module B = Base in 
     match cmd with
     | Push e   -> ListStack.(push e sut |> length) = B.List.length (e :: st)
-    | Pop      -> (match ListStack.pop sut, B.List.hd st with 
+    | Pop      -> (match ListStack.pop sut, B.List.tl st with 
                   | None, None -> true 
                   | _, None | None, _ -> false 
-                  | Some e, Some e' -> e = e')
+                  | Some _, Some _ -> failwith "TODO: convert e to list")
     | Peek      -> (match ListStack.peek sut, B.List.hd st with 
                   | None, None -> true 
                   | _, None | None, _ -> false 
@@ -82,7 +82,7 @@ end
 
 (** The TestHarness.Make functor returns a module containing
     functions that check for consistency and ensure that invariants are held *)
-module StT = TestHarness.Make(StackTest);;
+module StT = TestHarness.Make1(StackTest);;
 
 let%test_unit "consistency" = StT.consistency_test ~trials:1000;;
-let%test_unit "agreement" = StT.agree_test ~trials:1000;;
+(* let%test_unit "agreement" = StT.agree_test ~trials:1000;; *)

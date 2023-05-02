@@ -51,7 +51,7 @@ module ExprToImpl (M : SetIntf) = struct
       | _ -> failwith "ill-typed")
     | Intersect (e1, e2) ->
       (match interp e1, interp e2 with 
-      | ValT v1, ValT v2 -> ValT (M.inter v1 v2)
+      | ValT v1, ValT v2 -> ValT (M.intersection v1 v2)
       | _ -> failwith "ill-typed")
     | Mem (x, e) -> 
       (match interp e with 
