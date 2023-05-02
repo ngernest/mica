@@ -165,7 +165,7 @@ end
 type 'a tree =
   | Empty
   | Node of 'a tree * 'a * 'a tree
-  [@@deriving show]
+  [@@deriving sexp]
 
 let leaf x = Node (Empty, x, Empty)
 
