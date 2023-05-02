@@ -19,6 +19,7 @@ module type SetIntf = sig
 
   (** ['a t] represents a set whose elements are of type ['a] *)
   type 'a t
+    [@@deriving sexp]
 
   (** [empty] is the set containing no elements *)
   val empty : 'a t
@@ -53,7 +54,7 @@ module type SetIntf = sig
   val string: ('a -> string) -> 'a t -> string 
 
   (** [invariant s] checks if [s] only contains unique elements *)
-  val invariant: 'a t -> bool
+  val invariant: 'a t -> 'a t Base.Or_error.t
   
   (** [rep_ok s] checks if the representation invariant holds for [s],
       and throws an exception if the RI doesn't hold *)
@@ -84,7 +85,8 @@ module ListSetDups : SetIntf = struct
         The empty list [[]] represents the empty set [{}].
         
         Representation invariant (RI): None: The list _may_ contain duplicates. *)
-    type 'a t = 'a list
+    type 'a t = 'a Base.List.t
+      [@@deriving sexp]
     
     let empty = []
 
@@ -106,7 +108,7 @@ module ListSetDups : SetIntf = struct
         s |> dedup |> string_of_list f
 
     (* No invariant when we represent sets as lists w/ duplicates *)
-    let invariant _ = true 
+    let invariant s = Base.Or_error.return s
 
     (* No RI for representing sets as lists w/ duplicates, so [rep_ok] is trivial *)
     (* let rep_ok s = s *)
@@ -120,7 +122,8 @@ module ListSetNoDups : SetIntf = struct
     (** AF: The list [a1; ...; an] represents the set {a1, ..., an}. 
             The empty list [[]] represents the empty set. 
         RI: The list must not contain duplicates. *)
-    type 'a t = 'a list
+    type 'a t = 'a Base.List.t 
+      [@@deriving sexp]
 
     (** [rep_ok] checks the representation invariant. 
         Restore the (expensive) implementation of [rep_ok] when checking *)
@@ -155,7 +158,9 @@ module ListSetNoDups : SetIntf = struct
     (* Invariant: list can only contain unique elements *)
     let invariant s = 
       let open Base in 
-      not @@ List.contains_dup ~compare:Poly.compare s
+      if (not @@ List.contains_dup ~compare:Poly.compare s) 
+        then Or_error.return s 
+      else Or_error.error_string "Invariant violated"
 end
 
 (*******************************************************************************)
@@ -165,7 +170,7 @@ end
 type 'a tree =
   | Empty
   | Node of 'a tree * 'a * 'a tree
-  [@@deriving show]
+  [@@deriving show, sexp]
 
 let leaf x = Node (Empty, x, Empty)
 
@@ -227,6 +232,7 @@ module BSTSet : SetIntf = struct
         less than [x], and all values in [rt] are strictly greater than [x]. *)
     
     type 'a t = 'a tree
+      [@@deriving sexp]
   
     let empty = Empty
 
@@ -304,10 +310,13 @@ module BSTSet : SetIntf = struct
                 in
               (p x && res_left && res_right)
           in
+        let open Base.Or_error in 
         match t with
-        | Empty -> true
+        | Empty -> return t
         | Node (_, _, _) -> 
-            if walk t (fun _ -> true) then true else false
+            let open Base.Or_error in 
+            if walk t (fun _ -> true) then return t 
+            else error_string "BST invariants violated"
 
     let string = failwith "TODO"
     
@@ -351,7 +360,7 @@ module CompareSetImpls (A : SetIntf) (B : SetIntf) : Spec2 = struct
       | Intersection
       | Size 
       | Is_empty 
-      [@@deriving sexp_of, quickcheck]
+      [@@deriving sexp, quickcheck]
 
      (** Generate symbolic commands based on the model's current state 
       *  TODO: figure out what to do about binary operations eg. [Union] *)

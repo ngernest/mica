@@ -22,6 +22,8 @@ type expr =
 type ty = T | Int | Bool
   [@@deriving sexp_of, quickcheck]
 
+
+
 (** Functor relating [expr] to the actual module [M] implementing [SetIntf] *)
 module ExprToImpl (M : SetIntf) = struct 
 
@@ -29,42 +31,57 @@ module ExprToImpl (M : SetIntf) = struct
   
   (** Type representing values, i.e. observations made *)
   type value = ValT of int M.t | ValInt of int | ValBool of bool
+    [@@deriving sexp_of]
 
   (** [interp expr] interprets the expression [expr] wrt the module 
       implementation [M], and returns the result as a [value] *)     
-  let rec interp (expr : expr) : value = 
+  let rec interp (expr : expr) : value Or_error.t = 
+    let open Or_error.Let_syntax in 
     match expr with 
-    | EInt n -> ValInt n
-    | Empty -> ValT M.empty
-    (* TODO: make the nested pattern-matches more succint *)
-    | Add (x, e) -> 
-      (match interp e with 
-      | ValT v -> ValT (M.add x v)
-      | _ -> failwith "ill-typed")
-    | Remove (x, e) -> 
-      (match interp e with 
-      | ValT v -> ValT (M.rem x v)
-      | _ -> failwith "ill-typed")
+    | EInt n -> return (ValInt n)
+    | Empty -> return (ValT M.empty)
+    | Add (x, e) -> interp_helper e (M.add x)
+    | Remove (x, e) -> interp_helper e (M.rem x)
     | Union (e1, e2) -> 
-      (match interp e1, interp e2 with 
-      | ValT v1, ValT v2 -> ValT (M.union v1 v2)
-      | _ -> failwith "ill-typed")
+      (match Or_error.both (interp e1) (interp e2) with 
+      | Ok (ValT v1, ValT v2) -> return @@ ValT (M.union v1 v2)
+      | Ok malformed -> Or_error.error "ill-typed" malformed [%sexp_of: value * value]
+      | Error _ as err -> Or_error.tag err ~tag:"Failed to evaluate one or more arguments to union")
     | Intersect (e1, e2) ->
-      (match interp e1, interp e2 with 
-      | ValT v1, ValT v2 -> ValT (M.intersection v1 v2)
-      | _ -> failwith "ill-typed")
+      (match Or_error.both (interp e1) (interp e2) with 
+      | Ok (ValT v1, ValT v2) -> return @@ ValT (M.intersection v1 v2)
+      | Ok malformed -> Or_error.error "ill-typed" malformed [%sexp_of: value * value]
+      | Error _ as err -> Or_error.tag err ~tag:"Failed to evaluate one or more arguments to intersection")
     | Mem (x, e) -> 
       (match interp e with 
-      | ValT v -> ValBool (M.mem x v)
-      | _ -> failwith "ill-typed")
+      | Ok ValT v -> 
+        let%map v' = M.invariant v in
+        ValBool (M.mem x v')
+      | Ok malformed -> Or_error.error "ill-typed" malformed sexp_of_value 
+      | Error _ as err -> Or_error.tag err ~tag: "interp_helper failed")
     | Size e -> 
       (match interp e with 
-      | ValT v -> ValInt (M.size v)
-      | _ -> failwith "ill-typed")
+      | Ok ValT v -> 
+        let%map v' = M.invariant v in 
+        ValInt (M.size v')
+      | Ok malformed -> Or_error.error "ill-typed" malformed sexp_of_value 
+      | Error _ as err -> Or_error.tag err ~tag: "interp_helper failed")
     | Is_empty e ->
       (match interp e with 
-      | ValT v -> ValBool (M.is_empty v)
-      | _ -> failwith "ill-typed")
+      | Ok ValT v -> 
+        let%map v' = M.invariant v in 
+        ValBool (M.is_empty v')
+      | Ok malformed -> Or_error.error "ill-typed" malformed sexp_of_value 
+      | Error _ as err -> Or_error.tag err ~tag: "interp_helper failed")
+
+    and interp_helper (e : expr) (f: 'a t -> 'a t) : value Or_error.t = 
+      let open Or_error.Let_syntax in 
+      match interp e with 
+      | Ok ValT v ->
+        let%map v' = M.invariant v in 
+        ValT (f v')
+      | Ok malformed -> Or_error.error "ill-typed" malformed sexp_of_value 
+      | Error _ as err -> Or_error.tag err ~tag: "interp_helper failed"  
 end
 
 (** Generator for expressions: 
@@ -130,11 +147,12 @@ module I2 = ExprToImpl(ListSetDups)
 
 (** TODO: for some reason, Dune doesn't like the [let%test_unit] annotation
   * TODO: fix this in Dune *)
-(* let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
-  match I1.interp e, I2.interp e with 
-  | ValBool b1, ValBool b2 -> 
+let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
+  match Or_error.both (I1.interp e) (I2.interp e) with 
+  | Ok (ValBool b1, ValBool b2) -> 
       [%test_eq: bool] b1 b2
-  | _, _ -> (failwith "ill-typed")) *)
+  | Ok _ -> failwith "Generated ill-typed value"
+  | Error _ -> failwith "Invariant failed")
 
 (* let%expect_test "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
