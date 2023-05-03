@@ -130,11 +130,11 @@ module I2 = ExprToImpl(ListSetDups)
 
 (** TODO: for some reason, Dune doesn't like the [let%test_unit] annotation
   * TODO: fix this in Dune *)
-(* let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
+let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
   | ValBool b1, ValBool b2 -> 
       [%test_eq: bool] b1 b2
-  | _, _ -> (failwith "ill-typed")) *)
+  | _, _ -> (failwith "ill-typed"))
 
 (* let%expect_test "bool_expr" = Core.Quickcheck.test (gen_expr Bool) ~f:(fun e -> 
   match I1.interp e, I2.interp e with 

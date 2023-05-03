@@ -1,12 +1,29 @@
-(** Code associated with the paper 
+(* (** Code associated with the paper 
     "ArtiCheck: well-typed generic fuzzing for module interfaces",
     Braibant et al, 2014.
 *)
 
 open! List
 
+module Tree: sig 
+  type t 
+  val empty: t
+  val add: t -> int -> t
+  val remove: t -> int -> t option 
+  
+  val check: t -> bool 
+end = struct 
+  type t = int list
+  let empty = []
+  let add _ _ = failwith ""
+  let remove _ _ = failwith ""
+  
+  let check _ = false
+end 
 
-(** SECTION 2 *)
+
+
+(** Section 2: The essence of external testing *)
 
 (** Signature & implementation for sorted integer lists *)
 module SIList: sig
@@ -45,6 +62,8 @@ type (_,_) fn =
   (* Helpers for creating [fn]'s. *)
   let (@->) ty fd = Fun (ty,fd)
   let returning ty = Ret ty
+
+
 
 
 (** [eval] takes a function descriptor [fd], recurses over it, 
@@ -86,7 +105,7 @@ type sig_elem = Elem : ('a,'b) fn * 'a -> sig_elem
 type sig_descr = (string * sig_elem) list
 
 (********************************************************************)
-(** SECTION 3 *)
+(** Section 3.1: A better algebra of types *)
 
 
 (** The GADT [('a, 'b) neg] (negative) represents a {i computation}
@@ -150,5 +169,37 @@ and produce: type a. a pos -> a list =
       cartesian_product (produce pa) (produce pb)
   | _ -> failwith "omitted"
 
+(********************************************************************)
+(** Section 3.2: Efficient construction of a set of instances *)
 
-(** TODO: read section 3.2 onwards *)
+(** We replace lists with arbitrary containers that have the 
+    following type *)
+type 'a bag = {
+  insert : 'a -> 'a bag;
+  fold : 'b . ('a -> 'b -> 'b) -> 'b -> 'b;
+  cardinal : unit -> int; 
+}
+
+(** Holding in memory the set of all possible products is too expensive. 
+    We adopt instead a symbolic representation of sets, where unions and products are explicitly represented using constructors. *)
+
+type _ set=
+  | Set : 'a bag -> 'a set
+  | Bij : 'a set * ('a, 'b) bijection -> 'b set
+  | Union : 'a set * 'b set -> ('a, 'b) sum set
+  | Product : 'a set * 'b set -> ('a * 'b) set    
+
+(** The instance space is still exponentially large; 
+    what we gained by changing our representation is that we no longer hold all the “intermediary” instances in memory simultaneously. 
+    This allows us to write an [iter] function that constructs the various 
+    instances on-the-fly. *)  
+let rec iter: type a. (a -> unit) -> a set -> unit =
+  fun f s -> match s with
+    | Set ps -> ps.fold (fun x () -> f x) ()
+    | Union (pa,pb) ->
+        iter (fun a -> f (L a)) pa;
+        iter (fun b -> f (R b)) pb;
+    | Product (pa,pb) ->
+        iter (fun a -> iter (fun b -> f (a,b)) pb) pa
+    | Bij (p, (proj, _)) -> iter (fun x -> f (proj x)) p
+ *)

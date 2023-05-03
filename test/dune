@@ -1,2 +1,5 @@
 (test
- (name module_pbt))
+ (name module_pbt)
+ (libraries base_quickcheck base core stdio ppxlib qcheck-core ppx_jane)
+ (preprocess
+  (pps ppx_jane ppx_deriving.show)))

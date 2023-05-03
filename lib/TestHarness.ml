@@ -190,10 +190,10 @@ module Make1 (Spec : Spec1) :
   
   (** An actual agreement test (for convenience). Accepts an optional count parameter
    * and a test name as a labeled parameter [name]. *)
-  let agree_test ~trials =
+  (* let agree_test ~trials =
     Quickcheck.test ~trials (arb_cmds Spec.init_state) 
       ~f:(fun cmds -> 
-        [%test_result: bool] ~expect:true (agree_prop cmds))
+        [%test_result: bool] ~expect:true (agree_prop cmds)) *)
 end
 
 (** Given a PBT specification, the functor [Make2] creates a test harness that compares if two
@@ -251,7 +251,7 @@ module Make2 (Spec : Spec2) : (Harness2 with
   (** Agreement property: checks if the command sequence [cs] yields the same observations
     when interpreted from the model's initial state and the [sut]'s initial state.
     Cleans up after itself by calling relevant functions in other modules. *)   
-  let agree_prop (cmds : cmd list) : bool = 
+  (* let agree_prop (cmds : cmd list) : bool = 
     assert (cmds_ok Spec.init_state cmds);
     (* reset system's state *)
     let sutA = Spec.init_sutA () in 
@@ -259,6 +259,6 @@ module Make2 (Spec : Spec2) : (Harness2 with
     let res = interp_agree Spec.init_state sutA sutB cmds in
     Spec.cleanupA sutA;
     Spec.cleanupB sutB;
-    res
+    res *)
 
 end

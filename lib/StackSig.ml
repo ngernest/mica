@@ -1,15 +1,17 @@
 (** Adapted from:
+    
     Core.Stack source code
     https://ocaml.janestreet.com/ocaml-core/109.20.00/doc/core/Stack.html 
-    CS 3110 Book Chapter 5.2 & 5.4
+    
+    Cornell CS3110 Book, Chapter 5.2 & 5.4
     https://cs3110.github.io/textbook/chapters/modules/modules.html 
     https://cs3110.github.io/textbook/chapters/modules/encapsulation.html#abstract-types
 
-    *)
+*)
 
 
 
-module type Stack = sig
+module type StackIntf = sig
   type 'a t
 
   (** [empty] is the empty stack. *)
@@ -21,9 +23,10 @@ module type Stack = sig
   (** [push a t] adds [a] to the top of stack [t]. *)
   val push : 'a -> 'a t -> 'a t
 
-  (** [pop t] removes and returns the top element of [t] as [Some a], 
-      or returns [None] if [t] is empty. *)
-  val pop : 'a t -> 'a option
+  (** [pop t] removes the top element of [t], 
+      and returns the remaininder of the stack, 
+      or [None] if [t] is empty *)
+  val pop : 'a t -> 'a t option
 
   (** [peek t] returns [Some a], where [a] is the top of [t], unless [is_empty t], in which
       case [top] returns [None]. *)
@@ -37,14 +40,18 @@ module type Stack = sig
   
   (** [length t] returns the size of the stack *)
   val length : 'a t -> int 
+  
+  (** [invariant x s] is true if the invariant [pop (push x s) = s] holds 
+      for any randomly generated [x] *)
+  val invariant : 'a -> 'a t -> bool 
 
   (** [rep_ok s] checks if the representation invariant holds for [s],
       and throws an exception if the RI doesn't hold *)
-  val rep_ok : 'a t -> 'a t 
+  (* val rep_ok : 'a t -> 'a t  *)
 end
 
 (** Implementation of stacks using linked lists *)
-module ListStack : Stack = struct 
+module ListStack : StackIntf = struct 
     type 'a t = 'a list 
 
     let empty = []
@@ -61,9 +68,10 @@ module ListStack : Stack = struct
     let pop s = 
       match s with 
       | [] -> None
-      | x :: _ -> Some x
+      | _ :: s' -> Some s'
 
-    let is_empty s = match s with 
+    let is_empty s = 
+      match s with 
       | [] -> true 
       | _ -> false 
 
@@ -71,33 +79,46 @@ module ListStack : Stack = struct
 
     let clear _ = ()
 
-    let rep_ok s = s
-      (* match s with 
-      | [] -> s 
-      | x :: xs -> failwith "TODO" *)
+    (* Tentative invariant *)
+    let invariant x s = 
+      Option.value (pop (push x s)) ~default:empty = s
 end 
 
-(** Implementaiton of stacks using variants *)
-(* TODO: make this implement the [Stack] signature defined above *)
-module VariantStack = struct
-  type 'a t = E | S of 'a * 'a t
+(** Implementation of stacks using variants *)
+module VariantStack : StackIntf = struct
+  type 'a t = 
+    | Nil 
+    | Cons of 'a * 'a t
+  [@@deriving compare]
 
-  exception Empty 
-  let empty = E
-  let push x s = S (x, s)
-  let peek = function E -> raise Empty | S (x, _) -> x
-  let pop = function E -> raise Empty | S (_, s) -> s
+  let empty = Nil
+  let push x s = Cons (x, s)
 
-  let clear = failwith ""
-  let create = failwith ""
-  let is_empty s = s = E
-  let length = failwith ""
-  let rep_ok = failwith ""
+  let peek = function Nil -> None | Cons (x, _) -> Some x
+  let pop = function Nil -> None | Cons (_, xs) -> Some xs
+
+  let clear _ = ()
+
+  let create () = empty
+
+  let is_empty s = 
+    let open Core.Poly in 
+    s = Nil
+    
+  let rec length s =
+    match s with 
+    | Nil -> 0
+    | Cons (_, xs) -> 1 + length xs
+
+  (* Tentative invariant *)
+  let invariant x s = 
+    Option.value (pop (push x s)) ~default:empty = s
+
 end
 
 
 (** Pathological implementation of stacks using record options, from CS 3110 *)
-module CustomStack : Stack = struct 
+(* module CustomStack : StackIntf = struct 
   type 'a entry = {top : 'a; rest : 'a t; size : int}
   and 'a t = S of 'a entry option
 
@@ -124,7 +145,7 @@ module CustomStack : Stack = struct
   let pop cs = 
     match cs with 
     | S None -> None
-    | S (Some {rest; _}) -> failwith "TODO"
+    | S (Some _) -> failwith "TODO"
 
   let create = failwith ""
 
@@ -134,4 +155,4 @@ module CustomStack : Stack = struct
 
   let clear = failwith ""
 
-end
+end *)

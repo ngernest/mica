@@ -3,6 +3,7 @@ open Ast_helper
 
 [@@@part "0"]
 
+(* Given a type, find the appropriate stringifying function for that type*)
 let rec expr_of_type typ =
   let loc = typ.ptyp_loc in
   match typ with
@@ -24,6 +25,7 @@ let rec expr_of_type typ =
 
 [@@@part "1"]
 
+(* Code generator *)
 let generate_impl ~ctxt (_rec_flag, type_decls) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   List.map
