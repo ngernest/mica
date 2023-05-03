@@ -1,6 +1,0 @@
-(executable
- (name hello_world_test)
- (ocamlopt_flags
-  (:standard -dsource))
- (preprocess
-  (pps deriving_hello)))

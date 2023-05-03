@@ -1,5 +1,3 @@
-(* TODO: figure out how to import SetTypes *)
-
 open Lib.SetTypes
 open Core
 
@@ -9,3 +7,12 @@ let () = Quickcheck.test (gen_expr Bool)
   | ValBool b1, ValBool b2 ->
       [%test_eq: bool] b1 b2
   | _, _ -> (failwith "ill-typed"))
+
+
+(* Uncomment to generate [expr]s that return [int] *)  
+(* let () = Quickcheck.test (gen_expr Int) 
+  ~f:(fun e -> 
+  match I1.interp e, I2.interp e with 
+  | ValInt n1, ValInt n2 ->
+      [%test_eq: int] n1 n2
+  | _, _ -> (failwith "ill-typed")) *)

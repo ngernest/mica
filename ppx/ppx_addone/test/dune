@@ -1,6 +1,0 @@
-(executable
- (name addone_test)
- (ocamlopt_flags
-  (:standard -dsource))
- (preprocess
-  (pps ppx_addone)))
