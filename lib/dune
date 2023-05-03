@@ -1,5 +1,5 @@
 (library
- (name module_pbt)
+ (name lib)
  (libraries base_quickcheck base core stdio)
  (preprocess
   (pps ppx_jane))

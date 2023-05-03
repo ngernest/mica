@@ -309,7 +309,7 @@ module BSTSet : SetIntf = struct
         | Node (_, _, _) -> 
             if walk t (fun _ -> true) then true else false
 
-    let string = failwith "TODO"
+    let string _ _ = ""
     
 
     (* Note that two binary search trees can be equal as sets without having the

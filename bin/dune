@@ -1,4 +1,4 @@
 (executable
  (public_name module_pbt)
  (name main)
- (libraries module_pbt))
+ (libraries lib))
