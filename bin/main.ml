@@ -1,16 +1,24 @@
 open! Lib.SetTypes
 open! Core
 
-module QC = Quickcheck
-
-(* let () = print_endline "hello" *)
+(* module QC = Base_quickcheck *)
 
 
-let () =
-  QC.test (QC.Generator.with_size (gen_expr' Bool) ~size:2) ~f:(fun e ->
+(* let () =
+  let module QC = Quickcheck in 
+  QC.test (gen_expr' Bool) ~f:(fun e ->
+      printf "%s\n" (Sexp.to_string (sexp_of_expr e));
       match (I1.interp e, I2.interp e) with
       | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
-      | _, _ -> ())
+      | _, _ -> ()) *)
+
+let () =
+  let module QC = Quickcheck in 
+  QC.test (gen_expr' Int) ~f:(fun e ->
+      printf "%s\n" (Sexp.to_string (sexp_of_expr e));
+      match (I1.interp e, I2.interp e) with
+      | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
+      | _, _ -> ())      
 
 (* let () =
   Core.Quickcheck.test (gen_expr Int) ~f:(fun e ->

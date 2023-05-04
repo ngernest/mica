@@ -87,7 +87,6 @@ let gen_expr' (ty : ty) : expr Generator.t =
   let open G.Let_syntax in 
   G.recursive_union [ 
     G.return Empty;  
-    let%map n = G.int_uniform in EInt n
   ]
   ~f:(fun gen ->
       match ty with 
@@ -117,7 +116,6 @@ let gen_expr' (ty : ty) : expr Generator.t =
           let%bind e1 = gen in 
           let%bind e2 = gen in 
             G.return @@ Intersect (e1, e2) in 
-        
         [add; remove; union; intersect])
     
 
@@ -177,7 +175,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
 *)    
 
 module I1 = ExprToImpl(ListSetDups)
-module I2 = ExprToImpl(BSTSet)
+module I2 = ExprToImpl(ListSetNoDups)
     
 
 (** TODO: not sure if [test] in [Core.Quickcheck] is a perfect substitute for 
