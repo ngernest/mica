@@ -82,6 +82,46 @@ let rec gen_expr_simple (ty : ty) : expr Generator.t =
 (** Generator for expressions: 
   * [gen_expr ty] produces an generator of [expr]s that have return type [ty] *)  
 
+let gen_expr' (ty : ty) : expr Generator.t = 
+  let module G = Generator in 
+  let open G.Let_syntax in 
+  G.recursive_union [ 
+    G.return Empty;  
+    let%map n = G.int_uniform in EInt n
+  ]
+  ~f:(fun gen ->
+      match ty with 
+      | Int -> [let%map e = gen in Size e]
+      | Bool -> 
+        let mem = 
+          let%bind x = G.int_uniform in
+          let%map e = gen in 
+            Mem (x, e) in
+        let isEmpty = 
+          let%map e = gen in Is_empty e in
+        [mem; isEmpty]
+      | T -> 
+        let add = 
+          let%bind x = G.int_uniform in 
+          let%map e = gen in 
+            Add (x, e) in 
+        let remove = 
+          let%bind x = G.int_uniform in 
+          let%map e = gen in 
+            Remove (x, e) in 
+        let union = 
+          let%bind e1 = gen in 
+          let%bind e2 = gen in 
+            G.return @@ Union (e1, e2) in 
+        let intersect = 
+          let%bind e1 = gen in 
+          let%bind e2 = gen in 
+            G.return @@ Intersect (e1, e2) in 
+        
+        [add; remove; union; intersect])
+    
+
+
 let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
   let open G.Let_syntax in 
@@ -118,12 +158,13 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let%bind e1 = gen_expr T in 
       let%bind e2 = gen_expr T in 
         G.return @@ Intersect (e1, e2) in 
+
     G.weighted_union [
       (5.0, empty);
-      (1.0, add); 
-      (1.0, remove); 
-      (1.0, union); 
-      (1.0, intersect)
+      (0.5, add); 
+      (0.5, remove); 
+      (0.5, union); 
+      (0.5, intersect)
     ]
 
 (** Calling [gen_expr T] should always generate a tree 
@@ -135,8 +176,8 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   * 
 *)    
 
-module I1 = ExprToImpl(ListSetNoDups)
-module I2 = ExprToImpl(ListSetDups)
+module I1 = ExprToImpl(ListSetDups)
+module I2 = ExprToImpl(BSTSet)
     
 
 (** TODO: not sure if [test] in [Core.Quickcheck] is a perfect substitute for 

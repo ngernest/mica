@@ -1,12 +1,17 @@
-open Lib.SetTypes
-open Core
+(* open Lib.SetTypes
+open Lib.Sets *)
+(* open Core *)
 
-let () = Quickcheck.test (gen_expr Bool) 
+(* 
+module I1 = ExprToImpl(ListSetNoDups)
+module I2 = ExprToImpl(ListSetDups) *)
+
+(* let () = Quickcheck.test (gen_expr Bool) 
   ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
   | ValBool b1, ValBool b2 ->
       [%test_eq: bool] b1 b2
-  | _, _ -> (failwith "ill-typed"))
+  | _, _ -> (failwith "ill-typed")) *)
 
 
 (* Uncomment to generate [expr]s that return [int] *)  
