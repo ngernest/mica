@@ -67,6 +67,18 @@ module ExprToImpl (M : SetIntf) = struct
       | _ -> failwith "impossible")
 end
 
+let rec gen_expr_simple (ty : ty) : expr Generator.t =
+  let module G = Generator in
+  let open G.Let_syntax in
+  match ty with
+  | Int ->
+      let%map e = gen_expr_simple T in
+      Size e
+  | Bool -> 
+      let%map e = gen_expr_simple T in 
+      Is_empty e
+  | T -> return Empty
+
 (** Generator for expressions: 
   * [gen_expr ty] produces an generator of [expr]s that have return type [ty] *)  
 
@@ -86,9 +98,10 @@ let rec gen_expr (ty : ty) : expr Generator.t =
     let isEmpty = 
       let%map e = gen_expr T in 
         Is_empty e in
-      G.weighted_union [(3.0, mem); (1.0, isEmpty)]
+      G.weighted_union [(1.0, mem); (3.0, isEmpty)]
   
   | T -> 
+    let empty = return Empty in 
     let add = 
       let%bind x = G.int_uniform in 
       let%map e = gen_expr T in 
@@ -106,10 +119,11 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let%bind e2 = gen_expr T in 
         G.return @@ Intersect (e1, e2) in 
     G.weighted_union [
-      (3.0, add); 
-      (2.0, remove); 
-      (3.0, union); 
-      (2.0, intersect)
+      (5.0, empty);
+      (1.0, add); 
+      (1.0, remove); 
+      (1.0, union); 
+      (1.0, intersect)
     ]
 
 (** Calling [gen_expr T] should always generate a tree 
