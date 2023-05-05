@@ -13,6 +13,7 @@
 
 module type StackIntf = sig
   type 'a t
+    [@@deriving sexp]
 
   (** [empty] is the empty stack. *)
   val empty : 'a t
@@ -43,7 +44,7 @@ module type StackIntf = sig
   
   (** [invariant x s] is true if the invariant [pop (push x s) = s] holds 
       for any randomly generated [x] *)
-  val invariant : 'a -> 'a t -> bool 
+  (* val invariant : 'a -> 'a t -> bool  *)
 
   (** [rep_ok s] checks if the representation invariant holds for [s],
       and throws an exception if the RI doesn't hold *)
@@ -52,7 +53,8 @@ end
 
 (** Implementation of stacks using linked lists *)
 module ListStack : StackIntf = struct 
-    type 'a t = 'a list 
+    type 'a t = 'a Base.List.t
+      [@@deriving sexp]
 
     let empty = []
 
@@ -69,6 +71,7 @@ module ListStack : StackIntf = struct
       match s with 
       | [] -> None
       | _ :: s' -> Some s'
+    (* Manufacture a bug: by doing [| _ -> Some s] in the pattern match *)  
 
     let is_empty s = 
       match s with 
@@ -80,8 +83,8 @@ module ListStack : StackIntf = struct
     let clear _ = ()
 
     (* Tentative invariant *)
-    let invariant x s = 
-      Option.value (pop (push x s)) ~default:empty = s
+    (* let invariant x s = 
+      Option.value (pop (push x s)) ~default:empty = s *)
 end 
 
 (** Implementation of stacks using variants *)
@@ -89,7 +92,7 @@ module VariantStack : StackIntf = struct
   type 'a t = 
     | Nil 
     | Cons of 'a * 'a t
-  [@@deriving compare]
+  [@@deriving sexp, compare]
 
   let empty = Nil
   let push x s = Cons (x, s)
@@ -111,8 +114,8 @@ module VariantStack : StackIntf = struct
     | Cons (_, xs) -> 1 + length xs
 
   (* Tentative invariant *)
-  let invariant x s = 
-    Option.value (pop (push x s)) ~default:empty = s
+  (* let invariant x s = 
+    Option.value (pop (push x s)) ~default:empty = s *)
 
 end
 
@@ -121,6 +124,7 @@ end
 (* module CustomStack : StackIntf = struct 
   type 'a entry = {top : 'a; rest : 'a t; size : int}
   and 'a t = S of 'a entry option
+    [@@deriving sexp]
 
   let empty = S None
 

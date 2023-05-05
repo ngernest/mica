@@ -11,7 +11,6 @@ type expr =
   | Push of char * expr
   | Pop of expr 
   | Peek of expr 
-  | Create of unit
   (* Observable commands *)
   | Clear of expr 
   | Is_empty of expr 
@@ -35,15 +34,14 @@ module ExprToImpl (M : StackIntf) = struct
     | ValBool of bool 
     | ValInt of int
     | ValUnit of unit
+    [@@deriving sexp]
 
   (** [interp expr] interprets the expression [expr] wrt the module 
-      implementation [M], and returns the result as a [value] *)
-  (** TODO: experiment with version that throws exceptions? *)      
+      implementation [M], and returns the result as a [value] *)   
   let rec interp (expr : expr) : value = 
     match expr with 
     | EChar c -> ValChar c
     | Empty -> ValT M.empty 
-    | Create () -> ValT M.empty
     | Push (x, e) -> 
       (match interp e with 
       | ValT v -> ValT (M.push x v)
@@ -76,50 +74,38 @@ end
 let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
   let open G.Let_syntax in 
-  match ty with 
-  | Int -> let%map e = gen_expr T in Length e
-  
-  | Bool -> let%map e = gen_expr T in Is_empty e 
-  
-  | Char -> 
-    let pop = 
-      let%map e = gen_expr T in Pop e in 
-    let peek = 
-      let%map e = gen_expr T in Peek e in 
-    G.weighted_union [(3.0, pop); (1.0, peek)]
-
-  | Unit -> 
-    let%map e = gen_expr T in Clear e
-
-  | T -> 
+  let%bind k = G.size in
+  match ty, k with 
+  | (T, 0) -> return Empty 
+  | (Int, _) -> 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
+      Length e
+  | (Bool, _) -> 
+    let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
+    Is_empty e
+  | (Char, _) -> 
+    let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
+    Peek e
+  | (Unit, _) -> 
+    let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
+    Clear e
+  | (T, _) -> 
     let push = 
       let%bind x = G.char_alpha in 
-      let%map e = gen_expr T in 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
       Push (x, e) in 
-    G.weighted_union [(4.0, push); (1.0, G.return @@ Create ())]
+    let pop = 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in Pop e in 
+    G.union [push; pop]
+
 
 module I1 = ExprToImpl(ListStack)
 module I2 = ExprToImpl(VariantStack)
 
 
-(** TODO: write more tests, try out [gen_expr] with different types *)
-
-(** TODO: figure out how to inspect the trees that [gen_expr T] produces *)
-
-let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) 
+(* let%test_unit "bool_expr" = Core.Quickcheck.test (gen_expr Bool) 
   ~f:(fun e -> 
   match I1.interp e, I2.interp e with 
   | ValBool b1, ValBool b2 ->
       [%test_eq: bool] b1 b2
-  | _, _ -> failwith "ill-typed")
-
-
-
-(** TODO: figure out how to compare the types M1.t & M2.t which are 
-    sealed within the modules? *)  
-(* let%test_unit "T_expr" = Core.Quickcheck.test (gen_expr T) 
-~f:(fun e -> 
-match I1.interp e, I2.interp e with 
-| ValT t1, ValT t2 ->
-    [%test_eq: T] t1 t2
-| _, _ -> failwith "ill-typed")   *)
+  | _, _ -> failwith "ill-typed") *)

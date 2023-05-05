@@ -1,8 +1,10 @@
-open! Lib.SetTypes
+(* open! Lib.SetTypes *)
 open! Core
 
 
+(* Set example: [expr]s that return [Bool] *)          
 let () =
+  let open Lib.SetTypes in
   let module QC = Quickcheck in 
   QC.test (gen_expr Bool) ~sexp_of:sexp_of_expr ~f:(fun e ->
       match (I1.interp e, I2.interp e) with
@@ -14,8 +16,9 @@ let () =
           (Sexp.to_string @@ [%sexp_of: I1.value] v1) 
           (Sexp.to_string @@ [%sexp_of: I2.value] v2))      
 
-(* Uncomment to test exprs that return Int *)          
+(* Set example: [expr]s that return [Int] *)          
 (* let () =
+  let open Lib.SetTypes in
   let module QC = Quickcheck in 
   QC.test (gen_expr Int) ~sexp_of:sexp_of_expr ~f:(fun e ->
       match (I1.interp e, I2.interp e) with
@@ -26,3 +29,19 @@ let () =
           (Sexp.to_string @@ sexp_of_expr e) 
           (Sexp.to_string @@ [%sexp_of: I1.value] v1) 
           (Sexp.to_string @@ [%sexp_of: I2.value] v2))        *)
+
+(* Stack example: [expr]s that return [Char] *)
+(* let () =
+  let open Lib.StackTypes in 
+  let module QC = Quickcheck in 
+  QC.test (gen_expr Char) ~sexp_of:sexp_of_expr ~f:(fun e ->
+      (* printf "e = %s\n" (Sexp.to_string @@ sexp_of_expr e); *)
+      match (I1.interp e, I2.interp e) with
+      | ValChar n1, ValChar n2 -> 
+          (* printf "n1 = %c, n2 = %c\n" n1 n2; *)
+          [%test_eq: char] n1 n2
+      | v1, v2 -> failwith @@ 
+          Printf.sprintf "e = %s, v1 = %s, v2 = %s\n" 
+          (Sexp.to_string @@ sexp_of_expr e) 
+          (Sexp.to_string @@ [%sexp_of: I1.value] v1) 
+          (Sexp.to_string @@ [%sexp_of: I2.value] v2))    *)          
