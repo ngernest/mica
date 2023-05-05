@@ -19,6 +19,7 @@ module type SetIntf = sig
 
   (** ['a t] represents a set whose elements are of type ['a] *)
   type 'a t
+    [@@deriving sexp]
 
   (** [empty] is the set containing no elements *)
   val empty : 'a t
@@ -84,7 +85,8 @@ module ListSetDups : SetIntf = struct
         The empty list [[]] represents the empty set [{}].
         
         Representation invariant (RI): None: The list _may_ contain duplicates. *)
-    type 'a t = 'a list
+    type 'a t = 'a Base.List.t
+      [@@deriving sexp]
     
     let empty = []
 
@@ -120,7 +122,8 @@ module ListSetNoDups : SetIntf = struct
     (** AF: The list [a1; ...; an] represents the set {a1, ..., an}. 
             The empty list [[]] represents the empty set. 
         RI: The list must not contain duplicates. *)
-    type 'a t = 'a list
+    type 'a t = 'a Base.List.t 
+      [@@deriving sexp]
 
     (** [rep_ok] checks the representation invariant. 
         Restore the (expensive) implementation of [rep_ok] when checking *)
@@ -227,6 +230,7 @@ module BSTSet : SetIntf = struct
         less than [x], and all values in [rt] are strictly greater than [x]. *)
     
     type 'a t = 'a tree
+      [@@deriving sexp]
   
     let empty = Empty
 
@@ -266,6 +270,7 @@ module BSTSet : SetIntf = struct
       match t with 
       | Empty -> 0
       | Node (lt, _, rt) -> size lt + 1 + size rt
+        (* size lt + 1 + size rt *)
   
     (* Union: convert [s2] to a list and do a fold over it, 
        inserting each element into [s1] *)

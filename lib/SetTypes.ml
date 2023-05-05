@@ -29,6 +29,7 @@ module ExprToImpl (M : SetIntf) = struct
   
   (** Type representing values, i.e. observations made *)
   type value = ValT of int M.t | ValInt of int | ValBool of bool
+    [@@deriving sexp_of]
 
   (** [interp expr] interprets the expression [expr] wrt the module 
       implementation [M], and returns the result as a [value] *)     
@@ -82,87 +83,46 @@ let rec gen_expr_simple (ty : ty) : expr Generator.t =
 (** Generator for expressions: 
   * [gen_expr ty] produces an generator of [expr]s that have return type [ty] *)  
 
-let gen_expr' (ty : ty) : expr Generator.t = 
-  let module G = Generator in 
-  let open G.Let_syntax in 
-  G.recursive_union [ 
-    G.return Empty;  
-  ]
-  ~f:(fun gen ->
-      match ty with 
-      | Int -> [let%map e = gen in Size e]
-      | Bool -> 
-        let mem = 
-          let%bind x = G.int_uniform in
-          let%map e = gen in 
-            Mem (x, e) in
-        let isEmpty = 
-          let%map e = gen in Is_empty e in
-        [mem; isEmpty]
-      | T -> 
-        let add = 
-          let%bind x = G.int_uniform in 
-          let%map e = gen in 
-            Add (x, e) in 
-        let remove = 
-          let%bind x = G.int_uniform in 
-          let%map e = gen in 
-            Remove (x, e) in 
-        let union = 
-          let%bind e1 = gen in 
-          let%bind e2 = gen in 
-            G.return @@ Union (e1, e2) in 
-        let intersect = 
-          let%bind e1 = gen in 
-          let%bind e2 = gen in 
-            G.return @@ Intersect (e1, e2) in 
-        [add; remove; union; intersect])
-    
-
-
 let rec gen_expr (ty : ty) : expr Generator.t = 
   let module G = Generator in 
   let open G.Let_syntax in 
-  match ty with 
-  | Int -> 
-      (* Note how we've remove the case for [EInt]*)
-      let%map e = gen_expr T in Size e
-  
-  | Bool -> 
+  let%bind k = G.size in
+  match ty, k with 
+  | (T, 0) -> return Empty
+  | (Int, _) -> 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
+      Size e
+  | (Bool, _) -> 
     let mem = 
-      let%bind x = G.int_uniform in
-      let%map e = gen_expr T in 
+      let%bind x = G.int_inclusive (-10) 10 in
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
         Mem (x, e) in
     let isEmpty = 
-      let%map e = gen_expr T in 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
         Is_empty e in
-      G.weighted_union [(1.0, mem); (3.0, isEmpty)]
-  
-  | T -> 
-    let empty = return Empty in 
+    G.weighted_union [(1.0, mem); (3.0, isEmpty)]
+  | (T, _) -> 
     let add = 
-      let%bind x = G.int_uniform in 
-      let%map e = gen_expr T in 
+      let%bind x = G.int_inclusive (-10) 10 in 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
         Add (x, e) in 
     let remove = 
-      let%bind x = G.int_uniform in 
-      let%map e = gen_expr T in 
+      let%bind x = G.int_inclusive (-10) 10 in 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
         Remove (x, e) in 
     let union = 
-      let%bind e1 = gen_expr T in 
-      let%bind e2 = gen_expr T in 
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in 
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in 
         G.return @@ Union (e1, e2) in 
     let intersect = 
-      let%bind e1 = gen_expr T in 
-      let%bind e2 = gen_expr T in 
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in 
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in 
         G.return @@ Intersect (e1, e2) in 
-
     G.weighted_union [
-      (5.0, empty);
-      (0.5, add); 
-      (0.5, remove); 
-      (0.5, union); 
-      (0.5, intersect)
+      (3.0, add); 
+      (2.0, remove); 
+      (1.0, union); 
+      (1.0, intersect)
     ]
 
 (** Calling [gen_expr T] should always generate a tree 
@@ -175,7 +135,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
 *)    
 
 module I1 = ExprToImpl(ListSetDups)
-module I2 = ExprToImpl(ListSetNoDups)
+module I2 = ExprToImpl(BSTSet)
     
 
 (** TODO: not sure if [test] in [Core.Quickcheck] is a perfect substitute for 
