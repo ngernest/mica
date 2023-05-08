@@ -11,7 +11,7 @@ doc: "https://url/to/documentation"
 bug-reports: "https://github.com/ngernest/module_pbt/issues"
 depends: [
   "ocaml"
-  "dune" {>= "3.6"}
+  "dune" {>= "3.4"}
   "odoc" {with-doc}
 ]
 build: [
