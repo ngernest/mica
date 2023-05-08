@@ -1,6 +1,6 @@
 (library
  (name lib)
- (libraries base_quickcheck base core stdio)
+ (libraries base_quickcheck base core stdio angstrom)
  (preprocess
   (pps ppx_jane))
  (inline_tests))
