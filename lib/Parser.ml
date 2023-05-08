@@ -18,12 +18,17 @@ let is_uppercase (c : char) : bool =
   | 'A'..'Z' -> true 
   | _ -> false 
 
+(** [is_lowercase c] returns true if [c] is a lowercase letter, false otherwise *)  
+let is_lowercase (c : char) : bool = 
+  match c with 
+  | 'a'..'z' -> true 
+  | _ -> false  
+
 (** [is_letter c] returns true if [c] is a letter, false otherwise *)    
 let is_letter (c : char) : bool = 
   match c with 
   | 'a'..'z' | 'A'..'Z' -> true 
   | _ -> false 
-
 
 (** [is_whitespace c] returns true if [c] is a whitespace character *)
 let is_whitespace (c : char) : bool = 
@@ -34,17 +39,28 @@ let is_whitespace (c : char) : bool =
 (******************************************************************************)
 (** Simple parsers *)  
 
-(** Parser for capital letters *)    
+(** Parser for a lowercase letter *) 
+let lowercaseP : char A.t = 
+  A.satisfy is_lowercase
+
+(** Parser for a capital letter *)    
 let upperCaseP : char A.t = 
   A.satisfy is_uppercase
 
-(** Parser for letters *)  
+(** Parser for a single letter *)  
 let letterP : char A.t = 
   A.satisfy is_letter
 
 (** Parser for a single digit *)  
 let digitP : char A.t = 
   A.satisfy is_digit
+
+(** Parser for a single underscore character *)  
+let underscoreP : char A.t = 
+  A.char '_'
+
+(** Parser for a single quote character *)    
+let quoteP : char A.t = A.char '\''
 
 (** Parser for integers *)  
 let intP : int A.t =
@@ -85,6 +101,12 @@ let chainl1 (e : 'a A.t) (op : ('a -> 'a -> 'a) A.t) : 'a A.t =
     (A.lift2 (fun f x -> f acc x) op e >>= go) <|> return acc in
   e >>= fun init -> go init  
 
+
+
+
+(******************************************************************************)
 (** [run_parser p s] uses the parser [p] to parse the string [s] *)  
 let run_parser (p : 'a A.t) (s : string) = 
   A.parse_string ~consume:Consume.All p s 
+
+  
