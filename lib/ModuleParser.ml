@@ -37,10 +37,6 @@ let sigP (p : 'a A.t) : 'a A.t =
 let modNameP : string A.t = 
   identP ~firstCharP:(upperCaseP) ()  
 
-(** Parser for a module signature *)
-let moduleTypeP : t_module A.t = 
-  (fun moduleName abstractType -> { moduleName; moduleType = Intf; abstractType} ) 
-    <$> stringP "module type" *> modNameP <* stringP "=" <*> sigP abstractTypeDeclP
 
 (** Parser for base types *)    
 let baseTypeP : ty A.t = 
@@ -64,5 +60,20 @@ let arrowTypeP : ty A.t =
     eg. [val empty : 'a t] or [val func : 'a -> 'a t -> 'a t] *)   
 let valDeclP : valDecl A.t = 
   (fun valName valType -> { valName; valType }) 
-    <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> baseTypeP)
+    <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> baseTypeP)  
+
+(** Parser for a module signature *)
+(* let moduleTypeP : t_module A.t = 
+  (fun moduleName abstractType -> 
+    { moduleName; moduleType = Intf; abstractType; values = None }) 
+  <$> stringP "module type" *> modNameP <* stringP "=" <*> sigP abstractTypeDeclP *)
+
+
+let moduleTypeP' : t_module A.t = 
+  (fun moduleName abstractType valDecls -> 
+    { moduleName; moduleType = Intf; abstractType; valDecls }) 
+  <$> stringP "module type" *> modNameP <* stringP "= sig" 
+  <*> abstractTypeDeclP 
+  <*> A.many valDeclP
+  <* stringP "end"
 

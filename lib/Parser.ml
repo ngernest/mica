@@ -30,7 +30,8 @@ let is_letter (c : char) : bool =
   | 'a'..'z' | 'A'..'Z' -> true 
   | _ -> false 
 
-(** [is_whitespace c] returns true if [c] is a whitespace character *)
+(** [is_whitespace c] returns true if [c] is a whitespace character,
+    i.e. tab/newline/space/carriage return *)
 let is_whitespace (c : char) : bool = 
   match c with
   | '\x20' | '\x0a' | '\x0d' | '\x09' -> true

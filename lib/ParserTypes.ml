@@ -48,15 +48,14 @@ type valDecl = {
 type argLabel = valDecl
   [@@deriving sexp]
 
-(** Type of an expression *)  
-type exprType = Tvar of string | Tarrow1 of argLabel * ty 
-
 (** Record type representing an ML module *)  
 type t_module = {
   moduleName : moduleName;
   moduleType : moduleType;
   abstractType : abstractType;
+  valDecls : valDecl list [@sexp.list]
+  (* option [@sexp.option] *)
 }
 [@@deriving sexp]
 
-(** TODO: figure out how to parse [val empty: 'a t] *)
+(** TODO: figure out how to parse any arbitrary no. of [val] declarations inside a module *)

@@ -5,23 +5,26 @@ open! Lib.Parser
 open! Lib.ParserTypes
 open! Lib.ModuleParser
 
-let () = 
+(* let () = 
   printf "\n";
   match (run_parser valDeclP "val func : 'a -> 'a t -> 'a t") with 
   | Ok ok -> printf "result = %s\n" 
     (Sexp.to_string @@ [%sexp_of: valDecl] ok) 
-  | Error err -> printf "error = %s\n" err
+  | Error err -> printf "error = %s\n" err *)
 
-(* let moduleString = "module type M = sig \
-                      type 'a t        \
+let moduleString = "module type M = sig                   \
+                      type 'a t                           \
+                      val empty : 'a t                    \
+                      val func1 : 'a -> 'a t -> 'a t       \
+                      val func2 : 'a -> 'a t -> 'a t        \
                     end"
 
 let () = 
   printf "\n";
-  match (run_parser moduleTypeP moduleString) with 
+  match (run_parser moduleTypeP' moduleString) with 
   | Ok ok -> printf "result = %s\n" 
     (Sexp.to_string @@ [%sexp_of: t_module] ok) 
-  | Error err -> printf "error = %s\n" err *)
+  | Error err -> printf "error = %s\n" err
 
 
 (* Set example: [expr]s that return [Bool] *)          
