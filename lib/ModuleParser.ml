@@ -38,7 +38,6 @@ let sigP (p : 'a A.t) : 'a A.t =
 let modNameP : string A.t = 
   identP ~firstCharP:(upperCaseP) ()  
 
-
 (** Parser for base types *)    
 let baseTypeP : ty A.t = 
   constP "int" Int 
@@ -64,7 +63,7 @@ let valDeclP : valDecl A.t =
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> baseTypeP)  
 
 (** Parser for a module signature *)
-let moduleTypeP : t_module A.t = 
+let moduleTypeP : moduleSig A.t = 
   (fun moduleName abstractType valDecls -> 
     { moduleName; moduleType = Intf; abstractType; valDecls }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
@@ -76,3 +75,8 @@ let moduleTypeP : t_module A.t =
 let string_of_file (filename : string) : string = 
   In_channel.with_file filename 
     ~f:(fun input -> In_channel.input_all input) 
+
+(** Writes a string to a file *)    
+let file_of_string (filename : string) (str : string) = 
+  Out_channel.with_file ~append:false ~fail_if_exists:false 
+    filename ~f:(fun output -> Out_channel.output_string output str)  

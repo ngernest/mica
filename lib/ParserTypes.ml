@@ -42,21 +42,22 @@ type valDecl = {
   valName : string;
   valType : ty
 }
-  [@@deriving sexp]
+  [@@deriving sexp, fields]
 
 (** Type representing the argument to a function *)   
 type argLabel = valDecl
   [@@deriving sexp]
 
 (** Record type representing an ML module *)  
-type t_module = {
+type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
   abstractType : abstractType;
   valDecls : valDecl list [@sexp.list]
-  (* option [@sexp.option] *)
 }
-[@@deriving sexp]
+[@@deriving sexp, fields]
 
 (** TODO: handle parens in arrow types *)
 (** TODO: figure out how to ignore comments?*)
+
+(** TODO: figure out how to pretty-print s-expresisons*)

@@ -1,20 +1,33 @@
 open! Core
 open! Angstrom
 open! Core_unix
+open! PPrint
+open! Stdio
 
 open! Lib.Parser
 open! Lib.ParserTypes
 open! Lib.ModuleParser
+open! Lib.CodeGenerator
+
+let () = 
+  (* Create an output channel [outc] *)
+  let outc = Out_channel.create ~append:false "Generated.ml" in
+  (* Pretty-print code for importing libraries to [outc] *)
+  ToChannel.pretty 1.0 60 outc (imports ^/^ exprADTDecl);
+  Out_channel.flush stdout;
+  Out_channel.close outc
+
+
 
 (* Current working directory is "module_pbt" *)
 
-let () = 
+(* let () = 
   printf "\n";
   let moduleString = string_of_file "./lib/SetInterface.ml" in 
   match (run_parser moduleTypeP moduleString) with 
   | Ok ok -> printf "result = %s\n" 
-    (Sexp.to_string @@ [%sexp_of: t_module] ok) 
-  | Error err -> printf "error = %s\n" err
+    (Sexp.to_string @@ [%sexp_of: moduleSig] ok) 
+  | Error err -> printf "error = %s\n" err *)
 
 (* let moduleString = "module type M = sig                   \
                       type 'a t                           \
