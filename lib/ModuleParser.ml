@@ -42,8 +42,8 @@ let moduleTypeP : t_module A.t =
   (fun moduleName abstractType -> { moduleName; moduleType = Intf; abstractType} ) 
     <$> stringP "module type" *> modNameP <* stringP "=" <*> sigP abstractTypeDeclP
 
-(** Parser for type expressions *)    
-let typeExprP : ty A.t = 
+(** Parser for base types *)    
+let baseTypeP : ty A.t = 
   constP "int" Int 
   <|> constP "char" Char 
   <|> constP "bool" Bool 
@@ -51,8 +51,18 @@ let typeExprP : ty A.t =
   <|> constP "\'a t" AlphaT 
   <|> constP "\'a" Alpha 
   <|> constP "t" T
-  
-(** Parser for a value declaration inside a module, eg. [val empty : 'a t] *)   
+
+(** Parser for arrow types *)  
+let arrowTypeP : ty A.t = 
+  let func1P = (fun arg ret -> Func1 (arg, ret)) 
+    <$> baseTypeP <* stringP "->" <*> baseTypeP in 
+  let func2P = (fun arg1 arg2 ret -> Func2 (arg1, arg2, ret)) 
+    <$> baseTypeP <* stringP "->" <*> baseTypeP <* stringP "->" <*> baseTypeP in 
+  (func2P <|> func1P)
+    
+(** Parser for a value declaration inside a module, 
+    eg. [val empty : 'a t] or [val func : 'a -> 'a t -> 'a t] *)   
 let valDeclP : valDecl A.t = 
   (fun valName valType -> { valName; valType }) 
-    <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> typeExprP
+    <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> baseTypeP)
+

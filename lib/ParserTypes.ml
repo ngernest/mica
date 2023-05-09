@@ -16,9 +16,21 @@ type ident = string
     [Alpha] represents ['a]
     [AlphaT] represents ['a t]     
     [T] represents [t]
+    [Func1] represents functions of arity 1 (arg type, return type)
+    [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type)
+
+    TODO: add pairs & lists / parameterized types??
 *)  
-type ty = Int | Char | Bool | Unit | Alpha | AlphaT | T
-  [@@deriving sexp]
+type ty = Int 
+          | Char 
+          | Bool 
+          | Unit 
+          | Alpha 
+          | AlphaT 
+          | T 
+          | Func1 of ty * ty 
+          | Func2 of ty * ty * ty
+          [@@deriving sexp]
 
 (** Abstract type contained within a module *)  
 type abstractType = T0 | T1 of ty

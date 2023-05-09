@@ -7,7 +7,7 @@ open! Lib.ModuleParser
 
 let () = 
   printf "\n";
-  match (run_parser valDeclP "val container : t  ") with 
+  match (run_parser valDeclP "val func : 'a -> 'a t -> 'a t") with 
   | Ok ok -> printf "result = %s\n" 
     (Sexp.to_string @@ [%sexp_of: valDecl] ok) 
   | Error err -> printf "error = %s\n" err
