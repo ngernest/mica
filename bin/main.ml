@@ -1,9 +1,25 @@
-(* open! Lib.SetTypes *)
 open! Core
+open! Angstrom
+
+open! Lib.Parser
+open! Lib.ParserTypes
+open! Lib.ModuleParser
+
+
+let moduleString = "module type M = sig \
+                      type 'a t        \
+                    end"
+
+let () = 
+  printf "\n";
+  match (run_parser moduleTypeP moduleString) with 
+  | Ok ok -> printf "result = %s\n" 
+    (Sexp.to_string @@ [%sexp_of: t_module] ok) 
+  | Error err -> printf "error = %s\n" err
 
 
 (* Set example: [expr]s that return [Bool] *)          
-let () =
+(* let () =
   let open Lib.SetTypes in
   let module QC = Quickcheck in 
   QC.test (gen_expr Bool) ~sexp_of:sexp_of_expr ~f:(fun e ->
@@ -14,8 +30,11 @@ let () =
           Printf.sprintf "e = %s, v1 = %s, v2 = %s\n" 
           (Sexp.to_string @@ sexp_of_expr e) 
           (Sexp.to_string @@ [%sexp_of: I1.value] v1) 
-          (Sexp.to_string @@ [%sexp_of: I2.value] v2))      
+          (Sexp.to_string @@ [%sexp_of: I2.value] v2))       *)
 
+
+
+(****************************************************************)          
 (* Set example: [expr]s that return [Int] *)          
 (* let () =
   let open Lib.SetTypes in
