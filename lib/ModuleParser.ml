@@ -2,6 +2,7 @@ open Parser
 open ParserTypes
 open Angstrom
 open Base
+open Stdio
 
 module A = Angstrom
 
@@ -63,13 +64,7 @@ let valDeclP : valDecl A.t =
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> baseTypeP)  
 
 (** Parser for a module signature *)
-(* let moduleTypeP : t_module A.t = 
-  (fun moduleName abstractType -> 
-    { moduleName; moduleType = Intf; abstractType; values = None }) 
-  <$> stringP "module type" *> modNameP <* stringP "=" <*> sigP abstractTypeDeclP *)
-
-
-let moduleTypeP' : t_module A.t = 
+let moduleTypeP : t_module A.t = 
   (fun moduleName abstractType valDecls -> 
     { moduleName; moduleType = Intf; abstractType; valDecls }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
@@ -77,3 +72,7 @@ let moduleTypeP' : t_module A.t =
   <*> A.many valDeclP
   <* stringP "end"
 
+(** Reads a file as a single string *)
+let string_of_file (filename : string) : string = 
+  In_channel.with_file filename 
+    ~f:(fun input -> In_channel.input_all input) 

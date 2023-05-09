@@ -1,18 +1,22 @@
 open! Core
 open! Angstrom
+open! Core_unix
 
 open! Lib.Parser
 open! Lib.ParserTypes
 open! Lib.ModuleParser
 
-(* let () = 
-  printf "\n";
-  match (run_parser valDeclP "val func : 'a -> 'a t -> 'a t") with 
-  | Ok ok -> printf "result = %s\n" 
-    (Sexp.to_string @@ [%sexp_of: valDecl] ok) 
-  | Error err -> printf "error = %s\n" err *)
+(* Current working directory is "module_pbt" *)
 
-let moduleString = "module type M = sig                   \
+let () = 
+  printf "\n";
+  let moduleString = string_of_file "./lib/SetInterface.ml" in 
+  match (run_parser moduleTypeP moduleString) with 
+  | Ok ok -> printf "result = %s\n" 
+    (Sexp.to_string @@ [%sexp_of: t_module] ok) 
+  | Error err -> printf "error = %s\n" err
+
+(* let moduleString = "module type M = sig                   \
                       type 'a t                           \
                       val empty : 'a t                    \
                       val func1 : 'a -> 'a t -> 'a t       \
@@ -21,10 +25,10 @@ let moduleString = "module type M = sig                   \
 
 let () = 
   printf "\n";
-  match (run_parser moduleTypeP' moduleString) with 
+  match (run_parser moduleTypeP moduleString) with 
   | Ok ok -> printf "result = %s\n" 
     (Sexp.to_string @@ [%sexp_of: t_module] ok) 
-  | Error err -> printf "error = %s\n" err
+  | Error err -> printf "error = %s\n" err *)
 
 
 (* Set example: [expr]s that return [Bool] *)          

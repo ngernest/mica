@@ -58,4 +58,5 @@ type t_module = {
 }
 [@@deriving sexp]
 
-(** TODO: figure out how to parse any arbitrary no. of [val] declarations inside a module *)
+(** TODO: handle parens in arrow types *)
+(** TODO: figure out how to ignore comments?*)
