@@ -5,8 +5,14 @@ open! Lib.Parser
 open! Lib.ParserTypes
 open! Lib.ModuleParser
 
+let () = 
+  printf "\n";
+  match (run_parser valDeclP "val container : t  ") with 
+  | Ok ok -> printf "result = %s\n" 
+    (Sexp.to_string @@ [%sexp_of: valDecl] ok) 
+  | Error err -> printf "error = %s\n" err
 
-let moduleString = "module type M = sig \
+(* let moduleString = "module type M = sig \
                       type 'a t        \
                     end"
 
@@ -15,7 +21,7 @@ let () =
   match (run_parser moduleTypeP moduleString) with 
   | Ok ok -> printf "result = %s\n" 
     (Sexp.to_string @@ [%sexp_of: t_module] ok) 
-  | Error err -> printf "error = %s\n" err
+  | Error err -> printf "error = %s\n" err *)
 
 
 (* Set example: [expr]s that return [Bool] *)          

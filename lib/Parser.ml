@@ -102,8 +102,6 @@ let chainl1 (e : 'a A.t) (op : ('a -> 'a -> 'a) A.t) : 'a A.t =
   e >>= fun init -> go init  
 
 
-
-
 (******************************************************************************)
 (** [run_parser p s] uses the parser [p] to parse the string [s] *)  
 let run_parser (p : 'a A.t) (s : string) : ('a, string) Result.t = 

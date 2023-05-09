@@ -3,7 +3,6 @@ open ParserTypes
 open Angstrom
 open Base
 
-module P = Parser
 module A = Angstrom
 
 (** Parsers for identifiers in OCaml 
@@ -18,15 +17,14 @@ let identP ?(firstCharP = letterP <|> underscoreP) () : string A.t =
 let lowercaseIdentP : string A.t = 
   identP ~firstCharP:(lowercaseP <|> underscoreP) ()
 
-
 (** Parses type-parameters, eg. ['a] *)    
 let typeParamP : char A.t = 
   quoteP *> lowercaseP    
   
 (** Parser for an abstract type declaration in a module, eg. [type 'a t] *)
-let abstractTypeP : abstractType A.t = 
+let abstractTypeDeclP : abstractType A.t = 
   let typeP = stringP "type" in
-  let noParam = typeP *> constP "t" T in 
+  let noParam = typeP *> constP "t" T0 in 
   let withParam = typeP *> wsP typeParamP *> constP "t" (T1 Alpha) in
   noParam <|> withParam
 
@@ -35,10 +33,6 @@ let abstractTypeP : abstractType A.t =
 let sigP (p : 'a A.t) : 'a A.t = 
   between (stringP "sig") p (stringP "end")
 
-(** Parses the tokens [module type], consuming subsequent whitespace *)
-let modTypeP : unit A.t = 
-  stringP "module type"  
-
 (** Parser for module names, which must start with a capital letter *)  
 let modNameP : string A.t = 
   identP ~firstCharP:(upperCaseP) ()  
@@ -46,6 +40,19 @@ let modNameP : string A.t =
 (** Parser for a module signature *)
 let moduleTypeP : t_module A.t = 
   (fun moduleName abstractType -> { moduleName; moduleType = Intf; abstractType} ) 
-    <$> stringP "module type" *> modNameP <* stringP "=" <*> sigP abstractTypeP
+    <$> stringP "module type" *> modNameP <* stringP "=" <*> sigP abstractTypeDeclP
+
+(** Parser for type expressions *)    
+let typeExprP : ty A.t = 
+  constP "int" Int 
+  <|> constP "char" Char 
+  <|> constP "bool" Bool 
+  <|> constP "unit" Unit 
+  <|> constP "\'a t" AlphaT 
+  <|> constP "\'a" Alpha 
+  <|> constP "t" T
   
-   
+(** Parser for a value declaration inside a module, eg. [val empty : 'a t] *)   
+let valDeclP : valDecl A.t = 
+  (fun valName valType -> { valName; valType }) 
+    <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> typeExprP

@@ -12,23 +12,32 @@ type moduleType = Intf | Impl
 type ident = string
   [@@deriving sexp]
 
-(** ADT representing concrete types *)  
-type ty = Int | Char | Bool | Unit | Alpha  
+(** ADT representing concrete types
+    [Alpha] represents ['a]
+    [AlphaT] represents ['a t]     
+    [T] represents [t]
+*)  
+type ty = Int | Char | Bool | Unit | Alpha | AlphaT | T
   [@@deriving sexp]
 
 (** Abstract type contained within a module *)  
-type abstractType = T | T1 of ty
+type abstractType = T0 | T1 of ty
   [@@deriving sexp]
 
-(** Type representing the arugment to a function *)  
-type arg_label = {
-  argName : string;
-  argType : ty
+
+(** Type representing a value declaration *)   
+type valDecl = {
+  valName : string;
+  valType : ty
 }
   [@@deriving sexp]
 
+(** Type representing the argument to a function *)   
+type argLabel = valDecl
+  [@@deriving sexp]
+
 (** Type of an expression *)  
-type exprType = Tvar of string | Tarrow1 of arg_label * ty 
+type exprType = Tvar of string | Tarrow1 of argLabel * ty 
 
 (** Record type representing an ML module *)  
 type t_module = {
@@ -37,3 +46,5 @@ type t_module = {
   abstractType : abstractType;
 }
 [@@deriving sexp]
+
+(** TODO: figure out how to parse [val empty: 'a t] *)
