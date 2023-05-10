@@ -36,15 +36,19 @@ type ty = Int
 
 (** Converts a [ty] to its string representation 
     Note that [AlphaT] & [T] are converted to "expr" 
-    The default argument [defaultTy] specifies a concrete base type that should be printed in the PBT code (when testing polymorphic functions). *)
-let rec string_of_ty ?(defaultTy = "int") (ty : ty) : string = 
+    The optional argument [alpha] specifies a concrete base type that should be 
+    printed in the PBT code in lieu of ['a\] when testing polymorphic functions. 
+    The optional argument [t] specifies a string that should be printed 
+    whenever [ty] is equal to [AlphaT] or [T] 
+    (eg. the string literal "expr" when generating the [expr] ADT definition). *)
+let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string = 
   match ty with 
   | Int -> "int"
   | Char -> "char"
   | Bool -> "bool"
   | Unit -> "unit"
-  | Alpha -> defaultTy
-  | AlphaT | T -> "expr"
+  | Alpha -> alpha
+  | AlphaT | T -> t
   | Func1 (arg, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])
   | Func2 (arg1, arg2, ret) -> 

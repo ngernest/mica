@@ -15,7 +15,8 @@ let () =
   | Ok parsedModule -> 
     let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
     (* Pretty-print code for importing libraries to [outc] *)
-    ToChannel.pretty 1.0 60 outc (imports ^/^ exprADTDecl parsedModule);
+    ToChannel.pretty 1.0 60 outc 
+      (imports ^/^ exprADTDecl parsedModule ^/^ tyADTDecl parsedModule);
     Out_channel.flush stdout;
     Out_channel.close outc
 

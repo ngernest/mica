@@ -16,8 +16,9 @@ let imports : document =
   (!^ "type expr =")
   (variant "expr" "Empty" 1 []) *)
 
-(** Converts functions to ADT constructors for the [expr] ADT *)
-let extractFuncTypes (v : valDecl) = 
+(** Extracts the argument types of functions defined in the module signature,
+    and generates ADT constructors that take these types as type parameters *)
+let extractArgTypes (v : valDecl) : document = 
   let open String in 
   match valType v with 
   | Func1 (arg, _) -> 
@@ -27,15 +28,28 @@ let extractFuncTypes (v : valDecl) =
   | Func2 (arg1, arg2, _) -> 
     !^ (capitalize @@ valName v)
     ^^ !^ " of "
-    ^^ !^ (string_of_ty arg1)
+    ^^ !^ (string_of_ty ~alpha:"int" arg1)
     ^^ !^ " * "
-    ^^ !^ (string_of_ty arg2)
+    ^^ !^ (string_of_ty ~alpha:"int" arg2)
   | _ -> !^ (capitalize @@ valName v)
 
-
-(** TODO: figure out how to extract arguments to constructors *)  
+(** Generates the definition of the [expr] ADT *)  
 let exprADTDecl (m : moduleSig) : document = 
   prefix 2 1 
   (!^ "type expr =")
   (group @@ separate_map (hardline ^^ !^ " | ") 
-    extractFuncTypes m.valDecls)  
+    extractArgTypes m.valDecls)  
+
+(** Extracts the return type of a function as a document
+    For non-arrow types, this function just extracts the type as a document *)    
+let extractReturnTypes (v : valDecl) : string = 
+  match valType v with 
+  | Func1 (_, ret) | Func2 (_, _, ret) -> (string_of_ty ~t:"T" ret)
+  | ty -> (string_of_ty ~t:"T" ty)
+
+let tyADTDecl (m : moduleSig) : document = 
+  let retTypes = List.dedup_and_sort ~compare:String.compare
+    @@ List.map ~f:(fun ty -> extractReturnTypes ty |> String.capitalize) m.valDecls in 
+  prefix 2 1
+  (!^ "type ty =")
+  (group @@ separate_map (!^ " | ") (!^) retTypes)
