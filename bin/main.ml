@@ -12,6 +12,21 @@ open! Lib.CodeGenerator
 let () = 
   let moduleString = string_of_file "./lib/SetInterface.ml" in 
   match (run_parser moduleTypeP moduleString) with 
+  | Ok m -> 
+    let outc = Out_channel.create ~append:false "./lib/test.ml" in
+    (* Pretty-print code for importing libraries to [outc] *)
+    ToChannel.pretty 1.0 60 outc 
+      (functorDef m ~sigName:"SetIntf" ~functorName:"ExprToImpl");
+    Out_channel.flush stdout;
+    Out_channel.close outc
+
+  | Error err -> printf "error = %s\n" err
+
+  
+(* 
+let () = 
+  let moduleString = string_of_file "./lib/SetInterface.ml" in 
+  match (run_parser moduleTypeP moduleString) with 
   | Ok parsedModule -> 
     let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
     (* Pretty-print code for importing libraries to [outc] *)
@@ -20,8 +35,7 @@ let () =
     Out_channel.flush stdout;
     Out_channel.close outc
 
-  | Error err -> printf "error = %s\n" err 
-  (* Create an output channel [outc] *)
+  | Error err -> printf "error = %s\n" err  *)
   
 
 

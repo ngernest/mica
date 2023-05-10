@@ -40,16 +40,48 @@ let exprADTDecl (m : moduleSig) : document =
   (group @@ separate_map (hardline ^^ !^ " | ") 
     extractArgTypes m.valDecls)  
 
-(** Extracts the return type of a function as a document
-    For non-arrow types, this function just extracts the type as a document *)    
+(** Extracts the return type of a function 
+    For non-arrow types, this function just extracts the type itself *)    
 let extractReturnTypes (v : valDecl) : string = 
   match valType v with 
   | Func1 (_, ret) | Func2 (_, _, ret) -> (string_of_ty ~t:"T" ret)
   | ty -> (string_of_ty ~t:"T" ty)
 
+(** Fetches the unique return types across the functions / values 
+    in a module signature *)  
+let uniqRetTypesInSig (m : moduleSig) : string list = 
+  let open String in
+  List.dedup_and_sort ~compare:compare
+    @@ List.map ~f:(fun ty -> extractReturnTypes ty |> capitalize) m.valDecls
+
+(** Generates the definition of the [ty] ADT *)  
 let tyADTDecl (m : moduleSig) : document = 
-  let retTypes = List.dedup_and_sort ~compare:String.compare
-    @@ List.map ~f:(fun ty -> extractReturnTypes ty |> String.capitalize) m.valDecls in 
+  let retTypes = uniqRetTypesInSig m in 
   prefix 2 1
   (!^ "type ty =")
   (group @@ separate_map (!^ " | ") (!^) retTypes)
+
+(** Helper function called by [valueADTDecl]: creates a constructor 
+    for the [value] ADT corresponding to the supplied [ty] 
+    
+    TODO: if [ty] = [T], make sure to add the [M.t] suffix 
+    *)
+let mkValADTConstructor (ty : string) : document = 
+  let open String in 
+  !^ ("Val" ^ capitalize ty) 
+  ^^ (!^ " of ")
+  ^^ (!^ (uncapitalize ty))
+
+(** Generates the [value] ADT definition (enclosed within the [ExprToImpl] functor) *)  
+let valueADTDecl (m : moduleSig) : document = 
+  let valueTypes = uniqRetTypesInSig m in 
+  prefix 2 1 
+  (!^ "type value = ")
+  (group @@ separate_map (!^ " | ") mkValADTConstructor valueTypes)  
+
+(** Generates the definition of the [ExprToImpl] functor *)  
+let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 
+  hang 2 @@ !^ (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
+  ^/^ (!^ "include M")
+  ^/^ (valueADTDecl m)
+  ^/^ (!^ "end")
