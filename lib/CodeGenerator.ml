@@ -62,15 +62,12 @@ let tyADTDecl (m : moduleSig) : document =
   (group @@ separate_map (!^ " | ") (!^) retTypes)
 
 (** Helper function called by [valueADTDecl]: creates a constructor 
-    for the [value] ADT corresponding to the supplied [ty] 
-    
-    TODO: if [ty] = [T], make sure to add the [M.t] suffix 
-    *)
+    for the [value] ADT corresponding to the supplied [ty] *)
 let mkValADTConstructor (ty : string) : document = 
   let open String in 
   !^ ("Val" ^ capitalize ty) 
   ^^ (!^ " of ")
-  ^^ (!^ (uncapitalize ty))
+  ^^ (!^ (uncapitalize ty |> fun ty -> if ty = "t" then "M.t" else ty))
 
 (** Generates the [value] ADT definition (enclosed within the [ExprToImpl] functor) *)  
 let valueADTDecl (m : moduleSig) : document = 
@@ -81,7 +78,8 @@ let valueADTDecl (m : moduleSig) : document =
 
 (** Generates the definition of the [ExprToImpl] functor *)  
 let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 
-  hang 2 @@ !^ (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
+  hang 2 @@ 
+  !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
   ^/^ (!^ "include M")
   ^/^ (valueADTDecl m)
   ^/^ (!^ "end")
