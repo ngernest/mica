@@ -7,8 +7,7 @@ open Stdio
 module A = Angstrom
 
 (** Parsers for identifiers in OCaml 
-    [ident ::= (A..Z | a..z | _) {A..Z | a..z | 0..9 | _ | '}]
-*)    
+    [ident ::= (A..Z | a..z | _) {A..Z | a..z | 0..9 | _ | '}] *)    
 let identP ?(firstCharP = letterP <|> underscoreP) () : string A.t = 
   let remainingChars = letterP <|> digitP <|> underscoreP <|> quoteP in 
   String.of_char_list <$> 
@@ -44,7 +43,7 @@ let baseTypeP : ty A.t =
   <|> constP "char" Char 
   <|> constP "bool" Bool 
   <|> constP "unit" Unit 
-  <|> constP "\'a t" AlphaT 
+  <|> constP "\'a t" AlphaT
   <|> constP "\'a" Alpha 
   <|> constP "t" T
 

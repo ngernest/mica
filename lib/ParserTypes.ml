@@ -28,7 +28,8 @@ type ty = Int
           | Bool 
           | Unit 
           | Alpha 
-          | AlphaT 
+          | AlphaT
+          (* | AlphaT of ty *)
           | T 
           | Func1 of ty * ty 
           | Func2 of ty * ty * ty
@@ -48,6 +49,7 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string =
   | Bool -> "bool"
   | Unit -> "unit"
   | Alpha -> alpha
+  (* | AlphaT a -> string_of_ty a ^ " " ^ t *)
   | AlphaT | T -> t
   | Func1 (arg, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])
@@ -93,5 +95,3 @@ type moduleSig = {
 
 (** TODO: handle parens in arrow types *)
 (** TODO: figure out how to ignore comments?*)
-
-(** TODO: figure out how to pretty-print s-expresisons*)

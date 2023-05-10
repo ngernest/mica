@@ -23,7 +23,7 @@ let () =
   | Error err -> printf "error = %s\n" err
 
   
-(* 
+
 let () = 
   let moduleString = string_of_file "./lib/SetInterface.ml" in 
   match (run_parser moduleTypeP moduleString) with 
@@ -35,7 +35,7 @@ let () =
     Out_channel.flush stdout;
     Out_channel.close outc
 
-  | Error err -> printf "error = %s\n" err  *)
+  | Error err -> printf "error = %s\n" err 
   
 
 

@@ -16,22 +16,30 @@ let imports : document =
   (!^ "type expr =")
   (variant "expr" "Empty" 1 []) *)
 
+(** Mutable list of constructors (identifiers) for the [expr] ADT *)  
+(* let exprConstrs : ident list ref = ref []  
+
+(** Mutable list of constructors (identifiers) for the [value] ADT *)  
+let valConstrs : ident list ref = ref [] *)
+
 (** Extracts the argument types of functions defined in the module signature,
-    and generates ADT constructors that take these types as type parameters *)
+    and generates constructors for the [expr] ADT 
+    that take these types as type parameters *)
 let extractArgTypes (v : valDecl) : document = 
   let open String in 
+  let constr = capitalize (valName v) in
   match valType v with 
   | Func1 (arg, _) -> 
-    !^ (capitalize @@ valName v)
+    !^ constr
     ^^ (!^ " of ")
     ^^ (!^ (string_of_ty arg))
   | Func2 (arg1, arg2, _) -> 
-    !^ (capitalize @@ valName v)
+    !^ constr
     ^^ !^ " of "
     ^^ !^ (string_of_ty ~alpha:"int" arg1)
     ^^ !^ " * "
     ^^ !^ (string_of_ty ~alpha:"int" arg2)
-  | _ -> !^ (capitalize @@ valName v)
+  | _ -> !^ constr
 
 (** Generates the definition of the [expr] ADT *)  
 let exprADTDecl (m : moduleSig) : document = 
@@ -39,6 +47,26 @@ let exprADTDecl (m : moduleSig) : document =
   (!^ "type expr =")
   (group @@ separate_map (hardline ^^ !^ " | ") 
     extractArgTypes m.valDecls)  
+
+(** Helper function for printing out OCaml constructors
+    (Wrapper for the [OCaml.variant] function in the [PPrint] library) *)    
+let printConstructor (c : string) (args : string list) : document = 
+  OCaml.variant "expr" c 1 (List.map ~f:string args)
+
+
+(** Fetches the constructor corresponding to a [val] 
+    declaration in the [expr] ADT *)
+let getExprConstructor (v : valDecl) : document = 
+  let c = String.capitalize (valName v) in
+  match valType v with 
+  | Int -> printConstructor c ["n"]
+  | Char -> printConstructor c ["c"]
+  | Bool -> printConstructor c ["b"]
+  | Unit -> OCaml.unit
+  | Alpha -> printConstructor c ["a"]
+  | T | AlphaT -> printConstructor c ["t"]
+  | Func1 (arg, _) -> printConstructor c [string_of_ty arg]
+  | Func2 (arg1, arg2, _) -> printConstructor c (List.map ~f:string_of_ty [arg1; arg2])
 
 (** Extracts the return type of a function 
     For non-arrow types, this function just extracts the type itself *)    
@@ -83,3 +111,12 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   ^/^ (!^ "include M")
   ^/^ (valueADTDecl m)
   ^/^ (!^ "end")
+
+
+
+
+(* let interpDefn (m : moduleSig) : document = 
+  hang 2 @@ 
+  !^ "let rec interp (expr : expr) : value = " 
+  ^/^ (!^ "match expr with")
+  ^/^ empty *)
