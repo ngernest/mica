@@ -3,5 +3,5 @@ _build
 *.txt
 .vscode/
 .ocamlformat
-Generated.ml
+lib/Generated.ml
 
