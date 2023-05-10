@@ -19,7 +19,9 @@ type ident = string
     [Func1] represents functions of arity 1 (arg type, return type)
     [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type)
 
-    TODO: add pairs & lists / parameterized types??
+    TODO: add pairs, lists, options / other parameterized types??
+
+    TODO: add support for types like [int t]
 *)  
 type ty = Int 
           | Char 
@@ -30,7 +32,35 @@ type ty = Int
           | T 
           | Func1 of ty * ty 
           | Func2 of ty * ty * ty
-          [@@deriving sexp]
+  [@@deriving sexp]
+
+(** Converts a [ty] to its string representation 
+    Note that [AlphaT] & [T] are converted to "expr" 
+    The default argument [defaultTy] specifies a concrete base type that should be printed in the PBT code (when testing polymorphic functions). *)
+let rec string_of_ty ?(defaultTy = "int") (ty : ty) : string = 
+  match ty with 
+  | Int -> "int"
+  | Char -> "char"
+  | Bool -> "bool"
+  | Unit -> "unit"
+  | Alpha -> defaultTy
+  | AlphaT | T -> "expr"
+  | Func1 (arg, ret) -> 
+    String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])
+  | Func2 (arg1, arg2, ret) -> 
+    String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg1; arg2; ret])
+
+(* let rec sexp_of_ty (ty : ty) : Sexp.t = 
+  match ty with 
+  | Int -> Atom "int"
+  | Char -> Atom "char"
+  | Bool -> Atom "bool"
+  | Unit -> Atom "unit"
+  | Alpha -> Atom "\'a"
+  | AlphaT -> List [Atom "\'a"; Atom "t"]
+  | T -> Atom "t"
+  | Func1 (arg, ret) -> List (List.map ~f:sexp_of_ty [arg; ret])
+  | Func2 (arg1, arg2, ret) -> List (List.map ~f:sexp_of_ty [arg1; arg2; ret]) *)
 
 (** Abstract type contained within a module *)  
 type abstractType = T0 | T1 of ty

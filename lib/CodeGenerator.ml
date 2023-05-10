@@ -16,12 +16,26 @@ let imports : document =
   (!^ "type expr =")
   (variant "expr" "Empty" 1 []) *)
 
+(** Converts functions to ADT constructors for the [expr] ADT *)
+let extractFuncTypes (v : valDecl) = 
+  let open String in 
+  match valType v with 
+  | Func1 (arg, _) -> 
+    !^ (capitalize @@ valName v)
+    ^^ (!^ " of ")
+    ^^ (!^ (string_of_ty arg))
+  | Func2 (arg1, arg2, _) -> 
+    !^ (capitalize @@ valName v)
+    ^^ !^ " of "
+    ^^ !^ (string_of_ty arg1)
+    ^^ !^ " * "
+    ^^ !^ (string_of_ty arg2)
+  | _ -> !^ (capitalize @@ valName v)
+
 
 (** TODO: figure out how to extract arguments to constructors *)  
 let exprADTDecl (m : moduleSig) : document = 
   prefix 2 1 
   (!^ "type expr =")
-  (group @@ separate_map (!^ " | ") 
-    (fun r -> valName r |> String.capitalize |> string) m.valDecls)
-
-
+  (group @@ separate_map (hardline ^^ !^ " | ") 
+    extractFuncTypes m.valDecls)  
