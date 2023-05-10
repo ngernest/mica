@@ -7,6 +7,12 @@ let imports : document =
   (string "open! Base") 
   ^^ hardline 
   ^^ (string "open! Base_quickcheck")
+  ^^ hardline
+
+(** Document for printing the PPX annotation for S-Expr serialization (indented),
+    followed by a newline *)
+let sexpAnnotation : document = 
+  blank 2 ^^ !^ "[@@deriving sexp]" ^^ hardline   
 
 (** Document for the [expr] ADT definition which is generated
     from a module signature  *)
@@ -15,12 +21,6 @@ let imports : document =
   prefix 2 1 
   (!^ "type expr =")
   (variant "expr" "Empty" 1 []) *)
-
-(** Mutable list of constructors (identifiers) for the [expr] ADT *)  
-(* let exprConstrs : ident list ref = ref []  
-
-(** Mutable list of constructors (identifiers) for the [value] ADT *)  
-let valConstrs : ident list ref = ref [] *)
 
 (** Extracts the argument types of functions defined in the module signature,
     and generates constructors for the [expr] ADT 
@@ -45,14 +45,13 @@ let extractArgTypes (v : valDecl) : document =
 let exprADTDecl (m : moduleSig) : document = 
   prefix 2 1 
   (!^ "type expr =")
-  (group @@ separate_map (hardline ^^ !^ " | ") 
-    extractArgTypes m.valDecls)  
+  (group @@ separate_map (hardline ^^ !^ " | ") extractArgTypes m.valDecls 
+    ^/^ sexpAnnotation)  
 
 (** Helper function for printing out OCaml constructors
     (Wrapper for the [OCaml.variant] function in the [PPrint] library) *)    
 let printConstructor (c : string) (args : string list) : document = 
   OCaml.variant "expr" c 1 (List.map ~f:string args)
-
 
 (** Fetches the constructor corresponding to a [val] 
     declaration in the [expr] ADT *)
@@ -87,7 +86,8 @@ let tyADTDecl (m : moduleSig) : document =
   let retTypes = uniqRetTypesInSig m in 
   prefix 2 1
   (!^ "type ty =")
-  (group @@ separate_map (!^ " | ") (!^) retTypes)
+  (group @@ separate_map (!^ " | ") (!^) retTypes
+    ^/^ sexpAnnotation)
 
 (** Helper function called by [valueADTDecl]: creates a constructor 
     for the [value] ADT corresponding to the supplied [ty] *)
@@ -102,7 +102,8 @@ let valueADTDecl (m : moduleSig) : document =
   let valueTypes = uniqRetTypesInSig m in 
   prefix 2 1 
   (!^ "type value = ")
-  (group @@ separate_map (!^ " | ") mkValADTConstructor valueTypes)  
+  (group @@ separate_map (!^ " | ") mkValADTConstructor valueTypes 
+    ^/^ sexpAnnotation)  
 
 (** Generates the definition of the [ExprToImpl] functor *)  
 let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 

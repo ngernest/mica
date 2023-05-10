@@ -13,8 +13,10 @@ let () =
   let moduleString = string_of_file "./lib/SetInterface.ml" in 
   match (run_parser moduleTypeP moduleString) with 
   | Ok m -> 
-    let outc = Out_channel.create ~append:false "./lib/test.ml" in
+    let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
     (* Pretty-print code for importing libraries to [outc] *)
+    ToChannel.pretty 1.0 60 outc 
+      (imports ^/^ exprADTDecl m ^/^ tyADTDecl m);
     ToChannel.pretty 1.0 60 outc 
       (functorDef m ~sigName:"SetIntf" ~functorName:"ExprToImpl");
     Out_channel.flush stdout;
@@ -24,7 +26,7 @@ let () =
 
   
 
-let () = 
+(* let () = 
   let moduleString = string_of_file "./lib/SetInterface.ml" in 
   match (run_parser moduleTypeP moduleString) with 
   | Ok parsedModule -> 
@@ -36,7 +38,7 @@ let () =
     Out_channel.close outc
 
   | Error err -> printf "error = %s\n" err 
-  
+   *)
 
 
 
