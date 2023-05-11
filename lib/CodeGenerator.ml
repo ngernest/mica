@@ -67,6 +67,10 @@ let varNameHelper (ty : ty) : string =
   | Int -> "n"
   | _ -> String.prefix (string_of_ty ty) 1
 
+(** Special case of [genVarNames] when we only have one argument type *)    
+let genVarNamesSingleton (argTy : ty) : string = 
+  varNameHelper argTy   
+
 (** Takes a list of argument types, and generates corresponding variable names 
     which are unique for each element of the list 
     
@@ -74,26 +78,30 @@ let varNameHelper (ty : ty) : string =
 let genVarNames (argTys : ty list) : string list = 
   match argTys with 
   | [] -> []
-  | [ty] -> [varNameHelper ty]
+  | [ty] -> [genVarNamesSingleton ty]
   | _ -> List.mapi ~f:(fun i ty -> varNameHelper ty ^ Int.to_string (i + 1)) 
     argTys
-    
 
+ 
+    
 (** Fetches the constructor corresponding to a [val] 
     declaration in the [expr] ADT *)
-let getExprConstructor (v : valDecl) : document = 
+let getExprConstructor (v : valDecl) : string list * document = 
   let constr = String.capitalize (valName v) in
   match constr, valType v with 
-  | "Empty", _ -> !^ constr
-  | _, Int -> printConstructor constr ["n"]
-  | _, Char -> printConstructor constr ["c"]
-  | _, Bool -> printConstructor constr ["b"]
-  | _, Unit -> OCaml.unit
-  | _, Alpha -> printConstructor constr ["a"]
-  | _, T | _, AlphaT -> printConstructor constr ["t"]
-  | _, Func1 (arg, _) -> printConstructor constr (genVarNames [arg])
+  | "Empty", _ -> ([], !^ constr)
+  | _, Int -> (["n"], printConstructor constr ["n"])
+  | _, Char -> (["c"], printConstructor constr ["c"])
+  | _, Bool -> (["b"], printConstructor constr ["b"])
+  | _, Unit -> ([], OCaml.unit)
+  | _, Alpha -> (["a"], printConstructor constr ["a"])
+  | _, T | _, AlphaT -> (["t"], printConstructor constr ["t"])
+  | _, Func1 (argTy, _) -> 
+    let singletonArg = genVarNames [argTy] in 
+    (singletonArg, printConstructor constr singletonArg)
   | _, Func2 (arg1, arg2, _) -> 
-    printConstructor constr (genVarNames [arg1; arg2])
+    let args = genVarNames [arg1; arg2] in 
+    (args, printConstructor constr args)
 
 (** Extracts the return type of a function 
     For non-arrow types, this function just extracts the type itself *)    
@@ -118,34 +126,64 @@ let tyADTDecl (m : moduleSig) : document =
     ^/^ sexpAnnotation
     ^^ hardline)
 
-(** Helper function called by [valueADTDecl]: creates a constructor 
-    for the [value] ADT corresponding to the supplied [ty] *)
-let mkValADTConstructor (ty : string) : document = 
-  let open String in 
-  !^ ("Val" ^ capitalize ty) 
+(** [valADTConstructor ty] generates the constructor name for the 
+    [value] ADT corresponding to the type [ty] *)  
+let valADTConstructor (ty : string) : document = 
+  !^ ("Val" ^ String.capitalize ty) 
+
+(** [valADTParam ty] generates the type param for the 
+    constructor [value] ADT corresponding to the type [ty] *)    
+let valADTParam (ty : string) : document = 
+  let open String in
+  !^ (uncapitalize ty |> fun ty -> if ty = "t" then "int M.t" else ty)
+
+(** [valADTTypeDef ty] generates both the constructor & type parameter 
+    for the [value] ADT corresponding to the type [ty] *)  
+let valADTTypeDef (ty : string) : document = 
+  valADTConstructor ty 
   ^^ (!^ " of ")
-  ^^ (!^ (uncapitalize ty |> fun ty -> if ty = "t" then "int M.t" else ty))
+  ^^ valADTParam ty
 
 (** Generates the [value] ADT definition (enclosed within the [ExprToImpl] functor) *)  
-let valueADTDecl (m : moduleSig) : document = 
+let valueADTDefn (m : moduleSig) : document = 
   let valueTypes = uniqRetTypesInSig m in 
   prefix 2 1 
   (!^ "type value = ")
-  (group @@ separate_map (!^ " | ") mkValADTConstructor valueTypes 
+  (group @@ separate_map (!^ " | ") valADTTypeDef valueTypes 
     ^/^ sexpAnnotation)  
 
 
-(** TODO: find a way of generating the RHS of the pattern-matches for [interp] *)
+(** Produces the inner pattern match ([interp e]) in the [interp] function *) 
+let interpExprPatternMatch (v, args : valDecl * string list) : document = 
+  match valType v, args with 
+  | Func1 (_, retTy), [arg] -> 
+    ((!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
+      ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
+      ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy) 
+      ^^ (!^ " -> failwith " ^^ OCaml.string "TODO"))
+    )
+    ^^ (!^ "end")
+  (* | Func2 (_, _, retTy), [arg1; arg2] -> !^ "TODO" *)
+  | _ -> !^ "TODO"
+
 
 (** Generates the definition of the [interp] function which evaluates [expr]s *)
+
+(** TODO: maybe move where [innerPatMatches] is called *)
 let interpDefn (m : moduleSig) : document = 
+  let (constrArgs, docs) = 
+    List.unzip @@ List.map ~f:getExprConstructor m.valDecls in
+  let innerPatMatches = 
+    List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls constrArgs) in
+  (* TODO: add call to [List.zip m.valDecls constrArgs] and pass this onto 
+     [interpExprPatternMatch] *)  
   hang 2 @@ 
   !^ "let rec interp (expr : expr) : value = " 
   ^/^ (!^ "match expr with")
   ^/^ (!^ " | ")
-  ^^ separate_map (!^ " -> failwith " ^^ OCaml.string "TODO" 
-                   ^^ hardline ^^ !^ " | ") 
-                  getExprConstructor m.valDecls
+  ^^ separate (!^ " -> " ^^ hardline ^^ jump 2 1 (concat innerPatMatches)
+               ^^ hardline ^^ !^ " | ") 
+              docs
   ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")                  
   
 
@@ -155,6 +193,6 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   hang 2 @@ 
   !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
   ^/^ (!^ "include M")
-  ^/^ (valueADTDecl m)
+  ^/^ (valueADTDefn m)
   ^/^ (interpDefn m)
   ^/^ (!^ "end")  
