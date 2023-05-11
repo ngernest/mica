@@ -162,28 +162,30 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
       ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy) 
       ^^ (!^ " -> failwith " ^^ OCaml.string "TODO"))
     )
-    ^^ (!^ "end")
+    ^/^ (!^ "end")
   (* | Func2 (_, _, retTy), [arg1; arg2] -> !^ "TODO" *)
   | _ -> !^ "TODO"
 
 
 (** Generates the definition of the [interp] function which evaluates [expr]s *)
 
-(** TODO: maybe move where [innerPatMatches] is called *)
+(** TODO: maybe move where [innerPatMatches] is called -- 
+    replace with a call to [List.map], see notebook *)
 let interpDefn (m : moduleSig) : document = 
-  let (constrArgs, docs) = 
+  let (exprConstrArgs, exprConstrs) = 
     List.unzip @@ List.map ~f:getExprConstructor m.valDecls in
-  let innerPatMatches = 
-    List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls constrArgs) in
+  let innerPatternMatches = 
+    List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls exprConstrArgs) in
   (* TODO: add call to [List.zip m.valDecls constrArgs] and pass this onto 
      [interpExprPatternMatch] *)  
   hang 2 @@ 
   !^ "let rec interp (expr : expr) : value = " 
   ^/^ (!^ "match expr with")
   ^/^ (!^ " | ")
-  ^^ separate (!^ " -> " ^^ hardline ^^ jump 2 1 (concat innerPatMatches)
+  ^^ separate (!^ " -> " ^^ hardline ^^ empty
+  (* jump 2 1 (concat innerPatMatches) *)
                ^^ hardline ^^ !^ " | ") 
-              docs
+              exprConstrs
   ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")                  
   
 
