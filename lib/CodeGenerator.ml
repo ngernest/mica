@@ -149,37 +149,24 @@ let valueADTDefn (m : moduleSig) : document =
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
   match valType v, args with 
   | Func1 (_, retTy), [arg] -> 
-    (* jump 2 1 @@  *)
     align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
       ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
       ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
       ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
       ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
       ^/^ (!^ "end")
-  (* | Func2 (_, _, retTy), [arg1; arg2] -> !^ "TODO" *)
+  | Func2 (_, _, retTy), [arg1; arg2] -> 
+    (** TODO: don't call [interp] if [argi] isn't an [expr] *)
+    align @@ (!^ "begin match ") 
+      ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
+      ^^ (!^ " with ")
+      ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
+      ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
+      ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
+      ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
+      ^/^ (!^ "end")
   | _ -> !^ "failwith " ^^ OCaml.string "TODO"
 
-
-(** Generates the definition of the [interp] function which evaluates [expr]s *)
-
-(** Old definition of [interpDefn] *)
-(* let interpDefn (m : moduleSig) : document = 
-  let (exprConstrArgs, exprConstrs) = 
-    List.unzip @@ List.map ~f:getExprConstructor m.valDecls in
-  let innerPatternMatches = 
-    List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls exprConstrArgs) in
-  (* TODO: add call to [List.zip m.valDecls constrArgs] and pass this onto 
-     [interpExprPatternMatch] *)  
-  hang 2 @@ 
-  !^ "let rec interp (expr : expr) : value = " 
-  ^/^ (!^ "match expr with")
-  ^/^ (!^ " | ")
-  ^^ separate (!^ " -> " ^^ hardline ^^ empty
-  (* jump 2 1 (concat innerPatMatches) *)
-               ^^ hardline ^^ !^ " | ") 
-              exprConstrs
-  ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")      *)
-  
 (** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
 let spaced (doc : document) : document = 
   enclose space space doc   
@@ -189,19 +176,14 @@ let sBar : document = spaced bar
 let sArrow : document = spaced (!^ "->")
 
 
-(** [interpHelper i constr] takes in a PPrint document [constr] 
-    at index [i] of a list, and concatenates it with the appropriate 
-    pattern matching code 
-    (this function is intended to be supplied to [List.mapi] *)  
-(* let interpHelper (i : int) (exprConstr : document) : document = 
-  let constrArgs = List.nth i exprConstrArgs *)
-
-(** Alternate implementation of [interpDefn] *) 
+(** Generates the definition of the [interp] function which evaluates [expr]s *)
 let interpDefn (m : moduleSig) : document = 
   let (exprConstrArgs, exprConstrs) = 
     List.unzip @@ List.map ~f:getExprConstructor m.valDecls in
   let innerPatternMatches = 
     List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls exprConstrArgs) in
+  (** [interpHelper i constr] takes in a PPrint document [constr] 
+    at index [i], and concatenates it with the appropriate pattern matching code *)    
   let interpHelper (i : int) (exprConstr : document) : document = 
     (* let constrArgs = List.nth_exn exprConstrArgs i in  *)
     let pattern = List.nth_exn innerPatternMatches i in 
@@ -215,7 +197,6 @@ let interpDefn (m : moduleSig) : document =
   (* ^/^ (!^ " | ") *)
   ^^ (concat (List.mapi ~f:interpHelper exprConstrs)) (* TODO: check if calling [concat] is valid *)
   ^^ break 1
-    (* ^^ (!^ " -> failwith " ^^ OCaml.string "TODO" ^^ hardline)         *)
 
 
 (** Generates the definition of the [ExprToImpl] functor *)  

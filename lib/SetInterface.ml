@@ -7,6 +7,6 @@ module type SetIntf = sig
   val rem : 'a -> 'a t -> 'a t
   val size: 'a t -> int
   val union: 'a t -> 'a t -> 'a t
-  val intersection: 'a t -> 'a t -> 'a t  
+  val intersect: 'a t -> 'a t -> 'a t  
   val invariant: 'a t -> bool
 end
