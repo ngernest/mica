@@ -50,22 +50,48 @@ let exprADTDecl (m : moduleSig) : document =
 
 (** Helper function for printing out OCaml constructors
     (Wrapper for the [OCaml.variant] function in the [PPrint] library) *)    
-let printConstructor (c : string) (args : string list) : document = 
-  OCaml.variant "expr" c 1 (List.map ~f:string args)
+let printConstructor (constr : string) (args : string list) : document = 
+  match args with 
+  | [] -> !^ constr
+  | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
+  | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
+
+(** [varNameHelper ty] returns an appropriate variable name corresponding 
+    to [ty], eg. [varNameHelper Int = n] *)  
+let varNameHelper (ty : ty) : string = 
+  match ty with 
+  | Alpha -> "a"
+  | T | AlphaT -> "e"
+  | Int -> "n"
+  | _ -> String.prefix (string_of_ty ty) 1
+
+(** Takes a list of argument types, and generates corresponding variable names 
+    which are unique for each element of the list 
+    
+    eg. [genVarNames [Int, Int] = [n1, n2]] *)
+let genVarNames (argTys : ty list) : string list = 
+  match argTys with 
+  | [] -> []
+  | [ty] -> [varNameHelper ty]
+  | _ -> List.mapi ~f:(fun i ty -> varNameHelper ty ^ Int.to_string (i + 1)) 
+    argTys
+    
 
 (** Fetches the constructor corresponding to a [val] 
     declaration in the [expr] ADT *)
 let getExprConstructor (v : valDecl) : document = 
-  let c = String.capitalize (valName v) in
-  match valType v with 
-  | Int -> printConstructor c ["n"]
-  | Char -> printConstructor c ["c"]
-  | Bool -> printConstructor c ["b"]
-  | Unit -> OCaml.unit
-  | Alpha -> printConstructor c ["a"]
-  | T | AlphaT -> printConstructor c ["t"]
-  | Func1 (arg, _) -> printConstructor c [string_of_ty arg]
-  | Func2 (arg1, arg2, _) -> printConstructor c (List.map ~f:string_of_ty [arg1; arg2])
+  let constr = String.capitalize (valName v) in
+  match constr, valType v with 
+  | "Empty", _ -> !^ constr
+  | _, Int -> printConstructor constr ["n"]
+  | _, Char -> printConstructor constr ["c"]
+  | _, Bool -> printConstructor constr ["b"]
+  | _, Unit -> OCaml.unit
+  | _, Alpha -> printConstructor constr ["a"]
+  | _, T | _, AlphaT -> printConstructor constr ["t"]
+  | _, Func1 (arg, _) -> printConstructor constr (genVarNames [arg])
+  | _, Func2 (arg1, arg2, _) -> 
+    printConstructor constr (genVarNames [arg1; arg2])
 
 (** Extracts the return type of a function 
     For non-arrow types, this function just extracts the type itself *)    
@@ -87,7 +113,8 @@ let tyADTDecl (m : moduleSig) : document =
   prefix 2 1
   (!^ "type ty =")
   (group @@ separate_map (!^ " | ") (!^) retTypes
-    ^/^ sexpAnnotation)
+    ^/^ sexpAnnotation
+    ^^ hardline)
 
 (** Helper function called by [valueADTDecl]: creates a constructor 
     for the [value] ADT corresponding to the supplied [ty] *)
@@ -105,19 +132,22 @@ let valueADTDecl (m : moduleSig) : document =
   (group @@ separate_map (!^ " | ") mkValADTConstructor valueTypes 
     ^/^ sexpAnnotation)  
 
+
+(** TODO: find a way of generating the pattern-matches for [interp] *)
+
+let interpDefn (m : moduleSig) : document = 
+  hang 2 @@ 
+  !^ "let rec interp (expr : expr) : value = " 
+  ^/^ (!^ "match expr with")
+  ^/^ (!^ " | ")
+  ^^ separate_map (hardline ^^ !^ " | ") getExprConstructor m.valDecls
+
+
 (** Generates the definition of the [ExprToImpl] functor *)  
 let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 
   hang 2 @@ 
   !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
   ^/^ (!^ "include M")
   ^/^ (valueADTDecl m)
-  ^/^ (!^ "end")
-
-
-
-
-(* let interpDefn (m : moduleSig) : document = 
-  hang 2 @@ 
-  !^ "let rec interp (expr : expr) : value = " 
-  ^/^ (!^ "match expr with")
-  ^/^ empty *)
+  ^/^ (interpDefn m)
+  ^/^ (!^ "end")  
