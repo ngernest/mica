@@ -8,21 +8,13 @@ let imports : document =
   ^^ hardline 
   ^^ (!^ "open! Base_quickcheck")
   ^^ hardline
-  ^^ (!^ "open Sets")
+  ^^ (!^ "open Sets") (* TODO: remove hardcoding of [Sets] *)
   ^^ hardline
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
     followed by a newline *)
 let sexpAnnotation : document = 
   blank 2 ^^ !^ "[@@deriving sexp]" ^^ hardline   
-
-(** Document for the [expr] ADT definition which is generated
-    from a module signature  *)
-(* let exprADTDecl : document = 
-  let open OCaml in 
-  prefix 2 1 
-  (!^ "type expr =")
-  (variant "expr" "Empty" 1 []) *)
 
 (** Extracts the argument types of functions defined in the module signature,
     and generates constructors for the [expr] ADT 
@@ -157,21 +149,21 @@ let valueADTDefn (m : moduleSig) : document =
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
   match valType v, args with 
   | Func1 (_, retTy), [arg] -> 
-    ((!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
+    (* jump 2 1 @@  *)
+    align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
       ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
-      ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy) 
-      ^^ (!^ " -> failwith " ^^ OCaml.string "TODO"))
-    )
-    ^/^ (!^ "end")
+      ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
+      ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
+      ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
+      ^/^ (!^ "end")
   (* | Func2 (_, _, retTy), [arg1; arg2] -> !^ "TODO" *)
-  | _ -> !^ "TODO"
+  | _ -> !^ "failwith " ^^ OCaml.string "TODO"
 
 
 (** Generates the definition of the [interp] function which evaluates [expr]s *)
 
-(** TODO: maybe move where [innerPatMatches] is called -- 
-    replace with a call to [List.map], see notebook *)
-let interpDefn (m : moduleSig) : document = 
+(** Old definition of [interpDefn] *)
+(* let interpDefn (m : moduleSig) : document = 
   let (exprConstrArgs, exprConstrs) = 
     List.unzip @@ List.map ~f:getExprConstructor m.valDecls in
   let innerPatternMatches = 
@@ -186,8 +178,44 @@ let interpDefn (m : moduleSig) : document =
   (* jump 2 1 (concat innerPatMatches) *)
                ^^ hardline ^^ !^ " | ") 
               exprConstrs
-  ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")                  
+  ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")      *)
   
+(** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
+let spaced (doc : document) : document = 
+  enclose space space doc   
+
+(** Aliases for PPrint documents for common OCaml symbols *)  
+let sBar : document = spaced bar  
+let sArrow : document = spaced (!^ "->")
+
+
+(** [interpHelper i constr] takes in a PPrint document [constr] 
+    at index [i] of a list, and concatenates it with the appropriate 
+    pattern matching code 
+    (this function is intended to be supplied to [List.mapi] *)  
+(* let interpHelper (i : int) (exprConstr : document) : document = 
+  let constrArgs = List.nth i exprConstrArgs *)
+
+(** Alternate implementation of [interpDefn] *) 
+let interpDefn (m : moduleSig) : document = 
+  let (exprConstrArgs, exprConstrs) = 
+    List.unzip @@ List.map ~f:getExprConstructor m.valDecls in
+  let innerPatternMatches = 
+    List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls exprConstrArgs) in
+  let interpHelper (i : int) (exprConstr : document) : document = 
+    (* let constrArgs = List.nth_exn exprConstrArgs i in  *)
+    let pattern = List.nth_exn innerPatternMatches i in 
+    break 1 
+    ^^ sBar ^^ exprConstr ^^ sArrow 
+    ^^ jump 2 1 pattern
+  in
+  hang 2 @@ 
+  !^ "let rec interp (expr : expr) : value = " 
+  ^/^ (!^ "match expr with")
+  (* ^/^ (!^ " | ") *)
+  ^^ (concat (List.mapi ~f:interpHelper exprConstrs)) (* TODO: check if calling [concat] is valid *)
+  ^^ break 1
+    (* ^^ (!^ " -> failwith " ^^ OCaml.string "TODO" ^^ hardline)         *)
 
 
 (** Generates the definition of the [ExprToImpl] functor *)  
@@ -198,3 +226,4 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   ^/^ (valueADTDefn m)
   ^/^ (interpDefn m)
   ^/^ (!^ "end")  
+  ^^ hardline
