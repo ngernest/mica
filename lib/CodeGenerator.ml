@@ -4,9 +4,11 @@ open! ParserTypes
 
 (** Document representing modules that need to be imported *)
 let imports : document = 
-  (string "open! Base") 
+  (!^ "open! Base") 
   ^^ hardline 
-  ^^ (string "open! Base_quickcheck")
+  ^^ (!^ "open! Base_quickcheck")
+  ^^ hardline
+  ^^ (!^ "open Sets")
   ^^ hardline
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
@@ -122,7 +124,7 @@ let mkValADTConstructor (ty : string) : document =
   let open String in 
   !^ ("Val" ^ capitalize ty) 
   ^^ (!^ " of ")
-  ^^ (!^ (uncapitalize ty |> fun ty -> if ty = "t" then "M.t" else ty))
+  ^^ (!^ (uncapitalize ty |> fun ty -> if ty = "t" then "int M.t" else ty))
 
 (** Generates the [value] ADT definition (enclosed within the [ExprToImpl] functor) *)  
 let valueADTDecl (m : moduleSig) : document = 
@@ -133,14 +135,19 @@ let valueADTDecl (m : moduleSig) : document =
     ^/^ sexpAnnotation)  
 
 
-(** TODO: find a way of generating the pattern-matches for [interp] *)
+(** TODO: find a way of generating the RHS of the pattern-matches for [interp] *)
 
+(** Generates the definition of the [interp] function which evaluates [expr]s *)
 let interpDefn (m : moduleSig) : document = 
   hang 2 @@ 
   !^ "let rec interp (expr : expr) : value = " 
   ^/^ (!^ "match expr with")
   ^/^ (!^ " | ")
-  ^^ separate_map (hardline ^^ !^ " | ") getExprConstructor m.valDecls
+  ^^ separate_map (!^ " -> failwith " ^^ OCaml.string "TODO" 
+                   ^^ hardline ^^ !^ " | ") 
+                  getExprConstructor m.valDecls
+  ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")                  
+  
 
 
 (** Generates the definition of the [ExprToImpl] functor *)  
