@@ -15,13 +15,14 @@ let write_doc (outc : Out_channel.t) (doc : document) : unit =
 
 
 let () = 
-  let moduleString = string_of_file "./lib/SetInterface.ml" in 
+  let filepath = "./lib/SetInterface.ml" in
+  let moduleString = string_of_file filepath in 
   match (run_parser moduleTypeP moduleString) with 
   | Ok m -> 
     let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
     (* Pretty-print code for importing libraries to [outc] *)
     write_doc outc 
-      (imports ^/^ exprADTDecl m ^/^ tyADTDecl m);
+      (imports filepath ^/^ exprADTDecl m ^/^ tyADTDecl m);
     write_doc outc 
       (functorDef m ~sigName:"SetIntf" ~functorName:"ExprToImpl");
     Out_channel.flush stdout;

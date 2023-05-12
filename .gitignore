@@ -6,3 +6,4 @@ _build
 lib/Generated.ml
 lib/SimpleInterface.ml
 lib/test.ml
+lib/Gen2.ml

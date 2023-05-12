@@ -2,13 +2,18 @@ open! Base
 open! PPrint
 open! ParserTypes
 
-(** Document representing modules that need to be imported *)
-let imports : document = 
+(** [imports filepath] prints out a PPrint document that imports
+    the requisite modules for the PBT code.
+    The [filepath] argument should be a POSIX filepath specifying
+    the path to the .ml/.mli file containing the module signature under test *)
+let imports (filepath : string) : document = 
+  let open Core.Filename in
+  let sigFile = basename filepath |> chop_extension in
   (!^ "open! Base") 
   ^^ hardline 
   ^^ (!^ "open! Base_quickcheck")
   ^^ hardline
-  ^^ (!^ "open Sets") (* TODO: remove hardcoding of [Sets] *)
+  ^^ !^ ("open " ^ sigFile) 
   ^^ hardline
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
@@ -144,6 +149,14 @@ let valueADTDefn (m : moduleSig) : document =
   (group @@ separate_map (!^ " | ") valADTTypeDef valueTypes 
     ^/^ sexpAnnotation)  
 
+(** Given an argument and its type, determines if we need to recursively call 
+    [interp] on the argument for the inner pattern match in [interp] *)
+(* let checkIfInterpNeeded (argTy : ty) (arg : string) : bool = 
+  let interpNeeded = 
+    match argTy with 
+    | AlphaT | T -> true
+    | _ -> false
+  in interpNeeded *)
 
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
