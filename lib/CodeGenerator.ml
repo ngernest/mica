@@ -82,7 +82,9 @@ let genVarNames (argTys : ty list) : string list =
  
     
 (** Fetches the constructor corresponding to a [val] 
-    declaration in the [expr] ADT *)
+    declaration in the [expr] ADT, 
+    returning a pair of the form [(args, constructor applied to args)], 
+    eg. [(["x", "e"], !^ "Mem(x,e)")]  *)
 let getExprConstructor (v : valDecl) : string list * document = 
   let constr = String.capitalize (valName v) in
   match constr, valType v with 
@@ -149,35 +151,47 @@ let valueADTDefn (m : moduleSig) : document =
   (group @@ separate_map (!^ " | ") valADTTypeDef valueTypes 
     ^/^ sexpAnnotation)  
 
+(** TODO: figure out how to remember the [M.f] to [expr] constructor [F] mapping *)
+
 (** Given an argument and its type, determines if we need to recursively call 
     [interp] on the argument for the inner pattern match in [interp] *)
-(* let checkIfInterpNeeded (argTy : ty) (arg : string) : bool = 
-  let interpNeeded = 
-    match argTy with 
-    | AlphaT | T -> true
-    | _ -> false
-  in interpNeeded *)
+let interpIsNeeded (argTy : ty) : bool = 
+  match argTy with 
+  | AlphaT | T -> true
+  | _ -> false
+
+let interpOnce (arg : ident) (retTy : ty) : document = 
+  align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
+    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
+    ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
+    ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
+    ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
+    ^/^ (!^ "end")
+
+let interpTwice (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
+  align @@ (!^ "begin match ") 
+    ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
+    ^^ (!^ " with ")
+    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
+    ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
+    ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
+    ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
+    ^/^ (!^ "end")
 
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
   match valType v, args with 
-  | Func1 (_, retTy), [arg] -> 
-    align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
-      ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
-      ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
-      ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
-      ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
-      ^/^ (!^ "end")
-  | Func2 (_, _, retTy), [arg1; arg2] -> 
-    (** TODO: don't call [interp] if [argi] isn't an [expr] *)
-    align @@ (!^ "begin match ") 
-      ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
-      ^^ (!^ " with ")
-      ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
-      ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
-      ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
-      ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
-      ^/^ (!^ "end")
+  | Func1 (argTy, retTy), [arg] -> 
+    if interpIsNeeded argTy
+    then interpOnce arg retTy
+    else OCaml.string "TODO: remember the [M.f] to [F] mapping "
+  | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
+    begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
+    | true, true -> interpTwice arg1 arg2 retTy
+    | false, true -> interpOnce arg1 retTy 
+    | true, false -> interpOnce arg2 retTy 
+    | _, _ -> OCaml.string "TODO: remember the [M.f] to [F] mapping"
+    end
   | _ -> !^ "failwith " ^^ OCaml.string "TODO"
 
 (** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
