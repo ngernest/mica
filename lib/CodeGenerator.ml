@@ -80,13 +80,17 @@ let genVarNames (argTys : ty list) : string list =
     argTys
 
  
+(** Fetches the [expr] constructor corresponding to a [val] declaration 
+    in a module *)
+let getExprConstructorName (v : valDecl) : string = 
+  String.capitalize @@ valName v
     
 (** Fetches the constructor corresponding to a [val] 
     declaration in the [expr] ADT, 
     returning a pair of the form [(args, constructor applied to args)], 
     eg. [(["x", "e"], !^ "Mem(x,e)")]  *)
 let getExprConstructor (v : valDecl) : string list * document = 
-  let constr = String.capitalize (valName v) in
+  let constr = getExprConstructorName v in
   match constr, valType v with 
   | "Empty", _ -> ([], !^ constr)
   | _, Int -> (["n"], printConstructor constr ["n"])
@@ -101,6 +105,7 @@ let getExprConstructor (v : valDecl) : string list * document =
   | _, Func2 (arg1, arg2, _) -> 
     let args = genVarNames [arg1; arg2] in 
     (args, printConstructor constr args)
+
 
 (** Extracts the return type of a function 
     For non-arrow types, this function just extracts the type itself *)    
@@ -160,6 +165,7 @@ let interpIsNeeded (argTy : ty) : bool =
   | AlphaT | T -> true
   | _ -> false
 
+(** Pattern matches [interp] on one argument of type [expr] *)  
 let interpOnce (arg : ident) (retTy : ty) : document = 
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
     ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
@@ -168,6 +174,7 @@ let interpOnce (arg : ident) (retTy : ty) : document =
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
+(** Pattern matches [interp] on two arguments both of type [expr] *)      
 let interpTwice (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
   align @@ (!^ "begin match ") 
     ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
@@ -178,25 +185,27 @@ let interpTwice (arg1 : ident) (arg2 : ident) (retTy : ty) : document =
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
+(** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
+let spaced (doc : document) : document = 
+  enclose space space doc   
+
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
   match valType v, args with 
   | Func1 (argTy, retTy), [arg] -> 
     if interpIsNeeded argTy
     then interpOnce arg retTy
-    else OCaml.string "TODO: remember the [M.f] to [F] mapping "
+    else !^ ("M." ^ valName v) ^^ spaced (!^ arg)
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
     begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
     | true, true -> interpTwice arg1 arg2 retTy
     | false, true -> interpOnce arg1 retTy 
     | true, false -> interpOnce arg2 retTy 
-    | _, _ -> OCaml.string "TODO: remember the [M.f] to [F] mapping"
+    | _, _ -> !^ ("M." ^ valName v) ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
     end
   | _ -> !^ "failwith " ^^ OCaml.string "TODO"
 
-(** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
-let spaced (doc : document) : document = 
-  enclose space space doc   
+
 
 (** Aliases for PPrint documents for common OCaml symbols *)  
 let sBar : document = spaced bar  
