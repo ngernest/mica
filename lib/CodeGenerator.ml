@@ -71,18 +71,19 @@ let printConstructor (constr : string) (args : string list) : document =
     to [ty], eg. [varNameHelper Int = n] *)  
 let varNameHelper (ty : ty) : string = 
   match ty with 
-  | Alpha -> "a"
+  | Alpha -> "x"
   | T | AlphaT -> "e"
   | Int -> "n"
   | _ -> String.prefix (string_of_ty ty) 1
 
-(** Special case of [genVarNames] when we only have one argument type *)    
-let genVarNamesSingleton (argTy : ty) : string = 
-  varNameHelper argTy   
+(** Special case of [genVarNames] when we only have one argument type 
+    If [prime = true], add a single quote to the end of the variable name *)    
+let genVarNamesSingleton ?(prime = false) (argTy : ty) : string = 
+  let varName = varNameHelper argTy in 
+  if prime then varName ^ "\'" else varName
 
 (** Takes a list of argument types, and generates corresponding variable names 
     which are unique for each element of the list 
-    
     eg. [genVarNames [Int, Int] = [n1, n2]] *)
 let genVarNames (argTys : ty list) : string list = 
   match argTys with 
@@ -179,48 +180,53 @@ let interpIsNeeded (argTy : ty) : bool =
   | AlphaT | T -> true
   | _ -> false
 
+(** Applies a function pointwise on a pair *)  
+let mapPair ~(f : 'a -> 'b) (a1, a2 : 'a * 'a) : 'b * 'b = 
+  (f a1, f a2)  
+
 (** Pattern matches [interp] on one argument of type [expr] *)  
-let interpOnce (v : valDecl) (arg : ident) (retTy : ty) : document = 
-  let retTyValConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
+let interpOnce (argTy : ty) (funcName : document) (arg : ident) (retTy : ty) : document = 
+  let (argTyConstr, retTyConstr) = 
+    mapPair ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (argTy, retTy) in
+  let newArg = genVarNamesSingleton ~prime:true argTy in
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ retTyValConstr
-    ^^ (space ^^ !^ (genVarNamesSingleton retTy)) 
-    ^^ sArrow ^^ spaced retTyValConstr ^^ parens (getFuncName v ^^ space ^^ (!^ arg))
+    ^/^ (!^ " | ") ^^ argTyConstr
+    ^^ (space ^^ !^ newArg) 
+    ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ space ^^ (!^ newArg))
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
 (** Pattern matches [interp] on two arguments both of type [expr] *)      
-let interpTwice (v : valDecl) (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
+let interpTwice (funcName : document) (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
   let retTyValConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
   align @@ (!^ "begin match ") 
     ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
     ^^ (!^ " with ")
     ^/^ (!^ " | ") ^^ retTyValConstr
-    ^^ (space ^^ !^ (genVarNamesSingleton retTy)) 
-    ^^ sArrow ^^ spaced retTyValConstr ^^ parens (getFuncName v ^^ (spaced !^ arg1) ^^ (!^ arg2))
+    ^^ (space ^^ !^ (genVarNamesSingleton ~prime:true retTy)) 
+    ^^ sArrow ^^ spaced retTyValConstr ^^ parens (funcName ^^ (spaced !^ arg1) ^^ (!^ arg2))
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
 
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
+  let funcName = getFuncName v in
   match valType v, args with 
   | Func1 (argTy, retTy), [arg] -> 
     if interpIsNeeded argTy
-    then interpOnce v arg retTy
-    else getFuncName v ^^ spaced (!^ arg)
+    then interpOnce argTy funcName arg retTy
+    else funcName ^^ spaced (!^ arg)
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
     begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
-    | true, true -> interpTwice v arg1 arg2 retTy
-    | false, true -> interpOnce v arg1 retTy 
-    | true, false -> interpOnce v arg2 retTy 
-    | _, _ -> getFuncName v ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
+    | true, true -> interpTwice funcName arg1 arg2 retTy
+    | false, true -> interpOnce arg1Ty funcName arg1 retTy 
+    | true, false -> interpOnce arg2Ty funcName arg2 retTy 
+    | _, _ -> funcName ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
     end
   | valTy, _ -> 
-    (* TODO: handle case for [Is_empty] (should just return [b]) *)
     let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
-    valTyConstr ^^ space ^^ parens @@ getFuncName v
-
+    valTyConstr ^^ space ^^ parens funcName
 
 
 (** Generates the definition of the [interp] function which evaluates [expr]s *)
@@ -241,7 +247,6 @@ let interpDefn (m : moduleSig) : document =
   hang 2 @@ 
   !^ "let rec interp (expr : expr) : value = " 
   ^/^ (!^ "match expr with")
-  (* ^/^ (!^ " | ") *)
   ^^ (concat (List.mapi ~f:interpHelper exprConstrs)) (* TODO: check if calling [concat] is valid *)
   ^^ break 1
 
