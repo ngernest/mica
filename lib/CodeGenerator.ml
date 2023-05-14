@@ -181,30 +181,39 @@ let interpIsNeeded (argTy : ty) : bool =
   | _ -> false
 
 (** Applies a function pointwise on a pair *)  
-let mapPair ~(f : 'a -> 'b) (a1, a2 : 'a * 'a) : 'b * 'b = 
-  (f a1, f a2)  
+let map2 ~f (a1, a2) = (f a1, f a2)  
+
+(** Applies a function pointwise on a triple *)  
+let map3 ~f (a1, a2, a3) = (f a1, f a2, f a3)  
 
 (** Pattern matches [interp] on one argument of type [expr] *)  
 let interpOnce (argTy : ty) (funcName : document) (arg : ident) (retTy : ty) : document = 
+  (* Obtain appropriate constructors based on the arg & return types *)    
   let (argTyConstr, retTyConstr) = 
-    mapPair ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (argTy, retTy) in
-  let newArg = genVarNamesSingleton ~prime:true argTy in
+    map2 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (argTy, retTy) in
+  (* Generate a fresh variable name *)  
+  let arg' = genVarNamesSingleton ~prime:true argTy in
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
     ^/^ (!^ " | ") ^^ argTyConstr
-    ^^ (space ^^ !^ newArg) 
-    ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ space ^^ (!^ newArg))
+    ^^ (space ^^ !^ arg') 
+    ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ space ^^ (!^ arg'))
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
-(** Pattern matches [interp] on two arguments both of type [expr] *)      
-let interpTwice (funcName : document) (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
-  let retTyValConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
+(** Pattern matches [interp] on two arguments, both of type [expr] *)      
+let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document) 
+                (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
+  (* Obtain appropriate constructors based on the arg & return types *)              
+  let (arg1TyConstr, arg2TyConstr, retTyConstr) = 
+    map3 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (arg1Ty, arg2Ty, retTy) in
+  (* Generate fresh variable names *)    
+  let (arg1', arg2') = 
+    map2 ~f:(fun ty -> !^ (genVarNamesSingleton ~prime:true ty)) (arg1Ty, arg2Ty) in 
   align @@ (!^ "begin match ") 
     ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
     ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ retTyValConstr
-    ^^ (space ^^ !^ (genVarNamesSingleton ~prime:true retTy)) 
-    ^^ sArrow ^^ spaced retTyValConstr ^^ parens (funcName ^^ (spaced !^ arg1) ^^ (!^ arg2))
+    ^/^ (!^ " | ") ^^ OCaml.tuple [arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2']
+    ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ (spaced arg1') ^^ arg2')
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
@@ -219,9 +228,9 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     else funcName ^^ spaced (!^ arg)
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
     begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
-    | true, true -> interpTwice funcName arg1 arg2 retTy
-    | false, true -> interpOnce arg1Ty funcName arg1 retTy 
-    | true, false -> interpOnce arg2Ty funcName arg2 retTy 
+    | true, true -> interpTwice arg1Ty arg2Ty funcName arg1 arg2 retTy
+    | true, _ -> interpOnce arg1Ty funcName arg1 retTy 
+    | _, true -> interpOnce arg2Ty funcName arg2 retTy 
     | _, _ -> funcName ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
     end
   | valTy, _ -> 
