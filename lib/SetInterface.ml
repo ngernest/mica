@@ -1,5 +1,6 @@
-module type SetIntf = sig
+module type SetInterface = sig
   type 'a t
+    [@@deriving sexp]
   val empty : 'a t
   val is_empty : 'a t -> bool 
   val mem : 'a -> 'a t -> bool

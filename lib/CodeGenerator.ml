@@ -2,13 +2,25 @@ open! Base
 open! PPrint
 open! ParserTypes
 
+(** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
+let spaced (doc : document) : document = 
+  enclose space space doc   
+
+(** Aliases for PPrint documents for common OCaml symbols *)  
+let sBar : document = spaced bar  
+let sArrow : document = spaced (!^ "->")
+
+(** Given a filepath to a .ml/.mli file, retrieves the corresponding name of the 
+    top-level module signature (must be the same as the .ml/.mli file) *)  
+let getModuleSigName (filepath : string) : string =
+  Core.Filename.(basename filepath |> chop_extension)
+    
 (** [imports filepath] prints out a PPrint document that imports
     the requisite modules for the PBT code.
     The [filepath] argument should be a POSIX filepath specifying
     the path to the .ml/.mli file containing the module signature under test *)
 let imports (filepath : string) : document = 
-  let open Core.Filename in
-  let sigFile = basename filepath |> chop_extension in
+  let sigFile = getModuleSigName filepath in
   (!^ "open! Base") 
   ^^ hardline 
   ^^ (!^ "open! Base_quickcheck")
@@ -31,7 +43,7 @@ let extractArgTypes (v : valDecl) : document =
   | Func1 (arg, _) -> 
     !^ constr
     ^^ (!^ " of ")
-    ^^ (!^ (string_of_ty arg))
+    ^^ (!^ (string_of_ty ~alpha:"int" arg))
   | Func2 (arg1, arg2, _) -> 
     !^ constr
     ^^ !^ " of "
@@ -79,7 +91,6 @@ let genVarNames (argTys : ty list) : string list =
   | _ -> List.mapi ~f:(fun i ty -> varNameHelper ty ^ Int.to_string (i + 1)) 
     argTys
 
- 
 (** Fetches the [expr] constructor corresponding to a [val] declaration 
     in a module *)
 let getExprConstructorName (v : valDecl) : string = 
@@ -130,6 +141,11 @@ let tyADTDecl (m : moduleSig) : document =
     ^/^ sexpAnnotation
     ^^ hardline)
 
+(** Given a [val] declaration inside a module (eg. [val f : 'a -> 'a]), 
+    returns the corresponding function name (eg. [M.f]) *)
+let getFuncName (v : valDecl) : document = 
+  !^ ("M." ^ valName v)     
+
 (** [valADTConstructor ty] generates the constructor name for the 
     [value] ADT corresponding to the type [ty] *)  
 let valADTConstructor (ty : string) : document = 
@@ -164,49 +180,44 @@ let interpIsNeeded (argTy : ty) : bool =
   | _ -> false
 
 (** Pattern matches [interp] on one argument of type [expr] *)  
-let interpOnce (arg : ident) (retTy : ty) : document = 
+let interpOnce (v : valDecl) (arg : ident) (retTy : ty) : document = 
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
-    ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
-    ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
+    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy))
+    ^^ (space ^^ !^ (genVarNamesSingleton retTy)) 
+    (* TODO: add [Valx] constructor in front of [getFuncName] *)
+    ^^ sArrow ^^ getFuncName v ^^ spaced (!^ arg)
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
 (** Pattern matches [interp] on two arguments both of type [expr] *)      
-let interpTwice (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
+let interpTwice (v : valDecl) (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
   align @@ (!^ "begin match ") 
     ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
     ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" retTy))
-    ^^ (blank 1 ^^ !^ (genVarNamesSingleton retTy)) 
-    ^^ (!^ " -> failwith " ^^ OCaml.string "TODO")
+    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy))
+    ^^ (space ^^ !^ (genVarNamesSingleton retTy)) 
+    (* TODO: add [Valx] constructor in front of [getFuncName] *)
+    ^^ sArrow ^^ getFuncName v ^^ (spaced !^ arg1) ^^ (!^ arg2)
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
-(** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
-let spaced (doc : document) : document = 
-  enclose space space doc   
 
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
   match valType v, args with 
   | Func1 (argTy, retTy), [arg] -> 
     if interpIsNeeded argTy
-    then interpOnce arg retTy
-    else !^ ("M." ^ valName v) ^^ spaced (!^ arg)
+    then interpOnce v arg retTy
+    else getFuncName v ^^ spaced (!^ arg)
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
     begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
-    | true, true -> interpTwice arg1 arg2 retTy
-    | false, true -> interpOnce arg1 retTy 
-    | true, false -> interpOnce arg2 retTy 
-    | _, _ -> !^ ("M." ^ valName v) ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
+    | true, true -> interpTwice v arg1 arg2 retTy
+    | false, true -> interpOnce v arg1 retTy 
+    | true, false -> interpOnce v arg2 retTy 
+    | _, _ -> getFuncName v ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
     end
-  | _ -> !^ ("M." ^ valName v)
+  | _ -> getFuncName v
 
-
-(** Aliases for PPrint documents for common OCaml symbols *)  
-let sBar : document = spaced bar  
-let sArrow : document = spaced (!^ "->")
 
 
 (** Generates the definition of the [interp] function which evaluates [expr]s *)

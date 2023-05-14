@@ -20,13 +20,17 @@ let lowercaseIdentP : string A.t =
 (** Parses type-parameters, eg. ['a] *)    
 let typeParamP : char A.t = 
   quoteP *> lowercaseP    
+
+(** Parses the S-expression PPX annotation, consuming subsequent whitespace *)  
+let sexpAnnotP : unit A.t = 
+  constP "[@@deriving sexp]" ()
   
 (** Parser for an abstract type declaration in a module, eg. [type 'a t] *)
 let abstractTypeDeclP : abstractType A.t = 
   let typeP = stringP "type" in
   let noParam = typeP *> constP "t" T0 in 
   let withParam = typeP *> wsP typeParamP *> constP "t" (T1 Alpha) in
-  noParam <|> withParam
+  (noParam <|> withParam) <* sexpAnnotP
 
 (** [sigP p] takes a parser [p], and sandwiches it between parsers
     that parse the "sig" and "end" tokens *)
