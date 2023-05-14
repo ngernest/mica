@@ -111,8 +111,8 @@ let getExprConstructor (v : valDecl) : string list * document =
     For non-arrow types, this function just extracts the type itself *)    
 let extractReturnTypes (v : valDecl) : string = 
   match valType v with 
-  | Func1 (_, ret) | Func2 (_, _, ret) -> (string_of_ty ~t:"T" ret)
-  | ty -> (string_of_ty ~t:"T" ty)
+  | Func1 (_, ret) | Func2 (_, _, ret) -> (string_of_ty ~t:"T" ~alpha:"Int" ret)
+  | ty -> (string_of_ty ~t:"T" ~alpha:"Int" ty)
 
 (** Fetches the unique return types across the functions / values 
     in a module signature *)  
@@ -155,8 +155,6 @@ let valueADTDefn (m : moduleSig) : document =
   (!^ "type value = ")
   (group @@ separate_map (!^ " | ") valADTTypeDef valueTypes 
     ^/^ sexpAnnotation)  
-
-(** TODO: figure out how to remember the [M.f] to [expr] constructor [F] mapping *)
 
 (** Given an argument and its type, determines if we need to recursively call 
     [interp] on the argument for the inner pattern match in [interp] *)
@@ -203,8 +201,7 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     | true, false -> interpOnce arg2 retTy 
     | _, _ -> !^ ("M." ^ valName v) ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
     end
-  | _ -> !^ "failwith " ^^ OCaml.string "TODO"
-
+  | _ -> !^ ("M." ^ valName v)
 
 
 (** Aliases for PPrint documents for common OCaml symbols *)  
