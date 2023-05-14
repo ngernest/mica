@@ -85,11 +85,13 @@ let genVarNamesSingleton ?(prime = false) (argTy : ty) : string =
 (** Takes a list of argument types, and generates corresponding variable names 
     which are unique for each element of the list 
     eg. [genVarNames [Int, Int] = [n1, n2]] *)
-let genVarNames (argTys : ty list) : string list = 
+let genVarNames ?(prime = false) (argTys : ty list) : string list = 
   match argTys with 
   | [] -> []
   | [ty] -> [genVarNamesSingleton ty]
-  | _ -> List.mapi ~f:(fun i ty -> varNameHelper ty ^ Int.to_string (i + 1)) 
+  | _ -> List.mapi 
+    ~f:(fun i ty -> let var = genVarNamesSingleton ty ^ Int.to_string (i + 1) in 
+        if prime then var ^ "\'" else var) 
     argTys
 
 (** Fetches the [expr] constructor corresponding to a [val] declaration 
@@ -185,6 +187,10 @@ let map2 ~f (a1, a2) = (f a1, f a2)
 
 (** Applies a function pointwise on a triple *)  
 let map3 ~f (a1, a2, a3) = (f a1, f a2, f a3)  
+(* 
+let freshNames (arg1, arg2 : ty * ty) : string * string = 
+  map2 ~f:(fun arg -> genVarNamesSingleton arg ^ Int.to_string i ^ "\'") (arg1, arg2) *)
+
 
 (** Pattern matches [interp] on one argument of type [expr] *)  
 let interpOnce (argTy : ty) (funcName : document) (arg : ident) (retTy : ty) : document = 
@@ -207,15 +213,17 @@ let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document)
   let (arg1TyConstr, arg2TyConstr, retTyConstr) = 
     map3 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (arg1Ty, arg2Ty, retTy) in
   (* Generate fresh variable names *)    
-  let (arg1', arg2') = 
-    map2 ~f:(fun ty -> !^ (genVarNamesSingleton ~prime:true ty)) (arg1Ty, arg2Ty) in 
-  align @@ (!^ "begin match ") 
-    ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
-    ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ OCaml.tuple [arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2']
-    ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ (spaced arg1') ^^ arg2')
-    ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
-    ^/^ (!^ "end")
+  match List.map ~f:string (genVarNames ~prime:true [arg1Ty; arg2Ty]) with 
+   | [arg1'; arg2'] -> 
+    (* map2 ~f:(fun ty -> !^ (genVarNamesSingleton ~prime:true ty)) (arg1Ty, arg2Ty) in  *)
+    align @@ (!^ "begin match ") 
+      ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
+      ^^ (!^ " with ")
+      ^/^ (!^ " | ") ^^ OCaml.tuple [arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2']
+      ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ (spaced arg1') ^^ arg2')
+      ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
+      ^/^ (!^ "end")
+  | _ -> failwith "error generating fresh variable names"
 
 
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
@@ -247,7 +255,6 @@ let interpDefn (m : moduleSig) : document =
   (** [interpHelper i constr] takes in a PPrint document [constr] 
     at index [i], and concatenates it with the appropriate pattern matching code *)    
   let interpHelper (i : int) (exprConstr : document) : document = 
-    (* let constrArgs = List.nth_exn exprConstrArgs i in  *)
     let pattern = List.nth_exn innerPatternMatches i in 
     break 1 
     ^^ sBar ^^ exprConstr ^^ sArrow 
