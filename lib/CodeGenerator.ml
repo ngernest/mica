@@ -181,23 +181,23 @@ let interpIsNeeded (argTy : ty) : bool =
 
 (** Pattern matches [interp] on one argument of type [expr] *)  
 let interpOnce (v : valDecl) (arg : ident) (retTy : ty) : document = 
+  let retTyValConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy))
+    ^/^ (!^ " | ") ^^ retTyValConstr
     ^^ (space ^^ !^ (genVarNamesSingleton retTy)) 
-    (* TODO: add [Valx] constructor in front of [getFuncName] *)
-    ^^ sArrow ^^ getFuncName v ^^ spaced (!^ arg)
+    ^^ sArrow ^^ spaced retTyValConstr ^^ parens (getFuncName v ^^ space ^^ (!^ arg))
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
 (** Pattern matches [interp] on two arguments both of type [expr] *)      
 let interpTwice (v : valDecl) (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
+  let retTyValConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
   align @@ (!^ "begin match ") 
     ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
     ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ (valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy))
+    ^/^ (!^ " | ") ^^ retTyValConstr
     ^^ (space ^^ !^ (genVarNamesSingleton retTy)) 
-    (* TODO: add [Valx] constructor in front of [getFuncName] *)
-    ^^ sArrow ^^ getFuncName v ^^ (spaced !^ arg1) ^^ (!^ arg2)
+    ^^ sArrow ^^ spaced retTyValConstr ^^ parens (getFuncName v ^^ (spaced !^ arg1) ^^ (!^ arg2))
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
@@ -216,7 +216,10 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     | true, false -> interpOnce v arg2 retTy 
     | _, _ -> getFuncName v ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
     end
-  | _ -> getFuncName v
+  | valTy, _ -> 
+    (* TODO: handle case for [Is_empty] (should just return [b]) *)
+    let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
+    valTyConstr ^^ space ^^ parens @@ getFuncName v
 
 
 
