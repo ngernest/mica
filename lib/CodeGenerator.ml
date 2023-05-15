@@ -249,8 +249,10 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
     | true, true -> interpTwice arg1Ty arg2Ty funcName arg1 arg2 retTy
     | true, _ -> interpOnce arg1Ty ~nonExprArg:(Some (arg2, Snd)) funcName arg1 retTy 
-    | _, true -> interpOnce arg2Ty ~nonExprArg:(Some (arg1, Fst)) funcName arg2 retTy 
-    | _, _ -> funcName ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
+    | _, true -> interpOnce ~nonExprArg:(Some (arg1, Fst)) arg2Ty funcName arg2 retTy 
+    | _, _ -> 
+      let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
+      retTyConstr ^^ space ^^ parens (funcName ^^ spaced (!^ arg1) ^^ spaced (!^ arg2))
     end
   | valTy, _ -> 
     let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
