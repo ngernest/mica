@@ -206,8 +206,8 @@ let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : id
   let funcApp = 
     begin match nonExprArg with 
     | None -> funcName ^^ space ^^ (!^ arg') 
-    | Some (nonExprArg, Fst) -> funcName ^^ (spaced (!^ nonExprArg) ^^ !^ arg')
-    | Some (nonExprArg, Snd) -> funcName ^^ (spaced (!^ arg') ^^ !^ nonExprArg)
+    | Some (nonExprArg, Fst) -> funcName ^^ (spaced (!^ nonExprArg) ^^ (!^ arg'))
+    | Some (nonExprArg, Snd) -> funcName ^^ (spaced (!^ arg') ^^ (!^ nonExprArg))
     end in 
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
     ^/^ (!^ " | ") ^^ argTyConstr
@@ -242,7 +242,9 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
   | Func1 (argTy, retTy), [arg] -> 
     if interpIsNeeded argTy
     then interpOnce argTy funcName arg retTy
-    else funcName ^^ spaced (!^ arg)
+    else 
+      let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
+      retTyConstr ^^ space ^^ parens (funcName ^^ space ^^ (!^ arg))
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
     begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
     | true, true -> interpTwice arg1Ty arg2Ty funcName arg1 arg2 retTy

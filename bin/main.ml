@@ -14,12 +14,12 @@ let write_doc (outc : Out_channel.t) (doc : document) : unit =
   ToChannel.pretty 1.0 60 outc doc
 
 let () = 
-  let filepath = "./lib/SetInterface.ml" in
+  let filepath = "./lib/StackInterface.ml" in
   let moduleString = string_of_file filepath in 
   let sigName = getModuleSigName filepath in 
   match (run_parser moduleTypeP moduleString) with 
   | Ok m -> 
-    let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
+    let outc = Out_channel.create ~append:false "./lib/Gen2.ml" in
     (* Pretty-print code for importing libraries to [outc] *)
     write_doc outc 
       (imports filepath ^/^ exprADTDecl m ^/^ tyADTDecl m);
