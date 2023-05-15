@@ -187,22 +187,32 @@ let map2 ~f (a1, a2) = (f a1, f a2)
 
 (** Applies a function pointwise on a triple *)  
 let map3 ~f (a1, a2, a3) = (f a1, f a2, f a3)  
-(* 
-let freshNames (arg1, arg2 : ty * ty) : string * string = 
-  map2 ~f:(fun arg -> genVarNamesSingleton arg ^ Int.to_string i ^ "\'") (arg1, arg2) *)
 
+(** Auxiliary data type for indicating the position of a non-[expr] argument
+    to a function *)
+type argPos = Fst | Snd
+  [@@deriving sexp]
 
-(** Pattern matches [interp] on one argument of type [expr] *)  
-let interpOnce (argTy : ty) (funcName : document) (arg : ident) (retTy : ty) : document = 
+(** Pattern matches [interp] on one argument of type [expr] 
+    If [nonExprArg] is [Some] of some value, it is placed
+    in the appropriate argument position during function application *)  
+let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : ident) (retTy : ty) : document = 
   (* Obtain appropriate constructors based on the arg & return types *)    
   let (argTyConstr, retTyConstr) = 
     map2 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (argTy, retTy) in
   (* Generate a fresh variable name *)  
   let arg' = genVarNamesSingleton ~prime:true argTy in
+  (* Identify the position of any arguments whose type are not [expr] *)
+  let funcApp = 
+    begin match nonExprArg with 
+    | None -> funcName ^^ space ^^ (!^ arg') 
+    | Some (nonExprArg, Fst) -> funcName ^^ (spaced (!^ nonExprArg) ^^ !^ arg')
+    | Some (nonExprArg, Snd) -> funcName ^^ (spaced (!^ arg') ^^ !^ nonExprArg)
+    end in 
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
     ^/^ (!^ " | ") ^^ argTyConstr
     ^^ (space ^^ !^ arg') 
-    ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ space ^^ (!^ arg'))
+    ^^ sArrow ^^ spaced retTyConstr ^^ parens funcApp
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
@@ -213,10 +223,9 @@ let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document)
   let (arg1TyConstr, arg2TyConstr, retTyConstr) = 
     map3 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (arg1Ty, arg2Ty, retTy) in
   (* Generate fresh variable names *)    
-  match List.map ~f:string (genVarNames ~prime:true [arg1Ty; arg2Ty]) with 
+  match List.map ~f:(!^) (genVarNames ~prime:true [arg1Ty; arg2Ty]) with 
    | [arg1'; arg2'] -> 
-    (* map2 ~f:(fun ty -> !^ (genVarNamesSingleton ~prime:true ty)) (arg1Ty, arg2Ty) in  *)
-    align @@ (!^ "begin match ") 
+     align @@ (!^ "begin match ") 
       ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
       ^^ (!^ " with ")
       ^/^ (!^ " | ") ^^ OCaml.tuple [arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2']
@@ -237,8 +246,8 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
     begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
     | true, true -> interpTwice arg1Ty arg2Ty funcName arg1 arg2 retTy
-    | true, _ -> interpOnce arg1Ty funcName arg1 retTy 
-    | _, true -> interpOnce arg2Ty funcName arg2 retTy 
+    | true, _ -> interpOnce arg1Ty ~nonExprArg:(Some (arg2, Snd)) funcName arg1 retTy 
+    | _, true -> interpOnce arg2Ty ~nonExprArg:(Some (arg1, Fst)) funcName arg2 retTy 
     | _, _ -> funcName ^^ spaced (!^ arg1) ^^ spaced (!^ arg2)
     end
   | valTy, _ -> 
