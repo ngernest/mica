@@ -243,6 +243,7 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     if interpIsNeeded argTy
     then interpOnce argTy funcName arg retTy
     else 
+      (* Generate the appropriate constructor based on the return type *)
       let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
       retTyConstr ^^ space ^^ parens (funcName ^^ space ^^ (!^ arg))
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
@@ -279,7 +280,6 @@ let interpDefn (m : moduleSig) : document =
   ^^ (concat (List.mapi ~f:interpHelper exprConstrs)) (* TODO: check if calling [concat] is valid *)
   ^^ break 1
 
-
 (** Generates the definition of the [ExprToImpl] functor *)  
 let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 
   hang 2 @@ 
@@ -289,3 +289,16 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   ^/^ (interpDefn m)
   ^/^ (!^ "end")  
   ^^ hardline
+
+(** Generates the definition of the [gen_expr] Quickcheck generator for 
+    the [expr] datatype *)  
+let genExprDef : document = 
+  hang 2 @@ 
+  !^ "let rec gen_expr (ty : ty) : expr Generator.t = " 
+  ^/^ (!^ "let module G = Generator in ")
+  ^/^ (!^ "let open G.Let_syntax in ")
+  ^/^ (!^ "let%bind k = G.size in ")
+  ^/^ (!^ "match ty, k with ")
+  ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ (!^ "return Empty"))
+
+  (** TODO: replace [Empty] with something more generic *)
