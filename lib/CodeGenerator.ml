@@ -33,6 +33,19 @@ let imports (filepath : string) : document =
 let sexpAnnotation : document = 
   blank 2 ^^ !^ "[@@deriving sexp]" ^^ hardline   
 
+(** [isArrowType v] returns true if the value declaration [v] has an arrow type *)  
+let isArrowType (v : valDecl) : bool = 
+  match valType v with 
+  | Func1 _ | Func2 _ -> true 
+  | _ -> false  
+
+(** [tyIsArrow ty] returns true if [ty] correspons to an arrow type *)    
+let tyIsArrow (ty : ty) : bool = 
+  match ty with 
+  | Func1 _ | Func2 _ -> true 
+  | _ -> false    
+    
+
 (** Extracts the argument types of functions defined in the module signature,
     and generates constructors for the [expr] ADT 
     that take these types as type parameters *)
@@ -133,13 +146,18 @@ let extractReturnTypes (v : valDecl) : string =
 let uniqRetTypesInSig (m : moduleSig) : string list = 
   let open String in
   List.dedup_and_sort ~compare:compare
-    @@ List.map ~f:(fun ty -> extractReturnTypes ty |> capitalize) m.valDecls
+    @@ List.map ~f:(fun v -> extractReturnTypes v |> capitalize) m.valDecls
     
-(** Returns a list of constructors for the [ty] ADT 
-    (formatted as PPrint documents) *)
-let tyADTConstructors (m : moduleSig) : document list = 
-  List.map ~f:(!^) (uniqRetTypesInSig m)
+(** Returns an association list of constructors for the [ty] ADT 
+    where each element is the form [(ty, <constructor for the ADT ty>)] *)    
+let tyADTConstructorsAssocList (m : moduleSig) : (ty * string) list = 
+  let open String in
+  m.valDecls 
+    |> List.map ~f:(fun v -> (valType v, capitalize @@ extractReturnTypes v))
+    |> List.dedup_and_sort 
+       ~compare:(fun (_, tyName1) (_, tyName2) -> compare tyName1 tyName2)
     
+
 (** Generates the definition of the [ty] ADT *)  
 let tyADTDecl (m : moduleSig) : document = 
   let retTypes = uniqRetTypesInSig m in 
@@ -295,12 +313,63 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   ^/^ (!^ "end")  
   ^^ hardline
 
+(** Produces the RHS of the pattern matches in [gen_expr] *)  
+(** TODO: rewrite [genExprPatternRHS] in light of what is currently in [genExprDef] *)
+let genExprPatternRHS (v, args, funcApp : valDecl * string list * document) : document = 
+  match valType v, args with 
+  | Func1 (argTy, retTy), [arg] -> 
+    let binding = 
+      Printf.sprintf "let%%map %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
+        arg (string_of_ty ~t:"T" ~alpha:"Alpha" argTy) in
+    !^ binding ^/^ funcApp
+  | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> !^ "failwith " ^^ OCaml.string "TODO"
+  | _ -> failwith "malformed"
+
+(** Takes in a pair of the form (ty, tyADTConstructorString) 
+    and returns a triple of the form [(ty, constructorArgs, constructor applied to args)], 
+    eg. [(["x", "e"], !^ "Mem(x,e)")] *)
+let getExprConstructor' (ty, constr : ty * string) : ty * string list * document = 
+  match ty, constr with 
+  | _, "Empty" -> (ty, [], !^ constr)
+  | Int, _ -> (ty, ["n"], printConstructor constr ["n"])
+  | Char, _ -> (ty, ["c"], printConstructor constr ["c"])
+  | Bool, _ -> (ty, ["b"], printConstructor constr ["b"])
+  | Unit, _ -> (ty, [], OCaml.unit)
+  | Alpha, _ -> (ty, ["a"], printConstructor constr ["a"])
+  | T, _ | AlphaT, _ -> (ty, ["t"], printConstructor constr ["t"])
+  | Func1 (argTy, _), _ ->
+    let singletonArg = genVarNames [argTy] in 
+    (ty, singletonArg, printConstructor constr singletonArg)
+  | Func2 (arg1, arg2, _), _ -> 
+    let args = genVarNames [arg1; arg2] in 
+    (ty, args, printConstructor constr args)
+  
+
 (** Generates the definition of the [gen_expr] Quickcheck generator for 
     the [expr] datatype *)  
+(* TODO: replace [return Empty] with something more generic? *)
 let genExprDef (m : moduleSig) : document = 
-  let constrs = tyADTConstructors m in
-  let patterns = List.map ~f:(fun c -> OCaml.tuple [c; underscore]) constrs in
-  hang 2 @@ 
+  let open List in
+  let tyAssocList = tyADTConstructorsAssocList m in 
+  let (_, tyConstrs) = List.unzip tyAssocList in
+  let patterns = map ~f:(fun c -> OCaml.tuple [!^ c; underscore]) tyConstrs in
+  (** TODO: need a way of mapping each [tyConstr] to the appropriate RHS of the pattern match *)
+  let _ = tyAssocList 
+    |> filter ~f:(fun (ty, _) -> tyIsArrow ty) 
+    |> map ~f:getExprConstructor' in 
+  
+  (* let (vs, funcArgs, funcApps) = 
+    m.valDecls 
+      |> filter ~f:isArrowType 
+      |> map ~f:(fun v -> let (args, doc) = getExprConstructor v in (v, args, doc)) 
+      |> map ~f:genExprPatternRHS 
+      |> unzip3 *)
+  in
+  (** TODO: figure out what to do here??? *)    
+  (* let innerPatternMatches = 
+    List.map ~f:genExprPatternRHS (List.zip_exn m.valDecls funcArgs) in *)
+  hardline
+  ^^ hang 2 @@ 
   !^ "let rec gen_expr (ty : ty) : expr Generator.t = " 
   ^/^ (!^ "let module G = Generator in ")
   ^/^ (!^ "let open G.Let_syntax in ")
@@ -312,4 +381,8 @@ let genExprDef (m : moduleSig) : document =
       (fun pat -> pat ^^ sArrow ^^ (!^ "failwith ") ^^ OCaml.string "TODO") 
       patterns
   
-  (** TODO: replace [Empty] with something more generic *)
+(* TODO: figure out which [expr]s return a certain [ty] *)
+
+
+
+
