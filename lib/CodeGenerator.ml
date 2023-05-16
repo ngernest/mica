@@ -134,7 +134,12 @@ let uniqRetTypesInSig (m : moduleSig) : string list =
   let open String in
   List.dedup_and_sort ~compare:compare
     @@ List.map ~f:(fun ty -> extractReturnTypes ty |> capitalize) m.valDecls
-
+    
+(** Returns a list of constructors for the [ty] ADT 
+    (formatted as PPrint documents) *)
+let tyADTConstructors (m : moduleSig) : document list = 
+  List.map ~f:(!^) (uniqRetTypesInSig m)
+    
 (** Generates the definition of the [ty] ADT *)  
 let tyADTDecl (m : moduleSig) : document = 
   let retTypes = uniqRetTypesInSig m in 
@@ -292,7 +297,9 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
 
 (** Generates the definition of the [gen_expr] Quickcheck generator for 
     the [expr] datatype *)  
-let genExprDef : document = 
+let genExprDef (m : moduleSig) : document = 
+  let constrs = tyADTConstructors m in
+  let patterns = List.map ~f:(fun c -> OCaml.tuple [c; underscore]) constrs in
   hang 2 @@ 
   !^ "let rec gen_expr (ty : ty) : expr Generator.t = " 
   ^/^ (!^ "let module G = Generator in ")
@@ -300,5 +307,9 @@ let genExprDef : document =
   ^/^ (!^ "let%bind k = G.size in ")
   ^/^ (!^ "match ty, k with ")
   ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ (!^ "return Empty"))
-
+  ^/^ sBar
+  ^^ separate_map (hardline ^^ sBar) 
+      (fun pat -> pat ^^ sArrow ^^ (!^ "failwith ") ^^ OCaml.string "TODO") 
+      patterns
+  
   (** TODO: replace [Empty] with something more generic *)

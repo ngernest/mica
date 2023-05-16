@@ -68,18 +68,6 @@ module ExprToImpl (M : SetIntf) = struct
       | _ -> failwith "impossible")
 end
 
-let rec gen_expr_simple (ty : ty) : expr Generator.t =
-  let module G = Generator in
-  let open G.Let_syntax in
-  match ty with
-  | Int ->
-      let%map e = gen_expr_simple T in
-      Size e
-  | Bool -> 
-      let%map e = gen_expr_simple T in 
-      Is_empty e
-  | T -> return Empty
-
 (** Generator for expressions: 
   * [gen_expr ty] produces an generator of [expr]s that have return type [ty] *)  
 
