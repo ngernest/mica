@@ -314,17 +314,6 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   ^^ hardline
 
 (** Produces the RHS of the pattern matches in [gen_expr] *)  
-(** TODO: rewrite [genExprPatternRHS] in light of what is currently in [genExprDef] *)
-(* let genExprPatternRHS (v, args, funcApp : valDecl * string list * document) : document = 
-  match valType v, args with 
-  | Func1 (argTy, retTy), [arg] -> 
-    let binding = 
-      Printf.sprintf "let%%map %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
-        arg (string_of_ty ~t:"T" ~alpha:"Alpha" argTy) in
-    !^ binding ^/^ funcApp
-  | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> !^ "failwith " ^^ OCaml.string "TODO"
-  | _ -> failwith "malformed" *)
-
 let genExprPatternRHS (ty, args, funcApp : ty * string list * document) : ty * document = 
   match ty, args with 
   | Func1 (argTy, _), [arg] -> 
@@ -384,7 +373,7 @@ let genExprDef (m : moduleSig) : document =
         | None -> (!^ "failwith ") ^^ OCaml.string "Missing RHS for pattern"
         end in 
       hardline ^^ sBar ^^ 
-      patternLHS ^^ sArrow ^^ patternRHS)) in
+      patternLHS ^^ sArrow ^^ jump 4 0 patternRHS)) in
   
   hardline
   ^^ hang 2 @@ 
