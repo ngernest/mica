@@ -315,7 +315,7 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
 
 (** Produces the RHS of the pattern matches in [gen_expr] *)  
 (** TODO: rewrite [genExprPatternRHS] in light of what is currently in [genExprDef] *)
-let genExprPatternRHS (v, args, funcApp : valDecl * string list * document) : document = 
+(* let genExprPatternRHS (v, args, funcApp : valDecl * string list * document) : document = 
   match valType v, args with 
   | Func1 (argTy, retTy), [arg] -> 
     let binding = 
@@ -323,7 +323,17 @@ let genExprPatternRHS (v, args, funcApp : valDecl * string list * document) : do
         arg (string_of_ty ~t:"T" ~alpha:"Alpha" argTy) in
     !^ binding ^/^ funcApp
   | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> !^ "failwith " ^^ OCaml.string "TODO"
-  | _ -> failwith "malformed"
+  | _ -> failwith "malformed" *)
+
+let genExprPatternRHS (ty, args, funcApp : ty * string list * document) : ty * document = 
+  match ty, args with 
+  | Func1 (argTy, _), [arg] -> 
+    let binding = 
+      Printf.sprintf "let%%map %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
+        arg (string_of_ty ~t:"T" ~alpha:"Alpha" argTy) in
+    (ty, (!^ binding) ^/^ funcApp)
+  (* | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> !^ "failwith " ^^ OCaml.string "TODO" *)
+  | _ -> (ty, (!^ "failwith ") ^^ OCaml.string "TODO")
 
 (** Takes in a pair of the form (ty, tyADTConstructorString) 
     and returns a triple of the form [(ty, constructorArgs, constructor applied to args)], 
@@ -347,27 +357,35 @@ let getExprConstructor' (ty, constr : ty * string) : ty * string list * document
 
 (** Generates the definition of the [gen_expr] Quickcheck generator for 
     the [expr] datatype *)  
+
 (* TODO: replace [return Empty] with something more generic? *)
 let genExprDef (m : moduleSig) : document = 
-  let open List in
   let tyAssocList = tyADTConstructorsAssocList m in 
-  let (_, tyConstrs) = List.unzip tyAssocList in
-  let patterns = map ~f:(fun c -> OCaml.tuple [!^ c; underscore]) tyConstrs in
-  (** TODO: need a way of mapping each [tyConstr] to the appropriate RHS of the pattern match *)
-  let _ = tyAssocList 
-    |> filter ~f:(fun (ty, _) -> tyIsArrow ty) 
-    |> map ~f:getExprConstructor' in 
   
-  (* let (vs, funcArgs, funcApps) = 
-    m.valDecls 
-      |> filter ~f:isArrowType 
-      |> map ~f:(fun v -> let (args, doc) = getExprConstructor v in (v, args, doc)) 
-      |> map ~f:genExprPatternRHS 
-      |> unzip3 *)
-  in
-  (** TODO: figure out what to do here??? *)    
-  (* let innerPatternMatches = 
-    List.map ~f:genExprPatternRHS (List.zip_exn m.valDecls funcArgs) in *)
+  (** Map each [ty] to the LHS of its corresponding pattern match *)
+  let patternLHSAssocList : (ty * document) list = 
+    tyAssocList
+    |> List.map ~f:(fun (ty, c) -> (ty, OCaml.tuple [!^ c; underscore])) in
+
+  (** Map each [ty] to the RHS of its corresponding pattern match *)
+  let patternRHSAssocList : (ty, document) List.Assoc.t = 
+    List.(tyAssocList 
+    |> filter ~f:(fun (ty, _) -> tyIsArrow ty) 
+    |> map ~f:getExprConstructor' 
+    |> map ~f:genExprPatternRHS) in
+
+  (** Given each (ty, patternLHS) pair, find the [patternRHS] that corresponds
+      to the same ty *)
+  let completePatterns : document list = 
+    List.(map patternLHSAssocList ~f:(fun (ty, patternLHS) -> 
+      let patternRHS = 
+        begin match (Assoc.find patternRHSAssocList ~equal:tyEqual ty) with 
+        | Some rhs -> rhs
+        | None -> (!^ "failwith ") ^^ OCaml.string "Missing RHS for pattern"
+        end in 
+      hardline ^^ sBar ^^ 
+      patternLHS ^^ sArrow ^^ patternRHS)) in
+  
   hardline
   ^^ hang 2 @@ 
   !^ "let rec gen_expr (ty : ty) : expr Generator.t = " 
@@ -376,10 +394,7 @@ let genExprDef (m : moduleSig) : document =
   ^/^ (!^ "let%bind k = G.size in ")
   ^/^ (!^ "match ty, k with ")
   ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ (!^ "return Empty"))
-  ^/^ sBar
-  ^^ separate_map (hardline ^^ sBar) 
-      (fun pat -> pat ^^ sArrow ^^ (!^ "failwith ") ^^ OCaml.string "TODO") 
-      patterns
+  ^^ concat completePatterns
   
 (* TODO: figure out which [expr]s return a certain [ty] *)
 

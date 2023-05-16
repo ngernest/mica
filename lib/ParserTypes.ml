@@ -35,6 +35,22 @@ type ty = Int
           | Func2 of ty * ty * ty
   [@@deriving sexp]
 
+(** Structural equality function for the [ty] datatype *)  
+let rec tyEqual (ty1 : ty) (ty2 : ty) : bool = 
+  match ty1, ty2 with 
+  | Int, Int
+  | Char, Char
+  | Bool, Bool
+  | Unit, Unit
+  | Alpha, Alpha
+  | AlphaT, AlphaT
+  | T, T -> true
+  | Func1 (a1, b1), Func1 (a2, b2) -> 
+    tyEqual a1 a2 && tyEqual b1 b2
+  | Func2 (a1, b1, c1), Func2 (a2, b2, c2) -> 
+    tyEqual a1 a2 && tyEqual b1 b2 && tyEqual c1 c2
+  | _, _ -> false 
+
 (** Converts a [ty] to its string representation 
     Note that [AlphaT] & [T] are converted to "expr" 
     The optional argument [alpha] specifies a concrete base type that should be 
@@ -56,22 +72,9 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string =
   | Func2 (arg1, arg2, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg1; arg2; ret])
 
-(* let rec sexp_of_ty (ty : ty) : Sexp.t = 
-  match ty with 
-  | Int -> Atom "int"
-  | Char -> Atom "char"
-  | Bool -> Atom "bool"
-  | Unit -> Atom "unit"
-  | Alpha -> Atom "\'a"
-  | AlphaT -> List [Atom "\'a"; Atom "t"]
-  | T -> Atom "t"
-  | Func1 (arg, ret) -> List (List.map ~f:sexp_of_ty [arg; ret])
-  | Func2 (arg1, arg2, ret) -> List (List.map ~f:sexp_of_ty [arg1; arg2; ret]) *)
-
 (** Abstract type contained within a module *)  
 type abstractType = T0 | T1 of ty
   [@@deriving sexp]
-
 
 (** Type representing a value declaration *)   
 type valDecl = {
