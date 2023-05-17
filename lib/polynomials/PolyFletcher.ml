@@ -137,3 +137,23 @@ struct
     let a, k = List.fold_left reduce h t in
     R.mul (pow c k) a
 end
+
+(* Ring of integers *)
+module Ring_int = Ring (struct
+  type t = int
+  let of_int x = x                   
+  let to_int x = x
+  let of_string = int_of_string      
+  let to_string = string_of_int
+  let zero = 0                       
+  let one = 1
+  let add = ( + )                    
+  let sub = ( - )
+  let mul = ( * )                    
+  let div = ( / )
+  let compare = Base.Int.compare   
+  let equal = ( = )
+end)
+
+(** Polynomials over the ring of integers *)
+module Polynomial_int = Polynomial(Ring_int)
