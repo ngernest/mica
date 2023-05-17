@@ -65,7 +65,6 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string =
   | Bool -> "bool"
   | Unit -> "unit"
   | Alpha -> alpha
-  (* | AlphaT a -> string_of_ty a ^ " " ^ t *)
   | AlphaT | T -> t
   | Func1 (arg, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])

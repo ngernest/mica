@@ -313,15 +313,32 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   ^/^ (!^ "end")  
   ^^ hardline
 
+(** Produces the code for a monadic bind of [arg] to a QuickCheck generator 
+    producing a value of type [ty], where [ty] must be a non-arrow type
+    (helper function called by [genExprPatternRHS]) *)  
+let argGen (arg : string) (ty : ty) : document = 
+  match ty with 
+  | Int | Alpha -> 
+    !^ (Printf.sprintf "let%%bind %s = G.int_inclusive (-10) 10 in " arg)
+  | Char -> 
+    !^ (Printf.sprintf "let%%bind %s = G.char_alpha in " arg)
+  | Bool -> 
+    !^ (Printf.sprintf "let%%bind %s = G.bool in " arg)
+  | Unit -> 
+    !^ (Printf.sprintf "let%%bind %s = G.unit in " arg)
+  | T | AlphaT -> 
+    !^ (Printf.sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
+        arg (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
+  | _ -> failwith "Higher-order functions not supported"
+
 (** Produces the RHS of the pattern matches in [gen_expr] *)  
 let genExprPatternRHS (ty, args, funcApp : ty * string list * document) : ty * document = 
+  let monadicReturn = !^ "G.return @@ " ^^ funcApp in
   match ty, args with 
   | Func1 (argTy, _), [arg] -> 
-    let binding = 
-      Printf.sprintf "let%%map %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
-        arg (string_of_ty ~t:"T" ~alpha:"Alpha" argTy) in
-    (ty, (!^ binding) ^/^ funcApp)
-  (* | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> !^ "failwith " ^^ OCaml.string "TODO" *)
+    (ty, argGen arg argTy ^/^ monadicReturn)
+  | Func2 (arg1Ty, arg2Ty, _), [arg1; arg2] -> 
+    (ty, argGen arg1 arg1Ty ^/^ argGen arg2 arg2Ty ^/^ monadicReturn)
   | _ -> (ty, (!^ "failwith ") ^^ OCaml.string "TODO")
 
 (** Takes in a pair of the form (ty, tyADTConstructorString) 
