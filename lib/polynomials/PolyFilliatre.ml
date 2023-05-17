@@ -13,9 +13,14 @@
 (*                                                                        *)
 (**************************************************************************)
 
+(* Disable "unused-values" compiler warnings *)
+[@@@ocaml.warning "-32-34"]
+
 (* Polynomials over an abstract ring *)
 
 open Format
+
+
 
 module type Ring = sig
   type t
@@ -24,11 +29,22 @@ module type Ring = sig
   val add : t -> t -> t
   val neg : t -> t
   val mul : t -> t -> t
-
   val equal : t -> t -> bool
-
   val print : formatter -> t -> unit
 end
+
+module IntRing : Ring = struct 
+  open Base
+  type t = Int.t 
+  let zero = Int.zero 
+  let one = Int.one 
+  let add = Int.(+)
+  let neg = Int.(~-)
+  let mul = Int.( * )
+  let equal = Int.(=)
+  let print = Int.pp
+end 
+
 
 let unknown =
   let u = ref (-1) in
@@ -76,11 +92,10 @@ module Make(X : Ring) = struct
     | [] -> X.zero
     | { coef = c; _ } :: _ -> c
 
-  let rec add p1 p2 = match p1, p2 with
-    | [], _ ->
-        p2
-    | _, [] ->
-        p1
+  let rec add p1 p2 = 
+    match p1, p2 with
+    | [], _ -> p2
+    | _, [] -> p1
     | m1 :: r1, m2 :: r2 ->
         if m1.degree > m2.degree then
           m1 :: add r1 p2
@@ -151,3 +166,5 @@ module Make(X : Ring) = struct
 
 end
 
+(** Polynomials over the ring of integers *)
+module IntPolynomial = Make(IntRing)

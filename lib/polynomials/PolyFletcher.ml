@@ -5,12 +5,18 @@ https://blog.shaynefletcher.org/2017/03/polynomials-over-rings.html
 
 module type ARITH = sig
   type t
-  val of_int : int -> t            val to_int : t -> int
-  val of_string : string -> t      val to_string : t -> string
-  val zero : t                     val one : t
-  val add : t -> t -> t            val sub : t -> t -> t
-  val mul : t -> t -> t            val div : t -> t -> t
-  val compare : t -> t -> int      val equal : t -> t -> bool
+  val of_int : int -> t            
+  val to_int : t -> int
+  val of_string : string -> t      
+  val to_string : t -> string
+  val zero : t                     
+  val one : t
+  val add : t -> t -> t            
+  val sub : t -> t -> t
+  val mul : t -> t -> t            
+  val div : t -> t -> t
+  val compare : t -> t -> int      
+  val equal : t -> t -> bool
 end
 
 
@@ -18,9 +24,12 @@ module type RING = sig
   type t
   type extern_t
   val print : t -> unit
-  val make : extern_t -> t         val show : t -> extern_t
-  val zero : t                     val one : t
-  val add : t -> t -> t            val mul : t -> t -> t
+  val make : extern_t -> t         
+  val show : t -> extern_t
+  val zero : t                     
+  val one : t
+  val add : t -> t -> t            
+  val mul : t -> t -> t
   val equal : t -> t -> bool
 end
 
