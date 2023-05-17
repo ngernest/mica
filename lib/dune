@@ -4,3 +4,5 @@
  (preprocess
   (pps ppx_jane))
  (inline_tests))
+
+(include_subdirs unqualified)

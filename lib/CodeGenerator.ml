@@ -149,7 +149,7 @@ let uniqRetTypesInSig (m : moduleSig) : string list =
     @@ List.map ~f:(fun v -> extractReturnTypes v |> capitalize) m.valDecls
     
 (** Returns an association list of constructors for the [ty] ADT 
-    where each element is the form [(ty, <constructor for the ADT ty>)] *)    
+    where each element is the form [(ty, <constructor for the ty ADT>)] *)    
 let tyADTConstructorsAssocList (m : moduleSig) : (ty * string) list = 
   let open String in
   m.valDecls 
@@ -326,7 +326,7 @@ let genExprPatternRHS (ty, args, funcApp : ty * string list * document) : ty * d
 
 (** Takes in a pair of the form (ty, tyADTConstructorString) 
     and returns a triple of the form [(ty, constructorArgs, constructor applied to args)], 
-    eg. [(["x", "e"], !^ "Mem(x,e)")] *)
+    eg. [(Bool, ["x", "e"], !^ "Mem(x,e)")] *)
 let getExprConstructor' (ty, constr : ty * string) : ty * string list * document = 
   match ty, constr with 
   | _, "Empty" -> (ty, [], !^ constr)
@@ -358,8 +358,9 @@ let genExprDef (m : moduleSig) : document =
 
   (** Map each [ty] to the RHS of its corresponding pattern match *)
   let patternRHSAssocList : (ty, document) List.Assoc.t = 
-    List.(tyAssocList 
-    |> filter ~f:(fun (ty, _) -> tyIsArrow ty) 
+    List.(m.valDecls 
+    |> filter ~f:(fun v -> tyIsArrow (valType v)) 
+    |> map ~f:(fun v -> (valType v, getExprConstructorName v))
     |> map ~f:getExprConstructor' 
     |> map ~f:genExprPatternRHS) in
 
@@ -385,7 +386,6 @@ let genExprDef (m : moduleSig) : document =
   ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ (!^ "return Empty"))
   ^^ concat completePatterns
   
-(* TODO: figure out which [expr]s return a certain [ty] *)
 
 
 
