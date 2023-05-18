@@ -9,10 +9,6 @@ open! Lib.ParserTypes
 open! Lib.ModuleParser
 open! Lib.CodeGenerator
 
-(** Writes a PPrint document to an Out_channel (eg. [stdout]) *)
-let write_doc (outc : Out_channel.t) (doc : document) : unit = 
-  ToChannel.pretty 1.0 60 outc doc
-
 let () = 
   let filepath = "./lib/SetInterface.ml" in
   let moduleString = string_of_file filepath in 

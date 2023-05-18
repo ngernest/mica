@@ -1,6 +1,11 @@
 open! Base
 open! PPrint
 open! ParserTypes
+open! Stdio
+
+(** Writes a PPrint document to an Out_channel (eg. [stdout]) *)
+let write_doc (outc : Out_channel.t) (doc : document) : unit = 
+  ToChannel.pretty 1.0 60 outc doc
 
 (** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
 let spaced (doc : document) : document = 
@@ -331,34 +336,41 @@ let argGen (arg : string) (ty : ty) : document =
         arg (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
   | _ -> failwith "Higher-order functions not supported"
 
-(** Produces the RHS of the pattern matches in [gen_expr] *)  
-let genExprPatternRHS (ty, args, funcApp : ty * string list * document) : ty * document = 
+(** Produces the RHS of the pattern matches in [gen_expr] 
+    Eg. if ty = [Bool], constr = [Mem] and funcApp = [Mem(x, e)], then then 
+    [genExprPatternRHS (ty, args, constr, funcApp)] produces the code
+    "let%bind arg = G.bool in G.return @@ Mem(x, e)", where
+    [G] = [Base_quickcheck.Generator]. *)  
+let genExprPatternRHS (ty, args, constr, funcApp : ty * string list * string * document) 
+  : ty * (document * string) = 
+  let patternName = String.uncapitalize constr in 
+  let preamble = !^ ("let " ^ patternName ^ " = ") in
   let monadicReturn = !^ "G.return @@ " ^^ funcApp in
   match ty, args with 
   | Func1 (argTy, _), [arg] -> 
-    (ty, argGen arg argTy ^/^ monadicReturn)
+    ty, (preamble ^^ jump 2 1 @@ argGen arg argTy ^/^ monadicReturn, patternName)
   | Func2 (arg1Ty, arg2Ty, _), [arg1; arg2] -> 
-    (ty, argGen arg1 arg1Ty ^/^ argGen arg2 arg2Ty ^/^ monadicReturn)
-  | _ -> (ty, (!^ "failwith ") ^^ OCaml.string "TODO")
+    ty, (preamble ^^ jump 2 1 @@ argGen arg1 arg1Ty ^/^ argGen arg2 arg2Ty ^/^ monadicReturn, patternName)
+  | _ -> ty, ((!^ "failwith ") ^^ OCaml.string "TODO", "no pattern")
 
 (** Takes in a pair of the form (ty, tyADTConstructorString) 
-    and returns a triple of the form [(ty, constructorArgs, constructor applied to args)], 
-    eg. [(Bool, ["x", "e"], !^ "Mem(x,e)")] *)
-let getExprConstructor' (ty, constr : ty * string) : ty * string list * document = 
+    and returns a 4-tuple of the form [(ty, constructorArgs, constructor, constructor applied to args)], 
+    eg. [(Bool, ["x", "e"], "Mem", !^ "Mem(x,e)")] *)
+let getExprConstructor' (ty, constr : ty * string) : ty * string list * string * document = 
   match ty, constr with 
-  | _, "Empty" -> (ty, [], !^ constr)
-  | Int, _ -> (ty, ["n"], printConstructor constr ["n"])
-  | Char, _ -> (ty, ["c"], printConstructor constr ["c"])
-  | Bool, _ -> (ty, ["b"], printConstructor constr ["b"])
-  | Unit, _ -> (ty, [], OCaml.unit)
-  | Alpha, _ -> (ty, ["a"], printConstructor constr ["a"])
-  | T, _ | AlphaT, _ -> (ty, ["t"], printConstructor constr ["t"])
+  | _, "Empty" -> (ty, [], constr, !^ constr)
+  | Int, _ -> (ty, ["n"], constr, printConstructor constr ["n"])
+  | Char, _ -> (ty, ["c"], constr, printConstructor constr ["c"])
+  | Bool, _ -> (ty, ["b"], constr, printConstructor constr ["b"])
+  | Unit, _ -> (ty, [], constr, OCaml.unit)
+  | Alpha, _ -> (ty, ["a"], constr, printConstructor constr ["a"])
+  | T, _ | AlphaT, _ -> (ty, ["t"], constr, printConstructor constr ["t"])
   | Func1 (argTy, _), _ ->
     let singletonArg = genVarNames [argTy] in 
-    (ty, singletonArg, printConstructor constr singletonArg)
+    (ty, singletonArg, constr, printConstructor constr singletonArg)
   | Func2 (arg1, arg2, _), _ -> 
     let args = genVarNames [arg1; arg2] in 
-    (ty, args, printConstructor constr args)
+    (ty, args, constr, printConstructor constr args)
 
 (** [replicate n a] produces a list containing [n] copies of [a] *)    
 let replicate ~(n : int) (a : 'a) : 'a list = 
@@ -381,12 +393,10 @@ let genExprDef (m : moduleSig) : document =
     |> List.map ~f:(fun (ty, c) -> (ty, OCaml.tuple [!^ c; underscore])) in
 
   (** Map each [ty] to the RHS of its corresponding pattern match *)
-  let patternRHSAssocList = 
+  let patternRHSAssocList : (ty, document * string) List.Assoc.t = 
     List.(m.valDecls 
     |> filter ~f:(fun v -> tyIsArrow (valType v)) 
     |> map ~f:(fun v -> (valType v, getExprConstructorName v))
-    (* |> Assoc.sort_and_group ~compare:compare_ty  
-    |> map ~f:(fun (ty, constrs) -> map ~f:getExprConstructor' ) *)
     |> map ~f:getExprConstructor' 
     |> map ~f:genExprPatternRHS) in
 
@@ -394,13 +404,22 @@ let genExprDef (m : moduleSig) : document =
       to the same ty *)
   let completePatterns : document list = 
     List.(map patternLHSAssocList ~f:(fun (ty, patternLHS) -> 
-      let patternRHS = 
-        begin match (Assoc.find patternRHSAssocList ~equal:tyEqual ty) with 
-        | Some rhs -> rhs
-        | None -> (!^ "failwith ") ^^ OCaml.string "Missing RHS for pattern"
+      (* write_doc stdout (!^ "patternLHS = " ^^ patternLHS ^^ hardline);
+      Stdio.printf "patternRhsAssocList length = %d\n" (length patternRHSAssocList); *)
+
+      let groupedPatternRHSes : (ty, (document * string) list) Assoc.t = 
+        Assoc.sort_and_group ~compare:compare_ty patternRHSAssocList in
+
+      let patternRHSes = 
+        begin match (Assoc.find groupedPatternRHSes ~equal:tyEqual ty) with 
+        | Some [(rhs, patternName)] -> rhs ^/^ !^ ("in " ^ patternName)
+        | Some patterns -> 
+          let (rhses, patternNames) = List.unzip patterns in 
+          separate (!^ " in " ^^ hardline) rhses ^/^ (!^ "in G.union ") ^^ OCaml.list (!^) patternNames
+        | None -> (!^ "failwith ") ^^ OCaml.string "Missing RHS for pattern" 
         end in 
       hardline ^^ sBar ^^ 
-      patternLHS ^^ sArrow ^^ jump 4 0 patternRHS)) in
+      patternLHS ^^ sArrow ^^ jump 4 0 patternRHSes)) in
   
   hardline
   ^^ hang 2 @@ 
