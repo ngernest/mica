@@ -33,7 +33,7 @@ type ty = Int
           | T 
           | Func1 of ty * ty 
           | Func2 of ty * ty * ty
-  [@@deriving sexp]
+  [@@deriving sexp, compare]
 
 (** Structural equality function for the [ty] datatype *)  
 let rec tyEqual (ty1 : ty) (ty2 : ty) : bool = 

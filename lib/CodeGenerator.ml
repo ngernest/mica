@@ -359,7 +359,14 @@ let getExprConstructor' (ty, constr : ty * string) : ty * string list * document
   | Func2 (arg1, arg2, _), _ -> 
     let args = genVarNames [arg1; arg2] in 
     (ty, args, printConstructor constr args)
-  
+
+(** [replicate n a] produces a list containing [n] copies of [a] *)    
+let replicate ~(n : int) (a : 'a) : 'a list = 
+  let rec helper (n : int) (acc : 'a list) : 'a list = 
+    if n = 0 then acc 
+    else helper (n - 1) (a :: acc) in 
+  helper n []
+    
 
 (** Generates the definition of the [gen_expr] Quickcheck generator for 
     the [expr] datatype *)  
@@ -374,10 +381,12 @@ let genExprDef (m : moduleSig) : document =
     |> List.map ~f:(fun (ty, c) -> (ty, OCaml.tuple [!^ c; underscore])) in
 
   (** Map each [ty] to the RHS of its corresponding pattern match *)
-  let patternRHSAssocList : (ty, document) List.Assoc.t = 
+  let patternRHSAssocList = 
     List.(m.valDecls 
     |> filter ~f:(fun v -> tyIsArrow (valType v)) 
     |> map ~f:(fun v -> (valType v, getExprConstructorName v))
+    (* |> Assoc.sort_and_group ~compare:compare_ty  
+    |> map ~f:(fun (ty, constrs) -> map ~f:getExprConstructor' ) *)
     |> map ~f:getExprConstructor' 
     |> map ~f:genExprPatternRHS) in
 
