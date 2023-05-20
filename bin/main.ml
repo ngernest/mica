@@ -21,7 +21,7 @@ let () =
       (imports filepath ^/^ exprADTDecl m ^/^ tyADTDecl m);
     write_doc outc 
       (functorDef m ~sigName:sigName ~functorName:"ExprToImpl");
-    write_doc outc (genExprDefNew m);
+    write_doc outc (genExprDef m);
     Out_channel.flush stdout;
     Out_channel.close outc
 
