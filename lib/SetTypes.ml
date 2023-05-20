@@ -16,6 +16,7 @@ type expr =
   | Mem of int * expr 
   | Size of expr
   | Is_empty of expr  
+  | Invariant of expr
   [@@deriving sexp_of, quickcheck]
 
 (** ADT representing types, where [T] is the abstract type of the module *)
@@ -66,6 +67,10 @@ module ExprToImpl (M : SetIntf) = struct
       (match interp e with 
       | ValT v -> ValBool (M.is_empty v)
       | _ -> failwith "impossible")
+    | Invariant e -> 
+      (match interp e with 
+      | ValT v -> ValBool (M.invariant v)
+      | _ -> failwith "impossible")
 end
 
 (** Generator for expressions: 
@@ -88,7 +93,10 @@ let rec gen_expr (ty : ty) : expr Generator.t =
     let isEmpty = 
       let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
         Is_empty e in
-    G.weighted_union [(1.0, mem); (3.0, isEmpty)]
+    let invariant = 
+      let%map e = G.with_size ~size:(k / 2) (gen_expr T) in 
+        Invariant e in 
+    G.weighted_union [(1.0, mem); (3.0, isEmpty); (1.0, invariant)]
   | (T, _) -> 
     let add = 
       let%bind x = G.int_inclusive (-10) 10 in 
