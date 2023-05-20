@@ -8,8 +8,12 @@ open! Lib.Parser
 open! Lib.ParserTypes
 open! Lib.ModuleParser
 open! Lib.CodeGenerator
+open! Lib.CmdLineParser
 
-let () = 
+
+let () = Command_unix.run ~version:"1.0" cmdLineParser
+
+(* let () = 
   let filepath = "./lib/SetInterface.ml" in
   let moduleString = string_of_file filepath in 
   let sigName = getModuleSigName filepath in 
@@ -25,7 +29,7 @@ let () =
     Out_channel.flush stdout;
     Out_channel.close outc
 
-  | Error err -> printf "error = %s\n" err
+  | Error err -> printf "error = %s\n" err *)
 
   
 
