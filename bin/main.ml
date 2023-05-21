@@ -17,26 +17,25 @@ let cmdLineParser : Command.t =
     ~summary:"Automated Property-Based Testing for OCaml modules"
     ~readme:(fun () -> "TODO: Complete readme")
     (let%map_open.Command 
-      sigFile = anon ("signature file" %: regular_file) in
-      (* and implFile1 = anon ("implementation file 1" %: regular_file)
-      and implFile2 = anon ("implementation file 2" %: regular_file) in *)
+      sigFile = anon ("signature file" %: regular_file) 
+      and implFile1 = anon ("implementation file 1" %: regular_file)
+      and implFile2 = anon ("implementation file 2" %: regular_file) in
     fun () -> 
+      let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
-      let sigName = getModuleSigName sigFile in 
-      match (run_parser moduleTypeP moduleString) with 
-      | Ok m -> 
-        let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
-        (* Pretty-print code for importing libraries to [outc] *)
-        write_doc outc 
-          (imports sigFile ^/^ exprADTDecl m ^/^ tyADTDecl m);
-        write_doc outc 
-          (functorDef m ~sigName:sigName ~functorName:"ExprToImpl");
-        write_doc outc (genExprDef m);
-        Out_channel.flush stdout;
-        Out_channel.close outc
-
-      | Error err -> printf "error = %s\n" err)
-
+      let (sigName, modName1, modName2) = 
+        map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
+      begin match (run_parser moduleTypeP moduleString) with 
+        | Ok m -> 
+          let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
+          write_doc outc (imports sigName modName1 modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
+          write_doc outc (functorDef m ~sigName ~functorName);
+          write_doc outc (genExprDef m);
+          write_doc outc (implModuleBindings ~functorName modName1 modName2);
+          Out_channel.flush stdout;
+          Out_channel.close outc
+        | Error err -> printf "error = %s\n" err
+      end)
 
 let () = Command_unix.run ~version:"1.0" cmdLineParser
 

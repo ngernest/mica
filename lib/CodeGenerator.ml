@@ -22,15 +22,15 @@ let getModuleSigName (filepath : string) : string =
     
 (** [imports filepath] prints out a PPrint document that imports
     the requisite modules for the PBT code.
-    The [filepath] argument should be a POSIX filepath specifying
-    the path to the .ml/.mli file containing the module signature under test *)
-let imports (filepath : string) : document = 
-  let sigFile = getModuleSigName filepath in
+    The [sigName, modName1, modName2] arguments are the names of the 
+    module signatures & the two module implementations, which must
+    be the same as their corresponding [.ml] files. *)
+let imports (sigName : string) (modName1 : string) (modName2 : string) : document = 
   (!^ "open! Base") 
-  ^^ hardline 
-  ^^ (!^ "open! Base_quickcheck")
-  ^^ hardline
-  ^^ !^ ("open " ^ sigFile) 
+  ^/^ !^ "open! Base_quickcheck"
+  ^/^ !^ ("open " ^ sigName)
+  ^/^ !^ ("open " ^ modName1)
+  ^/^ !^ ("open " ^ modName2)
   ^^ hardline
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
@@ -437,6 +437,17 @@ let genExprDef (m : moduleSig) : document =
   ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ (!^ "return Empty"))
   ^^ concat completePatterns
 
+(** Produces a PPrint document of an OCaml functor application, where 
+    [functorName] is the name of the functor, and [arg] is the name
+    of the argument to the functor *)  
+let functorApp ~(functorName : moduleName) (arg : string) : document = 
+  OCaml.variant "functorApp" functorName 1 [!^ arg]
 
-
+(** Produces the module bindings for the two module implemntations [I1, I2], 
+    where [functorName] is the name of the functor that procduces the PBT test harness,
+    and [modName1] & [modName2] are the names of the two module implementaitons *)  
+let implModuleBindings ~(functorName : moduleName) (modName1 : string) (modName2 : string) : document = 
+  let i1 = !^ "module I1 = " ^^ (functorApp ~functorName modName1) in 
+  let i2 = !^ "module I2 = " ^^ (functorApp ~functorName modName2) in
+  hardline ^/^ i1 ^/^ i2 
 
