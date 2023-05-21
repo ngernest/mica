@@ -11,6 +11,33 @@ open! Lib.CodeGenerator
 open! Lib.CmdLineParser
 
 
+(** Parses the names of the signature & implementation files from the cmd-line *)
+let cmdLineParser : Command.t =
+  Command.basic
+    ~summary:"Automated Property-Based Testing for OCaml modules"
+    ~readme:(fun () -> "TODO: Complete readme")
+    (let%map_open.Command 
+      sigFile = anon ("signature file" %: regular_file) in
+      (* and implFile1 = anon ("implementation file 1" %: regular_file)
+      and implFile2 = anon ("implementation file 2" %: regular_file) in *)
+    fun () -> 
+      let moduleString = string_of_file sigFile in 
+      let sigName = getModuleSigName sigFile in 
+      match (run_parser moduleTypeP moduleString) with 
+      | Ok m -> 
+        let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
+        (* Pretty-print code for importing libraries to [outc] *)
+        write_doc outc 
+          (imports sigFile ^/^ exprADTDecl m ^/^ tyADTDecl m);
+        write_doc outc 
+          (functorDef m ~sigName:sigName ~functorName:"ExprToImpl");
+        write_doc outc (genExprDef m);
+        Out_channel.flush stdout;
+        Out_channel.close outc
+
+      | Error err -> printf "error = %s\n" err)
+
+
 let () = Command_unix.run ~version:"1.0" cmdLineParser
 
 (* let () = 

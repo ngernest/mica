@@ -36,20 +36,7 @@ let regular_file =
     (1) Defines a cmd-line argument type which ensures that the 
     input file isn't some Unix file type that can’t be read, and 
     (2) Prompts the user if no value is provided *)        
+(** TODO: not sure why this doesn't work *)      
 let anon_prompt_reg_file (name : string) : string Command.Param.t = 
   anon_prompt name is_filename
-
-(** Parses the names of the signature & implementation files from the cmd-line *)
-let cmdLineParser : Command.t =
-  Command.basic
-    ~summary:"Automated Property-Based Testing for OCaml modules"
-    ~readme:(fun () -> "TODO: Complete readme")
-    (let%map_open.Command 
-      sigFile = anon ("signature file" %: regular_file)
-      and implFile1 = anon ("implementation file 1" %: regular_file)
-      and implFile2 = anon ("implementation file 2" %: regular_file) in
-    fun () -> 
-      (* TODO: modify this function so that it invokes the module parser & code generator *)
-      printf "sigFile = %s, implFile = %s, implFile2 = %s" sigFile implFile1 implFile2)
-
 

@@ -66,7 +66,7 @@ end
 let dedup lst = 
     lst |> List.sort_uniq Stdlib.compare
 
-(** Converts the interior elments of a list ot a stirng*)    
+(** Converts the interior elments of a list of a string*)    
 let interior string_of_elt h t = 
     t
     |> List.map string_of_elt
