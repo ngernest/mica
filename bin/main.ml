@@ -11,11 +11,26 @@ open! Lib.CodeGenerator
 open! Lib.CmdLineParser
 
 (** Name of the generated file containing the PBT code *)
-let pbtFileName : string = "./lib/Generated.ml"
+let pbtFilePath : string = "./lib/Generated.ml"
 
 (** Name of the generated executable file which compares two modules
     for observational equivalence *)
-let execFileName : string = "./bin/compare_impls.ml"
+let execFilePath : string = "./bin/compare_impls.ml"
+
+(** Writes the generated PBT code to the file at [pbtFilePath] 
+    [m] is the parsed module signature AST 
+    [functorName] is the name of the functor that produces the test harness
+    [sigName, modName1, modName2] are the names of the signature/two module implementations *)
+let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : string)
+  (sigName : string) (modName1 : string) (modName2 : string) : unit = 
+
+  let pbtFile = Out_channel.create ~append:false pbtFilePath in
+  write_doc pbtFile (imports sigName modName1 modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
+  write_doc pbtFile (functorDef m ~sigName ~functorName);
+  write_doc pbtFile (genExprDef m);
+  write_doc pbtFile (implModuleBindings ~functorName modName1 modName2);
+  write_doc pbtFile displayErrorDef;
+  Out_channel.close pbtFile
 
 (** Parses the names of the signature & implementation files from the cmd-line *)
 let cmdLineParser : Command.t =
@@ -33,16 +48,10 @@ let cmdLineParser : Command.t =
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
       begin match (run_parser moduleTypeP moduleString) with 
         | Ok m -> 
-          let pbtFile = Out_channel.create ~append:false pbtFileName in
-            write_doc pbtFile (imports sigName modName1 modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
-            write_doc pbtFile (functorDef m ~sigName ~functorName);
-            write_doc pbtFile (genExprDef m);
-            write_doc pbtFile (implModuleBindings ~functorName modName1 modName2);
-            write_doc pbtFile displayErrorDef;
-            Out_channel.close pbtFile;
-
-          let executable = Out_channel.create ~append:false execFileName in
-            write_doc executable (executableImports pbtFileName);
+          writeToPBTFile m ~pbtFilePath ~functorName sigName modName1 modName2;
+          let executable = Out_channel.create ~append:false execFilePath in
+            write_doc executable (executableImports ~pbtFilePath ~execFilePath);
+            write_doc executable (compareImpls m);
 
             (** TODO: generate code for executable file *)
             Out_channel.close executable;

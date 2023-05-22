@@ -17,6 +17,12 @@ let spaced (doc : document) : document =
 (** Aliases for PPrint documents for common OCaml symbols *)  
 let sBar : document = spaced bar  
 let sArrow : document = spaced (!^ "->")
+let star2 : document = star ^^ star
+
+(** Takes a PPrint document [body] and wraps it in the OCaml comment syntax, 
+    i.e. [comment body] is displayed as [(** body *)] *)
+let comment (body : document) : document = 
+  parens @@ enclose (star2 ^^ space) (space ^^ star) body
 
 (** Given a filepath to a .ml/.mli file, retrieves the corresponding name of the 
     top-level module signature (must be the same as the .ml/.mli file) *)  
@@ -40,8 +46,9 @@ let replicate ~(n : int) (a : 'a) : 'a list =
     module signatures & the two module implementations, which must
     be the same as their corresponding [.ml] files. *)
 let imports (sigName : string) (modName1 : string) (modName2 : string) : document = 
-  (!^ "open! Base") 
-  ^/^ !^ "open! Base_quickcheck"
+  comment (!^ "Generated property-based testing code")
+  ^/^ (!^ "open! Base") 
+  ^/^ (!^ "open! Base_quickcheck")
   ^/^ !^ ("open " ^ sigName)
   ^/^ !^ ("open " ^ modName1)
   ^/^ !^ ("open " ^ modName2)
@@ -101,14 +108,15 @@ let printConstructor (constr : string) (args : string list) : document =
 
 (** Converts a string denoting a type to the equivalent [ty] ADT constructor *)  
 let ty_of_string (s : string) : ty = 
-  match s with 
+  match String.uncapitalize s with 
   | "int" -> Int 
   | "char" -> Char 
   | "unit" -> Unit 
+  | "bool" -> Bool
   | "\'a" -> Alpha 
   | "\'a t" -> AlphaT 
   | "t" -> T 
-  | _ -> failwith (Printf.sprintf "Type conversion from string %s not supported" s)
+  | _ -> failwith (Printf.sprintf "Type conversion from \"%s\" not supported" s)
 
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
     to [ty], eg. [varNameHelper Int = n] *)  
@@ -511,32 +519,36 @@ let displayErrorDef : document =
 
 (** Generate requisite imports for the executable file, where 
     [filepath] is the filepath to the executable file *)  
-let executableImports (filepath : string) : document = 
-  !^ ("open! Core")
-  ^/^ !^ ("open! " ^ "Lib." ^ String.capitalize @@ getModuleSigName filepath)
+let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : document = 
+  let open Core.Filename in 
+  comment (!^ "Generated executable for testing observational equivalence of two modules")
+  ^/^ comment (!^ "Usage: " ^^ 
+    brackets @@ !^ (Printf.sprintf "dune exec -- %s.exe" @@ chop_extension execFilePath))
+  ^/^ !^ ("open! Core")
+  ^/^ !^ ("open! " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
   ^/^ hardline
 
+(** Produces Quickcheck code in the executable that tests two modules 
+    for observational equivalence based on [expr]s that return some [tyConstr] of type [ty], 
+    and pattern matching on the equivalent [valConstr]s that they return *)
 let obsEquiv (tyConstr, valConstr : string * string) : document = 
-  let baseTy = String.uncapitalize tyConstr in
+  let baseTy : string = String.uncapitalize tyConstr in
+  let vars : string list = genVarNamesN ~n:2 (ty_of_string baseTy) in
+  let varDocs : document list = List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
 
   !^ "QC.test (gen_expr " ^^ (!^ tyConstr) ^^ !^ ") ~sexp_of:sexp_of_expr ~f:(fun e ->"
   ^^ jump 2 1 @@ 
   !^ "match (I1.interp e, I2.interp e) with "
-  ^/^ sBar ^^ (!^ valConstr) ^^ (!^ "e1, ") ^^ (!^ valConstr) ^^ (!^ "e2") 
-  ^^ sArrow ^^ !^ "[%test_eq: " ^^ (!^ baseTy) ^^ !^ "] " 
-  ^^ !^ (genVarNamesSingleton @@ ty_of_string baseTy)
+  ^/^ sBar ^^ OCaml.tuple varDocs ^^ sArrow ^^ (!^ "[%test_eq: " ^^ (!^ baseTy) ^^ !^ "] ")
+  ^^ separate_map space (!^) vars 
+  ^/^ sBar ^^ (!^ "v1, v2") ^^ sArrow ^^ (!^ "failwith @@ displayError e v1 v2);") 
+  ^^ hardline
 
 (** Generate the executable code for testing observational equivalence
     of two modules *)  
 let compareImpls (m : moduleSig) : document = 
+  let constrs = List.filter ~f:(fun (ty, _) -> not @@ phys_equal (ty_of_string ty) T) 
+    (tyAndValueADTConstructors m) in 
   !^ "let () = "
-  ^/^ jump 2 1 @@ !^ "let module QC = Core.Quickcheck in "
-  ^/^ concat_map obsEquiv (tyAndValueADTConstructors m)
-
-(** TODO: find a way of enumerating all the [ty] constructors that aren't [T]s 
-    and finding the corresponding [Val] constructor
-
-    TOOD: call [genVarNamesN]
-    
-    (eg. associate the [Int] constructor for the [Ty] datatype with the 
-         [ValInt] constructor for the [value] datatype) *)  
+  ^^ jump 2 1 @@ !^ "let module QC = Core.Quickcheck in "
+  ^/^ separate_map hardline obsEquiv constrs
