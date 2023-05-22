@@ -1,7 +1,7 @@
-open! Base
-open! PPrint
-open! ParserTypes
-open! Stdio
+open Base
+open PPrint
+open ParserTypes
+open Stdio
 
 (***********************************************************************************)
 (** Generic utility functions *)
@@ -550,5 +550,5 @@ let compareImpls (m : moduleSig) : document =
   let constrs = List.filter ~f:(fun (ty, _) -> not @@ phys_equal (ty_of_string ty) T) 
     (tyAndValueADTConstructors m) in 
   !^ "let () = "
-  ^^ jump 2 1 @@ !^ "let module QC = Core.Quickcheck in "
+  ^^ jump 2 1 @@ !^ "let module QC = Quickcheck in "
   ^/^ separate_map hardline obsEquiv constrs

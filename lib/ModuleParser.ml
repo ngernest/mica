@@ -25,6 +25,12 @@ let typeParamP : char A.t =
 let sexpAnnotP : unit A.t = 
   constP "[@@deriving sexp]" ()
   
+let ignoreCommentsP : unit A.t = 
+  let body = many @@ wsP (letterP <|> digitP <|> underscoreP) in 
+  let left = stringP "(**" <|> stringP "(*" in 
+  let right = stringP "**)" <|> stringP "*)" in
+  left *> body *> right
+
 (** Parser for an abstract type declaration in a module, eg. [type 'a t] *)
 let abstractTypeDeclP : abstractType A.t = 
   let typeP = stringP "type" in
