@@ -4,10 +4,12 @@
 open PolyInterface
 
 module Polynomial1 : PolyInterface = struct
-  type monomial = { coeff: int; degree : int }
-    [@@deriving fields] 
 
-  type t = monomial list  (* sorted in decr. degrees *)
+  type monomial = { coeff: Base.Int.t; degree : Base.Int.t }
+    [@@deriving fields, sexp] 
+
+  type t = monomial Base.List.t
+    [@@deriving sexp]
 
   let zero = []
   let one = [ { coeff= 1; degree = 0 } ]
@@ -29,13 +31,13 @@ module Polynomial1 : PolyInterface = struct
           if c = 0 then
             add r1 r2
           else
-            { coeff= c; degree = m1.degree } :: add r1 r2
+            { coeff = c; degree = m1.degree } :: add r1 r2
   
   let create ml =
     List.fold_left (fun p (c, d) -> add (monomial c d) p) zero ml
 
-  let mul p1 p2 =
-    let mul_monomial m p =
+  let mult p1 p2 =
+    let mult_monomial m p =
       List.fold_right
         (fun m' acc ->
            let c = m.coeff * m'.coeff in
@@ -43,7 +45,7 @@ module Polynomial1 : PolyInterface = struct
            else { coeff= c; degree = m.degree + m'.degree } :: acc)
         p []
     in
-    List.fold_left (fun p m -> add (mul_monomial m p2) p) zero p1
+    List.fold_left (fun p m -> add (mult_monomial m p2) p) zero p1
 
   let rec power x n =
     if n == 0 then 1

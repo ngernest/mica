@@ -4,7 +4,8 @@ open PolyInterface
 
 module Polynomial2 : PolyInterface = struct
   (* Invariant : Ordered by powers, lower order terms at the front *)
-  type t = (int * int) list 
+  type t = (Base.Int.t * Base.Int.t) Base.List.t 
+    [@@deriving sexp]
 
   let print p =
     List.iter
@@ -46,7 +47,7 @@ module Polynomial2 : PolyInterface = struct
     if c2 = 0 then times (c, k) q
     else (c2, k + k1) :: times (c, k) q
 
-  let mul p = List.fold_left (fun r m -> add r (times m p)) zero
+  let mult p = List.fold_left (fun r m -> add r (times m p)) zero
 
   let rec equal p1 p2 =
     match p1, p2 with
