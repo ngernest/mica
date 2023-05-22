@@ -1,6 +1,15 @@
 (executable
  (public_name module_pbt)
  (name main)
+ (modules main)
  (libraries lib core angstrom stdio pprint)
  (preprocess
   (pps ppx_assert ppx_sexp_conv ppx_jane)))
+
+(executable
+ (name compare_impls)
+ (modules compare_impls)
+ (libraries lib core stdio)
+ (preprocess 
+  (pps ppx_sexp_conv ppx_jane)))
+

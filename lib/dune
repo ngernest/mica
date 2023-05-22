@@ -1,8 +1,8 @@
+(include_subdirs unqualified)
+
 (library
  (name lib)
  (libraries base_quickcheck base core stdio angstrom core_unix pprint core_unix.command_unix)
  (preprocess
   (pps ppx_jane))
  (inline_tests))
-
-(include_subdirs unqualified)

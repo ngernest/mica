@@ -7,3 +7,4 @@ lib/Generated.ml
 lib/SimpleInterface.ml
 lib/test.ml
 lib/Gen2.ml
+bin/compare_impls.ml
