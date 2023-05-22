@@ -3,6 +3,9 @@ open! PPrint
 open! ParserTypes
 open! Stdio
 
+(***********************************************************************************)
+(** Generic utility functions *)
+
 (** Writes a PPrint document to an Out_channel (eg. [stdout]) *)
 let write_doc (outc : Out_channel.t) (doc : document) : unit = 
   ToChannel.pretty 1.0 60 outc doc
@@ -19,7 +22,18 @@ let sArrow : document = spaced (!^ "->")
     top-level module signature (must be the same as the .ml/.mli file) *)  
 let getModuleSigName (filepath : string) : string =
   Core.Filename.(basename filepath |> chop_extension)
-    
+
+
+ (** [replicate n a] produces a list containing [n] copies of [a] *)    
+let replicate ~(n : int) (a : 'a) : 'a list = 
+  let rec helper (n : int) (acc : 'a list) : 'a list = 
+    if n = 0 then acc 
+    else helper (n - 1) (a :: acc) in 
+  helper n []  
+
+(***********************************************************************************)
+(** Code generators for [Generated.ml], the generated PBT code *)
+
 (** [imports filepath] prints out a PPrint document that imports
     the requisite modules for the PBT code.
     The [sigName, modName1, modName2] arguments are the names of the 
@@ -85,6 +99,17 @@ let printConstructor (constr : string) (args : string list) : document =
   | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
+(** Converts a string denoting a type to the equivalent [ty] ADT constructor *)  
+let ty_of_string (s : string) : ty = 
+  match s with 
+  | "int" -> Int 
+  | "char" -> Char 
+  | "unit" -> Unit 
+  | "\'a" -> Alpha 
+  | "\'a t" -> AlphaT 
+  | "t" -> T 
+  | _ -> failwith (Printf.sprintf "Type conversion from string %s not supported" s)
+
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
     to [ty], eg. [varNameHelper Int = n] *)  
 let varNameHelper (ty : ty) : string = 
@@ -92,6 +117,7 @@ let varNameHelper (ty : ty) : string =
   | Alpha -> "x"
   | T | AlphaT -> "e"
   | Int -> "n"
+  | Bool -> "b"
   | _ -> String.prefix (string_of_ty ty) 1
 
 (** Special case of [genVarNames] when we only have one argument type 
@@ -99,6 +125,11 @@ let varNameHelper (ty : ty) : string =
 let genVarNamesSingleton ?(prime = false) (argTy : ty) : string = 
   let varName = varNameHelper argTy in 
   if prime then varName ^ "\'" else varName
+
+(** Generates [n] unique variable names corresponding to a type [ty] *)  
+let genVarNamesN ~(n : int) (ty : ty) : string list = 
+  replicate ~n (varNameHelper ty) |> 
+  List.mapi ~f:(fun i arg -> arg ^ Int.to_string @@ i + 1)
 
 (** Takes a list of argument types, and generates corresponding variable names 
     which are unique for each element of the list 
@@ -111,6 +142,8 @@ let genVarNames ?(prime = false) (argTys : ty list) : string list =
     ~f:(fun i ty -> let var = genVarNamesSingleton ty ^ Int.to_string (i + 1) in 
         if prime then var ^ "\'" else var) 
     argTys
+
+
 
 (** Fetches the [expr] constructor corresponding to a [val] declaration 
     in a module *)
@@ -153,7 +186,6 @@ let uniqRetTypesInSig (m : moduleSig) : string list =
   List.dedup_and_sort ~compare:compare
     @@ List.map ~f:(fun v -> extractReturnType v |> capitalize) m.valDecls
 
-
 (** Generates the definition of the [ty] ADT *)  
 let tyADTDecl (m : moduleSig) : document = 
   let retTypes = uniqRetTypesInSig m in 
@@ -168,10 +200,25 @@ let tyADTDecl (m : moduleSig) : document =
 let getFuncName (v : valDecl) : document = 
   !^ ("M." ^ valName v)     
 
+(** Like [valADTConstructor] (see below), but returns a string 
+    instead of a PPrint document *)  
+let valADTConstructorString (ty : string) : string = 
+  "Val" ^ String.capitalize ty
+
 (** [valADTConstructor ty] generates the constructor name for the 
     [value] ADT corresponding to the type [ty] *)  
 let valADTConstructor (ty : string) : document = 
-  !^ ("Val" ^ String.capitalize ty) 
+  !^ (valADTConstructorString ty)
+
+(** Generates the list of constructor names for the [ty] ADT *)  
+let tyADTConstructors (m : moduleSig) : string list =
+  uniqRetTypesInSig m
+
+(** Returns an association list where each element is a constructor for the 
+    [ty] ADT & its associated constructor for the [value] ADT *)  
+let tyAndValueADTConstructors (m : moduleSig) : (string * string) list = 
+  List.map ~f:(fun ty -> ty, valADTConstructorString ty) 
+  (tyADTConstructors m)
 
 (** [valADTParam ty] generates the type param for the 
     constructor [value] ADT corresponding to the type [ty] *)    
@@ -450,6 +497,9 @@ let implModuleBindings ~(functorName : moduleName) (modName1 : string) (modName2
   let i2 = !^ "module I2 = " ^^ (functorApp ~functorName modName2) in
   hardline ^/^ i1 ^/^ i2 ^/^ hardline
 
+(***********************************************************************************)
+(** Code generators for [compare_impls.ml], the executable for comparing 2 modules *)
+
 (** Generates the definition of a [displayError] helper function 
     for displaying error messages when QuickCheck tests fail *)  
 let displayErrorDef : document = 
@@ -459,11 +509,34 @@ let displayErrorDef : document =
   ^/^ !^ "(Sexp.to_string @@ [%sexp_of: I1.value] v1)"
   ^/^ !^ "(Sexp.to_string @@ [%sexp_of: I2.value] v2)"
 
-let compareImplsImports (filepath : string) : document = 
+(** Generate requisite imports for the executable file, where 
+    [filepath] is the filepath to the executable file *)  
+let executableImports (filepath : string) : document = 
   !^ ("open! Core")
-  ^/^ !^ ("open! " ^ "Lib." ^ getModuleSigName filepath)
+  ^/^ !^ ("open! " ^ "Lib." ^ String.capitalize @@ getModuleSigName filepath)
+  ^/^ hardline
 
-let compareImpls : document = 
+let obsEquiv (tyConstr, valConstr : string * string) : document = 
+  let baseTy = String.uncapitalize tyConstr in
+
+  !^ "QC.test (gen_expr " ^^ (!^ tyConstr) ^^ !^ ") ~sexp_of:sexp_of_expr ~f:(fun e ->"
+  ^^ jump 2 1 @@ 
+  !^ "match (I1.interp e, I2.interp e) with "
+  ^/^ sBar ^^ (!^ valConstr) ^^ (!^ "e1, ") ^^ (!^ valConstr) ^^ (!^ "e2") 
+  ^^ sArrow ^^ !^ "[%test_eq: " ^^ (!^ baseTy) ^^ !^ "] " 
+  ^^ !^ (genVarNamesSingleton @@ ty_of_string baseTy)
+
+(** Generate the executable code for testing observational equivalence
+    of two modules *)  
+let compareImpls (m : moduleSig) : document = 
   !^ "let () = "
   ^/^ jump 2 1 @@ !^ "let module QC = Core.Quickcheck in "
-  ^/^ !^ "QC.test (gen_expr )"
+  ^/^ concat_map obsEquiv (tyAndValueADTConstructors m)
+
+(** TODO: find a way of enumerating all the [ty] constructors that aren't [T]s 
+    and finding the corresponding [Val] constructor
+
+    TOOD: call [genVarNamesN]
+    
+    (eg. associate the [Int] constructor for the [Ty] datatype with the 
+         [ValInt] constructor for the [value] datatype) *)  
