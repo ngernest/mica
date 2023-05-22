@@ -253,7 +253,6 @@ let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document)
       ^/^ (!^ "end")
   | _ -> failwith "error generating fresh variable names"
 
-
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
   let funcName = getFuncName v in
@@ -406,7 +405,7 @@ let genExprPatterns (m : moduleSig) =
 
 (* TODO: replace [return Empty] with something more generic? *)
 let genExprDef (m : moduleSig) : document = 
-  (* [(tyConstr, (funcTy, patternRHS, patternName) list)]*)
+  (* [patterns] is a [(tyConstr, (funcTy, patternRHS, patternName) list)]*)
   let patterns : (string, (ty * document * string) list) List.Assoc.t = 
     genExprPatterns m
       |> List.Assoc.sort_and_group ~compare:compare_string in
@@ -449,5 +448,22 @@ let functorApp ~(functorName : moduleName) (arg : string) : document =
 let implModuleBindings ~(functorName : moduleName) (modName1 : string) (modName2 : string) : document = 
   let i1 = !^ "module I1 = " ^^ (functorApp ~functorName modName1) in 
   let i2 = !^ "module I2 = " ^^ (functorApp ~functorName modName2) in
-  hardline ^/^ i1 ^/^ i2 
+  hardline ^/^ i1 ^/^ i2 ^/^ hardline
 
+(** Generates the definition of a [displayError] helper function 
+    for displaying error messages when QuickCheck tests fail *)  
+let displayErrorDef : document = 
+  !^ "let displayError (e : expr) (v1 : I1.value) (v2 : I2.value) : string = "
+  ^^ jump 2 1 @@ !^ "Printf.sprintf " ^^ OCaml.string "e = %s, v1 = %s, v2 = %s\n" 
+  ^^ jump 2 1 @@ !^ "(Sexp.to_string @@ sexp_of_expr e)"
+  ^/^ !^ "(Sexp.to_string @@ [%sexp_of: I1.value] v1)"
+  ^/^ !^ "(Sexp.to_string @@ [%sexp_of: I2.value] v2)"
+
+let compareImplsImports (filepath : string) : document = 
+  !^ ("open! Core")
+  ^/^ !^ ("open! " ^ "Lib." ^ getModuleSigName filepath)
+
+let compareImpls : document = 
+  !^ "let () = "
+  ^/^ jump 2 1 @@ !^ "let module QC = Core.Quickcheck in "
+  ^/^ !^ "QC.test (gen_expr )"

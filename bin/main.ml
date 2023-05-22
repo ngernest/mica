@@ -10,6 +10,8 @@ open! Lib.ModuleParser
 open! Lib.CodeGenerator
 open! Lib.CmdLineParser
 
+(** Name of the generated file containing the PBT code *)
+let pbtFileName : string = "./lib/Generated.ml"
 
 (** Parses the names of the signature & implementation files from the cmd-line *)
 let cmdLineParser : Command.t =
@@ -27,12 +29,12 @@ let cmdLineParser : Command.t =
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
       begin match (run_parser moduleTypeP moduleString) with 
         | Ok m -> 
-          let outc = Out_channel.create ~append:false "./lib/Generated.ml" in
+          let outc = Out_channel.create ~append:false pbtFileName in
           write_doc outc (imports sigName modName1 modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
           write_doc outc (functorDef m ~sigName ~functorName);
           write_doc outc (genExprDef m);
           write_doc outc (implModuleBindings ~functorName modName1 modName2);
-          Out_channel.flush stdout;
+          write_doc outc displayErrorDef;
           Out_channel.close outc
         | Error err -> printf "error = %s\n" err
       end)
