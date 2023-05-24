@@ -1,13 +1,23 @@
 # Automated Property-Based Testing (PBT) for OCaml Modules 
 
-## Description of repo
+## Building & running
+This project compiles with `dune build`. 
 
-### The `lib` directory
-- `Parser.ml`: parser utility functions, modified from the Angstrom parser-combinator library
-- `ParserTypes.ml`: Datatypes defining an AST for module signatures
-- `ModuleParser.ml`: Parser for OCaml module signatures
-- `CodeGenerator.ml`: Takes a parsed AST representing a module signature and generates the appropriate PBT code 
-- `CmdLineParser.ml`: Parses user input from the command line
+**Usage**: `dune exec -- bin/main.exe [.ml file containing signature] [.ml file containing 1st module] [.ml file containing 2nd module]`
+- This command runs our tool and creates two new files:
+  1. `lib/Generated.ml` (contains PBT code for testing an OCaml module)
+  2. `bin/compare_impls.ml` (code for an executable that tests two modules for observational equivalence)
+
+To run the generated executable, run `dune exec -- bin/compare_impls.exe`. 
+
+## Description of source files
+- `lib/Parser.ml`: parser utility functions, modified from the Angstrom parser-combinator library
+- `lib/ParserTypes.ml`: Datatypes defining an AST for module signatures
+- `lib/ModuleParser.ml`: Parser for OCaml module signatures
+- `lib/CodeGenerator.ml`: Takes a parsed AST representing a module signature and generates the appropriate PBT code 
+- `lib/CmdLineParser.ml`: Parses user input from the command line
+- `bin/main.ml`: Entry point for the executable for our tool
+
 
 The `lib` directory also contains examples of the test harness adapted to work with the following modules (work in progress):
 - Finite sets
