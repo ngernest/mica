@@ -8,5 +8,4 @@ module type StackInterface = sig
   val clear : 'a t -> unit 
   val is_empty : 'a t -> bool
   val length : 'a t -> int 
-  val create : unit -> 'a t
 end

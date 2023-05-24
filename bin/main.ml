@@ -11,11 +11,11 @@ open! Lib.CodeGenerator
 open! Lib.CmdLineParser
 
 (** Name of the generated file containing the PBT code *)
-let pbtFilePath : string = "./lib/Generated_Poly.ml"
+let pbtFilePath : string = "./lib/Generated.ml"
 
 (** Name of the generated executable file which compares two modules
     for observational equivalence *)
-let execFilePath : string = "./bin/compare_impls_poly.ml"
+let execFilePath : string = "./bin/compare_impls.ml"
 
 (* TODO: remove disabling of "unused-values" compiler warnings *)
 [@@@ocaml.warning "-32-34-27"]
@@ -52,6 +52,9 @@ let cmdLineParser : Command.t =
       begin match (run_parser moduleTypeP moduleString) with 
         | Ok m -> 
           writeToPBTFile m ~pbtFilePath ~functorName sigName modName1 modName2;
+
+          (** TODO: append executable stanza to Dune file *)
+
           let executable = Out_channel.create ~append:false execFilePath in
             write_doc executable (executableImports ~pbtFilePath ~execFilePath);
             write_doc executable (compareImpls m);

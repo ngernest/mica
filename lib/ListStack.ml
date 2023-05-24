@@ -6,8 +6,6 @@ module ListStack : StackInterface = struct
 
   let empty = []
 
-  let create () = empty
-
   let push x s = x :: s
 
   let peek s = 
@@ -17,7 +15,7 @@ module ListStack : StackInterface = struct
   
   let pop s = 
     match s with 
-    | [] -> failwith "can't pop from an empty stack"
+    | [] -> s
     | _ :: s' -> s'
   (* Manufacture a bug: by doing [| _ -> Some s] in the pattern match *)  
 
