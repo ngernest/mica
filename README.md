@@ -3,7 +3,8 @@
 ## Building & running
 This project compiles with `dune build`. 
 
-**Usage**: `dune exec -- bin/main.exe [.ml file containing signature] [.ml file containing 1st module] [.ml file containing 2nd module]`
+**Usage**:       
+`dune exec -- bin/main.exe [.ml file containing signature] [.ml file containing 1st module] [.ml file containing 2nd module]`
 - This command runs our tool and creates two new files:
   1. `lib/Generated.ml` (contains PBT code for testing an OCaml module)
   2. `bin/compare_impls.ml` (code for an executable that tests two modules for observational equivalence)
