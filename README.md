@@ -20,16 +20,16 @@ To run the generated executable, run `dune exec -- bin/compare_impls.exe`.
 - `bin/main.ml`: Entry point for the executable for our tool
 
 
-The `lib` directory also contains examples of the test harness adapted to work with the following modules (work in progress):
-- Finite sets
+The `lib` directory also contains examples of the test harness adapted to work with the following modules:
+- Finite sets (`lib/sets` subdirectory)
   - Signature: `SetInterface.ml`
   - Implementation using lists: `ListSet.ml` (adapted from Yale-NUS YSC2229 website)
   - Implementation using BSTs: `BSTSet.ml` (adapted from Penn CIS 1200 lecture notes)
-- Stacks
+- Stacks (`lib/stacks` subdirectory)
   - Signature: `StackInterface.ml`
   - Implementation using lists: `ListStack.ml` (adapted from Jane Street's Base library)
   - Implementation using custom ADTs: `VariantStack.ml` (adapted from Cornell CS 3110 textbook)
-- Polynomials
+- Polynomials (`lib/polynomials` subdirectory)
   - Signature: `PolyInterface.ml`
   - Implementation using lists of tuples: `Poly1.ml` (adapted from Jean-Christophe Filliatre)
   - Implementation using lists of records: `Poly2.ml` (adapted from Shayne Fletcher)
