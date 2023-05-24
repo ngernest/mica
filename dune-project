@@ -7,9 +7,9 @@
 (source
  (github ngernest/module_pbt))
 
-(authors "Ernest Ng")
+(authors "Ernest Ng <ngernest@seas.upenn.edu>")
 
-(maintainers "Maintainer Name")
+(maintainers "Ernest Ng <ngernest@seas.upenn.edu>")
 
 (license LICENSE)
 
