@@ -1,4 +1,4 @@
-# Automated Property-Based Testing (PBT) for OCaml Modules 
+# Automated Property-Based Testing for OCaml Modules 
 
 ## Building & running
 This project compiles with `dune build`. 
