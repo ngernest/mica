@@ -3,8 +3,10 @@ open PPrint
 open ParserTypes
 open Stdio
 
-(***********************************************************************************)
-(** Generic utility functions *)
+(** This file contains the logic for generating PBT code from the AST 
+    of a parsed module signature. *)
+    
+(** {1 Generic utility functions} *)
 
 (** Writes a PPrint document to an Out_channel (eg. [stdout]) *)
 let write_doc (outc : Out_channel.t) (doc : document) : unit = 
@@ -14,9 +16,13 @@ let write_doc (outc : Out_channel.t) (doc : document) : unit =
 let spaced (doc : document) : document = 
   enclose space space doc   
 
-(** Aliases for PPrint documents for common OCaml symbols *)  
+(** Produces a PPrint document [ | ] with spaces on either side *)  
 let sBar : document = spaced bar  
+
+(** Produces a PPrint document [ -> ] with spaces on either side *)  
 let sArrow : document = spaced (!^ "->")
+
+(** Produces a PPrint document [ ** ] with spaces on either side *)  
 let star2 : document = star ^^ star
 
 (** Takes a PPrint document [body] and wraps it in the OCaml comment syntax, 
@@ -29,16 +35,14 @@ let comment (body : document) : document =
 let getModuleSigName (filepath : string) : string =
   Core.Filename.(basename filepath |> chop_extension)
 
-
- (** [replicate n a] produces a list containing [n] copies of [a] *)    
+(** [replicate n a] produces a list containing [n] copies of [a] *)    
 let replicate ~(n : int) (a : 'a) : 'a list = 
   let rec helper (n : int) (acc : 'a list) : 'a list = 
     if n = 0 then acc 
     else helper (n - 1) (a :: acc) in 
   helper n []  
 
-(***********************************************************************************)
-(** Code generators for [Generated.ml], the generated PBT code *)
+(** {1 Functions for generating PBT code} *)
 
 (** [imports filepath] prints out a PPrint document that imports
     the requisite modules for the PBT code.
@@ -71,7 +75,6 @@ let tyIsArrow (ty : ty) : bool =
   | Func1 _ | Func2 _ -> true 
   | _ -> false    
     
-
 (** Extracts the argument types of functions defined in the module signature,
     and generates constructors for the [expr] ADT 
     that take these types as type parameters *)
@@ -128,20 +131,21 @@ let varNameHelper (ty : ty) : string =
   | Bool -> "b"
   | _ -> String.prefix (string_of_ty ty) 1
 
-(** Special case of [genVarNames] when we only have one argument type 
+(** Special case of [genVarNames] when we only have one argument type.  
     If [prime = true], add a single quote to the end of the variable name *)    
 let genVarNamesSingleton ?(prime = false) (argTy : ty) : string = 
   let varName = varNameHelper argTy in 
   if prime then varName ^ "\'" else varName
 
-(** Generates [n] unique variable names corresponding to a type [ty] *)  
+(** Generates [n] unique variable names corresponding to a type [ty]. 
+    For example, [genVarNamesN 3 Int] produces [["n1"; "n2"; "n3"]].  *)  
 let genVarNamesN ~(n : int) (ty : ty) : string list = 
   replicate ~n (varNameHelper ty) |> 
   List.mapi ~f:(fun i arg -> arg ^ Int.to_string @@ i + 1)
 
 (** Takes a list of argument types, and generates corresponding variable names 
     which are unique for each element of the list 
-    eg. [genVarNames [Int, Int] = [n1, n2]] *)
+    eg. [genVarNames [Int; Int; Char] = [n1; n2; c]] *)
 let genVarNames ?(prime = false) (argTys : ty list) : string list = 
   match argTys with 
   | [] -> []
@@ -150,8 +154,6 @@ let genVarNames ?(prime = false) (argTys : ty list) : string list =
     ~f:(fun i ty -> let var = genVarNamesSingleton ty ^ Int.to_string (i + 1) in 
         if prime then var ^ "\'" else var) 
     argTys
-
-
 
 (** Fetches the [expr] constructor corresponding to a [val] declaration 
     in a module *)
@@ -180,7 +182,7 @@ let getExprConstructor (v : valDecl) : string list * document =
     (args, printConstructor constr args)
 
 
-(** Extracts the return type of a function 
+(** Extracts the return type of a function.  
     For non-arrow types, this function just extracts the type itself *)    
 let extractReturnType (v : valDecl) : string = 
   match valType v with 
@@ -392,11 +394,16 @@ let argGen (arg : string) (ty : ty) : document =
     returning a tuple of the form 
     [(tyConstr, (ty, patternMatchRHS, nameOfPatternMatch))]
     
-    Eg. if [tyConstr = Bool], [ty = Func2(Alpha, Expr, Bool)], [constr = Mem] 
-        and [funcApp = Mem(x, e)], then  
-      [genExprPatternRHS (tyConstr, ty, args, constr, funcApp)] produces the code
-    "let%bind arg = G.int in G.return @@ Mem(x, e)", where
-    [G] = [Base_quickcheck.Generator]. *)  
+    For example, if:
+    - [tyConstr = Bool]
+    - [ty = Func2(Alpha, Expr, Bool)]
+    - [constr = Mem]
+    - [funcApp = Mem(x, e)]
+    then [genExprPatternRHS (tyConstr, ty, args, constr, funcApp)] produces the code
+    {[
+      let%bind arg = G.int in G.return @@ Mem(x, e)
+    ]}
+    where [G] = [Base_quickcheck.Generator]. *)  
 let genExprPatternRHS 
   (tyConstr, funcTy, args, constr, funcApp : string * ty * string list * string * document) 
   : string * (ty * document * string) = 
@@ -506,7 +513,7 @@ let implModuleBindings ~(functorName : moduleName) (modName1 : string) (modName2
   hardline ^/^ i1 ^/^ i2 ^/^ hardline
 
 (***********************************************************************************)
-(** Code generators for [compare_impls.ml], the executable for comparing 2 modules *)
+(** {1 Functions for generating the executable for comparing 2 modules} *)
 
 (** Generates the definition of a [displayError] helper function 
     for displaying error messages when QuickCheck tests fail *)  

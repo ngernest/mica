@@ -4,7 +4,8 @@ This repo contains a tool which parses any generic OCaml module signature,
 and checks whether two modules implementing the signature are observationally 
 equivalent by generating random sequences of commands using Core.QuickCheck.
 
-Documentation (generated with Odoc) located at: https://ngernest.github.io/module_pbt/
+Documentation (generated with Odoc) located at:      
+https://ngernest.github.io/module_pbt/module_pbt/Lib/index.html 
 
 ## Description of source files
 - `lib/Parser.ml`: parser utility functions, modified from the Angstrom parser-combinator library

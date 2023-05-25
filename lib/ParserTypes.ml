@@ -1,5 +1,9 @@
 open! Base
 
+(** Datatype definitions for OCaml module signatures. 
+    These types are used by the module {!ModuleParser} to parse 
+    OCaml module signatures. *)
+
 (** Name of a module *)
 type moduleName = string
   [@@deriving sexp]
@@ -12,24 +16,19 @@ type moduleType = Intf | Impl
 type ident = string
   [@@deriving sexp]
 
-(** ADT representing concrete types
-    [Alpha] represents ['a]
-    [AlphaT] represents ['a t]     
-    [T] represents [t]
-    [Func1] represents functions of arity 1 (arg type, return type)
-    [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type)
-
-    TODO: add pairs, lists, options / other parameterized types??
-
-    TODO: add support for types like [int t]
-*)  
+(** [ty] is an ADT representing concrete types, where: 
+    - [Alpha] represents ['a]
+    - [AlphaT] represents ['a t]     
+    - [T] represents [t]
+    - [Func1] represents functions of arity 1 (arg type, return type)
+    - [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type) 
+    - All other constructors correspond to base OCaml types *)  
 type ty = Int 
           | Char 
           | Bool 
           | Unit 
           | Alpha 
           | AlphaT
-          (* | AlphaT of ty *)
           | T 
           | Func1 of ty * ty 
           | Func2 of ty * ty * ty
@@ -51,13 +50,13 @@ let rec tyEqual (ty1 : ty) (ty2 : ty) : bool =
     tyEqual a1 a2 && tyEqual b1 b2 && tyEqual c1 c2
   | _, _ -> false 
 
-(** Converts a [ty] to its string representation 
-    Note that [AlphaT] & [T] are converted to "expr" 
-    The optional argument [alpha] specifies a concrete base type that should be 
-    printed in the PBT code in lieu of ['a\] when testing polymorphic functions. 
-    The optional argument [t] specifies a string that should be printed 
+(** Converts a [ty] to its string representation. 
+    - Note that [AlphaT] & [T] are converted to "expr" 
+    - The optional argument [alpha] specifies a concrete base type that should be 
+    printed in the PBT code in lieu of [ \'a ] when testing polymorphic functions. 
+    - The optional argument [t] specifies a string that should be printed 
     whenever [ty] is equal to [AlphaT] or [T] 
-    (eg. the string literal "expr" when generating the [expr] ADT definition). *)
+    (eg. the string literal ["expr"] when generating the [expr] ADT definition). *)
 let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string = 
   match ty with 
   | Int -> "int"
@@ -75,7 +74,10 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string =
 type abstractType = T0 | T1 of ty
   [@@deriving sexp]
 
-(** Type representing a value declaration *)   
+(** Type representing a value declaration:
+    - [valName] is the name of the variable/function being declared
+    - [valType] is the type of the declaration
+    - E.g. for [val empty : 'a t], [valName = "empty"] and [valType = AlphaT] *)   
 type valDecl = {
   valName : string;
   valType : ty
@@ -95,5 +97,5 @@ type moduleSig = {
 }
 [@@deriving sexp, fields]
 
-(** TODO: handle parens in arrow types *)
-(** TODO: figure out how to ignore comments?*)
+(* TODO: handle parens in arrow types *)
+(* TODO: figure out how to ignore comments in parser *)

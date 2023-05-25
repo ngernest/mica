@@ -7,3 +7,6 @@
  (preprocess
   (pps ppx_jane))
  (inline_tests))
+
+(documentation
+ (package module_pbt)) 

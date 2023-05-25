@@ -1,10 +1,17 @@
 open Angstrom 
 open Base
 
+(** Parser utility functions, based on the 
+    {{: https://github.com/inhabitedtype/angstrom } Angstrom } 
+    parser-combinator library. 
+    
+    The implementation of some parsers is adapted from 
+    the {{: https://www.seas.upenn.edu/~cis5520/22fa/lectures/stub/10-parsers/Parsers.html } Parsers lecture } of Penn's CIS 5520 Haskell course. *)
+
+(** Alias for the [Angstrom] module *)
 module A = Angstrom
 
-(******************************************************************************)
-(** Boolean predicates on characters *)
+(** {1 Boolean predicates on characters} *)
 
 (** [is_digit c] returns true if [c] is a digit, false otherwise *)  
 let is_digit (c : char) : bool = 
@@ -38,7 +45,7 @@ let is_whitespace (c : char) : bool =
   | _ -> false  
 
 (******************************************************************************)
-(** Simple parsers *)  
+(** {1 Simple parsers} *)  
 
 (** Parser for a lowercase letter *) 
 let lowercaseP : char A.t = 
@@ -85,7 +92,7 @@ let constP (s : string) (x : 'a) : 'a A.t =
   stringP s *> return x
 
 (** [between openP p closeP] parses [openP], followed by [p] and finally
---   [close]. Only the value of [p] is pure-ed.*)  
+    [closeP]. Only the value parsed by [p] is returned. *)  
 let between (openP : 'b A.t) (p : 'a A.t) (closeP : 'c A.t) : 'a A.t = 
   openP *> p <* closeP
 
@@ -95,8 +102,9 @@ let parens (p : 'a A.t) : 'a A.t =
 
 (** [chainl1 e op] parses one or more occurrences of [e], separated by [op],
     & returns a left-associative application of the functions returned by the [op]
-    parser onto the values retruned by the [e] parser.
-    Implementation of [chainl1] taken from Angstrom docs *)  
+    parser onto the values retruned by the [e] parser. 
+
+    (Implementation of [chainl1] taken from the {{: https://github.com/inhabitedtype/angstrom } Angstrom docs}) *)  
 let chainl1 (e : 'a A.t) (op : ('a -> 'a -> 'a) A.t) : 'a A.t =
   let rec go (acc : 'a) : 'a A.t =
     (A.lift2 (fun f x -> f acc x) op e >>= go) <|> return acc in
@@ -104,6 +112,8 @@ let chainl1 (e : 'a A.t) (op : ('a -> 'a -> 'a) A.t) : 'a A.t =
 
 
 (******************************************************************************)
+(** {1 Functions for running parsers} *)
+
 (** [run_parser p s] uses the parser [p] to parse the string [s] *)  
 let run_parser (p : 'a A.t) (s : string) : ('a, string) Result.t = 
   A.parse_string ~consume:Consume.All p s 

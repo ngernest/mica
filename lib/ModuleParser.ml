@@ -4,6 +4,14 @@ open Angstrom
 open Base
 open Stdio
 
+(** A parser for module signatures, based on the 
+    {{: https://github.com/inhabitedtype/angstrom } Angstrom } 
+    parser-combinator library. 
+    
+    This file depends on helper functions defined in the module {!Parser},
+    and datatype definitions defined in {!ParserTypes}. *)
+
+(** Alias for the [Angstrom] module *)
 module A = Angstrom
 
 (** Parsers for identifiers in OCaml 

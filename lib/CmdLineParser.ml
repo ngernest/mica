@@ -1,5 +1,8 @@
-(** Code adapted from Real World OCaml, Chapter 16 *)
 open Core 
+
+(** Parses user input from the command-line, in particular the filepaths 
+    of the [.ml] files containing the signature & the two modules for testing.
+    (Code adapted from Real World OCaml, Chapter 16) *)
 
 (** Prompts the user to enter a value, where [name] is the name of the value, 
     and [of_string] if a function converting the string input to type ['a] *)
@@ -32,11 +35,11 @@ let is_filename (filename : string) : string =
 let regular_file =
   Command.Arg_type.create is_filename
 
-(** Creates a parser that:
+(* (DEPRECATED) Creates a parser that:
     (1) Defines a cmd-line argument type which ensures that the 
     input file isn't some Unix file type that can’t be read, and 
-    (2) Prompts the user if no value is provided *)        
-(** TODO: not sure why this doesn't work *)      
+    (2) Prompts the user if no value is provided 
+*)         
 let anon_prompt_reg_file (name : string) : string Command.Param.t = 
   anon_prompt name is_filename
 

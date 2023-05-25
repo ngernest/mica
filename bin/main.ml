@@ -17,7 +17,7 @@ let pbtFilePath : string = "./lib/Generated.ml"
     for observational equivalence *)
 let execFilePath : string = "./bin/compare_impls.ml"
 
-(* TODO: remove disabling of "unused-values" compiler warnings *)
+(* Disable "unused-values" compiler warnings *)
 [@@@ocaml.warning "-32-34-27"]
 
 (** Writes the generated PBT code to the file at [pbtFilePath] 
@@ -53,7 +53,7 @@ let cmdLineParser : Command.t =
         | Ok m -> 
           writeToPBTFile m ~pbtFilePath ~functorName sigName modName1 modName2;
 
-          (** TODO: append executable stanza to Dune file *)
+          (* TODO (stretch-goal): automatically append executable stanza to Dune file *)
 
           let executable = Out_channel.create ~append:false execFilePath in
             write_doc executable (executableImports ~pbtFilePath ~execFilePath);
