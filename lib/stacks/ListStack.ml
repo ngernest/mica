@@ -10,13 +10,13 @@ module ListStack : StackInterface = struct
 
   let peek s = 
     match s with 
-    | [] -> failwith "can't peek from an empty stack"
-    | x :: _ -> x
+    | [] -> None
+    | x :: _ -> Some x
   
   let pop s = 
     match s with 
-    | [] -> s
-    | _ :: s' -> s'
+    | [] -> None
+    | _ :: s' -> Some s'
   (* Manufacture a bug: by doing [| _ -> Some s] in the pattern match *)  
 
   let is_empty s = 

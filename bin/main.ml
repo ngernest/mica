@@ -11,11 +11,11 @@ open! Lib.CodeGenerator
 open! Lib.CmdLineParser
 
 (** Name of the generated file containing the PBT code *)
-let pbtFilePath : string = "./lib/Gen2.ml"
+let pbtFilePath : string = "./lib/Generated.ml"
 
 (** Name of the generated executable file which compares two modules
     for observational equivalence *)
-let execFilePath : string = "./bin/stack_compare_impls.ml"
+let execFilePath : string = "./bin/compare_impls.ml"
 
 (* Disable "unused-values" compiler warnings *)
 [@@@ocaml.warning "-32-34-27"]
@@ -65,7 +65,7 @@ let cmdLineParser : Command.t =
       end)
 
 
-let testParser : Command.t =
+(* let testParser : Command.t =
   Command.basic
     ~summary:"Automated Property-Based Testing for OCaml modules"
     ~readme:(fun () -> "TODO: Complete readme")
@@ -80,8 +80,8 @@ let testParser : Command.t =
           writeToPBTFile m ~pbtFilePath ~functorName sigName "" ""
 
         | Error err -> printf "error = %s\n" err
-      end)      
+      end)       *)
 
-let () = Command_unix.run ~version:"test" testParser
+let () = Command_unix.run ~version:"1.1" cmdLineParser
 
   
