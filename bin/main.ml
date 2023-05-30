@@ -11,11 +11,11 @@ open! Lib.CodeGenerator
 open! Lib.CmdLineParser
 
 (** Name of the generated file containing the PBT code *)
-let pbtFilePath : string = "./lib/Generated.ml"
+let pbtFilePath : string = "./lib/Gen2.ml"
 
 (** Name of the generated executable file which compares two modules
     for observational equivalence *)
-let execFilePath : string = "./bin/compare_impls.ml"
+let execFilePath : string = "./bin/stack_compare_impls.ml"
 
 (* Disable "unused-values" compiler warnings *)
 [@@@ocaml.warning "-32-34-27"]
@@ -28,7 +28,7 @@ let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : strin
   (sigName : string) (modName1 : string) (modName2 : string) : unit = 
 
   let pbtFile = Out_channel.create ~append:false pbtFilePath in
-  write_doc pbtFile (imports sigName modName1 modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
+  write_doc pbtFile (imports sigName ~modName1 ~modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
   write_doc pbtFile (functorDef m ~sigName ~functorName);
   write_doc pbtFile (genExprDef m);
   write_doc pbtFile (implModuleBindings ~functorName modName1 modName2);
@@ -64,4 +64,24 @@ let cmdLineParser : Command.t =
         | Error err -> printf "error = %s\n" err
       end)
 
-let () = Command_unix.run ~version:"1.0" cmdLineParser
+
+let testParser : Command.t =
+  Command.basic
+    ~summary:"Automated Property-Based Testing for OCaml modules"
+    ~readme:(fun () -> "TODO: Complete readme")
+    (let%map_open.Command 
+      sigFile = anon ("signature file" %: regular_file) in
+    fun () -> 
+      let functorName = "ExprToImpl" in
+      let moduleString = string_of_file sigFile in 
+      let sigName = getModuleSigName sigFile in 
+      begin match (run_parser moduleTypeP moduleString) with 
+        | Ok m -> 
+          writeToPBTFile m ~pbtFilePath ~functorName sigName "" ""
+
+        | Error err -> printf "error = %s\n" err
+      end)      
+
+let () = Command_unix.run ~version:"test" testParser
+
+  

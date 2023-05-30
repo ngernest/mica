@@ -49,7 +49,7 @@ let replicate ~(n : int) (a : 'a) : 'a list =
     The [sigName, modName1, modName2] arguments are the names of the 
     module signatures & the two module implementations, which must
     be the same as their corresponding [.ml] files. *)
-let imports (sigName : string) (modName1 : string) (modName2 : string) : document = 
+let imports (sigName : string) ~(modName1 : string) ~(modName2 : string) : document = 
   comment (!^ "Generated property-based testing code")
   ^/^ (!^ "open! Base") 
   ^/^ (!^ "open! Base_quickcheck")

@@ -33,6 +33,7 @@ let typeParamP : char A.t =
 let sexpAnnotP : unit A.t = 
   constP "[@@deriving sexp]" ()
   
+(* DEPRECATED: parses OCaml comments *)  
 let ignoreCommentsP : unit A.t = 
   let body = many @@ wsP (letterP <|> digitP <|> underscoreP) in 
   let left = stringP "(**" <|> stringP "(*" in 
@@ -79,12 +80,16 @@ let valDeclP : valDecl A.t =
   (fun valName valType -> { valName; valType }) 
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> baseTypeP)  
 
+(* Deprecated *)    
+(* let betweenComments (p : 'a A.t) : 'a A.t = 
+  ignoreCommentsP *> p <* ignoreCommentsP *)
+
 (** Parser for a module signature *)
 let moduleTypeP : moduleSig A.t = 
   (fun moduleName abstractType valDecls -> 
     { moduleName; moduleType = Intf; abstractType; valDecls }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
-  <*> abstractTypeDeclP 
+  <*> abstractTypeDeclP
   <*> A.many valDeclP
   <* stringP "end"
 
