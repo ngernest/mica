@@ -16,10 +16,13 @@ let write_doc (outc : Out_channel.t) (doc : document) : unit =
 let spaced (doc : document) : document = 
   enclose space space doc   
 
-(** Produces a PPrint document [ | ] with spaces on either side *)  
+(** Produces a PPrint document [" | "] with spaces on both sides *)  
 let sBar : document = spaced bar  
 
-(** Produces a PPrint document [ -> ] with spaces on either side *)  
+(** Produces a PPrint document [ "| " ] with a space on the right only *)
+let barSpace : document = bar ^^ space
+
+(** Produces a PPrint document [" -> "] with spaces on either side *)  
 let sArrow : document = spaced (!^ "->")
 
 (** Produces a PPrint document [ ** ] with spaces on either side *)  
@@ -98,8 +101,8 @@ let extractArgTypes (v : valDecl) : document =
 let exprADTDecl (m : moduleSig) : document = 
   prefix 2 1 
   (!^ "type expr =")
-  (group @@ separate_map (hardline ^^ !^ " | ") extractArgTypes m.valDecls 
-    ^/^ sexpAnnotation)  
+  (barSpace ^^ (group @@ separate_map (hardline ^^ barSpace) extractArgTypes m.valDecls 
+    ^/^ sexpAnnotation))  
 
 (** Helper function for printing out OCaml constructors
     (Wrapper for the [OCaml.variant] function in the [PPrint] library) *)    
@@ -286,8 +289,8 @@ let valueADTDefn (m : moduleSig) : document =
   let valueTypes = uniqRetTypesInSig m in 
   prefix 2 1 
   (!^ "type value = ")
-  (group @@ separate_map (hardline ^^ sBar) valADTTypeDef valueTypes 
-    ^/^ sexpAnnotation)  
+  (barSpace ^^ (group @@ separate_map (hardline ^^ barSpace) valADTTypeDef valueTypes 
+    ^/^ sexpAnnotation))  
 
 (** Given an argument and its type, determines if we need to recursively call 
     [interp] on the argument for the inner pattern match in [interp] *)
