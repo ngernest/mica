@@ -110,15 +110,26 @@ let printConstructor (constr : string) (args : string list) : document =
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
 (** Converts a string denoting a type to the equivalent [ty] ADT constructor *)  
-let ty_of_string (s : string) : ty = 
-  match String.uncapitalize s with 
-  | "int" -> Int 
-  | "char" -> Char 
-  | "unit" -> Unit 
-  | "bool" -> Bool
-  | "\'a" -> Alpha 
-  | "\'a t" -> AlphaT 
-  | "t" -> T 
+let rec ty_of_string (s : string) : ty = 
+  let strs = List.map ~f:String.uncapitalize (String.split ~on:' ' s) in
+  match strs with 
+  | [] -> failwith "String is empty"
+  | [str] -> begin match str with 
+    | "int" -> Int 
+    | "char" -> Char 
+    | "unit" -> Unit 
+    | "bool" -> Bool
+    | "\'a" -> Alpha 
+    | "\'a t" -> AlphaT 
+    | "t" -> T 
+    | _ -> 
+      (* If [str] contains the substring "Option", convert to an option type *)
+      if String.is_substring ~substring:"Option" str
+      then let newTy = String.substr_replace_first ~pattern:"Option" ~with_:"" str in 
+        Option (ty_of_string newTy)
+      else failwith (Printf.sprintf "Type conversion from \"%s\" not supported" s)
+    end
+  | [str ; "option"] -> Option (ty_of_string str)
   | _ -> failwith (Printf.sprintf "Type conversion from \"%s\" not supported" s)
 
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
@@ -174,9 +185,9 @@ let getExprConstructor (v : valDecl) : string list * document =
   | _, Unit -> ([], OCaml.unit)
   | _, Alpha -> (["a"], printConstructor constr ["a"])
   | _, T | _, AlphaT -> (["t"], printConstructor constr ["t"])
-  | _, Func1 (argTy, _) -> 
-    let singletonArg = genVarNames [argTy] in 
-    (singletonArg, printConstructor constr singletonArg)
+  | _, Option argTy | _, Func1 (argTy, _) -> 
+    let arg = genVarNames [argTy] in 
+    (arg, printConstructor constr arg)
   | _, Func2 (arg1, arg2, _) -> 
     let args = genVarNames [arg1; arg2] in 
     (args, printConstructor constr args)
@@ -186,8 +197,9 @@ let getExprConstructor (v : valDecl) : string list * document =
     For non-arrow types, this function just extracts the type itself *)    
 let extractReturnType (v : valDecl) : string = 
   match valType v with 
-  | Func1 (_, ret) | Func2 (_, _, ret) -> (string_of_ty ~t:"T" ~alpha:"Int" ret)
-  | ty -> (string_of_ty ~t:"T" ~alpha:"Int" ty)
+  | Func1 (_, ret) | Func2 (_, _, ret) -> 
+    string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true ret
+  | ty -> string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true ty
 
 (** Fetches the unique return types across the functions / values 
     in a module signature *)  
@@ -230,11 +242,37 @@ let tyAndValueADTConstructors (m : moduleSig) : (string * string) list =
   List.map ~f:(fun ty -> ty, valADTConstructorString ty) 
   (tyADTConstructors m)
 
+(** Takes [s], a string reprentation of a type, 
+    and instantiates the abstract type [t] to [int M.t] 
+    where [M] is some module defined elsewhere. \n
+    - Example: [instantiate "toption" = "int M.t option"] 
+    - If [s] doesn't contain the prefix ["t"], [s] is left unchanged  *)  
+let instantiateT (s : string) = 
+  let open String in 
+  if is_prefix ~prefix:"t" s 
+  then "int M.t" ^ drop_prefix s 1
+  else s
+
+(** Takes [s], a string reprentation of a type, 
+    and adds a space to [s] if [s] represents a parameterized type. 
+    - Example: [addSpaceToTyStr "intoption" = "int option"] 
+    - If [s] doesn't contain the prefix ["t"], [s] is left unchanged *)
+let addSpaceToTyStr (s : string) = 
+  let open String in 
+  if is_suffix ~suffix:"option" s 
+  then chop_suffix_exn ~suffix:"option" s ^ " option"
+  else s
+
 (** [valADTParam ty] generates the type param for the 
     constructor [value] ADT corresponding to the type [ty] *)    
 let valADTParam (ty : string) : document = 
   let open String in
-  !^ (uncapitalize ty |> fun ty -> if ty = "t" then "int M.t" else ty)
+  match (lowercase ty |> split ~on:' ') with 
+  | [] -> failwith "Can't extract a type parameter from an empty string"
+  | [str] -> 
+    if str = "t" then !^ "int M.t" 
+    else !^ (addSpaceToTyStr str |> instantiateT)
+  | tys -> separate_map space (!^) tys
 
 (** [valADTTypeDef ty] generates both the constructor & type parameter 
     for the [value] ADT corresponding to the type [ty] *)  
@@ -248,7 +286,7 @@ let valueADTDefn (m : moduleSig) : document =
   let valueTypes = uniqRetTypesInSig m in 
   prefix 2 1 
   (!^ "type value = ")
-  (group @@ separate_map (!^ " | ") valADTTypeDef valueTypes 
+  (group @@ separate_map (hardline ^^ sBar) valADTTypeDef valueTypes 
     ^/^ sexpAnnotation)  
 
 (** Given an argument and its type, determines if we need to recursively call 
@@ -275,7 +313,7 @@ type argPos = Fst | Snd
 let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : ident) (retTy : ty) : document = 
   (* Obtain appropriate constructors based on the arg & return types *)    
   let (argTyConstr, retTyConstr) = 
-    map2 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (argTy, retTy) in
+    map2 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true)) (argTy, retTy) in
   (* Generate a fresh variable name *)  
   let arg' = genVarNamesSingleton ~prime:true argTy in
   (* Identify the position of any arguments whose type are not [expr] *)
@@ -297,7 +335,7 @@ let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document)
                 (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
   (* Obtain appropriate constructors based on the arg & return types *)              
   let (arg1TyConstr, arg2TyConstr, retTyConstr) = 
-    map3 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int")) (arg1Ty, arg2Ty, retTy) in
+    map3 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true)) (arg1Ty, arg2Ty, retTy) in
   (* Generate fresh variable names *)    
   match List.map ~f:(!^) (genVarNames ~prime:true [arg1Ty; arg2Ty]) with 
    | [arg1'; arg2'] -> 
@@ -438,9 +476,9 @@ let getExprConstructorWithArgs (tyConstr : string) (ty : ty) (constr : string)
   | Unit, _ -> (tyConstr, ty, [], constr, OCaml.unit)
   | Alpha, _ -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
   | T, _ | AlphaT, _ -> (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
-  | Func1 (argTy, _), _ ->
-    let singletonArg = genVarNames [argTy] in 
-    (tyConstr, ty, singletonArg, constr, printConstructor constr singletonArg)
+  | Option argTy, _ | Func1 (argTy, _), _ ->
+    let arg = genVarNames [argTy] in 
+    (tyConstr, ty, arg, constr, printConstructor constr arg)
   | Func2 (arg1, arg2, _), _ -> 
     let args = genVarNames [arg1; arg2] in 
     (tyConstr, ty, args, constr, printConstructor constr args)
@@ -539,7 +577,7 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
     for observational equivalence based on [expr]s that return some [tyConstr] of type [ty], 
     and pattern matching on the equivalent [valConstr]s that they return *)
 let obsEquiv (tyConstr, valConstr : string * string) : document = 
-  let baseTy : string = String.uncapitalize tyConstr in
+  let baseTy : string = addSpaceToTyStr (String.lowercase tyConstr) in
   let vars : string list = genVarNamesN ~n:2 (ty_of_string baseTy) in
   let varDocs : document list = List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
 
@@ -551,11 +589,25 @@ let obsEquiv (tyConstr, valConstr : string * string) : document =
   ^/^ sBar ^^ (!^ "v1, v2") ^^ sArrow ^^ (!^ "failwith @@ displayError e v1 v2);") 
   ^^ hardline
 
+(** [isExcludedType ty] returns true if the type [ty] is 
+    a return type to be excluded from consideration when 
+    testing for {i observational equivalence}. 
+    - For example, expressions returning abstract types [T] and [AlphaT] 
+    are excluded when we check if two modules for observational equivalence,
+    because these abstract types may be instantiated differently in the two modules. 
+    - For instance, one module could instantiate ['a t] to be ['a list], 
+    while the other instantiates ['a t] to be ['a tree]. *)  
+let rec isExcludedType (ty : ty) : bool = 
+  match ty with 
+  | T | AlphaT -> true 
+  | Option argTy -> isExcludedType argTy
+  | _ -> false 
+
 (** Generate the executable code for testing observational equivalence
     of two modules *)  
 let compareImpls (m : moduleSig) : document = 
-  let constrs = List.filter ~f:(fun (ty, _) -> not @@ phys_equal (ty_of_string ty) T) 
-    (tyAndValueADTConstructors m) in 
+  let constrs = List.filter (tyAndValueADTConstructors m) 
+    ~f:(fun (ty, _) -> not @@ isExcludedType (ty_of_string ty)) in 
   !^ "let () = "
   ^^ jump 2 1 @@ !^ "let module QC = Quickcheck in "
   ^/^ separate_map hardline obsEquiv constrs

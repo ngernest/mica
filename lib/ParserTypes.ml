@@ -29,6 +29,7 @@ type ty = Int
           | Unit 
           | Alpha 
           | AlphaT
+          | Option of ty
           | T 
           | Func1 of ty * ty 
           | Func2 of ty * ty * ty
@@ -44,20 +45,27 @@ let rec tyEqual (ty1 : ty) (ty2 : ty) : bool =
   | Alpha, Alpha
   | AlphaT, AlphaT
   | T, T -> true
+  | Option t1, Option t2 -> tyEqual t1 t2 
   | Func1 (a1, b1), Func1 (a2, b2) -> 
     tyEqual a1 a2 && tyEqual b1 b2
   | Func2 (a1, b1, c1), Func2 (a2, b2, c2) -> 
     tyEqual a1 a2 && tyEqual b1 b2 && tyEqual c1 c2
   | _, _ -> false 
 
-(** Converts a [ty] to its string representation. 
+(** Converts a [ty] to its string representation, taking in optional arguments
+    specifying various parameters of the string represntation. 
     - Note that [AlphaT] & [T] are converted to "expr" 
-    - The optional argument [alpha] specifies a concrete base type that should be 
+    - The argument [alpha] specifies a concrete base type that should be 
     printed in the PBT code in lieu of [ \'a ] when testing polymorphic functions. 
-    - The optional argument [t] specifies a string that should be printed 
+    - The argument [t] specifies a string that should be printed 
     whenever [ty] is equal to [AlphaT] or [T] 
-    (eg. the string literal ["expr"] when generating the [expr] ADT definition). *)
-let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string = 
+    (eg. the string literal ["expr"] when generating the [expr] ADT definition)
+    - The argument [camelCase] specifies whether the 
+    string representation of [ty] should be in camel-case or not. This is relevant
+    for parameterized types whose string representation may contain a space, 
+    eg. ["int option"]. 
+*)
+let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : ty) : string = 
   match ty with 
   | Int -> "int"
   | Char -> "char"
@@ -65,6 +73,10 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") (ty : ty) : string =
   | Unit -> "unit"
   | Alpha -> alpha
   | AlphaT | T -> t
+  | Option ty -> 
+    let t = string_of_ty ~alpha ~t ty in 
+    if camelCase then t ^ "Option"
+    else t ^ " option"
   | Func1 (arg, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])
   | Func2 (arg1, arg2, ret) -> 

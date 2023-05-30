@@ -66,19 +66,29 @@ let baseTypeP : ty A.t =
   <|> constP "\'a" Alpha 
   <|> constP "t" T
 
+(** Parser for options *)  
+let optionP : ty A.t = 
+  let open A.Let_syntax in 
+  let%map ty = baseTypeP <* stringP "option" in 
+  ParserTypes.Option ty
+
+(** General parser for non-arrow types *)
+let typeP : ty A.t = 
+  optionP <|> baseTypeP
+
 (** Parser for arrow types *)  
 let arrowTypeP : ty A.t = 
   let func1P = (fun arg ret -> Func1 (arg, ret)) 
-    <$> baseTypeP <* stringP "->" <*> baseTypeP in 
+    <$> typeP <* stringP "->" <*> typeP in 
   let func2P = (fun arg1 arg2 ret -> Func2 (arg1, arg2, ret)) 
-    <$> baseTypeP <* stringP "->" <*> baseTypeP <* stringP "->" <*> baseTypeP in 
+    <$> typeP <* stringP "->" <*> typeP <* stringP "->" <*> typeP in 
   (func2P <|> func1P)
     
 (** Parser for a value declaration inside a module, 
     eg. [val empty : 'a t] or [val func : 'a -> 'a t -> 'a t] *)   
 let valDeclP : valDecl A.t = 
   (fun valName valType -> { valName; valType }) 
-    <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> baseTypeP)  
+    <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> typeP)  
 
 (* Deprecated *)    
 (* let betweenComments (p : 'a A.t) : 'a A.t = 
