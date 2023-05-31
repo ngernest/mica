@@ -9,5 +9,4 @@ module type PolyInterface = sig
   val create : (int * int) list -> t
   val eval : t -> int -> int
   val equal : t -> t -> bool
-  val print : t -> unit
 end

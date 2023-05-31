@@ -1,9 +1,11 @@
 (* Adatpted from code by Jean-Christophe Filliatre *)
 
+(* Disable "unused-values" compiler warnings *)
+[@@@ocaml.warning "-32-34-27"]
 
 open PolyInterface
 
-module Polynomial1 : PolyInterface = struct
+module Poly1 : PolyInterface = struct
 
   type monomial = { coeff: Base.Int.t; degree : Base.Int.t }
     [@@deriving fields, sexp] 

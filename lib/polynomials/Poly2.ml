@@ -1,8 +1,11 @@
 (* Adatpted from code by Shayne Fletcher *)
 
+(* Disable "unused-values" compiler warnings *)
+[@@@ocaml.warning "-32-34-27"]
+
 open PolyInterface
 
-module Polynomial2 : PolyInterface = struct
+module Poly2 : PolyInterface = struct
   (* Invariant : Ordered by powers, lower order terms at the front *)
   type t = (Base.Int.t * Base.Int.t) Base.List.t 
     [@@deriving sexp]
