@@ -16,8 +16,8 @@ open Utils
     be the same as their corresponding [.ml] files. *)
 let imports (sigName : string) ~(modName1 : string) ~(modName2 : string) : document = 
   comment (!^ "Generated property-based testing code")
-  ^/^ (!^ "open! Base") 
-  ^/^ (!^ "open! Base_quickcheck")
+  ^/^ (!^ "open Base") 
+  ^/^ (!^ "open Base_quickcheck")
   ^/^ !^ ("open " ^ sigName)
   ^/^ !^ ("open " ^ modName1)
   ^/^ !^ ("open " ^ modName2)
@@ -99,12 +99,17 @@ let rec ty_of_string (s : string) : ty =
 
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
     to [ty], eg. [varNameHelper Int = n] *)  
-let varNameHelper (ty : ty) : string = 
+let rec varNameHelper (ty : ty) : string = 
   match ty with 
   | Alpha -> "x"
   | T | AlphaT -> "e"
   | Int -> "n"
   | Bool -> "b"
+  | Char -> "c"
+  | List argTy -> varNameHelper argTy ^ "s"
+  | Option argTy -> varNameHelper argTy
+  (* TODO: check if we need to destruct the pair *)
+  | Pair (_, _) -> "p" 
   | _ -> String.prefix (string_of_ty ty) 1
 
 (** Special case of [genVarNames] when we only have one argument type.  
@@ -279,13 +284,13 @@ let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : id
   let funcApp = 
     begin match nonExprArg with 
     | None -> funcName ^^ space ^^ (!^ arg') 
-    | Some (nonExprArg, Fst) -> funcName ^^ (spaced (!^ nonExprArg) ^^ (!^ arg'))
-    | Some (nonExprArg, Snd) -> funcName ^^ (spaced (!^ arg') ^^ (!^ nonExprArg))
+    | Some (nonExprArg, Fst) -> funcName ^^ (spaceLR (!^ nonExprArg) ^^ (!^ arg'))
+    | Some (nonExprArg, Snd) -> funcName ^^ (spaceLR (!^ arg') ^^ (!^ nonExprArg))
     end in 
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
     ^/^ (!^ " | ") ^^ argTyConstr
     ^^ (space ^^ !^ arg') 
-    ^^ sArrow ^^ spaced retTyConstr ^^ parens funcApp
+    ^^ sArrow ^^ spaceLR retTyConstr ^^ parens funcApp
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
@@ -302,7 +307,7 @@ let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document)
       ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
       ^^ (!^ " with ")
       ^/^ (!^ " | ") ^^ OCaml.tuple [arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2']
-      ^^ sArrow ^^ spaced retTyConstr ^^ parens (funcName ^^ (spaced arg1') ^^ arg2')
+      ^^ sArrow ^^ spaceLR retTyConstr ^^ parens (funcName ^^ (spaceLR arg1') ^^ arg2')
       ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
       ^/^ (!^ "end")
   | _ -> failwith "error generating fresh variable names"
@@ -325,7 +330,7 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     | _, true -> interpOnce ~nonExprArg:(Some (arg1, Fst)) arg2Ty funcName arg2 retTy 
     | _, _ -> 
       let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
-      retTyConstr ^^ space ^^ parens (funcName ^^ spaced (!^ arg1) ^^ spaced (!^ arg2))
+      retTyConstr ^^ space ^^ parens (funcName ^^ spaceLR (!^ arg1) ^^ spaceLR (!^ arg2))
     end
   | valTy, _ -> 
     let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
@@ -362,21 +367,41 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   ^/^ (!^ "end")  
   ^^ hardline
 
-(** Produces the code for a monadic bind of [arg] to a QuickCheck generator 
-    producing a value of type [ty], where [ty] must be a non-arrow type
-    (helper function called by [genExprPatternRHS]) *)  
-let argGen (arg : string) (ty : ty) : document = 
+(** [getGenerator ty] takes in a type [ty] and produces a PPrint document
+    containing the corresponding QuickCheck generator for that type. 
+    - This is a helper function called by [argGen] *)
+let rec getGenerator (ty : ty) : document = 
   match ty with 
-  | Int | Alpha -> 
-    !^ (Printf.sprintf "let%%bind %s = G.int_inclusive (-10) 10 in " arg)
-  | Char -> 
-    !^ (Printf.sprintf "let%%bind %s = G.char_alpha in " arg)
-  | Bool -> 
-    !^ (Printf.sprintf "let%%bind %s = G.bool in " arg)
-  | Unit -> 
-    !^ (Printf.sprintf "let%%bind %s = G.unit in " arg)
+  | Int | Alpha -> !^ "G.int_inclusive (-10) 10"
+  | Char -> !^ "G.char_alpha"
+  | Bool -> !^ "G.bool"
+  | Unit -> !^ "G.unit"
+  | Option argTy -> 
+    !^ "G.option @@ " ^^ getGenerator argTy
+  | List argTy -> 
+    !^ "G.list @@ " ^^ getGenerator argTy
+  | Pair (ty1, ty2) -> 
+    let (g1, g2) = map2 ~f:getGenerator (ty1, ty2) in 
+    !^ "G.both @@" ^^ spaceLR g1 ^^ spaceR g2
+  | _ -> failwith @@ 
+    Printf.sprintf "Error: Can't fetch generator for type %s" 
+    (string_of_ty ~t:"T" ~alpha:"Alpha" ty)
+
+(** Produces the code for a monadic bind of [arg] to a QuickCheck generator 
+    producing a value of type [ty], where [ty] must be a non-arrow type.
+    - This is a helper function called by [genExprPatternRHS]) *)  
+let argGen (arg : string) (ty : ty) : document = 
+  let open Printf in 
+  let binding = !^ (sprintf "let%%bind %s = " arg) in
+  match ty with 
+  | Int | Alpha       -> binding ^^ getGenerator Int ^^ sIn
+  | Char              -> binding ^^ getGenerator Char ^^ sIn
+  | Bool              -> binding ^^ getGenerator Bool ^^ sIn
+  | Unit              -> binding ^^ getGenerator Unit ^^ sIn
+  | Option _ | List _ -> binding ^^ getGenerator ty ^^ sIn
+  | Pair (_, _) -> failwith "TODO: handle pairs"
   | T | AlphaT -> 
-    !^ (Printf.sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
+    !^ (sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
         arg (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
   | _ -> failwith "Higher-order functions not supported"
 
@@ -525,8 +550,8 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
   comment (!^ "Generated executable for testing observational equivalence of two modules")
   ^/^ comment (!^ "Usage: " ^^ 
     brackets @@ !^ (Printf.sprintf "dune exec -- %s.exe" @@ chop_extension execFilePath))
-  ^/^ !^ ("open! Core")
-  ^/^ !^ ("open! " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
+  ^/^ !^ ("open Core")
+  ^/^ !^ ("open " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
   ^/^ hardline
 
 (** Produces Quickcheck code in the executable that tests two modules 
@@ -552,11 +577,13 @@ let obsEquiv (tyConstr, valConstr : string * string) : document =
     are excluded when we check if two modules for observational equivalence,
     because these abstract types may be instantiated differently in the two modules. 
     - For instance, one module could instantiate ['a t] to be ['a list], 
-    while the other instantiates ['a t] to be ['a tree]. *)  
+    while the other instantiates ['a t] to be ['a tree].
+    - Note that arrow types are not considered by this function. *)  
 let rec isExcludedType (ty : ty) : bool = 
   match ty with 
   | T | AlphaT -> true 
-  | Option argTy -> isExcludedType argTy
+  | Option argTy | List argTy -> isExcludedType argTy
+  | Pair (ty1, ty2) -> isExcludedType ty1 || isExcludedType ty2
   | _ -> false 
 
 (** Generate the executable code for testing observational equivalence

@@ -27,11 +27,12 @@ let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : strin
   (sigName : string) (modName1 : string) (modName2 : string) : unit = 
 
   let pbtFile = Out_channel.create ~append:false pbtFilePath in
-  write_doc pbtFile (imports sigName ~modName1 ~modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
-  write_doc pbtFile (functorDef m ~sigName ~functorName);
-  write_doc pbtFile (genExprDef m);
-  write_doc pbtFile (implModuleBindings ~functorName modName1 modName2);
-  write_doc pbtFile displayErrorDef;
+  writeDoc pbtFile 
+    (imports sigName ~modName1 ~modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
+  writeDoc pbtFile (functorDef m ~sigName ~functorName);
+  writeDoc pbtFile (genExprDef m);
+  writeDoc pbtFile (implModuleBindings ~functorName modName1 modName2);
+  writeDoc pbtFile displayErrorDef;
   Out_channel.close pbtFile
 
 (** Parses the names of the signature & implementation files from the cmd-line *)
@@ -55,8 +56,8 @@ let cmdLineParser : Command.t =
           (* TODO (stretch-goal): automatically append executable stanza to Dune file *)
 
           let executable = Out_channel.create ~append:false execFilePath in
-            write_doc executable (executableImports ~pbtFilePath ~execFilePath);
-            write_doc executable (compareImpls m);
+            writeDoc executable (executableImports ~pbtFilePath ~execFilePath);
+            writeDoc executable (compareImpls m);
 
             Out_channel.close executable;
 

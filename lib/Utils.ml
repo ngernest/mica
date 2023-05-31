@@ -5,25 +5,34 @@ open Stdio
 (** This file contains general utility functions that are called 
     by the other files. *)
 
-(** Writes a PPrint document to an Out_channel (eg. [stdout]) *)
-let write_doc (outc : Out_channel.t) (doc : document) : unit = 
+(** [writeDoc outc doc] writes the PPrint document [doc] to an Out_channel [doc] 
+    (eg. [stdout]) *)
+let writeDoc (outc : Out_channel.t) (doc : document) : unit = 
   ToChannel.pretty 1.0 60 outc doc
 
-(** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
-let spaced (doc : document) : document = 
-  enclose space space doc   
+(** [spaceL doc] adds a space on the {b left} of the PPrint document [doc] *)  
+let spaceL (doc : document) : document = doc ^^ space      
+
+(** [spaceR doc] adds a space on the {b right} of the PPrint document [doc] *)    
+let spaceR (doc : document) : document = doc ^^ space  
+
+(** [spaceLR doc] adds a space on {b both} sides of the PPrint document [doc] *)  
+let spaceLR (doc : document) : document = enclose space space doc  
 
 (** Produces a PPrint document [" | "] with spaces on both sides *)  
-let sBar : document = spaced bar  
+let sBar : document = spaceLR bar  
 
 (** Produces a PPrint document [ "| " ] with a space on the right only *)
-let barSpace : document = bar ^^ space
+let barSpace : document = spaceR bar
 
 (** Produces a PPrint document [" -> "] with spaces on either side *)  
-let sArrow : document = spaced (!^ "->")
+let sArrow : document = spaceLR (!^ "->")
 
 (** Produces a PPrint document [ ** ] with spaces on either side *)  
 let star2 : document = star ^^ star
+
+(** Produces a PPrint document [" in "] with spaces on either side *)  
+let sIn : document = spaceLR (!^ "in")
 
 (** Takes a PPrint document [body] and wraps it in the OCaml comment syntax, 
     i.e. [comment body] is displayed as [(** body *)] *)
