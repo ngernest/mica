@@ -66,15 +66,20 @@ let baseTypeP : ty A.t =
   <|> constP "\'a" Alpha 
   <|> constP "t" T
 
-(** Parser for options *)  
-let optionP : ty A.t = 
-  let open A.Let_syntax in 
-  let%map ty = baseTypeP <* stringP "option" in 
-  ParserTypes.Option ty
-
+(** General parser for parameterized types, eg. options/pairs/lists *)  
+let paramTypeP : ty A.t = 
+  fix @@ fun paramType -> 
+    let pairP = 
+      (fun (t1, t2) -> Pair (t1, t2)) <$> A.both baseTypeP (stringP "*" *> baseTypeP) in 
+    let optionP = 
+      (fun ty -> Option ty) <$> ((baseTypeP <|> parens paramType) <* stringP "option") in 
+    let listP = 
+      (fun ty -> List ty) <$> ((baseTypeP <|> parens paramType) <* stringP "list") in 
+    pairP <|> optionP <|> listP
+    
 (** General parser for non-arrow types *)
 let typeP : ty A.t = 
-  optionP <|> baseTypeP
+  paramTypeP <|> baseTypeP
 
 (** Parser for arrow types *)  
 let arrowTypeP : ty A.t = 

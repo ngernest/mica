@@ -4,7 +4,8 @@ open ParserTypes
 open Utils
 
 (** This file contains the logic for generating PBT code from the AST 
-    of a parsed module signature. *)
+    of a parsed module signature. This file also calls some helper 
+    functions defined in the module {!Utils}. *)
 
 (** {1 Functions for generating PBT code} *)
 
@@ -149,7 +150,7 @@ let getExprConstructor (v : valDecl) : string list * document =
   | _, Unit -> ([], OCaml.unit)
   | _, Alpha -> (["a"], printConstructor constr ["a"])
   | _, T | _, AlphaT -> (["t"], printConstructor constr ["t"])
-  | _, Option argTy | _, Func1 (argTy, _) -> 
+  | _, Option argTy | _, List argTy | _, Func1 (argTy, _) -> 
     let arg = genVarNames [argTy] in 
     (arg, printConstructor constr arg)
   | _, Pair (arg1, arg2) | _, Func2 (arg1, arg2, _) -> 
@@ -435,7 +436,7 @@ let getExprConstructorWithArgs (tyConstr : string)
   | Alpha, _ -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
   | T, _ | AlphaT, _ -> 
     (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
-  | Option argTy, _ | Func1 (argTy, _), _ ->
+  | Option argTy, _ | List argTy, _ | Func1 (argTy, _), _ ->
     let arg = genVarNames [argTy] in 
     (tyConstr, ty, arg, constr, printConstructor constr arg)
   | Pair (arg1, arg2), _ | Func2 (arg1, arg2, _), _ -> 
