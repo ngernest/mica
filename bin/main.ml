@@ -1,14 +1,13 @@
-open! Core
-open! Angstrom
-open! Core_unix
-open! PPrint
-open! Stdio
+open Core
+open PPrint
+open Stdio
 
-open! Lib.Parser
-open! Lib.ParserTypes
-open! Lib.ModuleParser
-open! Lib.CodeGenerator
-open! Lib.CmdLineParser
+open Lib.Parser
+open Lib.ParserTypes
+open Lib.ModuleParser
+open Lib.CodeGenerator
+open Lib.CmdLineParser
+open Lib.Utils
 
 (** Name of the generated file containing the PBT code *)
 let pbtFilePath : string = "./lib/Generated.ml"

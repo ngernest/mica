@@ -8,12 +8,14 @@ Mica parses any generic OCaml module signature, and checks whether two modules i
 This project compiles with [dune build].
 
 {2 Usage}
-[dune exec -- bin/main.exe [.ml file containing signature] [.ml file containing 1st module] [.ml file containing 2nd module]]
+[dune exec -- bin/main.exe [.ml/.mli file containing signature] [.ml file containing 1st module] [.ml file containing 2nd module]]
 
 This command runs Mica and creates two new files:
 - [lib/Generated.ml] (contains PBT code for testing an OCaml module)
 - [bin/compare_impls.ml] (code for an executable that tests two modules for observational equivalence)
 To run the generated executable, run [dune exec -- bin/compare_impls.exe].
+
+(Note: The name of the module signature must be the same as the .ml/.mli file it is contained within.)
 
 {2 Dependencies}
 - {{: https://github.com/janestreet/base} Base}

@@ -1,49 +1,10 @@
 open Base
 open PPrint
 open ParserTypes
-open Stdio
+open Utils
 
 (** This file contains the logic for generating PBT code from the AST 
     of a parsed module signature. *)
-    
-(** {1 Generic utility functions} *)
-
-(** Writes a PPrint document to an Out_channel (eg. [stdout]) *)
-let write_doc (outc : Out_channel.t) (doc : document) : unit = 
-  ToChannel.pretty 1.0 60 outc doc
-
-(** [spaced doc] adds a space on either side of the PPrint document [doc] *)  
-let spaced (doc : document) : document = 
-  enclose space space doc   
-
-(** Produces a PPrint document [" | "] with spaces on both sides *)  
-let sBar : document = spaced bar  
-
-(** Produces a PPrint document [ "| " ] with a space on the right only *)
-let barSpace : document = bar ^^ space
-
-(** Produces a PPrint document [" -> "] with spaces on either side *)  
-let sArrow : document = spaced (!^ "->")
-
-(** Produces a PPrint document [ ** ] with spaces on either side *)  
-let star2 : document = star ^^ star
-
-(** Takes a PPrint document [body] and wraps it in the OCaml comment syntax, 
-    i.e. [comment body] is displayed as [(** body *)] *)
-let comment (body : document) : document = 
-  parens @@ enclose (star2 ^^ space) (space ^^ star) body
-
-(** Given a filepath to a .ml/.mli file, retrieves the corresponding name of the 
-    top-level module signature (must be the same as the .ml/.mli file) *)  
-let getModuleSigName (filepath : string) : string =
-  Core.Filename.(basename filepath |> chop_extension)
-
-(** [replicate n a] produces a list containing [n] copies of [a] *)    
-let replicate ~(n : int) (a : 'a) : 'a list = 
-  let rec helper (n : int) (acc : 'a list) : 'a list = 
-    if n = 0 then acc 
-    else helper (n - 1) (a :: acc) in 
-  helper n []  
 
 (** {1 Functions for generating PBT code} *)
 
@@ -191,7 +152,7 @@ let getExprConstructor (v : valDecl) : string list * document =
   | _, Option argTy | _, Func1 (argTy, _) -> 
     let arg = genVarNames [argTy] in 
     (arg, printConstructor constr arg)
-  | _, Func2 (arg1, arg2, _) -> 
+  | _, Pair (arg1, arg2) | _, Func2 (arg1, arg2, _) -> 
     let args = genVarNames [arg1; arg2] in 
     (args, printConstructor constr args)
 
@@ -298,12 +259,6 @@ let interpIsNeeded (argTy : ty) : bool =
   match argTy with 
   | AlphaT | T -> true
   | _ -> false
-
-(** Applies a function pointwise on a pair *)  
-let map2 ~f (a1, a2) = (f a1, f a2)  
-
-(** Applies a function pointwise on a triple *)  
-let map3 ~f (a1, a2, a3) = (f a1, f a2, f a3)  
 
 (** Auxiliary data type for indicating the position of a non-[expr] argument
     to a function *)
@@ -469,8 +424,8 @@ let genExprPatternRHS
     and returns a 5-tuple of the form 
     [(tyConstr, ty, constructorArgs, constructor, constructor applied to args)], 
     eg. [(Bool, Func2(Alpha, Expr, Bool), ["x", "e"], "Mem", !^ "Mem(x,e)")] *)
-let getExprConstructorWithArgs (tyConstr : string) (ty : ty) (constr : string) 
-  : string * ty * string list * string * document = 
+let getExprConstructorWithArgs (tyConstr : string) 
+  (ty : ty) (constr : string) : string * ty * string list * string * document = 
   match ty, constr with 
   | _, "Empty" -> (tyConstr, ty, [], constr, !^ constr)
   | Int, _ -> (tyConstr, ty, ["n"], constr, printConstructor constr ["n"])
@@ -478,17 +433,14 @@ let getExprConstructorWithArgs (tyConstr : string) (ty : ty) (constr : string)
   | Bool, _ -> (tyConstr, ty, ["b"], constr, printConstructor constr ["b"])
   | Unit, _ -> (tyConstr, ty, [], constr, OCaml.unit)
   | Alpha, _ -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
-  | T, _ | AlphaT, _ -> (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
+  | T, _ | AlphaT, _ -> 
+    (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
   | Option argTy, _ | Func1 (argTy, _), _ ->
     let arg = genVarNames [argTy] in 
     (tyConstr, ty, arg, constr, printConstructor constr arg)
-  | Func2 (arg1, arg2, _), _ -> 
+  | Pair (arg1, arg2), _ | Func2 (arg1, arg2, _), _ -> 
     let args = genVarNames [arg1; arg2] in 
     (tyConstr, ty, args, constr, printConstructor constr args)
-
-(** Conversion between the curried/uncurried versions of an arity-3 function *)    
-let curry3 f a b c = f (a, b, c)
-let uncurry3 f (a, b, c) = f a b c
     
 (** Returns an association list of constructors for the [ty] ADT 
   where each element is the form [(<constructor for the ty ADT>, ty)] *)    

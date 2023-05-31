@@ -1,4 +1,5 @@
-open! Base
+open Base
+open Utils
 
 (** Datatype definitions for OCaml module signatures. 
     These types are used by the module {!ModuleParser} to parse 
@@ -20,6 +21,8 @@ type ident = string
     - [Alpha] represents ['a]
     - [AlphaT] represents ['a t]     
     - [T] represents [t]
+    - [Option] represents option types 
+    - [Pair] represents a {i pair}, i.e. a product type with two arguments
     - [Func1] represents functions of arity 1 (arg type, return type)
     - [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type) 
     - All other constructors correspond to base OCaml types *)  
@@ -29,8 +32,9 @@ type ty = Int
           | Unit 
           | Alpha 
           | AlphaT
-          | Option of ty
           | T 
+          | Option of ty
+          | Pair of ty * ty
           | Func1 of ty * ty 
           | Func2 of ty * ty * ty
   [@@deriving sexp, compare]
@@ -77,6 +81,9 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
     let t = string_of_ty ~alpha ~t ty in 
     if camelCase then t ^ "Option"
     else t ^ " option"
+  | Pair (t1, t2) -> 
+    let (t1', t2') = map2 ~f:(string_of_ty ~alpha ~t ~camelCase) (t1, t2) in 
+    t1' ^ " * " ^ t2'
   | Func1 (arg, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])
   | Func2 (arg1, arg2, ret) -> 
