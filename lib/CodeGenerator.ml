@@ -40,6 +40,19 @@ let tyIsArrow (ty : ty) : bool =
   | Func1 _ | Func2 _ -> true 
   | _ -> false    
     
+(** Extracts all the "identity elements" defined within a module signature,
+    e.g. [mempty] for monoids, or [zero] & [one] for semirings
+    - For our purposes, we assume any declaration of the form [val x : t] 
+      in the module signature, where [t] is the module's abstract type, 
+      is an identity element *)
+let getIdentityElements (m : moduleSig) =
+  let collectIdElts (acc : string list) (v : valDecl) : string list = 
+    begin match valType v with 
+    | T | AlphaT -> (String.capitalize @@ valName v) :: acc
+    | _ -> acc
+    end in 
+  List.fold ~init:[] ~f:collectIdElts m.valDecls
+
 (** Extracts the argument types of functions defined in the module signature,
     and generates constructors for the [expr] ADT 
     that take these types as type parameters *)
@@ -63,7 +76,8 @@ let extractArgTypes (v : valDecl) : document =
 let exprADTDecl (m : moduleSig) : document = 
   prefix 2 1 
   (!^ "type expr =")
-  (barSpace ^^ (group @@ separate_map (hardline ^^ barSpace) extractArgTypes m.valDecls 
+  (barSpace ^^ (group @@ 
+    separate_map (hardline ^^ barSpace) extractArgTypes m.valDecls 
     ^/^ sexpAnnotation))  
 
 (** Helper function for printing out OCaml constructors
@@ -144,11 +158,16 @@ let getExprConstructorName (v : valDecl) : string =
 (** Fetches the constructor corresponding to a [val] 
     declaration in the [expr] ADT, 
     returning a pair of the form [(args, constructor applied to args)], 
-    eg. [(["x", "e"], !^ "Mem(x,e)")]  *)
-let getExprConstructor (v : valDecl) : string list * document = 
+    eg. [(["x", "e"], !^ "Mem(x,e)")] 
+    - The auxiliary argument [idElts] is a list of names of the identity elements
+    defined in the module signature (eg. [mempty] for monoids) 
+    - See [getIdentityElements] for further details on identity elements *)
+let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * document = 
   let constr = getExprConstructorName v in
-  match constr, valType v with 
-  | "Empty", _ -> ([], !^ constr)
+  (* Check if the constructor corresponds to an identity element in the signature *)
+  let isIdElt = List.mem idElts constr ~equal:String.equal in 
+  match isIdElt, valType v with 
+  | true, _ -> ([], !^ constr)
   | _, Int -> (["n"], printConstructor constr ["n"])
   | _, Char -> (["c"], printConstructor constr ["c"])
   | _, Bool -> (["b"], printConstructor constr ["b"])
@@ -353,10 +372,18 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     valTyConstr ^^ space ^^ parens funcName
 
 
-(** Generates the definition of the [interp] function which evaluates [expr]s *)
+(** [interpDefn m] generates the definition of the [interp] function, 
+    which evaluates [expr]s based on the value declarations defined in the 
+    module signature [m]. This function does so by doing the following:
+    {ol {- Extracting the names of all the identity elements in [m]
+           by calling [getIdentityElements]}
+        {- Fetching the [expr] ADT constructors & arguments based on the 
+           declarations inside [m]}
+        {- Generating the pattern matches inside the [interp] function}} *)
 let interpDefn (m : moduleSig) : document = 
+  let idElts = getIdentityElements m in 
   let (exprConstrArgs, exprConstrs) = 
-    List.unzip @@ List.map ~f:getExprConstructor m.valDecls in
+    List.unzip @@ List.map ~f:(getExprConstructor ~idElts) m.valDecls in
   let innerPatternMatches = 
     List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls exprConstrArgs) in
   (** [interpHelper i constr] takes in a PPrint document [constr] 
@@ -370,7 +397,7 @@ let interpDefn (m : moduleSig) : document =
   hang 2 @@ 
   !^ "let rec interp (expr : expr) : value = " 
   ^/^ (!^ "match expr with")
-  ^^ (concat (List.mapi ~f:interpHelper exprConstrs)) (* TODO: check if calling [concat] is valid *)
+  ^^ (concat (List.mapi ~f:interpHelper exprConstrs)) 
   ^^ break 1
 
 (** Generates the definition of the [ExprToImpl] functor *)  
@@ -505,10 +532,18 @@ let genExprPatterns (m : moduleSig) =
 
 (** Generates the definition of the [gen_expr] Quickcheck generator for 
     the [expr] datatype *)  
-
-(* TODO: replace [return Empty] with something more generic? *)
 let genExprDef (m : moduleSig) : document = 
-  (* [patterns] is a [(tyConstr, (funcTy, patternRHS, patternName) list)]*)
+
+  (* Generator for the identity element(s) in the module signature *)
+  let idEltGenerator : document = 
+    let idElts = getIdentityElements m in 
+    begin match idElts with 
+    | [] -> failwith "Missing identity element(s) in module signature"
+    | [mempty] -> (!^ "return ") ^^ (!^ mempty)
+    | _ -> !^ "G.union " ^^ OCaml.list (fun e -> !^ "return " ^^ !^ e) idElts 
+    end in 
+
+  (* [patterns] is a [(tyConstr, (funcTy, patternRHS, patternName) list)] *)
   let patterns : (string, (ty * document * string) list) List.Assoc.t = 
     genExprPatterns m
       |> List.Assoc.sort_and_group ~compare:compare_string in
@@ -536,7 +571,7 @@ let genExprDef (m : moduleSig) : document =
   ^/^ (!^ "let open G.Let_syntax in ")
   ^/^ (!^ "let%bind k = G.size in ")
   ^/^ (!^ "match ty, k with ")
-  ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ (!^ "return Empty"))
+  ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ idEltGenerator)
   ^^ concat completePatterns
 
 (** Produces a PPrint document of an OCaml functor application, where 
