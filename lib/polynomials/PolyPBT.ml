@@ -15,7 +15,8 @@ type expr =
   | Equal of expr * expr 
   [@@deriving sexp]
 
-type ty = Bool | Int | T 
+type ty = 
+  Bool | Int | T 
   [@@deriving sexp]
 
 module ExprToImpl (M : PolyInterface) = struct 
@@ -86,9 +87,10 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in 
       G.return @@ Mult(e1, e2) in 
     let create = 
-      let genPairs = G.both G.small_strictly_positive_int G.small_strictly_positive_int in 
-      let%bind lst = G.list genPairs in 
-      G.return @@ Create(lst) in
+      let%bind (x1, x2) = G.both G.small_strictly_positive_int G.small_strictly_positive_int in 
+      G.return @@ Create([(x1, x2)]) in
+      (* let%bind lst = G.list genPairs in 
+      G.return @@ Create(lst) in *)
     G.union [monomial; add; mult; create]
 
 

@@ -290,7 +290,7 @@ let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : id
   align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
     ^/^ (!^ " | ") ^^ argTyConstr
     ^^ (space ^^ !^ arg') 
-    ^^ sArrow ^^ spaceLR retTyConstr ^^ parens funcApp
+    ^^ sArrow ^^ spaceR retTyConstr ^^ parens funcApp
     ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
     ^/^ (!^ "end")
 
@@ -307,7 +307,7 @@ let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document)
       ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
       ^^ (!^ " with ")
       ^/^ (!^ " | ") ^^ OCaml.tuple [arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2']
-      ^^ sArrow ^^ spaceLR retTyConstr ^^ parens (funcName ^^ (spaceLR arg1') ^^ arg2')
+      ^^ sArrow ^^ spaceR retTyConstr ^^ parens (funcName ^^ (spaceLR arg1') ^^ arg2')
       ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
       ^/^ (!^ "end")
   | _ -> failwith "error generating fresh variable names"
@@ -330,7 +330,7 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     | _, true -> interpOnce ~nonExprArg:(Some (arg1, Fst)) arg2Ty funcName arg2 retTy 
     | _, _ -> 
       let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
-      retTyConstr ^^ space ^^ parens (funcName ^^ spaceLR (!^ arg1) ^^ spaceLR (!^ arg2))
+      retTyConstr ^^ space ^^ parens (funcName ^^ spaceLR (!^ arg1) ^^ spaceR (!^ arg2))
     end
   | valTy, _ -> 
     let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
@@ -361,7 +361,7 @@ let interpDefn (m : moduleSig) : document =
 let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 
   hang 2 @@ 
   !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
-  ^/^ (!^ "include M")
+  ^/^ (!^ "include M" ^^ hardline)
   ^/^ (valueADTDefn m)
   ^/^ (interpDefn m)
   ^/^ (!^ "end")  
@@ -372,14 +372,12 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
     - This is a helper function called by [argGen] *)
 let rec getGenerator (ty : ty) : document = 
   match ty with 
-  | Int | Alpha -> !^ "G.int_inclusive (-10) 10"
-  | Char -> !^ "G.char_alpha"
-  | Bool -> !^ "G.bool"
-  | Unit -> !^ "G.unit"
-  | Option argTy -> 
-    !^ "G.option @@ " ^^ getGenerator argTy
-  | List argTy -> 
-    !^ "G.list @@ " ^^ getGenerator argTy
+  | Int | Alpha     -> !^ "G.int_inclusive (-10) 10"
+  | Char            -> !^ "G.char_alpha"
+  | Bool            -> !^ "G.bool"
+  | Unit            -> !^ "G.unit"
+  | Option argTy    -> !^ "G.option @@ " ^^ getGenerator argTy
+  | List argTy      -> !^ "G.list @@ "   ^^ getGenerator argTy
   | Pair (ty1, ty2) -> 
     let (g1, g2) = map2 ~f:getGenerator (ty1, ty2) in 
     !^ "G.both @@" ^^ spaceLR g1 ^^ spaceR g2
@@ -394,12 +392,20 @@ let argGen (arg : string) (ty : ty) : document =
   let open Printf in 
   let binding = !^ (sprintf "let%%bind %s = " arg) in
   match ty with 
-  | Int | Alpha       -> binding ^^ getGenerator Int ^^ sIn
+  | Int | Alpha       -> binding ^^ getGenerator Int  ^^ sIn
   | Char              -> binding ^^ getGenerator Char ^^ sIn
   | Bool              -> binding ^^ getGenerator Bool ^^ sIn
   | Unit              -> binding ^^ getGenerator Unit ^^ sIn
-  | Option _ | List _ -> binding ^^ getGenerator ty ^^ sIn
-  | Pair (_, _) -> failwith "TODO: handle pairs"
+  | Option _ | List _ -> binding ^^ getGenerator ty   ^^ sIn
+  | Pair (ty1, ty2)   -> 
+    let lst = if phys_equal ty1 ty2 
+      then genVarNamesN ~n:2 ty1 
+      else genVarNames [ty1; ty2] in 
+    begin match lst with 
+    | [v1; v2] -> 
+      !^ (sprintf "let%%bind (%s, %s) = " v1 v2) ^^ getGenerator ty ^^ sIn 
+    | _ -> failwith "Error generating fresh varnames for Pair type"
+    end 
   | T | AlphaT -> 
     !^ (sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
         arg (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
