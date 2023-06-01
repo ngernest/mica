@@ -63,3 +63,6 @@ let curry3 f a b c = f (a, b, c)
 
 (** Converts an uncurried arity-3 function to its curried equivalent *)
 let uncurry3 f (a, b, c) = f a b c
+
+(** [parensStr s] parenthesizes the string [s] *)
+let parensStr (s : string) : string = "(" ^ s ^ ")"

@@ -80,13 +80,17 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | Unit -> "unit"
   | Alpha -> alpha
   | AlphaT | T -> t
+  (* TODO: figure out if we need to parenthesize parameterized types? 
+     (and if so, how to avoid cases where we have parens appearing in 
+      the derived constructor names 
+      -- maybe only parenthesize if [camelCase] is false) *)
   | Option ty -> 
     let t = string_of_ty ~alpha ~t ty in 
-    if camelCase then t ^ "Option"
-    else t ^ " option"
+      if camelCase then t ^ "Option"
+      else t ^ " option"
   | Pair (t1, t2) -> 
     let (t1', t2') = map2 ~f:(string_of_ty ~alpha ~t ~camelCase) (t1, t2) in 
-    t1' ^ " * " ^ t2'
+      parensStr @@ t1' ^ " * " ^ t2'
   | List eltTy -> string_of_ty ~alpha ~t ~camelCase eltTy ^ " list"
   | Func1 (arg, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])

@@ -423,7 +423,7 @@ let rec getGenerator (ty : ty) : document =
   | List argTy      -> !^ "G.list @@ "   ^^ getGenerator argTy
   | Pair (ty1, ty2) -> 
     let (g1, g2) = map2 ~f:getGenerator (ty1, ty2) in 
-    !^ "G.both @@" ^^ spaceLR g1 ^^ spaceR g2
+    !^ "G.both" ^^ spaceLR (parens g1) ^^ parens g2
   | _ -> failwith @@ 
     Printf.sprintf "Error: Can't fetch generator for type %s" 
     (string_of_ty ~t:"T" ~alpha:"Alpha" ty)
@@ -548,7 +548,7 @@ let genExprDef (m : moduleSig) : document =
     begin match idElts with 
     | [] -> failwith "Missing identity element(s) in module signature"
     | [mempty] -> (!^ "return ") ^^ (!^ mempty)
-    | _ -> !^ "G.union " ^^ OCaml.list (fun e -> !^ "return " ^^ !^ e) idElts 
+    | _ -> !^ "G.union " ^^ OCaml.list (fun e -> !^ "G.return " ^^ !^ e) idElts 
     end in 
 
   (* [patterns] is a [(tyConstr, (funcTy, patternRHS, patternName) list)] *)
