@@ -114,8 +114,14 @@ type valDecl = {
 }
   [@@deriving sexp, fields]
 
-(** Type representing the argument to a function *)   
-type argLabel = valDecl
+(** Auxiliary type which specifies whether integer QuickCheck generators
+    should generate:
+    - [AllInts] (i.e. all positive/negative ints) 
+    - [NonNegativeOnly] (only generate non-negative ints) 
+    - [PositiveOnly] (only generate strictly positive ints) 
+    - Note: when a module signature is parsed in {!Lib.ModuleParser}, 
+    by default, [intFlag] is set to [AllInts] *)  
+type intFlag = AllInts | NonNegativeOnly | PositiveOnly
   [@@deriving sexp]
 
 (** Record type representing an ML module *)  
@@ -123,9 +129,13 @@ type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
   abstractType : abstractType;
-  valDecls : valDecl list [@sexp.list]
+  valDecls : valDecl list [@sexp.list];
+  intFlag : intFlag
 }
 [@@deriving sexp, fields]
+
+
+
 
 (* TODO: handle parens in arrow types *)
 (* TODO: figure out how to ignore comments in parser *)

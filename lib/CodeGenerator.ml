@@ -412,41 +412,51 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
 
 (** [getGenerator ty] takes in a type [ty] and produces a PPrint document
     containing the corresponding QuickCheck generator for that type. 
-    - This is a helper function called by [argGen] *)
-let rec getGenerator (ty : ty) : document = 
+    - The auxiliary argument [nonNegOnly] specifies whether QuickCheck's int 
+      generators should only generate non-negative ints (in the event [ty] is [Int]). 
+    - By default, the int generator returned generates {i both} 
+      negative & positive ints. 
+    - Note that polymorphic types (eg. [Alpha]) are instantiated as ints
+    - This is a helper function called by [argGen]. *)
+let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document = 
   match ty with 
-  | Int | Alpha     -> !^ "G.int_inclusive (-10) 10"
+  | Int | Alpha     -> 
+    if nonNegOnly then !^ "G.small_positive_or_zero_int"
+    else !^ "G.int_inclusive (-10) 10"
   | Char            -> !^ "G.char_alpha"
   | Bool            -> !^ "G.bool"
   | Unit            -> !^ "G.unit"
-  | Option argTy    -> !^ "G.option @@ " ^^ getGenerator argTy
-  | List argTy      -> !^ "G.list @@ "   ^^ getGenerator argTy
+  | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
+  | List argTy      -> !^ "G.list @@ "   ^^ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
-    let (g1, g2) = map2 ~f:getGenerator (ty1, ty2) in 
+    let (g1, g2) = map2 ~f:(getGenerator ~nonNegOnly) (ty1, ty2) in 
     !^ "G.both" ^^ spaceLR (parens g1) ^^ parens g2
-  | _ -> failwith @@ 
+  | _ -> failwith @@            
     Printf.sprintf "Error: Can't fetch generator for type %s" 
     (string_of_ty ~t:"T" ~alpha:"Alpha" ty)
 
 (** Produces the code for a monadic bind of [arg] to a QuickCheck generator 
     producing a value of type [ty], where [ty] must be a non-arrow type.
-    - This is a helper function called by [genExprPatternRHS]) *)  
-let argGen (arg : string) (ty : ty) : document = 
+    - The auxiliary argument [nonNegOnly] specifies whether QuickCheck's int 
+      generators should only generate non-negative ints
+    - This is a helper function called by [genExprPatternRHS]. *)  
+let argGen ?(nonNegOnly = false) (arg : string) (ty : ty) : document = 
   let open Printf in 
   let binding = !^ (sprintf "let%%bind %s = " arg) in
   match ty with 
-  | Int | Alpha       -> binding ^^ getGenerator Int  ^^ sIn
-  | Char              -> binding ^^ getGenerator Char ^^ sIn
-  | Bool              -> binding ^^ getGenerator Bool ^^ sIn
-  | Unit              -> binding ^^ getGenerator Unit ^^ sIn
-  | Option _ | List _ -> binding ^^ getGenerator ty   ^^ sIn
+  | Int | Alpha       -> binding ^^ getGenerator ~nonNegOnly Int  ^^ sIn
+  | Char              -> binding ^^ getGenerator ~nonNegOnly Char ^^ sIn
+  | Bool              -> binding ^^ getGenerator ~nonNegOnly Bool ^^ sIn
+  | Unit              -> binding ^^ getGenerator ~nonNegOnly Unit ^^ sIn
+  | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty   ^^ sIn
   | Pair (ty1, ty2)   -> 
     let lst = if phys_equal ty1 ty2 
       then genVarNamesN ~n:2 ty1 
       else genVarNames [ty1; ty2] in 
     begin match lst with 
     | [v1; v2] -> 
-      !^ (sprintf "let%%bind (%s, %s) = " v1 v2) ^^ getGenerator ty ^^ sIn 
+      !^ (sprintf "let%%bind (%s, %s) = " v1 v2) 
+        ^^ getGenerator ~nonNegOnly ty ^^ sIn 
     | _ -> failwith "Error generating fresh varnames for Pair type"
     end 
   | T | AlphaT -> 
@@ -455,13 +465,15 @@ let argGen (arg : string) (ty : ty) : document =
   | _ -> failwith "Higher-order functions not supported"
 
 (** Takes in the following arguments:
-    [tyConstr]: constructor for the [ty] ADT representing the return type of a function
-    [funcTy]: function type
-    [args]: arguments passed to the [Expr] constructor
-    [constr]: constructor for the [Expr] ADT
-    [funcApp]: PPrint document containing the application of [constr] onto [args]
+    - [nonNegOnly]: An optional argument specifying whether QuickCheck's int 
+        generators should only generate non-negative ints
+    - [tyConstr]: constructor for the [ty] ADT representing the return type of a function
+    - [funcTy]: function type
+    - [args]: arguments passed to the [Expr] constructor
+    - [constr]: constructor for the [Expr] ADT
+    - [funcApp]: PPrint document containing the application of [constr] onto [args]
 
-    Produces the RHS of the pattern matches in [gen_expr],
+    This function produces the RHS of the pattern matches in [gen_expr],
     returning a tuple of the form 
     [(tyConstr, (ty, patternMatchRHS, nameOfPatternMatch))]
     
@@ -476,6 +488,7 @@ let argGen (arg : string) (ty : ty) : document =
     ]}
     where [G] = [Base_quickcheck.Generator]. *)  
 let genExprPatternRHS 
+  ?(nonNegOnly = false)
   (tyConstr, funcTy, args, constr, funcApp : string * ty * string list * string * document) 
   : string * (ty * document * string) = 
   let patternName = String.uncapitalize constr in 
@@ -484,12 +497,12 @@ let genExprPatternRHS
   match funcTy, args with 
   | Func1 (argTy, _), [arg] -> 
     let patternRHS = 
-      preamble ^^ jump 2 1 @@ argGen arg argTy ^/^ monadicReturn in
+      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly arg argTy ^/^ monadicReturn in
     tyConstr, (funcTy, patternRHS, patternName)
   | Func2 (arg1Ty, arg2Ty, _), [arg1; arg2] -> 
     let patternRHS = 
-      preamble ^^ jump 2 1 @@ argGen arg1 arg1Ty 
-        ^/^ argGen arg2 arg2Ty ^/^ monadicReturn in
+      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly arg1 arg1Ty 
+        ^/^ argGen ~nonNegOnly arg2 arg2Ty ^/^ monadicReturn in
     tyConstr, (funcTy, patternRHS, patternName)
   | _ -> tyConstr, (funcTy, (!^ "failwith ") ^^ OCaml.string "TODO", "no pattern")
 
@@ -528,20 +541,33 @@ let genExprPatterns (m : moduleSig) =
          valType v, 
          getExprConstructorName v))
     |> map ~f:(uncurry3 getExprConstructorWithArgs)
-    |> map ~f:genExprPatternRHS
+    |> map ~f:(genExprPatternRHS 
+        ~nonNegOnly:(phys_equal m.intFlag NonNegativeOnly))
+
+(** [setNonNegIntFlag m] sets the [intFlag] field of the module signature [m]
+    to [NonNegativeOnly], indicating that QuickCheck's int generators
+    should only generate non-negative ints. *)    
+let setNonNegIntFlag (m : moduleSig) : moduleSig = 
+  { m with intFlag = NonNegativeOnly }
 
 (** Produces the definition of the [gen_expr] Quickcheck generator for 
     the [expr] datatype. 
+    - The auxiliary argument [nonNegOnly] is a boolean specifying if QuickCheck's 
+      integer generators should only generate non-negative integers. 
+      (This is an optional command-line flag that is passed in when Mica is invoked.)
     - An example of the automatically-produced code 
-    for [gen_expr] can be found in [GeneratedSetPBTCode.ml] (specialized
-    to the finite set example discussed in the README / documentation homepage). 
+      for [gen_expr] can be found in [GeneratedSetPBTCode.ml] (specialized
+      to the finite set example discussed in the README / documentation homepage). 
     - When the internal size parameter of [gen_expr] reaches 0, 
       the function yields a trivial generator that just returns 
       the identity element (or one of them, if there are multiple) 
       of the signature. 
     - See [getIdentityElements] for a further discussion
       on identity elements. *)  
-let genExprDef (m : moduleSig) : document = 
+let genExprDef ~(nonNegOnly : bool) (modSig : moduleSig) : document = 
+
+  let m = if nonNegOnly then setNonNegIntFlag modSig else modSig in 
+
   (* Generator for the identity element(s) in the module signature *)
   let idEltGenerator : document = 
     let idElts = getIdentityElements m in 

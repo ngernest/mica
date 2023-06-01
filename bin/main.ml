@@ -16,6 +16,13 @@ let pbtFilePath : string = "./lib/Generated.ml"
     for observational equivalence *)
 let execFilePath : string = "./bin/compare_impls.ml"
 
+(** Name of a flag specifying whether QuickCheck integer generators 
+    should only generate non-negative integers *)
+let nonNegIntsFlag : string = "-non-negative-ints-only"
+
+(** Documentation string for [nonNegIntsFlag] *)
+let nonNegIntsDoc : string = "Specify if QuickCheck int generators should only generate non-negative ints"
+
 (* Disable "unused-values" compiler warnings *)
 [@@@ocaml.warning "-32-34-27"]
 
@@ -24,13 +31,13 @@ let execFilePath : string = "./bin/compare_impls.ml"
     [functorName] is the name of the functor that produces the test harness
     [sigName, modName1, modName2] are the names of the signature/two module implementations *)
 let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : string)
-  (sigName : string) (modName1 : string) (modName2 : string) : unit = 
+  ~(sigName : string) ~(nonNegOnly: bool) (modName1 : string) (modName2 : string) : unit = 
 
   let pbtFile = Out_channel.create ~append:false pbtFilePath in
   writeDoc pbtFile 
     (imports sigName ~modName1 ~modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
   writeDoc pbtFile (functorDef m ~sigName ~functorName);
-  writeDoc pbtFile (genExprDef m);
+  writeDoc pbtFile (genExprDef ~nonNegOnly m);
   writeDoc pbtFile (implModuleBindings ~functorName modName1 modName2);
   writeDoc pbtFile displayErrorDef;
   Out_channel.close pbtFile
@@ -38,12 +45,13 @@ let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : strin
 (** Parses the names of the signature & implementation files from the cmd-line *)
 let cmdLineParser : Command.t =
   Command.basic
-    ~summary:"Automated Property-Based Testing for OCaml modules"
-    ~readme:(fun () -> "TODO: Complete readme")
+    ~summary:"Mica: Automated Property-Based Testing for OCaml modules"
+    ~readme:(fun () -> "For detailed documentation, please consult the docs at ngernest.github.io/module_pbt")
     (let%map_open.Command 
-      sigFile = anon ("signature file" %: regular_file) 
-      and implFile1 = anon ("implementation file 1" %: regular_file)
-      and implFile2 = anon ("implementation file 2" %: regular_file) in
+      sigFile = anon ("signature_file" %: regular_file) 
+      and implFile1 = anon ("implementation_file_1" %: regular_file)
+      and implFile2 = anon ("implementation_file_2" %: regular_file) 
+      and nonNegOnly = flag nonNegIntsFlag no_arg ~doc:nonNegIntsDoc in
     fun () -> 
       let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
@@ -51,7 +59,8 @@ let cmdLineParser : Command.t =
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
       begin match (run_parser moduleTypeP moduleString) with 
         | Ok m -> 
-          writeToPBTFile m ~pbtFilePath ~functorName sigName modName1 modName2;
+          writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly 
+            modName1 modName2;
 
           (* TODO (stretch-goal): automatically append executable stanza to Dune file *)
 

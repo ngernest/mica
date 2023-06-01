@@ -102,7 +102,7 @@ let valDeclP : valDecl A.t =
 (** Parser for a module signature *)
 let moduleTypeP : moduleSig A.t = 
   (fun moduleName abstractType valDecls -> 
-    { moduleName; moduleType = Intf; abstractType; valDecls }) 
+    { moduleName; moduleType = Intf; abstractType; valDecls; intFlag = AllInts }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
   <*> abstractTypeDeclP
   <*> A.many valDeclP
