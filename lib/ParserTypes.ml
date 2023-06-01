@@ -2,9 +2,9 @@ open Base
 open Utils
 
 (** Datatype definitions for OCaml module signatures. 
-    These types are used by the module {!ModuleParser} to parse 
+    These types are used by the module {!Lib.ModuleParser} to parse 
     OCaml module signatures. This file also calls some helper 
-    functions defined in the module {!Utils}. *)
+    functions defined in the module {!Lib.Utils}. *)
 
 (** Name of a module *)
 type moduleName = string
@@ -93,7 +93,10 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | Func2 (arg1, arg2, ret) -> 
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg1; arg2; ret])
 
-(** Abstract type contained within a module *)  
+(** Abstract type contained within a module 
+    - The [T0] constructor means the abstract type is {i not} parameterized by any type variables, i.e. the abstract type is just [t] 
+    - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, 
+    eg. ['a t]  *)  
 type abstractType = T0 | T1 of ty
   [@@deriving sexp]
 

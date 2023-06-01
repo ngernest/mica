@@ -5,7 +5,7 @@ open Utils
 
 (** This file contains the logic for generating PBT code from the AST 
     of a parsed module signature. This file also calls some helper 
-    functions defined in the module {!Utils}. *)
+    functions defined in the module {!Lib.Utils}. *)
 
 (** {1 Functions for generating PBT code} *)
 
@@ -162,7 +162,6 @@ let getExprConstructor (v : valDecl) : string list * document =
     let args = genVarNames [arg1; arg2] in 
     (args, printConstructor constr args)
 
-
 (** Extracts the return type of a function.  
     For non-arrow types, this function just extracts the type itself *)    
 let extractReturnType (v : valDecl) : string = 
@@ -208,7 +207,7 @@ let tyADTConstructors (m : moduleSig) : string list =
 
 (** Returns an association list where each element is a constructor for the 
     [ty] ADT & its associated constructor for the [value] ADT *)  
-let tyAndValueADTConstructors (m : moduleSig) : (string * string) list = 
+let tyAndValADTConstructors (m : moduleSig) : (string * string) list = 
   List.map ~f:(fun ty -> ty, valADTConstructorString ty) 
   (tyADTConstructors m)
 
@@ -233,30 +232,47 @@ let addSpaceToTyStr (s : string) =
   then chop_suffix_exn ~suffix:"option" s ^ " option"
   else s
 
-(** [valADTParam ty] generates the type param for the 
-    constructor [value] ADT corresponding to the type [ty] *)    
-let valADTParam (ty : string) : document = 
+(** [valADTParam moduleAbsTy ty] generates the type param for the 
+    constructor [value] ADT corresponding to the type [ty]
+    - The auxiliary argument [moduleAbsTy] refers to the abstract type 
+      contained within the module signature, e.g. [M.t]
+    - If the module's abstract type [M.t] is polymorphic (i.e. ['a M.t]), 
+      we instantiate ['a] with [int], 
+      otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)    
+let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document = 
   let open String in
   match (lowercase ty |> split ~on:' ') with 
   | [] -> failwith "Can't extract a type parameter from an empty string"
   | [str] -> 
-    if str = "t" then !^ "int M.t" 
+    if str = "t" then
+      begin match moduleAbsTy with 
+      | T0 -> !^ "M.t"
+      | T1 _ -> !^ "int M.t" 
+      end
     else !^ (addSpaceToTyStr str |> instantiateT)
-  | tys -> separate_map space (!^) tys
+  | tys -> separate_map space (!^) tys  
 
-(** [valADTTypeDef ty] generates both the constructor & type parameter 
-    for the [value] ADT corresponding to the type [ty] *)  
-let valADTTypeDef (ty : string) : document = 
+(** [valADTTypeDef moduleAbsTy ty] generates both the constructor & type parameter 
+    for the [value] ADT corresponding to the type [ty]
+    - The auxiliary argument [moduleAbsTy] is the abstract type defined in the module, 
+      which is used to determine if the abstract type needs to be instantiated
+      with a concrete type (this logic is handled in [valADTParam])
+    - Note: This function is a helper function called by [valADTDefn] *)  
+let valADTTypeDef ~(moduleAbsTy : abstractType) (ty : string) : document = 
   valADTConstructor ty 
   ^^ (!^ " of ")
-  ^^ valADTParam ty
+  ^^ valADTParam ~moduleAbsTy ty      
 
-(** Generates the [value] ADT definition (enclosed within the [ExprToImpl] functor) *)  
-let valueADTDefn (m : moduleSig) : document = 
-  let valueTypes = uniqRetTypesInSig m in 
+(** Generates the [value] ADT definition that is contained within 
+    the module returned by the [ExprToImpl] functor *)  
+let valADTDefn (m : moduleSig) : document = 
+  let valueTypes : string list = uniqRetTypesInSig m in 
   prefix 2 1 
   (!^ "type value = ")
-  (barSpace ^^ (group @@ separate_map (hardline ^^ barSpace) valADTTypeDef valueTypes 
+  (barSpace ^^ 
+    (group @@ separate_map (hardline ^^ barSpace) 
+      (fun ty -> valADTTypeDef ~moduleAbsTy:m.abstractType ty) 
+      valueTypes 
     ^/^ sexpAnnotation))  
 
 (** Given an argument and its type, determines if we need to recursively call 
@@ -362,7 +378,7 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
   hang 2 @@ 
   !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
   ^/^ (!^ "include M" ^^ hardline)
-  ^/^ (valueADTDefn m)
+  ^/^ (valADTDefn m)
   ^/^ (interpDefn m)
   ^/^ (!^ "end")  
   ^^ hardline
@@ -538,7 +554,7 @@ let implModuleBindings ~(functorName : moduleName) (modName1 : string) (modName2
   hardline ^/^ i1 ^/^ i2 ^/^ hardline
 
 (***********************************************************************************)
-(** {1 Functions for generating the executable for comparing 2 modules} *)
+(** {1 Functions for generating the executable for comparing two modules} *)
 
 (** Generates the definition of a [displayError] helper function 
     for displaying error messages when QuickCheck tests fail *)  
@@ -595,7 +611,7 @@ let rec isExcludedType (ty : ty) : bool =
 (** Generate the executable code for testing observational equivalence
     of two modules *)  
 let compareImpls (m : moduleSig) : document = 
-  let constrs = List.filter (tyAndValueADTConstructors m) 
+  let constrs = List.filter (tyAndValADTConstructors m) 
     ~f:(fun (ty, _) -> not @@ isExcludedType (ty_of_string ty)) in 
   !^ "let () = "
   ^^ jump 2 1 @@ !^ "let module QC = Quickcheck in "
