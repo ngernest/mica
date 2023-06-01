@@ -530,10 +530,18 @@ let genExprPatterns (m : moduleSig) =
     |> map ~f:(uncurry3 getExprConstructorWithArgs)
     |> map ~f:genExprPatternRHS
 
-(** Generates the definition of the [gen_expr] Quickcheck generator for 
-    the [expr] datatype *)  
+(** Produces the definition of the [gen_expr] Quickcheck generator for 
+    the [expr] datatype. 
+    - An example of the automatically-produced code 
+    for [gen_expr] can be found in [GeneratedSetPBTCode.ml] (specialized
+    to the finite set example discussed in the README / documentation homepage). 
+    - When the internal size parameter of [gen_expr] reaches 0, 
+      the function yields a trivial generator that just returns 
+      the identity element (or one of them, if there are multiple) 
+      of the signature. 
+    - See [getIdentityElements] for a further discussion
+      on identity elements. *)  
 let genExprDef (m : moduleSig) : document = 
-
   (* Generator for the identity element(s) in the module signature *)
   let idEltGenerator : document = 
     let idElts = getIdentityElements m in 
