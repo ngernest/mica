@@ -14,7 +14,7 @@ module Poly1 : PolyInterface = struct
     [@@deriving sexp]
 
   let zero = []
-  let one = [ { coeff= 1; degree = 0 } ]
+  let one = [ { coeff = 1; degree = 0 } ]
 
   let monomial c d =
     if c = 0 then [] else [{ coeff= c; degree = d }]
@@ -49,13 +49,15 @@ module Poly1 : PolyInterface = struct
     in
     List.fold_left (fun p m -> add (mult_monomial m p2) p) zero p1
 
-  let rec power x n =
+  let rec power (x : int) (n : int) : int =
     if n == 0 then 1
     else
       let y = power x (n / 2) in
-      if n mod 2 == 0 then y * y else x * y * y
+      if n mod 2 == 0 then y * y 
+        else x * y * y
 
-  let rec eval p x = match p with
+  let rec eval (p : monomial list) (x : int) : int = 
+    match p with
     | [] -> 0
     | m :: r -> (m.coeff * (power x m.degree)) + (eval r x)
 

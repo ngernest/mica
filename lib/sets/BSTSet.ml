@@ -147,7 +147,10 @@ module BSTSet : SetInterface = struct
       match t with
       | Empty -> true
       | Node (_, _, _) -> 
-          if walk t (fun _ -> true) then true else false
+        (* To introduce a bug, replace with [fun _ -> false] 
+           See comment above function for details *)  
+        if walk t (fun _ -> true) then true else false
+          
   
 
   (* Note that two binary search trees can be equal as sets without having the

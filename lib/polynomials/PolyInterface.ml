@@ -3,6 +3,7 @@ module type PolyInterface = sig
     [@@deriving sexp]
   val zero : t
   val one : t
+  val power : int -> int -> int 
   val monomial : int -> int -> t
   val add : t -> t -> t
   val mult : t -> t -> t

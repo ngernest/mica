@@ -365,7 +365,7 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     | _, true -> interpOnce ~nonExprArg:(Some (arg1, Fst)) arg2Ty funcName arg2 retTy 
     | _, _ -> 
       let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
-      retTyConstr ^^ space ^^ parens (funcName ^^ spaceLR (!^ arg1) ^^ spaceR (!^ arg2))
+      retTyConstr ^^ space ^^ parens (funcName ^^ spaceLR (!^ arg1) ^^ (!^ arg2))
     end
   | valTy, _ -> 
     let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
@@ -392,7 +392,7 @@ let interpDefn (m : moduleSig) : document =
     let pattern = List.nth_exn innerPatternMatches i in 
     break 1 
     ^^ sBar ^^ exprConstr ^^ sArrow 
-    ^^ jump 2 1 pattern
+    ^^ jump 2 0 pattern
   in
   hang 2 @@ 
   !^ "let rec interp (expr : expr) : value = " 
