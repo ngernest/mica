@@ -427,7 +427,7 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
   | Bool            -> !^ "G.bool"
   | Unit            -> !^ "G.unit"
   | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
-  | List argTy      -> !^ "G.list @@ "   ^^ getGenerator ~nonNegOnly argTy
+  | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
     let (g1, g2) = map2 ~f:(getGenerator ~nonNegOnly) (ty1, ty2) in 
     !^ "G.both" ^^ spaceLR (parens g1) ^^ parens g2
