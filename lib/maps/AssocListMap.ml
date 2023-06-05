@@ -14,10 +14,11 @@ module AssocListMap : MapInterface = struct
           [[(k, v1); (k, v2)]] represents {k : v1}. The empty list represents
           the empty map.
           RI: none. *)
-  type t = (int * string) list
+  type t = (Base.int * Base.string) Base.List.t
+    [@@deriving sexp]
 
   (** Efficiency: O(1). *)
-  let insert k v m = 
+  let insert (k, v) m = 
     (k, v) :: m
 
   (** [find k m] is [Some v] if [k] is bound to [v] in [m], 

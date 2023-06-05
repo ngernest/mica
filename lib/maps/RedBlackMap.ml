@@ -7,7 +7,7 @@
     https://cs3110.github.io/textbook/chapters/ds/rb.html#id1
 
     The implementation of red-black tree definition follows
-    the approach taken by Germane & Might (2014), 
+    the approach taken by Germane & Might's (2014) functional pearl
     {i Deletion: The curse of the red-black tree}. *)
 
 open MapInterface
@@ -19,13 +19,15 @@ open MapInterface
     - Note that [BB] represents the {i double-black} transitory color, 
    introduced in Germane & Might's (2014) implementation of red-black tree deletion *)
 type color = Red | Black | BB
+  [@@deriving sexp]
 
 (** The type of (key, value) bindings stored at each red-black tree node *)
-type data = { key: int; value: string }
+type data = { key: Base.Int.t; value: Base.String.t }
+  [@@deriving sexp]
 
 (** The type of red-black trees *)
-type rbtree = 
-  Empty of color | Node of color * rbtree * data * rbtree
+type rbtree = Empty of color | Node of color * rbtree * data * rbtree
+  [@@deriving sexp]
 
 (** {1 Auxiliary functions for deletion from red-black trees} *)
 let rec min (t: rbtree) : 'a = 
@@ -81,19 +83,19 @@ let is_bb (t: rbtree) : bool =
 
 let rec bal_del_l (t: rbtree) : rbtree = 
   match t with
-      | Node (Black, d, y, Node (Red, l, z, r)) -> 
-          if   is_bb d 
-          then Node (Black, bal_del_l (Node (Red, d, y, l)), z, r)
-          else Node (Black, d, y, Node (Red, l, z, r))
-      | Node (c, d, y, Node (Black, l, z, r)) -> 
-          if is_bb d then 
-              if      is_b l && is_b r 
-              then    add_b (Node (c, rem_b d, y, Node (Red, l, z, r)))
-              else if is_r l && is_b r 
-              then    bal_del_l (Node (c, d, y, Node (Black, left l, node_val l, Node (Red, right l, z, r))))
-              else    Node (c, Node (Black, rem_b d, y, l), z, add_b r)
-          else Node (c, d, y, Node (Black, l, z, r))
-      | n -> n
+  | Node (Black, d, y, Node (Red, l, z, r)) -> 
+      if   is_bb d 
+      then Node (Black, bal_del_l (Node (Red, d, y, l)), z, r)
+      else Node (Black, d, y, Node (Red, l, z, r))
+  | Node (c, d, y, Node (Black, l, z, r)) -> 
+      if is_bb d then 
+          if      is_b l && is_b r 
+          then    add_b (Node (c, rem_b d, y, Node (Red, l, z, r)))
+          else if is_r l && is_b r 
+          then    bal_del_l (Node (c, d, y, Node (Black, left l, node_val l, Node (Red, right l, z, r))))
+          else    Node (c, Node (Black, rem_b d, y, l), z, add_b r)
+      else Node (c, d, y, Node (Black, l, z, r))
+  | n -> n
 
 let rec bal_del_r (t: rbtree) : rbtree = 
   match t with
@@ -118,6 +120,8 @@ let rec bal_del_r (t: rbtree) : rbtree =
     implemented using red-black trees *)
 module RedBlackMap : MapInterface = struct
   type t = rbtree
+    [@@deriving sexp]
+    
   let empty = Empty Black
 
   (** [find k m] is [Some v] if [k] is bound to [v] in [m], 
@@ -171,7 +175,7 @@ module RedBlackMap : MapInterface = struct
   (** [insert x tree] inserts [x] into the red-black tree [t], 
       calling [insert_aux] to perform the insertion and 
       re-coloring the root black. Efficiency: O(log n) *)
-  let insert (key : int) (value : string) (tree : rbtree) : rbtree = 
+  let insert (key, value : int * string) (tree : rbtree) : rbtree = 
     let binding = { key; value } in 
     match insert_aux binding tree with 
     | Empty _ -> failwith "impossible" (* [insert_aux] can never return [Leaf] *)
@@ -230,7 +234,7 @@ module RedBlackMap : MapInterface = struct
     association list [lst]. 
     Requirement: [lst] does not contain any duplicate keys. *)
   let from_list (lst : (int * string) list) : rbtree = 
-    List.fold_left (fun acc (k, v) -> insert k v acc) empty lst
+    List.fold_left (fun acc (k, v) -> insert (k, v) acc) empty lst
   
 
 end
