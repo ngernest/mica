@@ -1,6 +1,8 @@
 open Base
 open PPrint
 open ParserTypes
+open Parser
+open ModuleParser
 open Utils
 
 (** This file contains the logic for generating PBT code from the AST 
@@ -88,28 +90,46 @@ let printConstructor (constr : string) (args : string list) : document =
   | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
+(** [sanitizeString s] uncapitalizes the string [s] and filters out chars
+    corresponding to parentheses *)  
+let sanitizeString (s : string) = 
+  let open String in 
+  filter (uncapitalize s) ~f:(fun c -> let open Char in c <> '(' && c <> ')')
+
 (** Converts a string denoting a type to the equivalent [ty] ADT constructor *)  
-let rec ty_of_string (s : string) : ty = 
-  let strs = List.map ~f:String.uncapitalize (String.split ~on:' ' s) in
+let ty_of_string (s : string) : ty = 
+  match (run_parser typeP s) with 
+  | Ok ty -> ty 
+  | Error err -> failwith @@ 
+    Printf.sprintf "Error %s : couldn't parse the string %s\n" err s
+  (* let open String in 
+  let strs = List.map ~f:sanitizeString (split_on_chars ~on:[' '; '*'; '('; ')'] s) in
   match strs with 
   | [] -> failwith "String is empty"
-  | [str] -> begin match str with 
+  | [str] -> 
+    begin match str with 
     | "int" -> Int 
     | "char" -> Char 
     | "unit" -> Unit 
     | "bool" -> Bool
+    | "string" -> String
     | "\'a" -> Alpha 
     | "\'a t" -> AlphaT 
     | "t" -> T 
     | _ -> 
       (* If [str] contains the substring "Option", convert to an option type *)
-      if String.is_substring ~substring:"Option" str
-      then let newTy = String.substr_replace_first ~pattern:"Option" ~with_:"" str in 
-        Option (ty_of_string newTy)
-      else failwith (Printf.sprintf "Type conversion from \"%s\" not supported" s)
+      if is_substring ~substring:"Option" str
+        then let newTy = substr_replace_first ~pattern:"Option" ~with_:"" str in 
+          Option (ty_of_string newTy)
+      else if is_substring ~substring:"List" str 
+        then let newTy = substr_replace_first ~pattern:"List" ~with_:"" str in 
+          List (ty_of_string newTy)
+      else failwith (Printf.sprintf "Singleton case: type conversion from \"%s\" not supported" str)
     end
   | [str ; "option"] -> Option (ty_of_string str)
-  | _ -> failwith (Printf.sprintf "Type conversion from \"%s\" not supported" s)
+  | [str ; "list"] -> List (ty_of_string str)
+  | ss -> failwith @@ Printf.sprintf "Type conversion from \"%s\" not supported" 
+                     (Sexp.to_string (sexp_of_list sexp_of_string ss)) *)
 
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
     to [ty], eg. [varNameHelper Int = n] *)  
@@ -172,6 +192,7 @@ let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * doc
   | _, Char -> (["c"], printConstructor constr ["c"])
   | _, Bool -> (["b"], printConstructor constr ["b"])
   | _, Unit -> ([], OCaml.unit)
+  | _, String -> (["s"], printConstructor constr ["s"])
   | _, Alpha -> (["a"], printConstructor constr ["a"])
   | _, T | _, AlphaT -> (["t"], printConstructor constr ["t"])
   | _, Option argTy | _, List argTy | _, Func1 (argTy, _) -> 
@@ -248,7 +269,9 @@ let instantiateT (s : string) =
 let addSpaceToTyStr (s : string) = 
   let open String in 
   if is_suffix ~suffix:"option" s 
-  then chop_suffix_exn ~suffix:"option" s ^ " option"
+    then chop_suffix_exn ~suffix:"option" s ^ " option"
+  else if is_suffix ~suffix:"list" s 
+    then chop_suffix_exn ~suffix:"list" s ^ " list"
   else s
 
 (** [valADTParam moduleAbsTy ty] generates the type param for the 
@@ -310,6 +333,7 @@ type argPos = Fst | Snd
     If [nonExprArg] is [Some] of some value, it is placed
     in the appropriate argument position during function application. *)  
 let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : ident) (retTy : ty) : document = 
+  let open PPrint in 
   (* Obtain appropriate constructors based on the arg & return types *)    
   let (argTyConstr, retTyConstr) = 
     map2 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true)) (argTy, retTy) in
@@ -332,6 +356,7 @@ let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : id
 (** Pattern matches [interp] on two arguments, both of type [expr] *)      
 let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document) 
                 (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
+  let open PPrint in 
   (* Obtain appropriate constructors based on the arg & return types *)              
   let (arg1TyConstr, arg2TyConstr, retTyConstr) = 
     map3 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true)) (arg1Ty, arg2Ty, retTy) in
@@ -349,6 +374,7 @@ let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document)
 
 (** Produces the inner pattern match ([interp e]) in the [interp] function *) 
 let interpExprPatternMatch (v, args : valDecl * string list) : document = 
+  let open PPrint in 
   let funcName = getFuncName v in
   match valType v, args with 
   | Func1 (argTy, retTy), [arg] -> 
@@ -370,7 +396,6 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
   | valTy, _ -> 
     let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
     valTyConstr ^^ space ^^ parens funcName
-
 
 (** [interpDefn m] generates the definition of the [interp] function, 
     which evaluates [expr]s based on the value declarations defined in the 
@@ -419,6 +444,7 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
     - Note that polymorphic types (eg. [Alpha]) are instantiated as ints
     - This is a helper function called by [argGen]. *)
 let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document = 
+  let open PPrint in 
   match ty with 
   | Int | Alpha     -> 
     if nonNegOnly then !^ "G.small_positive_or_zero_int"
@@ -426,6 +452,7 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
   | Char            -> !^ "G.char_alpha"
   | Bool            -> !^ "G.bool"
   | Unit            -> !^ "G.unit"
+  | String          -> !^ "G.string_non_empty"
   | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
   | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
@@ -448,6 +475,7 @@ let argGen ?(nonNegOnly = false) (arg : string) (ty : ty) : document =
   | Char              -> binding ^^ getGenerator ~nonNegOnly Char ^^ sIn
   | Bool              -> binding ^^ getGenerator ~nonNegOnly Bool ^^ sIn
   | Unit              -> binding ^^ getGenerator ~nonNegOnly Unit ^^ sIn
+  | String            -> binding ^^ getGenerator ~nonNegOnly String ^^ sIn
   | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty   ^^ sIn
   | Pair (ty1, ty2)   -> 
     let lst = if phys_equal ty1 ty2 
@@ -520,6 +548,7 @@ let getExprConstructorWithArgs (tyConstr : string)
   | Char, _ -> (tyConstr, ty, ["c"], constr, printConstructor constr ["c"])
   | Bool, _ -> (tyConstr, ty, ["b"], constr, printConstructor constr ["b"])
   | Unit, _ -> (tyConstr, ty, [], constr, OCaml.unit)
+  | String, _ -> (tyConstr, ty, ["s"], constr, printConstructor constr ["s"])
   | Alpha, _ -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
   | T, _ | AlphaT, _ -> 
     (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])

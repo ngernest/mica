@@ -32,6 +32,7 @@ type ty = Int
           | Char 
           | Bool 
           | Unit 
+          | String
           | Alpha 
           | AlphaT
           | T 
@@ -78,6 +79,7 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | Char -> "char"
   | Bool -> "bool"
   | Unit -> "unit"
+  | String -> "string"
   | Alpha -> alpha
   | AlphaT | T -> t
   (* TODO: figure out if we need to parenthesize parameterized types? 

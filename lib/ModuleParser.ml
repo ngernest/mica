@@ -35,9 +35,9 @@ let sexpAnnotP : unit A.t =
 
 (** Parser for an abstract type declaration in a module, eg. [type 'a t] *)
 let abstractTypeDeclP : abstractType A.t = 
-  let typeP = stringP "type" in
-  let noParam = typeP *> constP "t" T0 in 
-  let withParam = typeP *> wsP typeParamP *> constP "t" (T1 Alpha) in
+  let typeTokenP = stringP "type" in
+  let noParam = typeTokenP *> constP "t" T0 in 
+  let withParam = typeTokenP *> wsP typeParamP *> constP "t" (T1 Alpha) in
   (noParam <|> withParam) <* sexpAnnotP
 
 (** [sigP p] takes a parser [p], and sandwiches it between parsers
@@ -55,6 +55,7 @@ let baseTypeP : ty A.t =
   <|> constP "char" Char 
   <|> constP "bool" Bool 
   <|> constP "unit" Unit 
+  <|> constP "string" String
   <|> constP "\'a t" AlphaT
   <|> constP "\'a" Alpha 
   <|> constP "t" T
@@ -62,8 +63,8 @@ let baseTypeP : ty A.t =
 (** General parser for parameterized types, eg. options/pairs/lists *)  
 let paramTypeP : ty A.t = 
   fix @@ fun paramType -> 
-    let pairP = 
-      (fun (t1, t2) -> Pair (t1, t2)) <$> A.both baseTypeP (stringP "*" *> baseTypeP) in 
+    let pairP = (fun (t1, t2) -> Pair (t1, t2)) 
+      <$> A.both baseTypeP (stringP "*" *> baseTypeP) in 
     let optionP = 
       (fun ty -> Option ty) <$> ((baseTypeP <|> parens paramType) <* stringP "option") in 
     let listP = 
