@@ -1,6 +1,8 @@
 (** Adapted from implementations by:  
     - Colin Shaw (2017)
     https://github.com/CompScienceClub/ocaml-red-black-trees 
+    - Benedikt Meurer (2017)
+    https://github.com/bmeurer/ocaml-rbtrees/blob/master/src/rbset.ml 
     - CS 3110 textbook, chapter 8.3
     https://cs3110.github.io/textbook/chapters/ds/rb.html#id1
 
@@ -212,7 +214,6 @@ module RedBlackMap : MapInterface = struct
     match remove_aux t binding with
       | Empty _            -> Empty Black
       | Node (_, l, x', r) -> Node (Black, l, x', r)
-
 
   (** [bindings m] is an association list containing the same bindings 
         as [m]. There are no duplicate keys in the list. *)
