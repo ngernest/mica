@@ -5,7 +5,7 @@ open Utils
 
 (** This file contains the logic for generating PBT code from the AST 
     of a parsed module signature. This file also calls some helper 
-    functions defined in the module {!Lib.Utils}. *)
+    functions defined in the module [Lib.Utils]. *)
 
 (** {1 Functions for generating PBT code} *)
 
@@ -232,7 +232,7 @@ let tyAndValADTConstructors (m : moduleSig) : (string * string) list =
 
 (** Takes [s], a string reprentation of a type, 
     and instantiates the abstract type [t] to [int M.t] 
-    where [M] is some module defined elsewhere. \n
+    where [M] is some module defined elsewhere. 
     - Example: [instantiate "toption" = "int M.t option"] 
     - If [s] doesn't contain the prefix ["t"], [s] is left unchanged  *)  
 let instantiateT (s : string) = 
@@ -306,9 +306,9 @@ let interpIsNeeded (argTy : ty) : bool =
 type argPos = Fst | Snd
   [@@deriving sexp]
 
-(** Pattern matches [interp] on one argument of type [expr] 
+(** Pattern matches [interp] on one argument of type [expr].  
     If [nonExprArg] is [Some] of some value, it is placed
-    in the appropriate argument position during function application *)  
+    in the appropriate argument position during function application. *)  
 let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : ident) (retTy : ty) : document = 
   (* Obtain appropriate constructors based on the arg & return types *)    
   let (argTyConstr, retTyConstr) = 
@@ -375,11 +375,11 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
 (** [interpDefn m] generates the definition of the [interp] function, 
     which evaluates [expr]s based on the value declarations defined in the 
     module signature [m]. This function does so by doing the following:
-    {ol {- Extracting the names of all the identity elements in [m]
-           by calling [getIdentityElements]}
-        {- Fetching the [expr] ADT constructors & arguments based on the 
-           declarations inside [m]}
-        {- Generating the pattern matches inside the [interp] function}} *)
+    - Extracting the names of all the identity elements in [m]
+      by calling [getIdentityElements]
+    - Fetching the [expr] ADT constructors & arguments based on the 
+      declarations inside [m]
+    - Generating the pattern matches inside the [interp] function *)
 let interpDefn (m : moduleSig) : document = 
   let idElts = getIdentityElements m in 
   let (exprConstrArgs, exprConstrs) = 
@@ -414,7 +414,7 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
     containing the corresponding QuickCheck generator for that type. 
     - The auxiliary argument [nonNegOnly] specifies whether QuickCheck's int 
       generators should only generate non-negative ints (in the event [ty] is [Int]). 
-    - By default, the int generator returned generates {i both} 
+    - By default, the int generator returned generates both 
       negative & positive ints. 
     - Note that polymorphic types (eg. [Alpha]) are instantiated as ints
     - This is a helper function called by [argGen]. *)

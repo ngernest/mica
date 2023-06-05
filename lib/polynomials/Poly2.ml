@@ -8,7 +8,7 @@ open PolyInterface
 module Poly2 : PolyInterface = struct
   (** Polynomials are represented as association lists,
       where each element is a pair of the form (coefficient, degree). 
-      {b Invariant} : Ordered by powers, lower order terms at the front *)
+      - Invariant: Ordered by powers, lower order terms at the front *)
   type t = (Base.Int.t * Base.Int.t) Base.List.t 
     [@@deriving sexp]
 

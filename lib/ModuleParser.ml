@@ -8,8 +8,8 @@ open Stdio
     {{: https://github.com/inhabitedtype/angstrom } Angstrom } 
     parser-combinator library. 
     
-    This file depends on helper functions defined in the module {!Parser},
-    and datatype definitions defined in {!ParserTypes}. *)
+    This file depends on helper functions defined in the module [Lib.Parser],
+    and datatype definitions defined in [Lib.ParserTypes]. *)
 
 (** Alias for the [Angstrom] module *)
 module A = Angstrom
@@ -32,13 +32,6 @@ let typeParamP : char A.t =
 (** Parses the S-expression PPX annotation, consuming subsequent whitespace *)  
 let sexpAnnotP : unit A.t = 
   constP "[@@deriving sexp]" ()
-  
-(* DEPRECATED: parses OCaml comments *)  
-let ignoreCommentsP : unit A.t = 
-  let body = many @@ wsP (letterP <|> digitP <|> underscoreP) in 
-  let left = stringP "(**" <|> stringP "(*" in 
-  let right = stringP "**)" <|> stringP "*)" in
-  left *> body *> right
 
 (** Parser for an abstract type declaration in a module, eg. [type 'a t] *)
 let abstractTypeDeclP : abstractType A.t = 
@@ -95,9 +88,6 @@ let valDeclP : valDecl A.t =
   (fun valName valType -> { valName; valType }) 
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> typeP)  
 
-(* Deprecated *)    
-(* let betweenComments (p : 'a A.t) : 'a A.t = 
-  ignoreCommentsP *> p <* ignoreCommentsP *)
 
 (** Parser for a module signature *)
 let moduleTypeP : moduleSig A.t = 

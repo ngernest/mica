@@ -44,16 +44,7 @@ let is_filename (filename : string) : string =
     input file isn't some Unix file type that can’t be read *)      
 let regular_file =
   Command.Arg_type.create is_filename
-
-(* (DEPRECATED) Creates a parser that:
-    (1) Defines a cmd-line argument type which ensures that the 
-    input file isn't some Unix file type that can’t be read, and 
-    (2) Prompts the user if no value is provided 
-*)         
-    let anon_prompt_reg_file (name : string) : string Command.Param.t = 
-      anon_prompt name is_filename
     
-
 (** {1 Useful filepaths & flags} *)    
 
 (** Name of the generated file containing the PBT code *)

@@ -2,15 +2,15 @@ open Base
 open Utils
 
 (** Datatype definitions for OCaml module signatures. 
-    These types are used by the module {!Lib.ModuleParser} to parse 
+    These types are used by the module [Lib.ModuleParser] to parse 
     OCaml module signatures. This file also calls some helper 
-    functions defined in the module {!Lib.Utils}. *)
+    functions defined in the module [Lib.Utils]. *)
 
 (** Name of a module *)
 type moduleName = string
   [@@deriving sexp]
 
-(** A module can either be an interface [Intf] or an implementation [Impl]*)  
+(** A module can either be an interface [Intf] or an implementation [Impl] *)  
 type moduleType = Intf | Impl
   [@@deriving sexp]
 
@@ -98,9 +98,8 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
     String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg1; arg2; ret])
 
 (** Abstract type contained within a module 
-    - The [T0] constructor means the abstract type is {i not} parameterized by any type variables, i.e. the abstract type is just [t] 
-    - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, 
-    eg. ['a t]  *)  
+    - The [T0] constructor means the abstract type is not parameterized by any type variables, i.e. the abstract type is just [t] 
+    - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, eg. ['a t]  *)  
 type abstractType = T0 | T1 of ty
   [@@deriving sexp]
 
@@ -119,8 +118,8 @@ type valDecl = {
     - [AllInts] (i.e. all positive/negative ints) 
     - [NonNegativeOnly] (only generate non-negative ints) 
     - [PositiveOnly] (only generate strictly positive ints) 
-    - Note: when a module signature is parsed in {!Lib.ModuleParser}, 
-    by default, [intFlag] is set to [AllInts] *)  
+    - Note: when a module signature is parsed in the [ModuleParser] module, 
+      by default, [intFlag] is set to [AllInts] *)  
 type intFlag = AllInts | NonNegativeOnly | PositiveOnly
   [@@deriving sexp]
 
