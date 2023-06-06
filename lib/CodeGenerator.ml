@@ -299,8 +299,10 @@ let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document =
     else !^ (addSpaceToTyStr str |> instantiateT)
   | ty1 :: ty2 :: "pair" :: remainingTys -> 
     (* We represent [["a"; "b"; "pair"]] as the type expression ["a * b"] *)
-    separate_map space (!^) (parensStr (ty1 ^ " * " ^ ty2) :: remainingTys)
-  | tys -> separate_map space (!^) tys 
+    separate_map space (!^) 
+      (parensStr (instantiateT ty1 ^ " * " ^ instantiateT ty2) :: remainingTys)
+  | tys -> 
+    separate_map space (fun ty -> !^ (instantiateT ty)) tys 
   
 
 (** [valADTTypeDef moduleAbsTy ty] generates both the constructor & type parameter 
@@ -718,7 +720,7 @@ let rec isExcludedType (ty : ty) : bool =
 (** Generate the executable code for testing observational equivalence
     of two modules *)  
 let compareImpls (m : moduleSig) : document = 
-  let constrs = List.filter (tyAndValADTConstructors ~camelCase:false m) 
+  let constrs = List.filter (tyAndValADTConstructors ~camelCase:true m) 
     ~f:(fun (ty, _) -> not @@ isExcludedType (baseTyOfString ty)) in 
   !^ "let () = "
   ^^ jump 2 1 @@ !^ "let module QC = Quickcheck in "
