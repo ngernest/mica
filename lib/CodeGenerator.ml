@@ -24,6 +24,9 @@ let imports (sigName : string) ~(modName1 : string) ~(modName2 : string) : docum
   ^/^ !^ ("open " ^ modName1)
   ^/^ !^ ("open " ^ modName2)
   ^^ hardline
+  ^/^ comment (!^ "Suppress unused value compiler warnings")
+  ^/^ (!^ "[@@@ocaml.warning \"-27-32-34\"]") 
+  ^^ hardline 
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
     followed by a newline *)
@@ -492,10 +495,13 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
 
 (** Produces the code for a monadic bind of [arg] to a QuickCheck generator 
     producing a value of type [ty], where [ty] must be a non-arrow type.
-    - The auxiliary argument [nonNegOnly] specifies whether QuickCheck's int 
+    - This is a helper function called by [genExprPatternRHS].
+    - The optional argument [nonNegOnly] specifies whether QuickCheck's int 
       generators should only generate non-negative ints
-    - This is a helper function called by [genExprPatternRHS]. *)  
-let argGen ?(nonNegOnly = false) (arg : string) (ty : ty) : document = 
+    - If the optional argument [pairName] (of type [string option]) is [Some p] 
+      and [ty] is of the form [Pair (_, _)], [p] will be used as the variable 
+      name for the overall pair. *)  
+let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) : document = 
   let open Printf in 
   let binding = !^ (sprintf "let%%bind %s = " arg) in
   match ty with 
@@ -511,14 +517,22 @@ let argGen ?(nonNegOnly = false) (arg : string) (ty : ty) : document =
       else genVarNames [ty1; ty2] in 
     begin match lst with 
     | [v1; v2] -> 
-      !^ (sprintf "let%%bind (%s, %s) = " v1 v2) 
-        ^^ getGenerator ~nonNegOnly ty ^^ sIn 
+      (* Let [p] be the variable name for the overall pair *)
+      let p = Option.value_or_thunk pairName ~default:(fun () -> genVarNamesSingleton ty) in 
+      !^ (sprintf "let%%bind (%s, %s) as %s = " v1 v2 p) 
+      ^^ getGenerator ~nonNegOnly ty ^^ sIn 
     | _ -> failwith "Error generating fresh varnames for Pair type"
     end 
   | T | AlphaT -> 
     !^ (sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
         arg (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
   | _ -> failwith "Higher-order functions not supported"
+
+(** [isPairType ty] returns [true] if [ty] is a pair type, [false] otherwise *)  
+let isPairType (ty : ty) : bool = 
+  match ty with 
+  | Pair (_, _) -> true 
+  | _ -> false 
 
 (** Takes in the following arguments:
     - [nonNegOnly]: An optional argument specifying whether QuickCheck's int 
@@ -556,9 +570,13 @@ let genExprPatternRHS
       preamble ^^ jump 2 1 @@ argGen ~nonNegOnly arg argTy ^/^ monadicReturn in
     tyConstr, (funcTy, patternRHS, patternName)
   | Func2 (arg1Ty, arg2Ty, _), [arg1; arg2] -> 
+    (* If [arg1Ty] or [arg2Ty] is a pair type, treat the corresponding 
+       variable name as the name for the overall pair *)
+    let pairName1 = Option.some_if (isPairType arg1Ty) arg1 in 
+    let pairName2 = Option.some_if (isPairType arg2Ty) arg2 in 
     let patternRHS = 
-      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly arg1 arg1Ty 
-        ^/^ argGen ~nonNegOnly arg2 arg2Ty ^/^ monadicReturn in
+      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly ~pairName:pairName1 arg1 arg1Ty 
+        ^/^ argGen ~nonNegOnly ~pairName:pairName2 arg2 arg2Ty ^/^ monadicReturn in
     tyConstr, (funcTy, patternRHS, patternName)
   | _ -> tyConstr, (funcTy, (!^ "failwith ") ^^ OCaml.string "TODO", "no pattern")
 
