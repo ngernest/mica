@@ -90,17 +90,21 @@ let printConstructor (constr : string) (args : string list) : document =
   | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
-(** [ty_of_string s] converts a string [s] denoting a type to the equivalent 
-    [ty] ADT constructor by running the 
-    parser [typeP] (defined in [Lib.ModuleParser]) over [s] *)  
-let ty_of_string (s : string) : ty = 
+(** [baseTyOfString s] converts a string [s] denoting a type to the equivalent 
+    [ty] ADT constructor of its {i base type} by running the parser [typeP] 
+    (defined in [Lib.ModuleParser]) over [s]. 
+    - Note that this function only looks at the {i base type}, 
+      i.e. the ["int"] in ["int list"]. *)  
+let baseTyOfString (s : string) : ty = 
   let open String in 
-  (* Preprocess [s] before feeding it to the parser *)
+  (* Preprocess [s] before feeding it to the parser, removing parens & whitespace *)
   let newStr = s |> lowercase
     |> chop_suffix_if_exists ~suffix:"option" 
     |> chop_suffix_if_exists ~suffix:"list"
     |> chop_suffix_if_exists ~suffix:"pair" 
-    |> filter ~f:(fun c -> let open Char in c <> '(' && c <> ')') 
+    |> substr_replace_first ~pattern:"(" ~with_:""
+    |> rstrip ~drop:is_parens
+    (* |> filter ~f:(fun c -> let open Char in c <> '(' && c <> ')')  *)
     |> strip in 
   match (run_parser typeP newStr) with 
   | Ok ty -> ty 
@@ -179,20 +183,26 @@ let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * doc
     let args = genVarNames [arg1; arg2] in 
     (args, printConstructor constr args)
 
-(** Extracts the return type of a fu4nction.  
-    For non-arrow types, this function just extracts the type itself *)    
-let extractReturnType (v : valDecl) : string = 
+(** [extractReturnType camelCase v] extracts the string 
+    representation of the return type of a function, 
+    if [v] is a [valDecl] corresponding to an arrow type. 
+    - For non-arrow types, this function just extracts the type itself. 
+    - The optional argument [camelCase] determines whether the string 
+    returned should be in camelCase or not. *)    
+let extractReturnType ?(camelCase = true) (v : valDecl) : string = 
   match valType v with 
   | Func1 (_, ret) | Func2 (_, _, ret) -> 
-    string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true ret
-  | ty -> string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true ty
+    string_of_ty ~t:"T" ~alpha:"Int" ~camelCase ret
+  | ty -> string_of_ty ~t:"T" ~alpha:"Int" ~camelCase ty
 
 (** Fetches the unique return types across the functions / values 
-    in a module signature *)  
-let uniqRetTypesInSig (m : moduleSig) : string list = 
+    in a module signature. 
+    - The optional argument [camelCase] determines whether the string 
+    returned should be in camelCase or not. *)  
+let uniqRetTypesInSig ?(camelCase = true) (m : moduleSig) : string list = 
   let open String in
   List.dedup_and_sort ~compare:compare
-    @@ List.map ~f:(fun v -> extractReturnType v |> capitalize) m.valDecls
+    @@ List.map ~f:(fun v -> extractReturnType ~camelCase v |> capitalize) m.valDecls
 
 (** Generates the definition of the [ty] ADT *)  
 let tyADTDecl (m : moduleSig) : document = 
@@ -218,15 +228,20 @@ let valADTConstructorString (ty : string) : string =
 let valADTConstructor (ty : string) : document = 
   !^ (valADTConstructorString ty)
 
-(** Generates the list of constructor names for the [ty] ADT *)  
-let tyADTConstructors (m : moduleSig) : string list =
-  uniqRetTypesInSig m
+(** Generates the list of constructor names (strings) for the [ty] ADT
+    - The optional argument [camelCase] determines whether the strings 
+    returned should be in camelCase or not. *)  
+let tyADTConstructors ?(camelCase = true) (m : moduleSig) : string list =
+  uniqRetTypesInSig ~camelCase m
 
-(** Returns an association list where each element is a constructor for the 
-    [ty] ADT & its associated constructor for the [value] ADT *)  
-let tyAndValADTConstructors (m : moduleSig) : (string * string) list = 
+(** Returns an association list of string pairs, 
+    where each element is a constructor for the 
+    [ty] ADT & its associated constructor for the [value] ADT. 
+    - The optional argument [camelCase] determines whether the strings 
+    returned should be in camelCase or not. *)  
+let tyAndValADTConstructors ?(camelCase = true) (m : moduleSig) : (string * string) list = 
   List.map ~f:(fun ty -> ty, valADTConstructorString ty) 
-  (tyADTConstructors m)
+  (tyADTConstructors ~camelCase m)
 
 (** Takes [s], a string reprentation of a type, 
     and instantiates the abstract type [t] to [int M.t] 
@@ -673,7 +688,7 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
     and pattern matching on the equivalent [valConstr]s that they return *)
 let obsEquiv (tyConstr, valConstr : string * string) : document = 
   let baseTy : string = addSpaceToTyStr (String.lowercase tyConstr) in
-  let vars : string list = genVarNamesN ~n:2 (ty_of_string baseTy) in
+  let vars : string list = genVarNamesN ~n:2 (baseTyOfString baseTy) in
   let varDocs : document list = List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
 
   !^ "QC.test (gen_expr " ^^ (!^ tyConstr) ^^ !^ ") ~sexp_of:sexp_of_expr ~f:(fun e ->"
@@ -703,8 +718,8 @@ let rec isExcludedType (ty : ty) : bool =
 (** Generate the executable code for testing observational equivalence
     of two modules *)  
 let compareImpls (m : moduleSig) : document = 
-  let constrs = List.filter (tyAndValADTConstructors m) 
-    ~f:(fun (ty, _) -> not @@ isExcludedType (ty_of_string ty)) in 
+  let constrs = List.filter (tyAndValADTConstructors ~camelCase:false m) 
+    ~f:(fun (ty, _) -> not @@ isExcludedType (baseTyOfString ty)) in 
   !^ "let () = "
   ^^ jump 2 1 @@ !^ "let module QC = Quickcheck in "
   ^/^ separate_map hardline obsEquiv constrs

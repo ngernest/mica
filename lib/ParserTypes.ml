@@ -97,7 +97,7 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | Pair (t1, t2) -> 
     let (s1, s2) = map2 ~f:(string_of_ty ~alpha ~t ~camelCase) (t1, t2) in 
     if camelCase then concat ~sep @@ List.map ~f:capitalize [s1; s2; "Pair"]
-      else parensStr @@ s1 ^ " * " ^ s2
+      else parensStr (s1 ^ " * " ^ s2)
   | List eltTy -> 
     let tyStr = string_of_ty ~alpha ~t ~camelCase eltTy in 
     if camelCase then concat ~sep @@ tyStr :: ["List"]
