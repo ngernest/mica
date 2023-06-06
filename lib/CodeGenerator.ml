@@ -92,16 +92,26 @@ let printConstructor (constr : string) (args : string list) : document =
 
 (** [sanitizeString s] uncapitalizes the string [s] and filters out chars
     corresponding to parentheses *)  
-let sanitizeString (s : string) = 
+(* let sanitizeString (s : string) = 
   let open String in 
-  filter (uncapitalize s) ~f:(fun c -> let open Char in c <> '(' && c <> ')')
+  filter (uncapitalize s) ~f:(fun c -> let open Char in c <> '(' && c <> ')') *)
 
 (** Converts a string denoting a type to the equivalent [ty] ADT constructor *)  
 let ty_of_string (s : string) : ty = 
-  match (run_parser typeP s) with 
+  let open String in 
+  let s' = s |> lowercase
+    |> chop_suffix_if_exists ~suffix:"option" 
+    |> chop_suffix_if_exists ~suffix:"list" 
+    |> filter ~f:(fun c -> let open Char in c <> '(' && c <> ')') 
+    |> strip in 
+  match (run_parser typeP s') with 
   | Ok ty -> ty 
-  | Error err -> failwith @@ 
-    Printf.sprintf "Error %s : couldn't parse the string %s\n" err s
+  | Error err -> 
+    failwith @@ Printf.sprintf 
+      "Error %s : couldn't parse the string \"%s\"\n" err s
+     
+
+
   (* let open String in 
   let strs = List.map ~f:sanitizeString (split_on_chars ~on:[' '; '*'; '('; ')'] s) in
   match strs with 

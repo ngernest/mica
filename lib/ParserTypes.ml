@@ -74,6 +74,8 @@ let rec tyEqual (ty1 : ty) (ty2 : ty) : bool =
     eg. ["int option"]. 
 *)
 let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : ty) : string = 
+  let open String in 
+  let sep = if camelCase then "" else " " in
   match ty with 
   | Int -> "int"
   | Char -> "char"
@@ -87,17 +89,21 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
       the derived constructor names 
       -- maybe only parenthesize if [camelCase] is false) *)
   | Option ty -> 
-    let t = string_of_ty ~alpha ~t ty in 
-      if camelCase then t ^ "Option"
-      else t ^ " option"
+    let tyStr = string_of_ty ~alpha ~t ty in 
+    if camelCase then concat ~sep @@ tyStr :: ["Option"]
+      else parensStr @@ concat ~sep @@ tyStr :: ["option"]
   | Pair (t1, t2) -> 
-    let (t1', t2') = map2 ~f:(string_of_ty ~alpha ~t ~camelCase) (t1, t2) in 
-      parensStr @@ t1' ^ " * " ^ t2'
-  | List eltTy -> string_of_ty ~alpha ~t ~camelCase eltTy ^ " list"
+    let (s1, s2) = map2 ~f:(string_of_ty ~alpha ~t ~camelCase) (t1, t2) in 
+    if camelCase then concat ~sep @@ List.map ~f:capitalize [s1; s2; "Pair"]
+      else parensStr @@ s1 ^ " * " ^ s2
+  | List eltTy -> 
+    let tyStr = string_of_ty ~alpha ~t ~camelCase eltTy in 
+    if camelCase then concat ~sep @@ tyStr :: ["List"]
+      else parensStr @@ concat ~sep @@ tyStr :: ["list"]
   | Func1 (arg, ret) -> 
-    String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg; ret])
+    concat ~sep:" -> " (List.map ~f:(string_of_ty ~alpha ~t ~camelCase) [arg; ret])
   | Func2 (arg1, arg2, ret) -> 
-    String.concat ~sep:" -> " (List.map ~f: string_of_ty [arg1; arg2; ret])
+    concat ~sep:" -> " (List.map ~f:(string_of_ty ~alpha ~t ~camelCase) [arg1; arg2; ret])
 
 (** Abstract type contained within a module 
     - The [T0] constructor means the abstract type is not parameterized by any type variables, i.e. the abstract type is just [t] 
