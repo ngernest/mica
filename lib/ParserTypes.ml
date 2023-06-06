@@ -1,6 +1,9 @@
 open Base
 open Utils
 
+(* Disable "unused-values" compiler warnings *)
+[@@@ocaml.warning "-32-34-27"]
+
 (** Datatype definitions for OCaml module signatures. 
     These types are used by the module [Lib.ModuleParser] to parse 
     OCaml module signatures. This file also calls some helper 
@@ -71,8 +74,7 @@ let rec tyEqual (ty1 : ty) (ty2 : ty) : bool =
     - The argument [camelCase] specifies whether the 
     string representation of [ty] should be in camel-case or not. This is relevant
     for parameterized types whose string representation may contain a space, 
-    eg. ["int option"]. 
-*)
+    eg. ["int option"]. *)
 let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : ty) : string = 
   let open String in 
   let sep = if camelCase then "" else " " in

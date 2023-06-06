@@ -99,18 +99,18 @@ let printConstructor (constr : string) (args : string list) : document =
 (** Converts a string denoting a type to the equivalent [ty] ADT constructor *)  
 let ty_of_string (s : string) : ty = 
   let open String in 
-  let s' = s |> lowercase
+  let newStr = s |> lowercase
     |> chop_suffix_if_exists ~suffix:"option" 
-    |> chop_suffix_if_exists ~suffix:"list" 
+    |> chop_suffix_if_exists ~suffix:"list"
+    |> chop_suffix_if_exists ~suffix:"pair" 
     |> filter ~f:(fun c -> let open Char in c <> '(' && c <> ')') 
     |> strip in 
-  match (run_parser typeP s') with 
+  match (run_parser typeP newStr) with 
   | Ok ty -> ty 
   | Error err -> 
     failwith @@ Printf.sprintf 
-      "Error %s : couldn't parse the string \"%s\"\n" err s
+      "Error %s : couldn't parse the string \"%s\"\n" err newStr
      
-
 
   (* let open String in 
   let strs = List.map ~f:sanitizeString (split_on_chars ~on:[' '; '*'; '('; ')'] s) in
@@ -227,6 +227,17 @@ let uniqRetTypesInSig (m : moduleSig) : string list =
   List.dedup_and_sort ~compare:compare
     @@ List.map ~f:(fun v -> extractReturnType v |> capitalize) m.valDecls
 
+(** Alt version of [extractReturnType] that returns [ty]s instead of strings *)    
+(* let extractReturnTypeAlt (v : valDecl) : ty = 
+  match valType v with 
+  | Func1 (_, ret) | Func2 (_, _, ret) -> ret
+  | ty -> ty *)
+
+(** Alt version of [uniqRetTypesInSig] that returns [ty]s instead of strings *)      
+(* let uniqRetTypesInSigAlt (m : moduleSig) : ty list = 
+  List.dedup_and_sort ~compare:compare_ty
+    @@ List.map ~f:(fun v -> extractReturnTypeAlt v) m.valDecls *)
+
 (** Generates the definition of the [ty] ADT *)  
 let tyADTDecl (m : moduleSig) : document = 
   let retTypes = uniqRetTypesInSig m in 
@@ -282,6 +293,7 @@ let addSpaceToTyStr (s : string) =
     then chop_suffix_exn ~suffix:"option" s ^ " option"
   else if is_suffix ~suffix:"list" s 
     then chop_suffix_exn ~suffix:"list" s ^ " list"
+  (* TODO: handle pairs *)
   else s
 
 (** [valADTParam moduleAbsTy ty] generates the type param for the 
@@ -292,11 +304,20 @@ let addSpaceToTyStr (s : string) =
       we instantiate ['a] with [int], 
       otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)    
 let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document = 
-  let open String in
-  match (lowercase ty |> split ~on:' ') with 
+  Stdio.printf "entered valADTParam w/ tyString = \"%s\"" ty;
+  let tys = (if String.length ty > 1 then 
+    let open Re.Str in 
+    let capitalRegex = regexp {|\([A-Z]\)|} in 
+    global_substitute capitalRegex (replace_matched {| \1|}) ty
+      |> String.split ~on:' ' 
+      |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
+      |> List.map ~f:String.lowercase 
+    else 
+      String.(lowercase ty |> split ~on: ' ')) in
+  match tys with 
   | [] -> failwith "Can't extract a type parameter from an empty string"
   | [str] -> 
-    if str = "t" then
+    if String.(str = "t") then
       begin match moduleAbsTy with 
       | T0 -> !^ "M.t"
       | T1 _ -> !^ "int M.t" 
