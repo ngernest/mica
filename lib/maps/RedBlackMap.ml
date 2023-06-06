@@ -165,16 +165,18 @@ module RedBlackMap : MapInterface = struct
     match tree with 
     (* Always color new nodes red, even if it violates the local invariant *)
     | Empty c -> Node (Red, Empty c, binding, Empty c) 
-    | Node (c, l, d, r) as n ->
+    | Node (c, l, d, r) ->
       (* Same as BST insertion, 
          but also call [balance] to restore the local invariant *)
       if binding.key < d.key then balance (c, insert_aux binding l, d, r)
       else if binding.key > d.key then balance (c, l, d, insert_aux binding r)
-      else n
+      else Node (c, l, binding, r)
 
-  (** [insert x tree] inserts [x] into the red-black tree [t], 
+  (** [insert (key, value) tree] inserts [x] into the red-black tree [t], 
       calling [insert_aux] to perform the insertion and 
-      re-coloring the root black. Efficiency: O(log n) *)
+      re-coloring the root black. Efficiency: O(log n) 
+      - If a binding for [key] already exists in the tree, the binding 
+        for [key] is updated so that it is mapped to [value]. *)
   let insert (key, value : int * string) (tree : rbtree) : rbtree = 
     let binding = { key; value } in 
     match insert_aux binding tree with 
@@ -220,7 +222,8 @@ module RedBlackMap : MapInterface = struct
       | Node (_, l, x', r) -> Node (Black, l, x', r)
 
   (** [bindings m] is an association list containing the same bindings 
-        as [m]. There are no duplicate keys in the list. *)
+      as [m], with the (integer-valued) keys sorted in ascending order. 
+      - There are no duplicate keys in the association list. *)
   let bindings (tree : rbtree) : (int * string) list = 
     let rec bindings_aux acc tree = 
       begin match tree with 

@@ -90,28 +90,45 @@ let printConstructor (constr : string) (args : string list) : document =
   | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
-(** [baseTyOfString s] converts a string [s] denoting a type to the equivalent 
+(** [ty_of_string s] converts a string [s] denoting a type to the equivalent 
     [ty] ADT constructor of its {i base type} by running the parser [typeP] 
     (defined in [Lib.ModuleParser]) over [s]. 
-    - Note that this function only looks at the {i base type}, 
-      i.e. the ["int"] in ["int list"]. *)  
-let baseTyOfString (s : string) : ty = 
-  let open String in 
-  (* Preprocess [s] before feeding it to the parser, removing parens & whitespace *)
-  let newStr = s |> lowercase
-    |> chop_suffix_if_exists ~suffix:"option" 
-    |> chop_suffix_if_exists ~suffix:"list"
-    |> chop_suffix_if_exists ~suffix:"pair" 
-    |> substr_replace_first ~pattern:"(" ~with_:""
-    |> rstrip ~drop:is_parens
-    (* |> filter ~f:(fun c -> let open Char in c <> '(' && c <> ')')  *)
-    |> strip in 
-  match (run_parser typeP newStr) with 
-  | Ok ty -> ty 
-  | Error err -> 
-    failwith @@ Printf.sprintf 
-      "Error %s : couldn't parse the string \"%s\"\n" err newStr
-
+    - Note: The string [s] must be in camel-case *) 
+let ty_of_string (s : string) : ty = 
+  (* TODO: abstract away common regex logic (shared w/ [valADTParam])
+     & common pattern-matching logic in the parser *)
+  let open Re.Str in 
+  let capitalRegex = regexp {|\([A-Z]\)|} in 
+  let tys = global_substitute capitalRegex (replace_matched {| \1|}) s
+    |> String.split ~on:' ' 
+    |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
+    |> List.map ~f:String.lowercase in
+  match tys with 
+  | [] -> failwith "Can't extract a type parameter from an empty string"
+  | [str] -> 
+    begin match (run_parser typeP str) with 
+    | Ok ty -> ty 
+    | Error err -> 
+      failwith @@ Printf.sprintf 
+        "Error %s : couldn't parse the string \"%s\"\n" err str
+    end
+  | ty1 :: ty2 :: "pair" :: remainingTys -> 
+    let newTy = String.concat ~sep:" " @@ parensStr (ty1 ^ " * " ^ ty2) :: remainingTys in 
+    begin match (run_parser typeP newTy) with 
+    | Ok ty -> ty 
+    | Error err -> 
+      failwith @@ Printf.sprintf 
+        "Error %s : couldn't parse the string \"%s\"\n" err newTy
+    end
+  | _ -> 
+    let newTy = String.concat ~sep:" " tys in 
+    begin match (run_parser typeP newTy) with 
+    | Ok ty -> ty 
+    | Error err -> 
+      failwith @@ Printf.sprintf 
+        "Error %s : couldn't parse the string \"%s\"\n" err newTy
+    end
+  
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
     to [ty], eg. [varNameHelper Int = n] *)  
 let rec varNameHelper (ty : ty) : string = 
@@ -689,9 +706,9 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
     for observational equivalence based on [expr]s that return some [tyConstr] of type [ty], 
     and pattern matching on the equivalent [valConstr]s that they return *)
 let obsEquiv (tyConstr, valConstr : string * string) : document = 
-  let baseTy : string = addSpaceToTyStr (String.lowercase tyConstr) in
-  let vars : string list = genVarNamesN ~n:2 (baseTyOfString baseTy) in
+  let vars : string list = genVarNamesN ~n:2 (ty_of_string tyConstr) in
   let varDocs : document list = List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
+  let baseTy : string = addSpaceToTyStr (String.lowercase tyConstr) in
 
   !^ "QC.test (gen_expr " ^^ (!^ tyConstr) ^^ !^ ") ~sexp_of:sexp_of_expr ~f:(fun e ->"
   ^^ jump 2 1 @@ 
@@ -721,7 +738,7 @@ let rec isExcludedType (ty : ty) : bool =
     of two modules *)  
 let compareImpls (m : moduleSig) : document = 
   let constrs = List.filter (tyAndValADTConstructors ~camelCase:true m) 
-    ~f:(fun (ty, _) -> not @@ isExcludedType (baseTyOfString ty)) in 
+    ~f:(fun (ty, _) -> not @@ isExcludedType (ty_of_string ty)) in 
   !^ "let () = "
   ^^ jump 2 1 @@ !^ "let module QC = Quickcheck in "
   ^/^ separate_map hardline obsEquiv constrs
