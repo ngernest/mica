@@ -90,15 +90,12 @@ let printConstructor (constr : string) (args : string list) : document =
   | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
-(** [sanitizeString s] uncapitalizes the string [s] and filters out chars
-    corresponding to parentheses *)  
-(* let sanitizeString (s : string) = 
-  let open String in 
-  filter (uncapitalize s) ~f:(fun c -> let open Char in c <> '(' && c <> ')') *)
-
-(** Converts a string denoting a type to the equivalent [ty] ADT constructor *)  
+(** [ty_of_string s] converts a string [s] denoting a type to the equivalent 
+    [ty] ADT constructor by running the 
+    parser [typeP] (defined in [Lib.ModuleParser]) over [s] *)  
 let ty_of_string (s : string) : ty = 
   let open String in 
+  (* Preprocess [s] before feeding it to the parser *)
   let newStr = s |> lowercase
     |> chop_suffix_if_exists ~suffix:"option" 
     |> chop_suffix_if_exists ~suffix:"list"
@@ -110,36 +107,6 @@ let ty_of_string (s : string) : ty =
   | Error err -> 
     failwith @@ Printf.sprintf 
       "Error %s : couldn't parse the string \"%s\"\n" err newStr
-     
-
-  (* let open String in 
-  let strs = List.map ~f:sanitizeString (split_on_chars ~on:[' '; '*'; '('; ')'] s) in
-  match strs with 
-  | [] -> failwith "String is empty"
-  | [str] -> 
-    begin match str with 
-    | "int" -> Int 
-    | "char" -> Char 
-    | "unit" -> Unit 
-    | "bool" -> Bool
-    | "string" -> String
-    | "\'a" -> Alpha 
-    | "\'a t" -> AlphaT 
-    | "t" -> T 
-    | _ -> 
-      (* If [str] contains the substring "Option", convert to an option type *)
-      if is_substring ~substring:"Option" str
-        then let newTy = substr_replace_first ~pattern:"Option" ~with_:"" str in 
-          Option (ty_of_string newTy)
-      else if is_substring ~substring:"List" str 
-        then let newTy = substr_replace_first ~pattern:"List" ~with_:"" str in 
-          List (ty_of_string newTy)
-      else failwith (Printf.sprintf "Singleton case: type conversion from \"%s\" not supported" str)
-    end
-  | [str ; "option"] -> Option (ty_of_string str)
-  | [str ; "list"] -> List (ty_of_string str)
-  | ss -> failwith @@ Printf.sprintf "Type conversion from \"%s\" not supported" 
-                     (Sexp.to_string (sexp_of_list sexp_of_string ss)) *)
 
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
     to [ty], eg. [varNameHelper Int = n] *)  
@@ -212,7 +179,7 @@ let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * doc
     let args = genVarNames [arg1; arg2] in 
     (args, printConstructor constr args)
 
-(** Extracts the return type of a function.  
+(** Extracts the return type of a fu4nction.  
     For non-arrow types, this function just extracts the type itself *)    
 let extractReturnType (v : valDecl) : string = 
   match valType v with 
@@ -226,17 +193,6 @@ let uniqRetTypesInSig (m : moduleSig) : string list =
   let open String in
   List.dedup_and_sort ~compare:compare
     @@ List.map ~f:(fun v -> extractReturnType v |> capitalize) m.valDecls
-
-(** Alt version of [extractReturnType] that returns [ty]s instead of strings *)    
-(* let extractReturnTypeAlt (v : valDecl) : ty = 
-  match valType v with 
-  | Func1 (_, ret) | Func2 (_, _, ret) -> ret
-  | ty -> ty *)
-
-(** Alt version of [uniqRetTypesInSig] that returns [ty]s instead of strings *)      
-(* let uniqRetTypesInSigAlt (m : moduleSig) : ty list = 
-  List.dedup_and_sort ~compare:compare_ty
-    @@ List.map ~f:(fun v -> extractReturnTypeAlt v) m.valDecls *)
 
 (** Generates the definition of the [ty] ADT *)  
 let tyADTDecl (m : moduleSig) : document = 
@@ -296,15 +252,18 @@ let addSpaceToTyStr (s : string) =
   (* TODO: handle pairs *)
   else s
 
-(** [valADTParam moduleAbsTy ty] generates the type param for the 
-    constructor [value] ADT corresponding to the type [ty]
+(** [valADTParam moduleAbsTy ty] takes [ty], a string representation 
+    of the corresponding type, and generates the type param for the 
+    constructor [value] ADT corresponding to the type [ty]. 
     - The auxiliary argument [moduleAbsTy] refers to the abstract type 
       contained within the module signature, e.g. [M.t]
     - If the module's abstract type [M.t] is polymorphic (i.e. ['a M.t]), 
       we instantiate ['a] with [int], 
       otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)    
 let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document = 
-  Stdio.printf "entered valADTParam w/ tyString = \"%s\"" ty;
+  (* If the string representation of the type [ty] is in camel-case, 
+     extract all the constituent types from [ty] using a regex
+     that matches on each capital letter & splits on them *)
   let tys = (if String.length ty > 1 then 
     let open Re.Str in 
     let capitalRegex = regexp {|\([A-Z]\)|} in 
@@ -323,7 +282,11 @@ let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document =
       | T1 _ -> !^ "int M.t" 
       end
     else !^ (addSpaceToTyStr str |> instantiateT)
-  | tys -> separate_map space (!^) tys  
+  | ty1 :: ty2 :: "pair" :: remainingTys -> 
+    (* We represent [["a"; "b"; "pair"]] as the type expression ["a * b"] *)
+    separate_map space (!^) (parensStr (ty1 ^ " * " ^ ty2) :: remainingTys)
+  | tys -> separate_map space (!^) tys 
+  
 
 (** [valADTTypeDef moduleAbsTy ty] generates both the constructor & type parameter 
     for the [value] ADT corresponding to the type [ty]
