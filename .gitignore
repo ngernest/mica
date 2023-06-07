@@ -10,3 +10,5 @@ lib/Gen2.ml
 bin/compare_impls.ml
 lib/maps/DirectAddressMap.ml
 lib/CodeGeneratorAlt.ml
+lib/quviq.ml
+lib/hashtables

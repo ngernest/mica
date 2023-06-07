@@ -566,8 +566,9 @@ let genExprPatternRHS
   let monadicReturn = !^ "G.return @@ " ^^ funcApp in
   match funcTy, args with 
   | Func1 (argTy, _), [arg] -> 
+    let pairName = Option.some_if (isPairType argTy) arg in 
     let patternRHS = 
-      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly arg argTy ^/^ monadicReturn in
+      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly ~pairName arg argTy ^/^ monadicReturn in
     tyConstr, (funcTy, patternRHS, patternName)
   | Func2 (arg1Ty, arg2Ty, _), [arg1; arg2] -> 
     (* If [arg1Ty] or [arg2Ty] is a pair type, treat the corresponding 
