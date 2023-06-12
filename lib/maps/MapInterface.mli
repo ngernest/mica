@@ -2,6 +2,8 @@
     Adapted from the Cornell CS 3110 textbook, chapter 8. *)
 
 module type MapInterface = sig 
+    type assoc_list = (int * string) list 
+
     (** The abstract type of maps. 
         For now, we require keys to be [int] and values to be [string]s. *)
     type t
