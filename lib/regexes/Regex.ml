@@ -1,5 +1,9 @@
 open Base 
 
+(** Representation of regexes & the Brzozowski derivative in OCaml
+    - Adapted from {{: https://www.youtube.com/watch?v=QaMU0wMMczU} Harry Goldstein's video} on DFAs & regexes
+*)
+
 (** Type of regular expressions *)
 type re = 
   | Void  (** always fails *)
