@@ -1,4 +1,4 @@
-open! Base 
+open Base 
 open Regex
 
 (** Representation of DFAs in OCaml
@@ -30,11 +30,11 @@ let rec implode (chars : char list) =
 (** {1 DFA representation} *)
 
 (** A coinductive representation of DFA states 
-    - The [accepting] field tells us whether the current state is an accepting state 
+    - The [acceptsEmpty] field tells us whether the current state is an accepting state 
     - The [next] record selector of type [dfa -> char -> dfa] 
       gives us the next state given the current character in the string *)
 type dfa = 
-  { accepting : bool; 
+  { acceptsEmpty : bool; 
     next : char -> dfa 
   }
   [@@deriving fields]
@@ -43,56 +43,56 @@ type dfa =
 let ex1 : dfa = 
   let open Char in 
   let rec fail : dfa lazy_t = 
-    lazy { accepting = false ; next = Fn.const (force fail) } in
+    lazy { acceptsEmpty = false ; next = Fn.const (force fail) } in
   let rec z = 
-    { accepting = true; 
+    { acceptsEmpty = true; 
       next = fun c -> if c = 'b' then z else force fail } in
   let y = 
-    { accepting = true; 
+    { acceptsEmpty = true; 
       next = Fn.const (force fail) } in
   let x = 
-    { accepting = false;  
+    { acceptsEmpty = false;  
       next = fun c -> if c = 'c' then y 
                       else if c = 'b' then z 
                       else force fail } in 
   let start = 
-    { accepting = false; 
+    { acceptsEmpty = false; 
       next = fun c -> if c = 'a' then x else force fail } in
   start
 
-(** [runDFA s dfa] runs the DFA [dfa] over the string [s], 
+(** [matchString s dfa] runs the DFA [dfa] over the string [s], 
     checking to see if [dfa] matches [s] *)  
-let rec runDFA (s: string) (dfa : dfa) : bool = 
+let rec matchString (s: string) (dfa : dfa) : bool = 
   match explode s with 
-  | [] -> accepting dfa 
-  | (c :: cs) -> runDFA (implode cs) (next dfa c)
+  | [] -> acceptsEmpty dfa 
+  | (c :: cs) -> matchString (implode cs) (next dfa c)
 
 let rec void : dfa lazy_t = 
-  lazy { accepting = false; next = Fn.const (force void) }
+  lazy { acceptsEmpty = false; next = Fn.const (force void) }
 
 let rec empty : dfa lazy_t = 
-  lazy { accepting = true; next = Fn.const (force empty) }
+  lazy { acceptsEmpty = true; next = Fn.const (force empty) }
 
 let rec alt (x : dfa) (y : dfa) : dfa = 
-  { accepting = accepting x || accepting y;
+  { acceptsEmpty = acceptsEmpty x || acceptsEmpty y;
     next = fun c -> alt (next x c) (next y c) 
   } 
 
 let rec star (dfa : dfa) : dfa = 
-  { accepting = true;
+  { acceptsEmpty = true;
     next = fun c -> alt (next dfa c) (star dfa)
   } 
 
 let lit (c : char) : dfa = 
   let open Char in 
-  { accepting = false; 
+  { acceptsEmpty = false; 
     next = fun c' -> if c = c' then star (force void) else (force void)
   }
 
 let rec cat (x : dfa) (y : dfa) : dfa = 
-  { accepting = accepting x && accepting y;
+  { acceptsEmpty = acceptsEmpty x && acceptsEmpty y;
     next = fun c -> alt (cat (next x c) y) 
-                        (if accepting x then next y c else (force void))
+                        (if acceptsEmpty x then next y c else (force void))
   }
   
 (** [convert re] converts the regex [re] to a DFA *)  
