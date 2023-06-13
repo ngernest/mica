@@ -10,7 +10,8 @@ open Regex
 (* Taken from https://stackoverflow.com/questions/9863036/ocaml-function-parameter-pattern-matching-for-strings#9863069 *)
 
 (** Converts a char to a string *)
-let string_of_char (c : char) : string = String.make 1 c
+let string_of_char (c : char) : string = 
+  String.make 1 c
 
 (** [explode str] converts the string [str] to a list of chars *)
 let explode (str : string) : char list =
@@ -22,7 +23,7 @@ let explode (str : string) : char list =
   explode_inner 0 []
 
 (** [implode chars] converts [chars], a list of chars, to a string *)
-let rec implode (chars : char list) =
+let rec implode (chars : char list) : string =
   match chars with
   | [] -> ""
   | h::t ->  string_of_char h ^ (implode t)
@@ -37,7 +38,7 @@ type dfa =
   { acceptsEmpty : bool; 
     next : char -> dfa 
   }
-  [@@deriving fields]
+  [@@deriving fields, sexp]
 
 (** A DFA for the regex [a(b* + c)] *)
 let ex1 : dfa = 
@@ -86,7 +87,8 @@ let rec star (dfa : dfa) : dfa =
 let lit (c : char) : dfa = 
   let open Char in 
   { acceptsEmpty = false; 
-    next = fun c' -> if c = c' then star (force void) else (force void)
+    next = fun c' -> if c = c' then star (force void) 
+                     else (force void)
   }
 
 let rec cat (x : dfa) (y : dfa) : dfa = 

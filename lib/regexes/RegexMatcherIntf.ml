@@ -1,3 +1,4 @@
+(** An interface for regular-expression matchers *)
 module type RegexMatcherIntf = sig 
   (** Abstract type of regexes *)
   type t 

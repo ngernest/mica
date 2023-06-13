@@ -1,4 +1,5 @@
 open Base 
+open Base_quickcheck
 
 (** Representation of regexes & the Brzozowski derivative in OCaml
     - Adapted from {{: https://www.youtube.com/watch?v=QaMU0wMMczU} Harry Goldstein's video} on DFAs & regexes
@@ -84,3 +85,40 @@ let matchString (r : re) (s : string) : bool =
   acceptsEmpty (String.fold s ~f:deriv ~init:r )
 
 
+(******************************************************************************)
+(** QuickCheck generators for regexes *)
+
+module G = Generator
+
+open G.Let_syntax
+
+(** Generates a regex of the form [Lit c], 
+    i.e. a regex that accepts a particular char [c] *)
+let genLit : re G.t = 
+  let%map c = G.of_list ['a'; 'b'; 'c'; 'd'] in Lit c
+
+(** Generates a character between 'a' and 'd' *)  
+let genChar : char G.t = G.of_list ['a'; 'b'; 'c'; 'd']  
+  
+(* let genRegex : re G.t = 
+  G.union [ return Void; return Empty; genLit; genAlt ]
+
+let genAlt : re G.t = 
+  let%bind r1 = genRegex
+       and r2 = genRegex in 
+  G.return @@ alt r1 r2   *)
+
+
+(** Generator for regexes *)  
+let genRegex : re G.t = 
+  G.recursive_union 
+    [ G.return Void;
+      G.return Empty;
+      genChar >>| fun c -> Lit c
+    ]
+    ~f:(fun regexGen -> 
+        [ 
+          (let%map r1 = regexGen and r2 = regexGen in alt r1 r2);
+          (let%map r1 = regexGen and r2 = regexGen in cat r1 r2);
+          (let%map r = regexGen in star r)
+        ])  
