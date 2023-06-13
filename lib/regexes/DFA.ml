@@ -40,7 +40,7 @@ type dfa =
   [@@deriving fields]
 
 (** A DFA for the regex [a(b* + c)] *)
-let rec ex1 : dfa = 
+let ex1 : dfa = 
   let open Char in 
   let rec fail : dfa lazy_t = 
     lazy { accepting = false ; next = Fn.const (force fail) } in
@@ -67,5 +67,40 @@ let rec runDFA (s: string) (dfa : dfa) : bool =
   | [] -> accepting dfa 
   | (c :: cs) -> runDFA (implode cs) (next dfa c)
 
+let rec void : dfa lazy_t = 
+  lazy { accepting = false; next = Fn.const (force void) }
 
-(* TODO: finish adapting other DFA functions *)
+let rec empty : dfa lazy_t = 
+  lazy { accepting = true; next = Fn.const (force empty) }
+
+let rec alt (x : dfa) (y : dfa) : dfa = 
+  { accepting = accepting x || accepting y;
+    next = fun c -> alt (next x c) (next y c) 
+  } 
+
+let rec star (dfa : dfa) : dfa = 
+  { accepting = true;
+    next = fun c -> alt (next dfa c) (star dfa)
+  } 
+
+let lit (c : char) : dfa = 
+  let open Char in 
+  { accepting = false; 
+    next = fun c' -> if c = c' then star (force void) else (force void)
+  }
+
+let rec cat (x : dfa) (y : dfa) : dfa = 
+  { accepting = accepting x && accepting y;
+    next = fun c -> alt (cat (next x c) y) 
+                        (if accepting x then next y c else (force void))
+  }
+  
+(** [convert re] converts the regex [re] to a DFA *)  
+let rec convert (re : re) : dfa = 
+  match re with 
+  | Void -> force void 
+  | Empty -> force empty
+  | Lit c -> lit c 
+  | Alt (r1, r2) -> alt (convert r1) (convert r2)
+  | Cat (r1, r2) -> cat (convert r1) (convert r2)
+  | Star r -> star (convert r)

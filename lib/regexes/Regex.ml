@@ -8,7 +8,7 @@ open Base
 type re = 
   | Void  (** always fails *)
   | Empty (** accepts empty string *) 
-  | Char of char       (** Single literal character *)
+  | Lit of char       (** Single literal character *)
   | Alt of re * re     (** [r1|r2], alternation *)
   | Cat of re * re     (** [r1 r2], concatenation *)
   | Star of re         (** [r*], Kleene star *)
@@ -41,12 +41,12 @@ let star (re : re) : re =
   | _ -> Star re
 
 (** Example regex, where [ex1 = a(b* + c)] *)
-let ex1 : re = Char 'a' ^^ (Star (Char 'b') <|> Char 'c')
+let ex1 : re = Lit 'a' ^^ (Star (Lit 'b') <|> Lit 'c')
 
 (** [nullable r] returns [true] when [r] can match the empty string *)
 let rec nullable (re : re) : bool = 
   match re with 
-  | Void  | Char _ -> false 
+  | Void  | Lit _ -> false 
   | Empty | Star _ -> true 
   | Alt (r1, r2) -> nullable r1 || nullable r2 
   | Cat (r1, r2) -> nullable r1 && nullable r2
@@ -56,8 +56,8 @@ let rec deriv (re : re) (c : char) : re =
   let open Char in 
   match re with 
   | Void | Empty -> Void 
-  | Char c' when c = c' -> Empty 
-  | Char _ -> Void
+  | Lit c' when c = c' -> Empty 
+  | Lit _ -> Void
   | Alt (r1, r2) -> deriv r1 c <|> deriv r2 c
   | Cat (r1, r2) -> (deriv r1 c ^^ r2) 
                     <|> if nullable r1 then deriv r2 c else Void 
