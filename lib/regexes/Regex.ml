@@ -122,3 +122,28 @@ let genRegex : re G.t =
           (let%map r1 = regexGen and r2 = regexGen in cat r1 r2);
           (let%map r = regexGen in star r)
         ])  
+
+(** [genRegexString r] returns for the strings accepted by the regex [r], if any *)        
+let rec genRegexString (r : re) : (string G.t) option = 
+  match r with 
+  | Void -> None 
+  | Empty -> Some (G.return "")
+  | Lit c -> Some (G.return @@ Char.to_string c)
+  | Alt (r1, r2) -> 
+    begin match genRegexString r1, genRegexString r2 with 
+    | None, None -> None 
+    | Some g1, _ -> Some g1 
+    | _, Some g2 -> Some g2
+    end
+  | Cat (r1, r2) -> 
+    let%bind_open.Option g1 = genRegexString r1
+                     and g2 = genRegexString r2 in 
+    Some (G.map2 ~f:(^) g1 g2)
+  | Star r -> 
+    begin match genRegexString r with 
+    | None -> Some (G.return "")
+    | Some gen -> 
+        Some (let%bind n = G.int_uniform_inclusive 0 3 in 
+              let%bind s = G.list_with_length ~length:n gen in 
+              G.return @@ String.concat s)
+    end
