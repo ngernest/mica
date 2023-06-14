@@ -24,7 +24,7 @@ let imports (sigName : string) ~(modName1 : string) ~(modName2 : string) : docum
   ^/^ !^ ("open " ^ modName1)
   ^/^ !^ ("open " ^ modName2)
   ^^ hardline
-  ^/^ comment (!^ "Suppress unused value compiler warnings")
+  ^/^ comment (!^ "Suppress \"unused value\" compiler warnings")
   ^/^ (!^ "[@@@ocaml.warning \"-27-32-34\"]") 
   ^^ hardline 
 
@@ -141,10 +141,11 @@ let rec varNameHelper (ty : ty) : string =
   | Int -> "n"
   | Bool -> "b"
   | Char -> "c"
+  | Opaque s -> String.prefix s 1 
   | List argTy -> varNameHelper argTy ^ "s"
   | Option argTy -> varNameHelper argTy
   (* TODO: check if we need to destruct the pair *)
-  | Pair (_, _) -> "p" 
+  | Pair (_, _) -> "p"
   | _ -> String.prefix (string_of_ty ty) 1
 
 (** Special case of [genVarNames] when we only have one argument type.  
@@ -196,6 +197,10 @@ let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * doc
   | _, String -> (["s"], printConstructor constr ["s"])
   | _, Alpha -> (["a"], printConstructor constr ["a"])
   | _, T | _, AlphaT -> (["t"], printConstructor constr ["t"])
+  | _, (Opaque _ as opaqueTy) -> 
+    (* For opaque types, the varname is the 1st letter of the type's name *)
+    let varName = varNameHelper opaqueTy in 
+    ([varName], printConstructor constr [varName])
   | _, Option argTy | _, List argTy | _, Func1 (argTy, _) -> 
     let arg = genVarNames [argTy] in 
     (arg, printConstructor constr arg)
@@ -484,13 +489,14 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
   | Bool            -> !^ "G.bool"
   | Unit            -> !^ "G.unit"
   | String          -> !^ "G.string_non_empty"
+  | Opaque _ -> failwith "TODO: figure out how to access generator for opaqueTy"
   | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
   | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
     let (g1, g2) = map2 ~f:(getGenerator ~nonNegOnly) (ty1, ty2) in 
     !^ "G.both" ^^ spaceLR (parens g1) ^^ parens g2
-  | _ -> failwith @@            
-    Printf.sprintf "Error: Can't fetch generator for type %s" 
+  | Func1 _ | Func2 _ | T | AlphaT -> 
+    failwith @@ Printf.sprintf "Error: Can't fetch generator for type %s" 
     (string_of_ty ~t:"T" ~alpha:"Alpha" ty)
 
 (** Produces the code for a monadic bind of [arg] to a QuickCheck generator 
@@ -510,6 +516,7 @@ let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) : d
   | Bool              -> binding ^^ getGenerator ~nonNegOnly Bool ^^ sIn
   | Unit              -> binding ^^ getGenerator ~nonNegOnly Unit ^^ sIn
   | String            -> binding ^^ getGenerator ~nonNegOnly String ^^ sIn
+  | Opaque _          -> binding ^^ getGenerator ~nonNegOnly ty  ^^ sIn
   | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty   ^^ sIn
   | Pair (ty1, ty2)   -> 
     let lst = if phys_equal ty1 ty2 
@@ -526,7 +533,7 @@ let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) : d
   | T | AlphaT -> 
     !^ (sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
         arg (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
-  | _ -> failwith "Higher-order functions not supported"
+  | Func1 _ | Func2 _ -> failwith "Higher-order functions not supported"
 
 (** [isPairType ty] returns [true] if [ty] is a pair type, [false] otherwise *)  
 let isPairType (ty : ty) : bool = 
@@ -599,6 +606,9 @@ let getExprConstructorWithArgs (tyConstr : string)
   | Alpha, _ -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
   | T, _ | AlphaT, _ -> 
     (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
+  | Opaque _ as opaqueTy, _ -> 
+    let var = varNameHelper opaqueTy in 
+    (tyConstr, ty, [var], constr, printConstructor constr [var])
   | Option argTy, _ | List argTy, _ | Func1 (argTy, _), _ ->
     let arg = genVarNames [argTy] in 
     (tyConstr, ty, arg, constr, printConstructor constr arg)

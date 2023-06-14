@@ -98,14 +98,14 @@ let cmdLineParser : Command.t =
       sigFile = anon ("signature_file" %: regular_file) 
       and implFile1 = anon ("implementation_file_1" %: regular_file)
       and implFile2 = anon ("implementation_file_2" %: regular_file) 
-      and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc
-      and opaqueType = flag "-opaque-type" (optional string) ~doc:opaqueTypeDoc in
+      and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc in
+      (* and opaqueType = flag "-opaque-type" (optional string) ~doc:opaqueTypeDoc in *)
     fun () -> 
       let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
       let (sigName, modName1, modName2) = 
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
-      begin match (run_parser (moduleTypeP ~opaqueType ()) moduleString) with 
+      begin match (run_parser moduleTypeP moduleString) with 
         | Ok m -> 
           writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly 
             modName1 modName2;
@@ -124,20 +124,20 @@ let cmdLineParser : Command.t =
 
 
 (* Commented out code for basic testing *)
-let testParser : Command.t =
+(* let testParser : Command.t =
   Command.basic
     ~summary:"Automated Property-Based Testing for OCaml modules"
     ~readme:(fun () -> "TODO: Complete readme")
     (let%map_open.Command 
       sigFile = anon ("signature file" %: regular_file) 
-      and opaqueType = flag "-opaque-type" (optional string) ~doc:opaqueTypeDoc in
+      and opaqueTypes = flag "-opaque-type" (listed string) ~doc:opaqueTypeDoc in
     fun () -> 
       let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
       let sigName = getModuleSigName sigFile in 
-      begin match (run_parser (moduleTypeP ~opaqueType ()) moduleString) with 
+      begin match (run_parser (moduleTypeP ~opaqueTypes ()) moduleString) with 
         | Ok m -> 
           writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly:false "" ""
           
         | Error err -> printf "error = %s\n" err
-      end)      
+      end)       *)

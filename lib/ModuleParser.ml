@@ -80,15 +80,15 @@ let abstractTypeP : abstractType A.t =
   let withParam = typeTokenP *> wsP typeParamP *> constP "t" (T1 Alpha) in
   (noParam <|> withParam) <* sexpAnnotP  
 
-(** Parser for the declaration of an opaque type in a module, 
+(* DEPRECATED: Parser for the declaration of an opaque type in a module, 
     eg. [type assoc_list = (int * string) list] *)  
-let opaqueTypeP ?(opaqueType : string option = None) () : (opaqueType option) A.t = 
+(* let opaqueTypeP ?(opaqueType : string option = None) () : (opaqueType option) A.t = 
   match opaqueType with 
   | None -> A.return None
   | Some opaqueTypeName -> 
     (fun opaqueType -> Some {opaqueTypeName; opaqueType} )
     <$> (typeTokenP *> stringP opaqueTypeName *> stringP "=")
-    *> typeP
+    *> typeP *)
   
 (** Parser for arrow types *)  
 let arrowTypeP : ty A.t = 
@@ -105,22 +105,21 @@ let valDeclP : valDecl A.t =
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> typeP)  
 
 (** Parser for a module signature 
-    - The optional argument [opaqueType] specifies the name of an auxiliary 
+    - The optional argument [opaqueTypes] specifies the names of an auxiliary 
     opaque type in the module signature (if contained) *)
-let moduleTypeP ?(opaqueType : string option = None) () : moduleSig A.t =   
-  (fun moduleName abstractType opaqueType valDecls -> 
-    printf "\nopaqueType = %s\n" 
+let moduleTypeP : moduleSig A.t =   
+  (fun moduleName abstractType valDecls -> 
+    (* printf "\n opaqueType = %s \n" 
       @@ Option.value_map opaqueType ~default:"" 
-          ~f:(fun ty -> Sexp.to_string @@ sexp_of_opaqueType ty);
+          ~f:(fun ty -> Sexp.to_string @@ sexp_of_opaqueType ty); *)
     { moduleName; 
       moduleType = Intf; 
       abstractType; 
-      opaqueType; 
       valDecls; 
       intFlag = AllInts }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
   <*> abstractTypeP 
-  <*> opaqueTypeP ~opaqueType ()
+  (* <*> opaqueTypeP ~opaqueType () *)
   <*> A.many valDeclP
   <* stringP "end"
 

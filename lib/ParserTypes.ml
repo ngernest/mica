@@ -28,6 +28,8 @@ type ident = string
     - [Option] represents option types 
     - [Pair] represents a {i pair}, i.e. a product type with two arguments
     - [List] represents lists
+    - [Opaque] represents an opaque type whose QuickCheck generator is assumed
+      to exist (provided by the user)
     - [Func1] represents functions of arity 1 (arg type, return type)
     - [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type) 
     - All other constructors correspond to base OCaml types *)  
@@ -39,6 +41,7 @@ type ty = Int
           | Alpha 
           | AlphaT
           | T 
+          | Opaque of string
           | Option of ty
           | Pair of ty * ty
           | List of ty
@@ -56,6 +59,7 @@ let rec tyEqual (ty1 : ty) (ty2 : ty) : bool =
   | Alpha, Alpha
   | AlphaT, AlphaT
   | T, T -> true
+  | Opaque s1, Opaque s2 -> String.equal s1 s2
   | Option t1, Option t2 -> tyEqual t1 t2 
   | Func1 (a1, b1), Func1 (a2, b2) -> 
     tyEqual a1 a2 && tyEqual b1 b2
@@ -84,6 +88,7 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | Bool -> "bool"
   | Unit -> "unit"
   | String -> "string"
+  | Opaque s -> s
   | Alpha -> alpha
   | AlphaT | T -> t
   (* TODO: figure out if we need to parenthesize parameterized types? 
@@ -113,17 +118,15 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
 type abstractType = T0 | T1 of ty
   [@@deriving sexp]
 
-(** Opaque type contained within a module 
+(* DEPRECATED: Opaque type contained within a module 
     - [opaqueTypeName] is the name of the opaque type 
     - [opaqueType] is the representation of the opaque type using the [ty] ADT *)  
-type opaqueType = {
+(* type opaqueType = {
   opaqueTypeName : string;
   opaqueType : ty
 }
-  [@@deriving sexp, fields]
+  [@@deriving sexp, fields] *)
   
-
-
 (** Type representing a value declaration:
     - [valName] is the name of the variable/function being declared
     - [valType] is the type of the declaration
@@ -149,7 +152,7 @@ type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
   abstractType : abstractType;
-  opaqueType : opaqueType option [@sexp.option];
+  (* DEPRECATED: opaqueType : opaqueType option [@sexp.option]; *)
   valDecls : valDecl list [@sexp.list];
   intFlag : intFlag
 }

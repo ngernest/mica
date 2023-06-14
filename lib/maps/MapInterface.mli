@@ -2,12 +2,13 @@
     Adapted from the Cornell CS 3110 textbook, chapter 8. *)
 
 module type MapInterface = sig 
-    type assoc_list = (int * string) list 
-
     (** The abstract type of maps. 
         For now, we require keys to be [int] and values to be [string]s. *)
-    type t
-      [@@deriving sexp]
+    type t [@@deriving sexp]
+
+    (** Opaque type of association lists.
+        Under the hood, [type assoc_list = (int * string) list]  *)
+    type assoc_list [@@deriving sexp]
 
     (** [empty] is the empty map *)
     val empty : t
@@ -30,11 +31,11 @@ module type MapInterface = sig
     (** [from_list lst] is a map containing the same bindings as the 
         association list [lst]. 
         Requirement: [lst] does not contain any duplicate keys. *)
-    val from_list : (int * string) list -> t
+    val from_list : assoc_list -> t
     
     (** [bindings m] is an association list containing the same bindings 
         as [m]. There are no duplicate keys in the list. *)
-    val bindings : t -> (int * string) list 
+    val bindings : t -> assoc_list
 end 
 
 
