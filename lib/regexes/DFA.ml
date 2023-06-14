@@ -1,5 +1,6 @@
 open Base 
 open Regex
+open Base_quickcheck
 
 (** Representation of DFAs in OCaml
     - Adapted from {{: https://www.youtube.com/watch?v=QaMU0wMMczU} Harry Goldstein's video} on DFAs & regexes 
@@ -27,6 +28,7 @@ let rec implode (chars : char list) : string =
   match chars with
   | [] -> ""
   | h::t ->  string_of_char h ^ (implode t)
+
 (************************************************************************)
 (** {1 DFA representation} *)
 
@@ -35,8 +37,8 @@ let rec implode (chars : char list) : string =
     - The [next] record selector of type [dfa -> char -> dfa] 
       gives us the next state given the current character in the string *)
 type dfa = 
-  { acceptsEmpty : bool; 
-    next : char -> dfa 
+  { acceptsEmpty : bool; [@sexp.bool]
+    next : char -> dfa   [@sexp.opaque]
   }
   [@@deriving fields, sexp]
 
@@ -106,3 +108,15 @@ let rec convert (re : re) : dfa =
   | Alt (r1, r2) -> alt (convert r1) (convert r2)
   | Cat (r1, r2) -> cat (convert r1) (convert r2)
   | Star r -> star (convert r)
+
+(************************************************************************)
+(** {1 QuickCheck generators for DFAs} *)  
+
+module G = Generator
+open! G.Let_syntax
+
+let genDFA : dfa G.t = failwith "TODO: implement"
+
+
+(* let genDFAString (dfa : dfa) : (string G.t) option = 
+  failwith "TODO: do I have to first convert the DFA to a regex first, and then get the corresponding string"  *)

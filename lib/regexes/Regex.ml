@@ -56,7 +56,7 @@ let star (re : re) : re =
   | Star re' -> Star re' 
   | _ -> Star re
 
-(** Example regex, where [ex1 = a(b* + c)] *)
+(** Example regex, where [ex1 = a(b* | c)] *)
 let ex1 : re = Lit 'a' ^^ (Star (Lit 'b') <|> Lit 'c')
 
 (** [acceptsEmpty r] returns [true] when [r] can match the empty string *)
@@ -67,12 +67,12 @@ let rec acceptsEmpty (re : re) : bool =
   | Alt (r1, r2) -> acceptsEmpty r1 || acceptsEmpty r2 
   | Cat (r1, r2) -> acceptsEmpty r1 && acceptsEmpty r2
 
-(** Brozozowski derivative *)
+(** [re c] takes the Brozozowski derivative of the regex [re] 
+    with respect to the char [c] *)
 let rec deriv (re : re) (c : char) : re = 
-  let open Char in 
   match re with 
   | Void | Empty -> Void 
-  | Lit c' when c = c' -> Empty 
+  | Lit c' when Char.(c = c') -> Empty 
   | Lit _ -> Void
   | Alt (r1, r2) -> deriv r1 c <|> deriv r2 c
   | Cat (r1, r2) -> (deriv r1 c ^^ r2) 
@@ -89,7 +89,6 @@ let matchString (r : re) (s : string) : bool =
 (** QuickCheck generators for regexes *)
 
 module G = Generator
-
 open G.Let_syntax
 
 (** Generates a regex of the form [Lit c], 
@@ -99,15 +98,6 @@ let genLit : re G.t =
 
 (** Generates a character between 'a' and 'd' *)  
 let genChar : char G.t = G.of_list ['a'; 'b'; 'c'; 'd']  
-  
-(* let genRegex : re G.t = 
-  G.union [ return Void; return Empty; genLit; genAlt ]
-
-let genAlt : re G.t = 
-  let%bind r1 = genRegex
-       and r2 = genRegex in 
-  G.return @@ alt r1 r2   *)
-
 
 (** Generator for regexes *)  
 let genRegex : re G.t = 
@@ -147,3 +137,5 @@ let rec genRegexString (r : re) : (string G.t) option =
               let%bind s = G.list_with_length ~length:n gen in 
               G.return @@ String.concat s)
     end
+
+(* To test, run [Option.value_map (genRegexString ex1) ~default:"void" ~f:random_value] *)    

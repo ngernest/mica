@@ -2,6 +2,7 @@
 module type RegexMatcherIntf = sig 
   (** Abstract type of regexes *)
   type t 
+    [@@deriving sexp]
 
   (** [void] is the regex that always fails *)
   val void : t 
