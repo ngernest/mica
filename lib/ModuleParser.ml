@@ -4,6 +4,9 @@ open Angstrom
 open Base
 open Stdio
 
+(** Suppress unused value compiler warnings *)
+[@@@ocaml.warning "-27-32-34"]
+
 (** A parser for module signatures, based on the 
     {{: https://github.com/inhabitedtype/angstrom } Angstrom } 
     parser-combinator library. 
@@ -90,8 +93,10 @@ let valDeclP : valDecl A.t =
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> typeP)  
 
 
-(** Parser for a module signature *)
-let moduleTypeP : moduleSig A.t = 
+(** Parser for a module signature 
+    - The optional argument [absType] specifies the name of the abstract 
+    type in the module signature *)
+let moduleTypeP ?(absType : string option = None) () : moduleSig A.t = 
   (fun moduleName abstractType valDecls -> 
     { moduleName; moduleType = Intf; abstractType; valDecls; intFlag = AllInts }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 

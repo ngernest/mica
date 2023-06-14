@@ -8,6 +8,9 @@ open ModuleParser
 open CodeGenerator
 open Utils
 
+(** Suppress unused value compiler warnings *)
+[@@@ocaml.warning "-27-32-34"]
+
 (** Parses user input from the command-line, in particular the filepaths 
     of the [.ml] files containing the signature & the two modules for testing.
     (Code adapted from Real World OCaml, Chapter 16) *)
@@ -54,13 +57,16 @@ let pbtFilePath : string = "./lib/Generated.ml"
     for observational equivalence *)
 let execFilePath : string = "./bin/compare_impls.ml"
 
-(** Name of a flag specifying whether QuickCheck integer generators 
-    should only generate non-negative integers *)
-let nonNegIntsFlag : string = "-non-negative-ints-only"
 
-(** Documentation string for [nonNegIntsFlag] *)
+(** Documentation string for a flag specifying whether QuickCheck int generators 
+    should only generate non-negative ints *)
 let nonNegIntsDoc : string = 
   "Specify if QuickCheck int generators should only generate non-negative ints"
+
+(** Docstring for a flag specifying the name of the abstract type 
+    contained inside the module signature *)    
+let absTyDoc : string = 
+  "Name of the abstract type in the module signature"
 
 (** {1 Writing the generated PBT code to an output file} *)   
 
@@ -92,13 +98,14 @@ let cmdLineParser : Command.t =
       sigFile = anon ("signature_file" %: regular_file) 
       and implFile1 = anon ("implementation_file_1" %: regular_file)
       and implFile2 = anon ("implementation_file_2" %: regular_file) 
-      and nonNegOnly = flag nonNegIntsFlag no_arg ~doc:nonNegIntsDoc in
+      and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc
+      and absType = flag "-abstract-type" (optional string) ~doc:absTyDoc in
     fun () -> 
       let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
       let (sigName, modName1, modName2) = 
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
-      begin match (run_parser moduleTypeP moduleString) with 
+      begin match (run_parser (moduleTypeP ~absType ()) moduleString) with 
         | Ok m -> 
           writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly 
             modName1 modName2;
@@ -116,8 +123,8 @@ let cmdLineParser : Command.t =
 
 
 
-(** Commented out code for basic testing *)
-let testParser : Command.t =
+(* Commented out code for basic testing *)
+(* let testParser : Command.t =
   Command.basic
     ~summary:"Automated Property-Based Testing for OCaml modules"
     ~readme:(fun () -> "TODO: Complete readme")
@@ -132,4 +139,4 @@ let testParser : Command.t =
           writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly:false "" ""
           
         | Error err -> printf "error = %s\n" err
-      end)      
+      end)       *)

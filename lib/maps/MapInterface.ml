@@ -1,11 +1,5 @@
-open Base
-
-(* Disable "unused-values" compiler warnings *)
-[@@@ocaml.warning "-32-34-27"]
-
 module type MapInterface = sig 
-  type assoc_list = (int * string) list 
-
+  type assoc_list = (int * string) list
   type t
     [@@deriving sexp]
   val empty : t
