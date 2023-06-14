@@ -63,10 +63,10 @@ let execFilePath : string = "./bin/compare_impls.ml"
 let nonNegIntsDoc : string = 
   "Specify if QuickCheck int generators should only generate non-negative ints"
 
-(** Docstring for a flag specifying the name of the abstract type 
+(** Docstring for a flag specifying the name of an opaque type 
     contained inside the module signature *)    
-let absTyDoc : string = 
-  "Name of the abstract type in the module signature"
+let opaqueTypeDoc : string = 
+  "Name of an opaque type in the module signature"
 
 (** {1 Writing the generated PBT code to an output file} *)   
 
@@ -99,13 +99,13 @@ let cmdLineParser : Command.t =
       and implFile1 = anon ("implementation_file_1" %: regular_file)
       and implFile2 = anon ("implementation_file_2" %: regular_file) 
       and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc
-      and absType = flag "-abstract-type" (optional string) ~doc:absTyDoc in
+      and opaqueType = flag "-opaque-type" (optional string) ~doc:opaqueTypeDoc in
     fun () -> 
       let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
       let (sigName, modName1, modName2) = 
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
-      begin match (run_parser (moduleTypeP ~absType ()) moduleString) with 
+      begin match (run_parser (moduleTypeP ~opaqueType ()) moduleString) with 
         | Ok m -> 
           writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly 
             modName1 modName2;
@@ -124,19 +124,20 @@ let cmdLineParser : Command.t =
 
 
 (* Commented out code for basic testing *)
-(* let testParser : Command.t =
+let testParser : Command.t =
   Command.basic
     ~summary:"Automated Property-Based Testing for OCaml modules"
     ~readme:(fun () -> "TODO: Complete readme")
     (let%map_open.Command 
-      sigFile = anon ("signature file" %: regular_file) in
+      sigFile = anon ("signature file" %: regular_file) 
+      and opaqueType = flag "-opaque-type" (optional string) ~doc:opaqueTypeDoc in
     fun () -> 
       let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
       let sigName = getModuleSigName sigFile in 
-      begin match (run_parser moduleTypeP moduleString) with 
+      begin match (run_parser (moduleTypeP ~opaqueType ()) moduleString) with 
         | Ok m -> 
           writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly:false "" ""
           
         | Error err -> printf "error = %s\n" err
-      end)       *)
+      end)      

@@ -36,13 +36,6 @@ let typeParamP : char A.t =
 let sexpAnnotP : unit A.t = 
   constP "[@@deriving sexp]" ()
 
-(** Parser for an abstract type declaration in a module, eg. [type 'a t] *)
-let abstractTypeDeclP : abstractType A.t = 
-  let typeTokenP = stringP "type" in
-  let noParam = typeTokenP *> constP "t" T0 in 
-  let withParam = typeTokenP *> wsP typeParamP *> constP "t" (T1 Alpha) in
-  (noParam <|> withParam) <* sexpAnnotP
-
 (** [sigP p] takes a parser [p], and sandwiches it between parsers
     that parse the "sig" and "end" tokens *)
 let sigP (p : 'a A.t) : 'a A.t = 
@@ -78,6 +71,25 @@ let paramTypeP : ty A.t =
 let typeP : ty A.t = 
   paramTypeP <|> baseTypeP
 
+(** Parses the token ["type"] *)  
+let typeTokenP : unit A.t = stringP "type"   
+
+(** Parser for the declaration of an abstract type in a module, eg. [type 'a t] *)
+let abstractTypeP : abstractType A.t = 
+  let noParam = typeTokenP *> constP "t" T0 in 
+  let withParam = typeTokenP *> wsP typeParamP *> constP "t" (T1 Alpha) in
+  (noParam <|> withParam) <* sexpAnnotP  
+
+(** Parser for the declaration of an opaque type in a module, 
+    eg. [type assoc_list = (int * string) list] *)  
+let opaqueTypeP ?(opaqueType : string option = None) () : (opaqueType option) A.t = 
+  match opaqueType with 
+  | None -> A.return None
+  | Some opaqueTypeName -> 
+    (fun opaqueType -> Some {opaqueTypeName; opaqueType} )
+    <$> (typeTokenP *> stringP opaqueTypeName *> stringP "=")
+    *> typeP
+  
 (** Parser for arrow types *)  
 let arrowTypeP : ty A.t = 
   let func1P = (fun arg ret -> Func1 (arg, ret)) 
@@ -92,15 +104,23 @@ let valDeclP : valDecl A.t =
   (fun valName valType -> { valName; valType }) 
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> typeP)  
 
-
 (** Parser for a module signature 
-    - The optional argument [absType] specifies the name of the abstract 
-    type in the module signature *)
-let moduleTypeP ?(absType : string option = None) () : moduleSig A.t = 
-  (fun moduleName abstractType valDecls -> 
-    { moduleName; moduleType = Intf; abstractType; valDecls; intFlag = AllInts }) 
+    - The optional argument [opaqueType] specifies the name of an auxiliary 
+    opaque type in the module signature (if contained) *)
+let moduleTypeP ?(opaqueType : string option = None) () : moduleSig A.t =   
+  (fun moduleName abstractType opaqueType valDecls -> 
+    printf "\nopaqueType = %s\n" 
+      @@ Option.value_map opaqueType ~default:"" 
+          ~f:(fun ty -> Sexp.to_string @@ sexp_of_opaqueType ty);
+    { moduleName; 
+      moduleType = Intf; 
+      abstractType; 
+      opaqueType; 
+      valDecls; 
+      intFlag = AllInts }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
-  <*> abstractTypeDeclP
+  <*> abstractTypeP 
+  <*> opaqueTypeP ~opaqueType ()
   <*> A.many valDeclP
   <* stringP "end"
 
@@ -110,6 +130,6 @@ let string_of_file (filename : string) : string =
     ~f:(fun input -> In_channel.input_all input) 
 
 (** Writes a string to a file *)    
-let file_of_string (filename : string) (str : string) = 
+let file_of_string (filename : string) (str : string) : unit = 
   Out_channel.with_file ~append:false ~fail_if_exists:false 
     filename ~f:(fun output -> Out_channel.output_string output str)  

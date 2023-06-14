@@ -113,6 +113,17 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
 type abstractType = T0 | T1 of ty
   [@@deriving sexp]
 
+(** Opaque type contained within a module 
+    - [opaqueTypeName] is the name of the opaque type 
+    - [opaqueType] is the representation of the opaque type using the [ty] ADT *)  
+type opaqueType = {
+  opaqueTypeName : string;
+  opaqueType : ty
+}
+  [@@deriving sexp, fields]
+  
+
+
 (** Type representing a value declaration:
     - [valName] is the name of the variable/function being declared
     - [valType] is the type of the declaration
@@ -138,6 +149,7 @@ type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
   abstractType : abstractType;
+  opaqueType : opaqueType option [@sexp.option];
   valDecls : valDecl list [@sexp.list];
   intFlag : intFlag
 }
