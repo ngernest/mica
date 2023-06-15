@@ -11,7 +11,6 @@
     {i Deletion: The curse of the red-black tree}. *)
 
 open MapInterface
-open Base_quickcheck
 
 (* Disable "unused-values" compiler warnings *)
 [@@@ocaml.warning "-32-34-27"]
@@ -119,20 +118,8 @@ let rec bal_del_r (t: rbtree) : rbtree =
 
 (** Implementation of maps with (int, string) key-value pairs, 
     implemented using red-black trees *)
-module RedBlackMap : MapInterface = struct
-  type assoc_list = (Base.int * Base.string) Base.List.t
-    [@@deriving sexp]
-
-  (** Generator of association lists with non-empty keys -- copied over *)
-  let gen_assoc_list : assoc_list Generator.t = 
-    let open Base in 
-    let open Latin in 
-    let open G.Let_syntax in 
-    let%bind xs = G.(list_non_empty small_positive_or_zero_int) in 
-    let keys = List.dedup_and_sort xs ~compare:compare_int in 
-    let length = List.length keys in 
-    let%bind values = G.list_with_length ~length genLatin in 
-    G.return @@ List.zip_exn keys values 
+module RedBlackMap : MapInterface = struct  
+  open AssocList
 
   type t = rbtree
     [@@deriving sexp]

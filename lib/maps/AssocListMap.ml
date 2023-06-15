@@ -9,20 +9,7 @@ module G = Generator
     Adapted from Cornell CS 3110 textbook, chapter 8. *)
 
 module AssocListMap : MapInterface = struct
-  type assoc_list = (Base.int * Base.string) Base.List.t
-    [@@deriving sexp]
-
-  (** Generator of association lists with non-empty keys -- copied over *)
-  let gen_assoc_list : assoc_list Generator.t = 
-    let open Base in 
-    let open Latin in 
-    let open G.Let_syntax in 
-    let%bind xs = G.(list_non_empty small_positive_or_zero_int) in 
-    let keys = List.dedup_and_sort xs ~compare:compare_int in 
-    let length = List.length keys in 
-    let%bind values = G.list_with_length ~length genLatin in 
-    G.return @@ List.zip_exn keys values 
-  
+  open AssocList
 
   (** AF: The association list [[(k1, v1); (k2, v2); ...; (kn, vn)]] 
           is the map {k1 : v1, k2 : v2, .., kn : vn}. 
@@ -35,8 +22,8 @@ module AssocListMap : MapInterface = struct
     [@@deriving sexp]
 
   (** Efficiency: O(1). *)
-  let insert (k, v) m = m
-    (* (k, v) :: m *)
+  let insert (k, v) m = 
+    (k, v) :: m
 
   (** [find k m] is [Some v] if [k] is bound to [v] in [m], 
       and [None] if not. Efficiency: O(n) *)
