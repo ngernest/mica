@@ -44,6 +44,16 @@ let tyIsArrow (ty : ty) : bool =
   match ty with 
   | Func1 _ | Func2 _ -> true 
   | _ -> false    
+
+
+(** [isOpaqueTy ty] returns [true] if [ty] is a string corresponding to 
+    an "opaque" type, i.e. a type originating from another module
+    - Eg. if [ty = "AssocListT"], then ty is actually ["AssocList.t"] 
+      where [AssocList] is some externally-defined module *)    
+let isOpaqueTy (ty : string) : bool = 
+  let open Re.Str in 
+  let opaqueTypeRegex = regexp {|^[A-Z]+[A-Za-z0-9']*T$|} in 
+  string_match opaqueTypeRegex ty 0     
     
 (** Extracts all the "identity elements" defined within a module signature,
     e.g. [mempty] for monoids, or [zero] & [one] for semirings
@@ -93,19 +103,34 @@ let printConstructor (constr : string) (args : string list) : document =
   | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
+(* If [s] is a string that is a constructor corresponding to an opaque type, 
+  eg. [s = "AssocListT"] (corresponding to ["AssocList.t"], where [AssocList] 
+  is some external module), then [reifyOpaqueTyConstr s] replace the capital "T" 
+  at the end of the string with the suffix [".t"]. 
+  That is, ["AssocListT"] becomes ["AssocList.t"]. *)
+let reifyOpaqueTyConstr (s : string) : string = 
+  let open Re.Str in 
+  replace_first (regexp {|T$|}) ".t" s
+
 (** [ty_of_string s] converts a string [s] denoting a type to the equivalent 
     [ty] ADT constructor of its {i base type} by running the parser [typeP] 
     (defined in [Lib.ModuleParser]) over [s]. 
     - Note: The string [s] must be in camel-case *) 
 let ty_of_string (s : string) : ty = 
-  (* TODO: abstract away common regex logic (shared w/ [valADTParam])
-     & common pattern-matching logic in the parser *)
-  let open Re.Str in 
-  let capitalRegex = regexp {|\([A-Z]\)|} in 
-  let tys = global_substitute capitalRegex (replace_matched {| \1|}) s
-    |> String.split ~on:' ' 
-    |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
-    |> List.map ~f:String.lowercase in
+  Stdio.printf "\nty_of_string called on ty = %s\n" s;
+  let isOpaque = isOpaqueTy s in 
+  (** TODO: abstract away the regex matching logic *)
+  let tys = 
+    let open Re.Str in 
+    begin match isOpaque with 
+    | true -> [reifyOpaqueTyConstr s]
+    | false -> 
+      let capitalRegex = regexp {|\([A-Z]\)|} in 
+      global_substitute capitalRegex (replace_matched {| \1|}) s
+        |> String.split ~on:' ' 
+        |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
+        |> List.map ~f:String.lowercase 
+    end in 
   match tys with 
   | [] -> failwith "Can't extract a type parameter from an empty string"
   | [str] -> 
@@ -305,11 +330,10 @@ let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) 
   let tys = 
     let open Re.Str in 
     begin match String.length ty, isOpaque with 
-    | _, true -> 
-      (* Replace the capital "T" at the end of an opaque type with the suffix [".t"], 
-         eg. ["AssocListT"] becomes ["AssocList.t"] *)
-      let suffixRegex = regexp {|T$|} in 
-      [replace_first suffixRegex ".t" ty]
+    | _, true -> [reifyOpaqueTyConstr ty]
+    (* If the string representation of the type [ty] is in camel-case, 
+     extract all the constituent types from [ty] using a regex
+     that matches on each capital letter & splits on them *)
     | n, false when n > 1 -> 
       let capitalRegex = regexp {|\([A-Z]\)|} in 
       global_substitute capitalRegex (replace_matched {| \1|}) ty
@@ -318,20 +342,6 @@ let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) 
         |> List.map ~f:String.lowercase 
     | _, false -> String.(lowercase ty |> split ~on: ' ')
     end in 
-
-
-  (* If the string representation of the type [ty] is in camel-case, 
-     extract all the constituent types from [ty] using a regex
-     that matches on each capital letter & splits on them *)
-  (* let tys = (if String.length ty > 1 then 
-    let open Re.Str in 
-    let capitalRegex = regexp {|\([A-Z]\)|} in 
-    global_substitute capitalRegex (replace_matched {| \1|}) ty
-      |> String.split ~on:' ' 
-      |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
-      |> List.map ~f:String.lowercase 
-    else 
-      String.(lowercase ty |> split ~on: ' ')) in *)
   match tys with 
   | [] -> failwith "Can't extract a type parameter from an empty string"
   | [str] -> 
@@ -347,8 +357,7 @@ let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) 
       (parensStr (instantiateT ty1 ^ " * " ^ instantiateT ty2) :: remainingTys)
   | tys -> 
     separate_map space (fun ty -> !^ (instantiateT ty)) tys 
-  
-
+ 
 (** [valADTTypeDef moduleAbsTy ty] generates both the constructor & type parameter 
     for the [value] ADT corresponding to the type [ty]
     - The auxiliary argument [moduleAbsTy] is the abstract type defined in the module, 
@@ -356,13 +365,7 @@ let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) 
       with a concrete type (this logic is handled in [valADTParam])
     - Note: This function is a helper function called by [valADTDefn] *)  
 let valADTTypeDef ~(moduleAbsTy : abstractType) (ty : string) : document = 
-  (* Determine if [ty] is an "opaque" type, i.e. a type originating from another module
-     - Eg. if [ty = "AssocListT"], then ty is actually ["AssocList.t"] 
-      where [AssocList] is an externally-defined module *)
-  let isOpaque = 
-    let open Re.Str in 
-    let opaqueTypeRegex = regexp {|^[A-Z]+[A-Za-z0-9']*T$|} in 
-    string_match opaqueTypeRegex ty 0 in 
+  let isOpaque = isOpaqueTy ty in 
   valADTConstructor ty 
   ^^ (!^ " of ")
   ^^ valADTParam ~moduleAbsTy ~isOpaque ty      
@@ -515,7 +518,9 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
   | Bool            -> !^ "G.bool"
   | Unit            -> !^ "G.unit"
   | String          -> !^ "G.string_non_empty"
-  | Opaque _ -> failwith "TODO: figure out how to access generator for opaqueTy"
+  | Opaque opaqueTy -> 
+    let moduleName = String.chop_suffix_if_exists opaqueTy ~suffix:".t" in 
+    !^ (moduleName ^ ".gen" ^ moduleName)
   | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
   | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
@@ -761,9 +766,12 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
     for observational equivalence based on [expr]s that return some [tyConstr] of type [ty], 
     and pattern matching on the equivalent [valConstr]s that they return *)
 let obsEquiv (tyConstr, valConstr : string * string) : document = 
-  let vars : string list = genVarNamesN ~n:2 (ty_of_string tyConstr) in
+  let vars    : string list = genVarNamesN ~n:2 (ty_of_string tyConstr) in
   let varDocs : document list = List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
-  let baseTy : string = addSpaceToTyStr (String.lowercase tyConstr) in
+  let baseTy  : string = 
+    if isOpaqueTy tyConstr 
+      then "Lib." ^ reifyOpaqueTyConstr tyConstr
+    else addSpaceToTyStr (String.lowercase tyConstr) in
 
   !^ "QC.test (gen_expr " ^^ (!^ tyConstr) ^^ !^ ") ~sexp_of:sexp_of_expr ~f:(fun e ->"
   ^^ jump 2 1 @@ 

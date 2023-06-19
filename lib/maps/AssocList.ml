@@ -37,7 +37,7 @@ include T
 include Comparable.Make(T)
 
 (** QuickCheck generator for the [assoc_list] type *)  
-let gen_assoc_list : t Generator.t = 
+let genAssocList : t Generator.t = 
   let open Base in 
   let open Latin in 
   let open G.Let_syntax in 

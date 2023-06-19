@@ -7,7 +7,7 @@ open RedBlackMap
 open Latin
 
 (** Suppress unused value compiler warnings *)
-[@@@ocaml.warning "-27-32-34"]
+[@@@ocaml.warning "-27-32-33-34"]
   
 module G = Generator
 
@@ -86,7 +86,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in 
         G.return @@ Remove(n1, e2) in 
       let from_list = 
-        let%bind ps = AssocList.gen_assoc_list in 
+        let%bind ps = AssocList.genAssocList in 
         G.return @@ From_list ps
       in G.union [ insert; remove; from_list ]
 
