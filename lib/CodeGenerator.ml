@@ -112,25 +112,26 @@ let reifyOpaqueTyConstr (s : string) : string =
   let open Re.Str in 
   replace_first (regexp {|T$|}) ".t" s
 
+(* [splitCamelCaseTyString] takes [s], a camel-case string 
+   representation of a type, and extracts all the base types
+   by using a regex that matches on each capital letter & splitting on them *)
+let splitCamelCaseTyString (s : string) : string list = 
+  let open Re.Str in 
+  let capitalRegex = regexp {|\([A-Z]\)|} in 
+  global_substitute capitalRegex (replace_matched {| \1|}) s
+    |> String.split ~on:' ' 
+    |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
+    |> List.map ~f:String.lowercase     
+
 (** [ty_of_string s] converts a string [s] denoting a type to the equivalent 
     [ty] ADT constructor of its {i base type} by running the parser [typeP] 
     (defined in [Lib.ModuleParser]) over [s]. 
     - Note: The string [s] must be in camel-case *) 
 let ty_of_string (s : string) : ty = 
-  Stdio.printf "\nty_of_string called on ty = %s\n" s;
   let isOpaque = isOpaqueTy s in 
-  (** TODO: abstract away the regex matching logic *)
   let tys = 
-    let open Re.Str in 
-    begin match isOpaque with 
-    | true -> [reifyOpaqueTyConstr s]
-    | false -> 
-      let capitalRegex = regexp {|\([A-Z]\)|} in 
-      global_substitute capitalRegex (replace_matched {| \1|}) s
-        |> String.split ~on:' ' 
-        |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
-        |> List.map ~f:String.lowercase 
-    end in 
+    if isOpaque then [reifyOpaqueTyConstr s] 
+    else splitCamelCaseTyString s in 
   match tys with 
   | [] -> failwith "Can't extract a type parameter from an empty string"
   | [str] -> 
@@ -328,18 +329,9 @@ let addSpaceToTyStr (s : string) =
       otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)    
 let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) : document = 
   let tys = 
-    let open Re.Str in 
     begin match String.length ty, isOpaque with 
     | _, true -> [reifyOpaqueTyConstr ty]
-    (* If the string representation of the type [ty] is in camel-case, 
-     extract all the constituent types from [ty] using a regex
-     that matches on each capital letter & splits on them *)
-    | n, false when n > 1 -> 
-      let capitalRegex = regexp {|\([A-Z]\)|} in 
-      global_substitute capitalRegex (replace_matched {| \1|}) ty
-        |> String.split ~on:' ' 
-        |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
-        |> List.map ~f:String.lowercase 
+    | n, false when n > 1 -> splitCamelCaseTyString ty
     | _, false -> String.(lowercase ty |> split ~on: ' ')
     end in 
   match tys with 
