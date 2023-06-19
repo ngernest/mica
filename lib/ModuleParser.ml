@@ -66,10 +66,16 @@ let paramTypeP : ty A.t =
     let listP = 
       (fun ty -> List ty) <$> ((baseTypeP <|> parens paramType) <* stringP "list") in 
     pairP <|> optionP <|> listP
-    
+
+(** Parser for "opaque types", i.e. types that are sealed within another module, 
+    eg. the type [M.t] from another module [M] *)    
+let opaqueTypeP : ty A.t = 
+  (fun modName typeName -> Opaque (modName ^ typeName))
+    <$> identP ~firstCharP:(upperCaseP) () <*> wsP (A.string ".t")
+
 (** General parser for non-arrow types *)
 let typeP : ty A.t = 
-  paramTypeP <|> baseTypeP
+  paramTypeP <|> baseTypeP <|> opaqueTypeP
 
 (** Parses the token ["type"] *)  
 let typeTokenP : unit A.t = stringP "type"   
@@ -79,16 +85,6 @@ let abstractTypeP : abstractType A.t =
   let noParam = typeTokenP *> constP "t" T0 in 
   let withParam = typeTokenP *> wsP typeParamP *> constP "t" (T1 Alpha) in
   (noParam <|> withParam) <* sexpAnnotP  
-
-(* DEPRECATED: Parser for the declaration of an opaque type in a module, 
-    eg. [type assoc_list = (int * string) list] *)  
-(* let opaqueTypeP ?(opaqueType : string option = None) () : (opaqueType option) A.t = 
-  match opaqueType with 
-  | None -> A.return None
-  | Some opaqueTypeName -> 
-    (fun opaqueType -> Some {opaqueTypeName; opaqueType} )
-    <$> (typeTokenP *> stringP opaqueTypeName *> stringP "=")
-    *> typeP *)
   
 (** Parser for arrow types *)  
 let arrowTypeP : ty A.t = 
@@ -104,14 +100,9 @@ let valDeclP : valDecl A.t =
   (fun valName valType -> { valName; valType }) 
     <$> stringP "val" *> lowercaseIdentP <* stringP ":" <*> (arrowTypeP <|> typeP)  
 
-(** Parser for a module signature 
-    - The optional argument [opaqueTypes] specifies the names of an auxiliary 
-    opaque type in the module signature (if contained) *)
+(** Parser for a module signature *)
 let moduleTypeP : moduleSig A.t =   
   (fun moduleName abstractType valDecls -> 
-    (* printf "\n opaqueType = %s \n" 
-      @@ Option.value_map opaqueType ~default:"" 
-          ~f:(fun ty -> Sexp.to_string @@ sexp_of_opaqueType ty); *)
     { moduleName; 
       moduleType = Intf; 
       abstractType; 
@@ -119,7 +110,6 @@ let moduleTypeP : moduleSig A.t =
       intFlag = AllInts }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
   <*> abstractTypeP 
-  (* <*> opaqueTypeP ~opaqueType () *)
   <*> A.many valDeclP
   <* stringP "end"
 

@@ -88,9 +88,11 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | Bool -> "bool"
   | Unit -> "unit"
   | String -> "string"
-  | Opaque s -> s
   | Alpha -> alpha
   | AlphaT | T -> t
+  | Opaque s -> 
+    if camelCase then split ~on:'.' s |> List.map ~f:capitalize |> concat
+      else s
   (* TODO: figure out if we need to parenthesize parameterized types? 
      (and if so, how to avoid cases where we have parens appearing in 
       the derived constructor names 
@@ -117,15 +119,6 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
     - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, eg. ['a t]  *)  
 type abstractType = T0 | T1 of ty
   [@@deriving sexp]
-
-(* DEPRECATED: Opaque type contained within a module 
-    - [opaqueTypeName] is the name of the opaque type 
-    - [opaqueType] is the representation of the opaque type using the [ty] ADT *)  
-(* type opaqueType = {
-  opaqueTypeName : string;
-  opaqueType : ty
-}
-  [@@deriving sexp, fields] *)
   
 (** Type representing a value declaration:
     - [valName] is the name of the variable/function being declared
@@ -152,7 +145,6 @@ type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
   abstractType : abstractType;
-  (* DEPRECATED: opaqueType : opaqueType option [@sexp.option]; *)
   valDecls : valDecl list [@sexp.list];
   intFlag : intFlag
 }
