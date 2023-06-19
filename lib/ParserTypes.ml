@@ -28,10 +28,16 @@ type ident = string
     - [Option] represents option types 
     - [Pair] represents a {i pair}, i.e. a product type with two arguments
     - [List] represents lists
-    - [Opaque] represents an opaque type whose QuickCheck generator is assumed
-      to exist (provided by the user)
     - [Func1] represents functions of arity 1 (arg type, return type)
     - [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type) 
+    - [Opaque] represents an opaque type defined in an external module. 
+    An example of an opaque type is [AssocList.t], where [AssocList] is an externally 
+    defined module (defined in a file [AssocList.ml] in the [lib] directory). 
+    We require that the type in this external module be called [t], and that the 
+    QuickCheck generator should share the same name as its enclosing module. 
+    For example, in [AssocList.ml], the generator for the type [AssocList.t]
+    should be called [genAssocList]. See [lib/maps/AssocList.ml] for an 
+    example of opaque types in use. 
     - All other constructors correspond to base OCaml types *)  
 type ty = Int 
           | Char 
