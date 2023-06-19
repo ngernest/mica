@@ -141,16 +141,15 @@ let rec varNameHelper (ty : ty) : string =
   | Int -> "n"
   | Bool -> "b"
   | Char -> "c"
-  | Opaque s -> String.prefix s 1 
+  | Opaque s -> String.(prefix (uncapitalize s) 1) 
   | List argTy -> varNameHelper argTy ^ "s"
   | Option argTy -> varNameHelper argTy
-  (* TODO: check if we need to destruct the pair *)
   | Pair (_, _) -> "p"
   | _ -> String.prefix (string_of_ty ty) 1
 
 (** Special case of [genVarNames] when we only have one argument type.  
     If [prime = true], add a single quote to the end of the variable name *)    
-let genVarNamesSingleton ?(prime = false) (argTy : ty) : string = 
+let genVarNameSingleton ?(prime = false) (argTy : ty) : string = 
   let varName = varNameHelper argTy in 
   if prime then varName ^ "\'" else varName
 
@@ -166,9 +165,9 @@ let genVarNamesN ~(n : int) (ty : ty) : string list =
 let genVarNames ?(prime = false) (argTys : ty list) : string list = 
   match argTys with 
   | [] -> []
-  | [ty] -> [genVarNamesSingleton ty]
+  | [ty] -> [genVarNameSingleton ty]
   | _ -> List.mapi 
-    ~f:(fun i ty -> let var = genVarNamesSingleton ty ^ Int.to_string (i + 1) in 
+    ~f:(fun i ty -> let var = genVarNameSingleton ty ^ Int.to_string (i + 1) in 
         if prime then var ^ "\'" else var) 
     argTys
 
@@ -282,29 +281,49 @@ let instantiateT (s : string) =
 (** Takes [s], a string reprentation of a type, 
     and adds a space to [s] if [s] represents a parameterized type. 
     - Example: [addSpaceToTyStr "intoption" = "int option"] 
-    - If [s] doesn't contain the prefix ["t"], [s] is left unchanged *)
+    - If [s] doesn't contain the suffix ["list"] or ["option"], [s] is left unchanged *)
 let addSpaceToTyStr (s : string) = 
   let open String in 
   if is_suffix ~suffix:"option" s 
     then chop_suffix_exn ~suffix:"option" s ^ " option"
   else if is_suffix ~suffix:"list" s 
     then chop_suffix_exn ~suffix:"list" s ^ " list"
-  (* TODO: handle pairs *)
   else s
 
 (** [valADTParam moduleAbsTy ty] takes [ty], a string representation 
-    of the corresponding type, and generates the type param for the 
+    of the corresponding type, and generates the type parameter for the 
     constructor [value] ADT corresponding to the type [ty]. 
     - The auxiliary argument [moduleAbsTy] refers to the abstract type 
       contained within the module signature, e.g. [M.t]
+    - The optional argument [isOpaque] is a boolean indicating whether 
+      this type is "opaque" (i.e. originating from another module, eg. ["AssocList.t"] 
+      where "AssocList" is an externally-defined module)
     - If the module's abstract type [M.t] is polymorphic (i.e. ['a M.t]), 
       we instantiate ['a] with [int], 
       otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)    
-let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document = 
+let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) : document = 
+  let tys = 
+    let open Re.Str in 
+    begin match String.length ty, isOpaque with 
+    | _, true -> 
+      (* Replace the capital "T" at the end of an opaque type with the suffix [".t"], 
+         eg. ["AssocListT"] becomes ["AssocList.t"] *)
+      let suffixRegex = regexp {|T$|} in 
+      [replace_first suffixRegex ".t" ty]
+    | n, false when n > 1 -> 
+      let capitalRegex = regexp {|\([A-Z]\)|} in 
+      global_substitute capitalRegex (replace_matched {| \1|}) ty
+        |> String.split ~on:' ' 
+        |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
+        |> List.map ~f:String.lowercase 
+    | _, false -> String.(lowercase ty |> split ~on: ' ')
+    end in 
+
+
   (* If the string representation of the type [ty] is in camel-case, 
      extract all the constituent types from [ty] using a regex
      that matches on each capital letter & splits on them *)
-  let tys = (if String.length ty > 1 then 
+  (* let tys = (if String.length ty > 1 then 
     let open Re.Str in 
     let capitalRegex = regexp {|\([A-Z]\)|} in 
     global_substitute capitalRegex (replace_matched {| \1|}) ty
@@ -312,7 +331,7 @@ let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document =
       |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
       |> List.map ~f:String.lowercase 
     else 
-      String.(lowercase ty |> split ~on: ' ')) in
+      String.(lowercase ty |> split ~on: ' ')) in *)
   match tys with 
   | [] -> failwith "Can't extract a type parameter from an empty string"
   | [str] -> 
@@ -337,9 +356,16 @@ let valADTParam ~(moduleAbsTy : abstractType) (ty : string) : document =
       with a concrete type (this logic is handled in [valADTParam])
     - Note: This function is a helper function called by [valADTDefn] *)  
 let valADTTypeDef ~(moduleAbsTy : abstractType) (ty : string) : document = 
+  (* Determine if [ty] is an "opaque" type, i.e. a type originating from another module
+     - Eg. if [ty = "AssocListT"], then ty is actually ["AssocList.t"] 
+      where [AssocList] is an externally-defined module *)
+  let isOpaque = 
+    let open Re.Str in 
+    let opaqueTypeRegex = regexp {|^[A-Z]+[A-Za-z0-9']*T$|} in 
+    string_match opaqueTypeRegex ty 0 in 
   valADTConstructor ty 
   ^^ (!^ " of ")
-  ^^ valADTParam ~moduleAbsTy ty      
+  ^^ valADTParam ~moduleAbsTy ~isOpaque ty      
 
 (** Generates the [value] ADT definition that is contained within 
     the module returned by the [ExprToImpl] functor *)  
@@ -374,7 +400,7 @@ let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : id
   let (argTyConstr, retTyConstr) = 
     map2 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true)) (argTy, retTy) in
   (* Generate a fresh variable name *)  
-  let arg' = genVarNamesSingleton ~prime:true argTy in
+  let arg' = genVarNameSingleton ~prime:true argTy in
   (* Identify the position of any arguments whose type are not [expr] *)
   let funcApp = 
     begin match nonExprArg with 
@@ -525,7 +551,7 @@ let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) : d
     begin match lst with 
     | [v1; v2] -> 
       (* Let [p] be the variable name for the overall pair *)
-      let p = Option.value_or_thunk pairName ~default:(fun () -> genVarNamesSingleton ty) in 
+      let p = Option.value_or_thunk pairName ~default:(fun () -> genVarNameSingleton ty) in 
       !^ (sprintf "let%%bind (%s, %s) as %s = " v1 v2 p) 
       ^^ getGenerator ~nonNegOnly ty ^^ sIn 
     | _ -> failwith "Error generating fresh varnames for Pair type"
