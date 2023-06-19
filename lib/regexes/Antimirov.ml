@@ -2,7 +2,7 @@
     - Adapted from {{: https://semantic-domain.blogspot.com/2013/11/antimirov-derivatives-for-regular.html} Neel Krishnaswami}
 *)
 
-open Regex 
+(* include Regex 
 
 (** The module [R] is the type of finite sets of regexes *)
 module RegexSet = Set.Make(struct 
@@ -27,6 +27,7 @@ let rmap (f : re -> re) (rs : RegexSet.t) : RegexSet.t =
 (** [aderiv re c] is the Antimirov derivative of the regex [re] with respect to the char [c] *)  
 let rec aderiv (re : re) (c : char) = 
   let open RegexSet in 
+  let open Regex in 
   match re with 
   | Lit c' when c = c' -> singleton Empty 
   | Lit _ | Empty | Void -> empty 
@@ -138,4 +139,4 @@ module Test = struct
                    seq [opt sign; plus digit; exponent] ]
 
   let t_float = table (dfa float)
-end
+end *)

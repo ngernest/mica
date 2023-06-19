@@ -3,7 +3,7 @@ module type RegexMatcherIntf = sig
     [@@deriving sexp]
   val void : t
   val empty : t
-  val matchString : string -> t -> bool
+  val matchString : t -> string -> bool
   val acceptsEmpty : t -> bool
   val lit : char -> t
   val alt : t -> t -> t

@@ -12,5 +12,4 @@ lib/maps/DirectAddressMap.ml
 lib/CodeGeneratorAlt.ml
 lib/quviq.ml
 lib/hashtables
-bin/GeneratedMapExecutable.ml
 lib/GenMapPBTAlt.ml

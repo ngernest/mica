@@ -65,10 +65,10 @@ let ex1 : dfa =
 
 (** [matchString s dfa] runs the DFA [dfa] over the string [s], 
     checking to see if [dfa] matches [s] *)  
-let rec matchString (s: string) (dfa : dfa) : bool = 
+let rec matchString (dfa : dfa) (s: string) : bool = 
   match explode s with 
   | [] -> acceptsEmpty dfa 
-  | (c :: cs) -> matchString (implode cs) (next dfa c)
+  | (c :: cs) -> matchString (next dfa c) (implode cs)
 
 let rec void : dfa lazy_t = 
   lazy { acceptsEmpty = false; next = Fn.const (force void) }
