@@ -14,4 +14,3 @@ lib/quviq.ml
 lib/hashtables
 bin/GeneratedMapExecutable.ml
 lib/GenMapPBTAlt.ml
-lib/maps/MapIntf.ml

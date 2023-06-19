@@ -19,15 +19,16 @@ type expr =
   | Insert of (int * string) * expr
   | Find of int * expr
   | Remove of int * expr
-  | From_list of AssocList.assoc_list
+  | From_list of AssocList.t
   | Bindings of expr
     [@@deriving sexp]
+
  
 module ExprToImpl (M : MapInterface) = struct 
   include M
 
   type value = 
-    | ValAssocList of AssocList.assoc_list
+    | ValAssocList of AssocList.t
     | ValStringOption of string option
     | ValT of M.t
     [@@deriving sexp]   

@@ -6,10 +6,9 @@ module G = Generator
 [@@@ocaml.warning "-32-34-27"]
 
 (** Implementation of maps using association lists.  
-    Adapted from Cornell CS 3110 textbook, chapter 8. *)
+    - Adapted from Cornell CS 3110 textbook, chapter 8. *)
 
 module AssocListMap : MapInterface = struct
-  open AssocList
 
   (** AF: The association list [[(k1, v1); (k2, v2); ...; (kn, vn)]] 
           is the map {k1 : v1, k2 : v2, .., kn : vn}. 
@@ -18,7 +17,7 @@ module AssocListMap : MapInterface = struct
           [[(k, v1); (k, v2)]] represents {k : v1}. The empty list represents
           the empty map.
           RI: none. *)
-  type t = (Base.int * Base.string) Base.List.t
+  type t = AssocList.t
     [@@deriving sexp]
 
   (** Efficiency: O(1). *)
@@ -39,7 +38,7 @@ module AssocListMap : MapInterface = struct
   (** [from_list lst] is a map containing the same bindings as the 
       association list [lst]. 
       Requirement: [lst] does not contain any duplicate keys. *)
-  let from_list (lst : assoc_list) : assoc_list = lst
+  let from_list (lst : AssocList.t) : AssocList.t = lst
 
   (** [keys m] is a list of the keys in [m], without any duplicates.
       This function performs the following:
@@ -53,14 +52,14 @@ module AssocListMap : MapInterface = struct
   (** [binding m k] is [(k, v)], where [v] is the value that [k] binds in [m].
       Requires: [k] is a key in [m].
       Efficiency: O(n). *)
-  let binding (m : assoc_list) (k : int) : int * string = 
+  let binding (m : AssocList.t) (k : int) : int * string = 
     (k, List.assoc k m)
 
   (** [bindings m] is an association list containing the same bindings 
       as [m]. There are no duplicate keys in the list. 
       Efficiency: O(n log n) + O(n) * O(n), which is O(n^2). 
       (In the worst-case, there are n keys for [m].) *)
-  let bindings (m : assoc_list) : assoc_list = 
+  let bindings (m : AssocList.t) : AssocList.t = 
     List.map (binding m) (keys m)
 end
 

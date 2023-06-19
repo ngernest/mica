@@ -119,8 +119,6 @@ let rec bal_del_r (t: rbtree) : rbtree =
 (** Implementation of maps with (int, string) key-value pairs, 
     implemented using red-black trees *)
 module RedBlackMap : MapInterface = struct  
-  open AssocList
-
   type t = rbtree
     [@@deriving sexp]
     
@@ -226,7 +224,7 @@ module RedBlackMap : MapInterface = struct
   (** [bindings m] is an association list containing the same bindings 
       as [m], with the (integer-valued) keys sorted in ascending order. 
       - There are no duplicate keys in the association list. *)
-  let bindings (tree : rbtree) : assoc_list = 
+  let bindings (tree : rbtree) : AssocList.t = 
     let rec bindings_aux acc tree = 
       begin match tree with 
       | Empty _ -> acc
@@ -238,7 +236,7 @@ module RedBlackMap : MapInterface = struct
   (** [from_list lst] is a map containing the same bindings as the 
     association list [lst]. 
     Requirement: [lst] does not contain any duplicate keys. *)
-  let from_list (lst : assoc_list) : rbtree = 
+  let from_list (lst : AssocList.t) : rbtree = 
     List.fold_left (fun acc (k, v) -> insert (k, v) acc) empty lst
   
 
