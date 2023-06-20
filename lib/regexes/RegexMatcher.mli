@@ -1,4 +1,4 @@
-module type RegexMatcherIntf = sig
+module type RegexMatcher = sig
   type t
     [@@deriving sexp]
   val void : t

@@ -1,7 +1,7 @@
 open Base
 open Base_quickcheck
-open RegexMatcherIntf 
-open Regex 
+open RegexMatcher
+open Brzozowski 
 open! DFA 
 
 
@@ -22,7 +22,7 @@ type expr =
   | AcceptsEmpty of expr 
   [@@deriving sexp]
 
-module ExprToImpl (M : RegexMatcherIntf) = struct 
+module ExprToImpl (M : RegexMatcher) = struct 
   include M
   
   type value = 
@@ -94,7 +94,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       G.return @@ Star e in 
     G.union [lit; alt; cat; star]
 
-module I1 = ExprToImpl(Regex)
+module I1 = ExprToImpl(Brzozowski)
 
 
 

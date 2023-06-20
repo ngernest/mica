@@ -1,6 +1,6 @@
 open Base 
 open Base_quickcheck
-open RegexMatcherIntf
+open RegexMatcher
 
 (** Representation of regexes & the Brzozowski derivative in OCaml
     - Adapted from {{: https://www.youtube.com/watch?v=QaMU0wMMczU} Harry Goldstein's video} on DFAs & regexes    
@@ -20,7 +20,7 @@ type re =
   [@@deriving sexp, compare]
 
 
-module Regex : RegexMatcherIntf = struct 
+module Brzozowski : RegexMatcher = struct 
   type t = re 
     [@@deriving sexp]  
 
