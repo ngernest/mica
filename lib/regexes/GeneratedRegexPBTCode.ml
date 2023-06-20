@@ -2,14 +2,11 @@ open Base
 open Base_quickcheck
 open RegexMatcher
 open Brzozowski 
-open! DFA 
-
+open DFA 
 
 (** Suppress unused value compiler warnings *)
 [@@@ocaml.warning "-27-32-34"]
 
-type ty = Bool | T
-  [@@deriving sexp]
 
 type expr = 
   | Void 
@@ -20,6 +17,9 @@ type expr =
   | Star of expr 
   | MatchString of expr * string 
   | AcceptsEmpty of expr 
+  [@@deriving sexp]
+
+type ty = Bool | T
   [@@deriving sexp]
 
 module ExprToImpl (M : RegexMatcher) = struct 
@@ -95,6 +95,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
     G.union [lit; alt; cat; star]
 
 module I1 = ExprToImpl(Brzozowski)
+module I2 = ExprToImpl(DFA)
 
 
 
