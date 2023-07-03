@@ -117,6 +117,8 @@ let cmdLineParser : Command.t =
             writeDoc executable (compareImpls m);
 
             Out_channel.close executable;
+            Stdio.printf "\nGenerated PBT code: ./lib/generated.ml\n";
+            Stdio.printf "Generated executable: ./bin/compare_impls.exe\n"
 
         | Error err -> printf "error = %s\n" err
       end)
