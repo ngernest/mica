@@ -512,7 +512,7 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
   | String          -> !^ "G.string_non_empty"
   | Opaque opaqueTy -> 
     let moduleName = String.chop_suffix_if_exists opaqueTy ~suffix:".t" in 
-    !^ (moduleName ^ ".quickcheck_generator")
+    !^ ("[%quickcheck.generator: " ^ moduleName ^ ".t]")
   | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
   | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
@@ -534,13 +534,13 @@ let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) : d
   let open Printf in 
   let binding = !^ (sprintf "let%%bind %s = " arg) in
   match ty with 
-  | Int | Alpha       -> binding ^^ getGenerator ~nonNegOnly Int  ^^ sIn
-  | Char              -> binding ^^ getGenerator ~nonNegOnly Char ^^ sIn
-  | Bool              -> binding ^^ getGenerator ~nonNegOnly Bool ^^ sIn
-  | Unit              -> binding ^^ getGenerator ~nonNegOnly Unit ^^ sIn
+  | Int | Alpha       -> binding ^^ getGenerator ~nonNegOnly Int    ^^ sIn
+  | Char              -> binding ^^ getGenerator ~nonNegOnly Char   ^^ sIn
+  | Bool              -> binding ^^ getGenerator ~nonNegOnly Bool   ^^ sIn
+  | Unit              -> binding ^^ getGenerator ~nonNegOnly Unit   ^^ sIn
   | String            -> binding ^^ getGenerator ~nonNegOnly String ^^ sIn
-  | Opaque _          -> binding ^^ getGenerator ~nonNegOnly ty  ^^ sIn
-  | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty   ^^ sIn
+  | Opaque _          -> binding ^^ getGenerator ~nonNegOnly ty     ^^ sIn
+  | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty     ^^ sIn
   | Pair (ty1, ty2)   -> 
     let lst = if phys_equal ty1 ty2 
       then genVarNamesN ~n:2 ty1 
