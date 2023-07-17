@@ -71,7 +71,7 @@ module BSTSet : SetInterface = struct
 
   let is_empty t = 
     match t with 
-    | Empty -> true 
+    | Empty -> true
     | Node _ -> false 
 
   (** [add x t] inserts [x] into the BST [t] *)
