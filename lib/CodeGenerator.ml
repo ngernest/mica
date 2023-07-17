@@ -512,7 +512,7 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
   | String          -> !^ "G.string_non_empty"
   | Opaque opaqueTy -> 
     let moduleName = String.chop_suffix_if_exists opaqueTy ~suffix:".t" in 
-    !^ (moduleName ^ ".gen" ^ moduleName)
+    !^ (moduleName ^ ".quickcheck_generator")
   | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
   | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
@@ -621,12 +621,12 @@ let getExprConstructorWithArgs (tyConstr : string)
   (ty : ty) (constr : string) : string * ty * string list * string * document = 
   match ty, constr with 
   | _, "Empty" -> (tyConstr, ty, [], constr, !^ constr)
-  | Int, _ -> (tyConstr, ty, ["n"], constr, printConstructor constr ["n"])
-  | Char, _ -> (tyConstr, ty, ["c"], constr, printConstructor constr ["c"])
-  | Bool, _ -> (tyConstr, ty, ["b"], constr, printConstructor constr ["b"])
-  | Unit, _ -> (tyConstr, ty, [], constr, OCaml.unit)
-  | String, _ -> (tyConstr, ty, ["s"], constr, printConstructor constr ["s"])
-  | Alpha, _ -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
+  | Int, _     -> (tyConstr, ty, ["n"], constr, printConstructor constr ["n"])
+  | Char, _    -> (tyConstr, ty, ["c"], constr, printConstructor constr ["c"])
+  | Bool, _    -> (tyConstr, ty, ["b"], constr, printConstructor constr ["b"])
+  | Unit, _    -> (tyConstr, ty, [], constr, OCaml.unit)
+  | String, _  -> (tyConstr, ty, ["s"], constr, printConstructor constr ["s"])
+  | Alpha, _   -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
   | T, _ | AlphaT, _ -> 
     (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
   | Opaque _ as opaqueTy, _ -> 

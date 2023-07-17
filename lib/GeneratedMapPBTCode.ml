@@ -86,7 +86,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in 
         G.return @@ Remove(n1, e2) in 
       let from_list = 
-        let%bind ps = AssocList.genAssocList in 
+        let%bind ps = AssocList.quickcheck_generator in 
         G.return @@ From_list ps
       in G.union [ insert; remove; from_list ]
 

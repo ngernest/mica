@@ -34,10 +34,11 @@ type ident = string
     An example of an opaque type is [AssocList.t], where [AssocList] is an externally 
     defined module (defined in a file [AssocList.ml] in the [lib] directory). 
     We require that the type in this external module be called [t], and that the 
-    QuickCheck generator should share the same name as its enclosing module. 
-    For example, in [AssocList.ml], the generator for the type [AssocList.t]
-    should be called [genAssocList]. See [lib/maps/AssocList.ml] for an 
-    example of opaque types in use. 
+    QuickCheck generator should be called [quickcheck_generator], 
+    following the naming conventions of 
+    Jane Street's {{: https://github.com/janestreet/base_quickcheck/tree/master/ppx_quickcheck} ppx_quickcheck}
+    library. 
+    - See [lib/maps/AssocList.ml] for an example of opaque types in use. 
     - All other constructors correspond to base OCaml types *)  
 type ty = Int 
           | Char 

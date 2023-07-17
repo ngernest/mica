@@ -36,8 +36,13 @@ end
 include T
 include Comparable.Make(T)
 
-(** QuickCheck generator for the [assoc_list] type *)  
-let genAssocList : t Generator.t = 
+(** QuickCheck generator for the [assoc_list] type 
+    - Note: For any user-defined opaque type [M.t] (where [M] is a module), 
+    we require that the QuickCheck generator be called [quickcheck_generator], 
+    following the naming conventions of Jane Street's 
+    {{: https://github.com/janestreet/base_quickcheck/tree/master/ppx_quickcheck} ppx_quickcheck}
+    library. *)  
+let quickcheck_generator : t Generator.t = 
   let open Base in 
   let open Latin in 
   let open G.Let_syntax in 
