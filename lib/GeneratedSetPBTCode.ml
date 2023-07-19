@@ -15,7 +15,7 @@ type expr =
    | Union of expr * expr
    | Intersect of expr * expr
    | Invariant of expr
-    [@@deriving sexp, compare]
+    [@@deriving sexp, compare, hash]
 
 type ty =
   Bool | Int | T
