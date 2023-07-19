@@ -13,3 +13,23 @@
  (preprocess 
   (pps ppx_sexp_conv ppx_jane)))  
 
+(executable
+ (name GeneratedRegexExecutable)
+ (modules GeneratedRegexExecutable)
+ (libraries lib core stdio)
+ (preprocess 
+  (pps ppx_sexp_conv ppx_jane)))  
+
+(executable
+ (name GeneratedSetExecutable)
+ (modules GeneratedSetExecutable)
+ (libraries lib core stdio)
+ (preprocess 
+  (pps ppx_sexp_conv ppx_jane)))  
+
+(executable
+ (name GeneratedMapExecutable)
+ (modules GeneratedMapExecutable)
+ (libraries lib core stdio)
+ (preprocess 
+  (pps ppx_sexp_conv ppx_jane)))       
