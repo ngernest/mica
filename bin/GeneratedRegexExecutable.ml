@@ -3,6 +3,10 @@
 open Core
 open Lib.GeneratedRegexPBTCode
 
+
+(** TODO: replace refs below with the more generic hashtable implementation 
+    for keeping track of the frequencies of random [value]s 
+    - See [GeneratedSetExecutable.ml] *)
 let i1_true = ref 0 
 let i1_false = ref 0 
 let i2_true = ref 0
