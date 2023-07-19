@@ -1,5 +1,5 @@
 (** Generated executable for testing observational equivalence of two modules *)
-(** Usage: [dune exec -- ./bin/compare_impls.exe] *)
+(** Usage: [dune exec -- ./bin/GeneratedMapExecutable.exe] *)
 open Core
 open Lib.GeneratedMapPBTCode
 

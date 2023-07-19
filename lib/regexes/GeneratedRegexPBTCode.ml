@@ -7,7 +7,6 @@ open DFA
 (** Suppress unused value compiler warnings *)
 [@@@ocaml.warning "-27-32-34"]
 
-
 type expr = 
   | Void 
   | Empty 
@@ -97,7 +96,11 @@ let rec gen_expr (ty : ty) : expr Generator.t =
 module I1 = ExprToImpl(Brzozowski)
 module I2 = ExprToImpl(DFA)
 
-
+let displayError (e : expr) (v1 : I1.value) (v2 : I2.value) : string = 
+  Printf.sprintf "e = %s, v1 = %s, v2 = %s\n"
+    (Sexp.to_string @@ sexp_of_expr e)
+    (Sexp.to_string @@ [%sexp_of: I1.value] v1)
+    (Sexp.to_string @@ [%sexp_of: I2.value] v2)
 
 
 
