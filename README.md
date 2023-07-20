@@ -34,6 +34,9 @@ The `lib` directory also contains examples of the test harness adapted to work w
   - Implementation using lists of tuples: `Poly1.ml` (adapted from Jean-Christophe Filliatre)
   - Implementation using lists of records: `Poly2.ml` (adapted from Shayne Fletcher)
 
+Note: the `x25519` subfolder contains code for a (currently work-in-progress) example -- 
+see `./x25519/README.md`.  
+
 ## Building & running
 This project compiles with `dune build`. 
 
