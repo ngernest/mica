@@ -1,0 +1,12 @@
+(library
+ (name oracle)
+ (modules oracle)
+ (foreign_stubs (language c) (names curve25519-donna)))
+
+(executable
+ (name test)
+ (modules test)
+ (libraries callipyge oracle fmt alcotest))
+
+(rule (copy# ../bench/curve25519-donna.c curve25519-donna.c))
+

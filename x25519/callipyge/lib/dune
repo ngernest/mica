@@ -1,3 +1,4 @@
 (library
  (name callipyge)
+ (public_name module_pbt.callipyge)
  (libraries fmt eqaf))
