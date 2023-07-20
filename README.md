@@ -15,6 +15,9 @@ https://ngernest.github.io/module_pbt/module_pbt/index.html
 - `lib/CmdLineParser.ml`: Parses user input from the command line
 - `bin/main.ml`: Entry point for the executable for Mica
 
+## Examples 
+**NB: this section is outdated and needs to be updated**
+
 The `lib` directory also contains examples of the test harness adapted to work with the following modules:
 - Finite sets (`lib/sets` subdirectory)
   - Signature: `SetInterface.ml`
