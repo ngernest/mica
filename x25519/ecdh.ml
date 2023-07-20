@@ -1,7 +1,6 @@
-
 (** Module signature for the Elliptic-Curve Diffie-Hellman (ECDH) 
     key exchange protocol *)
-module type ECDH = sig 
+module type ECDHIntf = sig 
   (** Abstract type for public keys *)
   type public_key
 
@@ -31,7 +30,7 @@ module type ECDH = sig
   *)
   val scalar_mult : private_key -> public_key -> public_key
 
-  val x25519 : private_key -> public_key -> string 
+  val x25519_ecdh : private_key -> public_key -> string 
 
   
 end   
