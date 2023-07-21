@@ -1,4 +1,4 @@
-open Ecdh
+open ECDHIntf
 
 (** Suppress "unused-value" compiler warnings *)
 [@@@ocaml.warning "-32"]

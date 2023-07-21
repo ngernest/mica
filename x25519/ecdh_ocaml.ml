@@ -1,5 +1,5 @@
 open Rfc7748
-open Ecdh
+open ECDHIntf
 
 (** Suppress "unused-value" compiler warnings *)
 [@@@ocaml.warning "-32"]
