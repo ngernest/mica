@@ -1,5 +1,8 @@
 open Ecdh
 
+(** Suppress "unused-value" compiler warnings *)
+[@@@ocaml.warning "-32"]
+
 module ECDH_C : ECDHIntf = struct 
   include Callipyge
   let sexp_of_public_key = sexp_of_public_key

@@ -1,7 +1,7 @@
 module type ECDHIntf = sig
   type public_key
     [@@deriving sexp_of]
-  type private_key
+  type private_key 
     [@@deriving sexp_of]
   val base : public_key
   val public_key_of_string : string -> public_key

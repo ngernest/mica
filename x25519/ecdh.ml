@@ -2,12 +2,10 @@
     key exchange protocol *)
 module type ECDHIntf = sig 
   (** Abstract type for public keys *)
-  type public_key
-    [@@deriving sexp_of]
+  type public_key [@@deriving sexp_of]
 
   (** Abstract type for private keys *)
-  type private_key 
-    [@@deriving sexp_of]
+  type private_key [@@deriving sexp_of]
 
   (** The base point [G] of the elliptic curve, 
       also the generator of the cyclic subgroup for ECDH *)
