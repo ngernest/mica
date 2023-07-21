@@ -1,6 +1,6 @@
 (library
  (name x25519_ecdh)
- (libraries base_quickcheck base core stdio rfc7748)
+ (libraries base_quickcheck base core stdio rfc7748 callipyge)
  (preprocess
   (pps ppx_jane))
  (inline_tests))

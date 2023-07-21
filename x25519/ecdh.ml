@@ -30,5 +30,6 @@ module type ECDHIntf = sig
   *)
   val scalar_mult : private_key -> public_key -> public_key
 
+  (** Computes the shared key as a string *)
   val x25519_ecdh : private_key -> public_key -> string 
 end   
