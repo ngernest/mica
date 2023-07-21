@@ -7,8 +7,8 @@ module type ECDHIntf = sig
   (** Abstract type for private keys *)
   type private_key 
 
-  (** The base point [G] of the elliptic curve, also the 
-      generator of the cyclic subgroup *)
+  (** The base point [G] of the elliptic curve, 
+      also the generator of the cyclic subgroup for ECDH *)
   val base : public_key
 
   (* No. of bits in the key *)
