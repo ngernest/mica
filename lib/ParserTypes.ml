@@ -30,6 +30,9 @@ type ident = string
     - [List] represents lists
     - [Func1] represents functions of arity 1 (arg type, return type)
     - [Func2] represents functions of arity 2 (arg1 type, arg2 type, return type) 
+    - [NamedAbstract] represents a {i named} monomorphic abstract type, i.e. an abstact type
+      that is not [t], e.g. the type [private_key] in the Diffie-Hellman example. 
+      Note: polymorphic named abstract types are currently not supported. 
     - [Opaque] represents an opaque type defined in an external module. 
     An example of an opaque type is [AssocList.t], where [AssocList] is an externally 
     defined module (defined in a file [AssocList.ml] in the [lib] directory). 
@@ -47,7 +50,8 @@ type ty = Int
           | String
           | Alpha 
           | AlphaT
-          | T 
+          | T  
+          | NamedAbstract of string
           | Opaque of string
           | Option of ty
           | Pair of ty * ty
@@ -55,6 +59,18 @@ type ty = Int
           | Func1 of ty * ty 
           | Func2 of ty * ty * ty
   [@@deriving sexp, compare]
+
+
+(** Abstract type contained within a module 
+  - The [T0] constructor means the abstract type is not parameterized by any type variables, i.e. the abstract type is just [t] 
+  - The [string] argument for the [T0] constructor is the name of the abstract type 
+    (eg. ["t"] or ["private_key"] for the Diffie-Hellman example)
+  - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, eg. ['a t]  
+  - [T1] also takes in a [string] argument, which is the name of the abstract type (eg. ["t"])*)  
+type abstractType = 
+  | T0 of string 
+  | T1 of ty * string
+  [@@deriving sexp]  
 
 (** Structural equality function for the [ty] datatype *)  
 let rec tyEqual (ty1 : ty) (ty2 : ty) : bool = 
@@ -97,6 +113,7 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | String -> "string"
   | Alpha -> alpha
   | AlphaT | T -> t
+  | NamedAbstract s -> s
   | Opaque s -> 
     if camelCase then split ~on:'.' s |> List.map ~f:capitalize |> concat
       else s
@@ -121,16 +138,6 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
   | Func2 (arg1, arg2, ret) -> 
     concat ~sep:" -> " (List.map ~f:(string_of_ty ~alpha ~t ~camelCase) [arg1; arg2; ret])
 
-(** Abstract type contained within a module 
-    - The [T0] constructor means the abstract type is not parameterized by any type variables, i.e. the abstract type is just [t] 
-    - The [string] argument for the [T0] constructor is the name of the abstract type 
-      (eg. ["t"] or ["private_key"] for the Diffie-Hellman example)
-    - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, eg. ['a t]  
-    - [T1] also takes in a [string] argument, which is the name of the abstract type (eg. ["t"])*)  
-type abstractType = 
-  | T0 of string 
-  | T1 of ty * string
-  [@@deriving sexp]
   
 (** Type representing a value declaration:
     - [valName] is the name of the variable/function being declared

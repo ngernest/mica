@@ -17,12 +17,13 @@ open Utils
     module signatures & the two module implementations, which must
     be the same as their corresponding [.ml] files. *)
 let imports (sigName : string) ~(modName1 : string) ~(modName2 : string) : document = 
+  let sigN, m1, m2 = map3 ~f:String.capitalize (sigName, modName1, modName2) in 
   comment (!^ "Generated property-based testing code")
   ^/^ (!^ "open Base") 
   ^/^ (!^ "open Base_quickcheck")
-  ^/^ !^ ("open " ^ sigName)
-  ^/^ !^ ("open " ^ modName1)
-  ^/^ !^ ("open " ^ modName2)
+  ^/^ !^ ("open " ^ sigN)
+  ^/^ !^ ("open " ^ m1)
+  ^/^ !^ ("open " ^ m2)
   ^^ hardline
   ^/^ comment (!^ "Suppress \"unused value\" compiler warnings")
   ^/^ (!^ "[@@@ocaml.warning \"-27-32-34\"]") 
@@ -32,6 +33,12 @@ let imports (sigName : string) ~(modName1 : string) ~(modName2 : string) : docum
     followed by a newline *)
 let sexpAnnotation : document = 
   blank 2 ^^ !^ "[@@deriving sexp]" ^^ hardline   
+  
+(** Document for invoking the ppx_quickcheck macro for a particular type [ty] 
+    (represented as a stirng )*)
+let ppxQuickCheckMacro (ty : string) : document =
+  !^ ("[%quickcheck.generator: " ^ ty ^ "]") 
+
 
 (** [isArrowType v] returns true if the value declaration [v] has an arrow type *)  
 let isArrowType (v : valDecl) : bool = 
@@ -49,7 +56,10 @@ let tyIsArrow (ty : ty) : bool =
 (** [isOpaqueTy ty] returns [true] if [ty] is a string corresponding to 
     an "opaque" type, i.e. a type originating from another module
     - Eg. if [ty = "AssocListT"], then ty is actually ["AssocList.t"] 
-      where [AssocList] is some externally-defined module *)    
+      where [AssocList] is some externally-defined module 
+    - Note: the only critiera for evaluating if a type is an opaque type 
+      is just checking if the type name ends with the substring ".t" 
+      (this heuristic may be replaced with a more robust mechanism in the future) *)    
 let isOpaqueTy (ty : string) : bool = 
   let open Re.Str in 
   let opaqueTypeRegex = regexp {|^[A-Z]+[A-Za-z0-9']*T$|} in 
@@ -63,7 +73,7 @@ let isOpaqueTy (ty : string) : bool =
 let getIdentityElements (m : moduleSig) =
   let collectIdElts (acc : string list) (v : valDecl) : string list = 
     begin match valType v with 
-    | T | AlphaT -> (String.capitalize @@ valName v) :: acc
+    | T | AlphaT | NamedAbstract _ -> (String.capitalize @@ valName v) :: acc
     | _ -> acc
     end in 
   List.fold ~init:[] ~f:collectIdElts m.valDecls
@@ -157,6 +167,18 @@ let ty_of_string (s : string) : ty =
       failwith @@ Printf.sprintf 
         "Error %s : couldn't parse the string \"%s\"\n" err newTy
     end
+
+(** Takes [tyName], the name of a named abstract type (eg. [public_key]), 
+    and produces a varname as follows:
+    - Split on underscores
+    - fetch the 1st letter of each substring
+    - Concat all the 1st letters of the substrings 
+    - eg. if the type name is [public_key], then the varname is [pk] *)    
+let namedAbsTyVarNameHelper (tyName : string) : string = 
+  let open List in 
+  let splitSubstrs = String.split tyName ~on:'_' |> 
+                     map ~f:(fun s -> String.prefix s 1) in 
+  fold ~f:(fun acc c -> acc ^ c) ~init:"" splitSubstrs
   
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
     to [ty], eg. [varNameHelper Int = n] *)  
@@ -167,7 +189,10 @@ let rec varNameHelper (ty : ty) : string =
   | Int -> "n"
   | Bool -> "b"
   | Char -> "c"
-  | Opaque s -> String.(prefix (uncapitalize s) 1) 
+  | String -> "s"
+  | Unit -> "u"
+  | NamedAbstract tyName -> namedAbsTyVarNameHelper tyName
+  | Opaque s -> String.uncapitalize s |> namedAbsTyVarNameHelper 
   | List argTy -> varNameHelper argTy ^ "s"
   | Option argTy -> varNameHelper argTy
   | Pair (_, _) -> "p"
@@ -210,9 +235,10 @@ let getExprConstructorName (v : valDecl) : string =
     defined in the module signature (eg. [mempty] for monoids) 
     - See [getIdentityElements] for further details on identity elements *)
 let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * document = 
+  let open List in 
   let constr = getExprConstructorName v in
   (* Check if the constructor corresponds to an identity element in the signature *)
-  let isIdElt = List.mem idElts constr ~equal:String.equal in 
+  let isIdElt = mem idElts constr ~equal:String.equal in 
   match isIdElt, valType v with 
   | true, _ -> ([], !^ constr)
   | _, Int -> (["n"], printConstructor constr ["n"])
@@ -222,6 +248,9 @@ let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * doc
   | _, String -> (["s"], printConstructor constr ["s"])
   | _, Alpha -> (["a"], printConstructor constr ["a"])
   | _, T | _, AlphaT -> (["t"], printConstructor constr ["t"])
+  | _, (NamedAbstract _ as absTy) -> 
+    let varName = varNameHelper absTy in 
+    ([varName], printConstructor constr [varName])
   | _, (Opaque _ as opaqueTy) -> 
     (* For opaque types, the varname is the 1st letter of the type's name *)
     let varName = varNameHelper opaqueTy in 
@@ -507,8 +536,9 @@ let interpDefn (m : moduleSig) : document =
 
 (** Generates the definition of the [ExprToImpl] functor *)  
 let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 
+  let sigN = String.capitalize sigName in 
   hang 2 @@ 
-  !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigName)
+  !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigN)
   ^/^ (!^ "include M" ^^ hardline)
   ^/^ (valADTDefn m)
   ^/^ (interpDefn m)
@@ -533,14 +563,13 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
   | Bool            -> !^ "G.bool"
   | Unit            -> !^ "G.unit"
   | String          -> !^ "G.string_non_empty"
-  | Opaque opaqueTy -> 
-    let moduleName = String.chop_suffix_if_exists opaqueTy ~suffix:".t" in 
-    !^ ("[%quickcheck.generator: " ^ moduleName ^ ".t]")
   | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
   | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
   | Pair (ty1, ty2) -> 
     let (g1, g2) = map2 ~f:(getGenerator ~nonNegOnly) (ty1, ty2) in 
     !^ "G.both" ^^ spaceLR (parens g1) ^^ parens g2
+  | NamedAbstract tyName  | Opaque tyName -> 
+    ppxQuickCheckMacro tyName
   | Func1 _ | Func2 _ | T | AlphaT -> 
     failwith @@ Printf.sprintf "Error: Can't fetch generator for type %s" 
     (string_of_ty ~t:"T" ~alpha:"Alpha" ty)
@@ -562,8 +591,9 @@ let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) : d
   | Bool              -> binding ^^ getGenerator ~nonNegOnly Bool   ^^ sIn
   | Unit              -> binding ^^ getGenerator ~nonNegOnly Unit   ^^ sIn
   | String            -> binding ^^ getGenerator ~nonNegOnly String ^^ sIn
-  | Opaque _          -> binding ^^ getGenerator ~nonNegOnly ty     ^^ sIn
   | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty     ^^ sIn
+  | Opaque _ | NamedAbstract _ ->
+    binding ^^ getGenerator ~nonNegOnly ty ^^ sIn
   | Pair (ty1, ty2)   -> 
     let lst = if phys_equal ty1 ty2 
       then genVarNamesN ~n:2 ty1 
@@ -634,12 +664,16 @@ let genExprPatternRHS
     tyConstr, (funcTy, patternRHS, patternName)
   | _ -> tyConstr, (funcTy, (!^ "failwith ") ^^ OCaml.string "TODO", "no pattern")
 
-(** Takes in [tyConstr] (constructor for the [ty] ADT representing the return type of a function), 
-    [ty] (the type of the [Expr] construcctor), and 
-    [constr] (the string representation of an [Expr] constructor),
-    and returns a 5-tuple of the form 
-    [(tyConstr, ty, constructorArgs, constructor, constructor applied to args)], 
-    eg. [(Bool, Func2(Alpha, Expr, Bool), ["x", "e"], "Mem", !^ "Mem(x,e)")] *)
+(** {b Arguments}:
+    - [tyConstr] (constructor for the [ty] ADT representing 
+                  the return type of a function)
+    - [ty] (the type of the [Expr] construcctor) 
+    - [constr] (the string representation of an [Expr] constructor)
+    
+    {b Returns}: a 5-tuple of the form 
+    {[ (tyConstr, ty, constructorArgs, constructor, constructor applied to args) ]} 
+    e.g. 
+    {[ (Bool, Func2(Alpha, Expr, Bool), ["x", "e"], "Mem", !^ "Mem(x,e)") ]} *)
 let getExprConstructorWithArgs (tyConstr : string) 
   (ty : ty) (constr : string) : string * ty * string list * string * document = 
   match ty, constr with 
@@ -652,8 +686,8 @@ let getExprConstructorWithArgs (tyConstr : string)
   | Alpha, _   -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
   | T, _ | AlphaT, _ -> 
     (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
-  | Opaque _ as opaqueTy, _ -> 
-    let var = varNameHelper opaqueTy in 
+  | Opaque _ as absTy, _ | (NamedAbstract _ as absTy, _) -> 
+    let var = varNameHelper absTy in 
     (tyConstr, ty, [var], constr, printConstructor constr [var])
   | Option argTy, _ | List argTy, _ | Func1 (argTy, _), _ ->
     let arg = genVarNames [argTy] in 
@@ -740,7 +774,7 @@ let genExprDef ~(nonNegOnly : bool) (modSig : moduleSig) : document =
   ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ idEltGenerator)
   ^^ concat completePatterns
 
-(** Produces a PPrint document of an OCaml functor application, where 
+(** Produces a PPrint document representing an OCaml functor application, where 
     [functorName] is the name of the functor, and [arg] is the name
     of the argument to the functor *)  
 let functorApp ~(functorName : moduleName) (arg : string) : document = 
@@ -750,8 +784,9 @@ let functorApp ~(functorName : moduleName) (arg : string) : document =
     where [functorName] is the name of the functor that procduces the PBT test harness,
     and [modName1] & [modName2] are the names of the two module implementaitons *)  
 let implModuleBindings ~(functorName : moduleName) (modName1 : string) (modName2 : string) : document = 
-  let i1 = !^ "module I1 = " ^^ (functorApp ~functorName modName1) in 
-  let i2 = !^ "module I2 = " ^^ (functorApp ~functorName modName2) in
+  let (m1, m2) = map2 ~f:String.capitalize (modName1, modName2) in 
+  let i1 = !^ "module I1 = " ^^ (functorApp ~functorName m1) in 
+  let i2 = !^ "module I2 = " ^^ (functorApp ~functorName m2) in
   hardline ^/^ i1 ^/^ i2 ^/^ hardline
 
 (***********************************************************************************)
@@ -772,7 +807,8 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
   let open Core.Filename in 
   comment (!^ "Generated executable for testing observational equivalence of two modules")
   ^/^ comment (!^ "Usage: " ^^ 
-    brackets @@ !^ (Printf.sprintf "dune exec -- %s.exe" @@ chop_extension execFilePath))
+    brackets @@ !^ (Printf.sprintf "dune exec -- %s.exe" @@ 
+      String.capitalize @@ chop_extension execFilePath))
   ^/^ !^ ("open Core")
   ^/^ !^ ("open " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
   ^/^ hardline
@@ -804,10 +840,13 @@ let obsEquiv (tyConstr, valConstr : string * string) : document =
     because these abstract types may be instantiated differently in the two modules. 
     - For instance, one module could instantiate ['a t] to be ['a list], 
     while the other instantiates ['a t] to be ['a tree].
+    - Note: we cannot test opaque types and named abstract types
+      directly for observational equivalence
+      (due to encapsulation, we can't inspect these types directly) 
     - Note that arrow types are not considered by this function. *)  
 let rec isExcludedType (ty : ty) : bool = 
   match ty with 
-  | T | AlphaT -> true 
+  | T | AlphaT | Opaque _ | NamedAbstract _ -> true 
   | Option argTy | List argTy -> isExcludedType argTy
   | Pair (ty1, ty2) -> isExcludedType ty1 || isExcludedType ty2
   | _ -> false 

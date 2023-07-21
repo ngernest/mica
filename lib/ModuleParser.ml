@@ -72,10 +72,16 @@ let paramTypeP : ty A.t =
 let opaqueTypeP : ty A.t = 
   (fun modName typeName -> Opaque (modName ^ typeName))
     <$> identP ~firstCharP:(upperCaseP) () <*> wsP (A.string ".t")
-
+    
+(** Parser for the [NamedAbstract] case of the [ty] datatype, 
+    i.e. parser for named monomorphic abstract types,
+    e.g. [type private_key] in the Diffie-Hellman example *)    
+let namedAbstractTypeP : ty A.t = 
+  lowercaseIdentP >>| (fun tyName -> NamedAbstract tyName)
+    
 (** General parser for non-arrow types *)
 let typeP : ty A.t = 
-  paramTypeP <|> baseTypeP <|> opaqueTypeP
+  paramTypeP <|> baseTypeP <|> opaqueTypeP <|> namedAbstractTypeP
 
 (** Parses the token ["type"] *)  
 let typeTokenP : unit A.t = stringP "type"   
