@@ -16,26 +16,28 @@ open Utils
     The [sigName, modName1, modName2] arguments are the names of the 
     module signatures & the two module implementations, which must
     be the same as their corresponding [.ml] files. *)
-let imports (sigName : string) ~(modName1 : string) ~(modName2 : string) : document = 
+let imports ~(externalLib : string option) ~(sigName : string) ~(modName1 : string) ~(modName2 : string) : document = 
   let sigN, m1, m2 = map3 ~f:String.capitalize (sigName, modName1, modName2) in 
   comment (!^ "Generated property-based testing code")
   ^/^ (!^ "open Base") 
   ^/^ (!^ "open Base_quickcheck")
+  ^/^ !^ (Option.value_map externalLib 
+          ~f:(fun libName -> "open " ^ String.capitalize libName) ~default:"")
   ^/^ !^ ("open " ^ sigN)
   ^/^ !^ ("open " ^ m1)
   ^/^ !^ ("open " ^ m2)
   ^^ hardline
   ^/^ comment (!^ "Suppress \"unused value\" compiler warnings")
-  ^/^ (!^ "[@@@ocaml.warning \"-27-32-34\"]") 
+  ^/^ (!^ "[@@@ocaml.warning \"-27-32-33-34\"]") 
   ^^ hardline 
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
     followed by a newline *)
 let sexpAnnotation : document = 
-  blank 2 ^^ !^ "[@@deriving sexp]" ^^ hardline   
+  blank 2 ^^ !^ "[@@deriving sexp_of]" ^^ hardline   
   
 (** Document for invoking the ppx_quickcheck macro for a particular type [ty] 
-    (represented as a stirng )*)
+    (represented as a string) *)
 let ppxQuickCheckMacro (ty : string) : document =
   !^ ("[%quickcheck.generator: " ^ ty ^ "]") 
 

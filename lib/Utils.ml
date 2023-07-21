@@ -57,7 +57,7 @@ let map2 ~f (a1, a2) = (f a1, f a2)
 
 (** Applies a function pointwise on a triple *)  
 let map3 ~f (a1, a2, a3) = (f a1, f a2, f a3)    
-
+ 
 (** Converts a curried arity-3 function to its uncurried equivalent *)    
 let curry3 f a b c = f (a, b, c)
 

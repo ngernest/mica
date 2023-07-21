@@ -68,6 +68,11 @@ let nonNegIntsDoc : string =
 let opaqueTypeDoc : string = 
   "Name of an opaque type in the module signature"
 
+(** Docstring for a flag specifying the name of the external library 
+    (eg. the Diffie-Hellman x25519 example, see readme) *)  
+let externalLibDoc : string = 
+  "Name of the external library in which the modules reside (if applicable)"  
+
 (** {1 Writing the generated PBT code to an output file} *)   
 
 (** Writes the generated PBT code to the file at [pbtFilePath] 
@@ -75,11 +80,11 @@ let opaqueTypeDoc : string =
     [functorName] is the name of the functor that produces the test harness
     [sigName, modName1, modName2] are the names of the signature/two module implementations *)
 let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : string)
-  ~(sigName : string) ~(nonNegOnly: bool) (modName1 : string) (modName2 : string) : unit = 
+  ~(sigName : string) ~(externalLib : string option) ~(nonNegOnly: bool) (modName1 : string) (modName2 : string) : unit = 
 
   let pbtFile = Out_channel.create ~append:false pbtFilePath in
   writeDoc pbtFile 
-    (imports sigName ~modName1 ~modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
+    (imports ~externalLib ~sigName ~modName1 ~modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
   writeDoc pbtFile (functorDef m ~sigName ~functorName);
   writeDoc pbtFile (genExprDef ~nonNegOnly m);
   writeDoc pbtFile (implModuleBindings ~functorName modName1 modName2);
@@ -98,8 +103,8 @@ let cmdLineParser : Command.t =
       sigFile = anon ("signature_file" %: regular_file) 
       and implFile1 = anon ("implementation_file_1" %: regular_file)
       and implFile2 = anon ("implementation_file_2" %: regular_file) 
-      and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc in
-      (* and opaqueType = flag "-opaque-type" (optional string) ~doc:opaqueTypeDoc in *)
+      and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc
+      and externalLib = flag "-library" (optional string) ~doc:externalLibDoc in
     fun () -> 
       let functorName = "ExprToImpl" in
       let moduleString = string_of_file sigFile in 
@@ -107,7 +112,7 @@ let cmdLineParser : Command.t =
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
       begin match (run_parser moduleTypeP moduleString) with 
         | Ok m -> 
-          writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly 
+          writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~externalLib ~nonNegOnly 
             modName1 modName2;
 
           (* TODO (stretch-goal): automatically append executable stanza to Dune file *)
