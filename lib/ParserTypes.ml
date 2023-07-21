@@ -123,8 +123,13 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false) (ty : t
 
 (** Abstract type contained within a module 
     - The [T0] constructor means the abstract type is not parameterized by any type variables, i.e. the abstract type is just [t] 
-    - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, eg. ['a t]  *)  
-type abstractType = T0 | T1 of ty
+    - The [string] argument for the [T0] constructor is the name of the abstract type 
+      (eg. ["t"] or ["private_key"] for the Diffie-Hellman example)
+    - The [T1] constructor takes a type [ty] as its argument, representing an abstract type containing a type variable, eg. ['a t]  
+    - [T1] also takes in a [string] argument, which is the name of the abstract type (eg. ["t"])*)  
+type abstractType = 
+  | T0 of string 
+  | T1 of ty * string
   [@@deriving sexp]
   
 (** Type representing a value declaration:
@@ -151,7 +156,7 @@ type intFlag = AllInts | NonNegativeOnly | PositiveOnly
 type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
-  abstractType : abstractType;
+  abstractTypes : abstractType list;
   valDecls : valDecl list [@sexp.list];
   intFlag : intFlag
 }

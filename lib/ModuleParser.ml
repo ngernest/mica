@@ -18,7 +18,7 @@ open Stdio
 module A = Angstrom
 
 (** Parsers for identifiers in OCaml 
-    [ident ::= (A..Z | a..z | _) {A..Z | a..z | 0..9 | _ | '}] *)    
+    [ident ::= (A..Z | a..z | _) {A..Z | a..z | 0..9 | _ | \'}] *)    
 let identP ?(firstCharP = letterP <|> underscoreP) () : string A.t = 
   let remainingChars = letterP <|> digitP <|> underscoreP <|> quoteP in 
   String.of_char_list <$> 
@@ -34,7 +34,7 @@ let typeParamP : char A.t =
 
 (** Parses the S-expression PPX annotation, consuming subsequent whitespace *)  
 let sexpAnnotP : unit A.t = 
-  constP "[@@deriving sexp]" ()
+  constP "[@@deriving sexp_of]" () <|> constP "[@@deriving sexp]" ()
 
 (** [sigP p] takes a parser [p], and sandwiches it between parsers
     that parse the "sig" and "end" tokens *)
@@ -82,8 +82,10 @@ let typeTokenP : unit A.t = stringP "type"
 
 (** Parser for the declaration of an abstract type in a module, eg. [type 'a t] *)
 let abstractTypeP : abstractType A.t = 
-  let noParam = typeTokenP *> constP "t" T0 in 
-  let withParam = typeTokenP *> wsP typeParamP *> constP "t" (T1 Alpha) in
+  let noParam = 
+    typeTokenP *> lowercaseIdentP >>| (fun tyName -> T0 tyName) in 
+  let withParam = typeTokenP *> wsP typeParamP *> 
+    lowercaseIdentP >>| (fun tyName -> T1 (Alpha, tyName)) in
   (noParam <|> withParam) <* sexpAnnotP  
   
 (** Parser for arrow types *)  
@@ -102,14 +104,14 @@ let valDeclP : valDecl A.t =
 
 (** Parser for a module signature *)
 let moduleTypeP : moduleSig A.t =   
-  (fun moduleName abstractType valDecls -> 
+  (fun moduleName abstractTypes valDecls -> 
     { moduleName; 
       moduleType = Intf; 
-      abstractType; 
+      abstractTypes; 
       valDecls; 
       intFlag = AllInts }) 
   <$> stringP "module type" *> modNameP <* stringP "= sig" 
-  <*> abstractTypeP 
+  <*> A.many abstractTypeP 
   <*> A.many valDeclP
   <* stringP "end"
 

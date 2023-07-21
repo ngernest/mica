@@ -307,7 +307,7 @@ let instantiateT (s : string) =
 (** Takes [s], a string reprentation of a type, 
     and adds a space to [s] if [s] represents a parameterized type. 
     - Example: [addSpaceToTyStr "intoption" = "int option"] 
-    - If [s] doesn't contain the suffix ["list"] or ["option"], [s] is left unchanged *)
+    - If [s] doesn't contain the suffix ["list"] or ["option"], [s] is left unchanged. *)
 let addSpaceToTyStr (s : string) = 
   let open String in 
   if is_suffix ~suffix:"option" s 
@@ -315,6 +315,28 @@ let addSpaceToTyStr (s : string) =
   else if is_suffix ~suffix:"list" s 
     then chop_suffix_exn ~suffix:"list" s ^ " list"
   else s
+
+(** [destructAbsTy] takes an abstract type [absTy] and produces a PPrint document 
+    referencing [absTy] inside some module [M]. For example, the abstract type [t]  
+    (represented as the inhabitant [T0 "t"] of the type [abstractType]) corresponds
+    to ["M.t"]. 
+    - Note: any polymorphic type variables are automatically instantiated with [int], 
+    so ['a t] becomes ["int M.t"]. *)  
+let destructAbsTy (absTy : abstractType) : document = 
+  match absTy with 
+  | T0 tyName      -> !^ ("M." ^ tyName)
+  | T1 (_, tyName) -> !^ ("int M." ^ tyName) 
+
+(** Takes a list [absTys] of abstract types and checks if the string [s] 
+    is the name of an abstract type *)  
+let rec lookupAbsTy (s : string) (absTys : abstractType list) = 
+  match absTys with 
+  | [] -> None 
+  | (T0 tyName as absTy) :: ts | (T1 (_, tyName) as absTy) :: ts -> 
+    if String.equal s tyName 
+      then Some absTy 
+    else lookupAbsTy s ts
+
 
 (** [valADTParam moduleAbsTy ty] takes [ty], a string representation 
     of the corresponding type, and generates the type parameter for the 
@@ -327,7 +349,7 @@ let addSpaceToTyStr (s : string) =
     - If the module's abstract type [M.t] is polymorphic (i.e. ['a M.t]), 
       we instantiate ['a] with [int], 
       otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)    
-let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) : document = 
+let valADTParam ~(moduleAbsTys : abstractType list) ?(isOpaque = false) (ty : string) : document = 
   let tys = 
     begin match String.length ty, isOpaque with 
     | _, true -> [reifyOpaqueTyConstr ty]
@@ -337,12 +359,13 @@ let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) 
   match tys with 
   | [] -> failwith "Can't extract a type parameter from an empty string"
   | [str] -> 
-    if String.(str = "t") then
-      begin match moduleAbsTy with 
-      | T0 -> !^ "M.t"
-      | T1 _ -> !^ "int M.t" 
-      end
-    else !^ (addSpaceToTyStr str |> instantiateT)
+    if String.(is_suffix str ~suffix:"list" || is_suffix str ~suffix:"option")
+      then !^ (addSpaceToTyStr str |> instantiateT)
+    else begin match lookupAbsTy str moduleAbsTys with 
+      | None -> !^ str 
+      | Some (T0 tyName)      -> !^ ("M." ^ tyName)
+      | Some (T1 (_, tyName)) -> !^ ("int M." ^ tyName)
+      end 
   | ty1 :: ty2 :: "pair" :: remainingTys -> 
     (* We represent [["a"; "b"; "pair"]] as the type expression ["a * b"] *)
     separate_map space (!^) 
@@ -356,11 +379,11 @@ let valADTParam ~(moduleAbsTy : abstractType) ?(isOpaque = false) (ty : string) 
       which is used to determine if the abstract type needs to be instantiated
       with a concrete type (this logic is handled in [valADTParam])
     - Note: This function is a helper function called by [valADTDefn] *)  
-let valADTTypeDef ~(moduleAbsTy : abstractType) (ty : string) : document = 
+let valADTTypeDef ~(moduleAbsTys : abstractType list) (ty : string) : document = 
   let isOpaque = isOpaqueTy ty in 
   valADTConstructor ty 
   ^^ (!^ " of ")
-  ^^ valADTParam ~moduleAbsTy ~isOpaque ty      
+  ^^ valADTParam ~moduleAbsTys ~isOpaque ty      
 
 (** Generates the [value] ADT definition that is contained within 
     the module returned by the [ExprToImpl] functor *)  
@@ -370,7 +393,7 @@ let valADTDefn (m : moduleSig) : document =
   (!^ "type value = ")
   (barSpace ^^ 
     (group @@ separate_map (hardline ^^ barSpace) 
-      (fun ty -> valADTTypeDef ~moduleAbsTy:m.abstractType ty) 
+      (fun ty -> valADTTypeDef ~moduleAbsTys:m.abstractTypes ty) 
       valueTypes 
     ^/^ sexpAnnotation))  
 
