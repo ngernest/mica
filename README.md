@@ -33,12 +33,20 @@ The `lib` directory also contains examples of the test harness adapted to work w
   - Signature: `PolyInterface.ml`
   - Implementation using lists of tuples: `Poly1.ml` (adapted from Jean-Christophe Filliatre)
   - Implementation using lists of records: `Poly2.ml` (adapted from Shayne Fletcher)
-
-Note: the `x25519` subfolder contains code for a (currently work-in-progress) example -- 
-see `./x25519/README.md`.  
+- [Elliptic-Curve Diffie-Hellman](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie–Hellman) 
+  using [Curve25519](https://en.wikipedia.org/wiki/Curve25519) (`x25519` directory)
+  - Signature: `x25519/ECDHIntf.ml`
+  - Implementation in OCaml: `x25519/ECDH_OCaml.ml` (adapted from [Markus Rudy](https://github.com/burgerdev))
+  - Implementation using the OCaml C FFI: `x25519/ECDH_C.ml` (adapted from [Romain Calascibetta](https://blog.osau.re/index.html))
+  - To run this example, we need to specify the `-library` flag as follows:
+  ```
+  dune exec -- bin/main.exe ./x25519/ECDHIntf.mli ./x25519/ECDH_OCaml.ml ./x25519/ECDH_C.ml -library x25519_ecdh
+  ```
+  (this example is registered as a separate library in Dune due to the C dependencies)
 
 ## Building & running
-This project compiles with `dune build`. 
+Run `make` (or `dune build`) to build and compile the library.         
+Run `make install` to install dependencies. 
 
 **Usage**:       
 `dune exec -- bin/main.exe [.ml file containing signature] [.ml file containing 1st module] [.ml file containing 2nd module]`

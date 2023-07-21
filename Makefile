@@ -9,9 +9,6 @@ default: build
 build:
 	dune build
 
-test:
-	dune runtest -f
-
 install:
 	dune install
 
