@@ -4,7 +4,7 @@
  (name lib)
  (public_name module_pbt)
  (libraries base_quickcheck base core stdio angstrom core_unix pprint 
-            core_unix.command_unix re)
+            core_unix.command_unix re x25519_ecdh)
  (preprocess
   (pps ppx_jane))
  (inline_tests))
