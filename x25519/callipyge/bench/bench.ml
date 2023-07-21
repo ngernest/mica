@@ -9,7 +9,7 @@ let bench () =
 
   let f () =
     let _ = Callipyge.shared
-        ~secret:(Callipyge.secret_key_of_string secret)
+        ~secret:(Callipyge.private_key_of_string secret)
         ~public:(Callipyge.public_key_of_string public) in
     () in
   let g () =

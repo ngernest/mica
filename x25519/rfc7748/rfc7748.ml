@@ -1,6 +1,9 @@
+(* Suppress "unused value" compiler warning *)
+[@@@ocaml.warning "-32"]
+
 module type DH = sig
-  type private_key
-  type public_key
+  type private_key [@@deriving sexp_of]
+  type public_key [@@deriving sexp_of]
 
   val key_size: int
 
@@ -25,6 +28,16 @@ end
 module X25519: DH = struct
   type private_key = Private_key of Z.t
   type public_key = Public_key of Z.t
+
+  let sexp_of_public_key public_key = 
+    let open Base in 
+    match public_key with 
+    | Public_key x -> sexp_of_int @@ Z.to_int x
+
+  let sexp_of_private_key private_key = 
+    let open Base in 
+    match private_key with 
+    | Private_key x -> sexp_of_int @@ Z.to_int x
 
   let key_size = 32
 
@@ -109,6 +122,16 @@ let x25519 ~priv ~pub =
 module X448: DH = struct
   type private_key = Private_key of Z.t
   type public_key = Public_key of Z.t
+
+  let sexp_of_public_key public_key = 
+    let open Base in 
+    match public_key with 
+    | Public_key x -> sexp_of_int @@ Z.to_int x
+
+  let sexp_of_private_key private_key = 
+    let open Base in 
+    match private_key with 
+    | Private_key x -> sexp_of_int @@ Z.to_int x
 
   let key_size = 56
 

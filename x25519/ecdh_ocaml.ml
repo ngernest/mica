@@ -6,7 +6,7 @@ open Ecdh
 
 module ECDH_OCaml : ECDHIntf = struct 
   include X25519
-
+  
   let scalar_mult = scale 
 
   let x25519_ecdh (priv_k : private_key) (pub_k : public_key) : string = 

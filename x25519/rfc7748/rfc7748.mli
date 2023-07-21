@@ -35,11 +35,11 @@ module type DH = sig
 
   (** {2 Types} *)
 
-  type private_key
+  type private_key [@@deriving sexp_of]
   (** A private key for this curve. Private keys are, generally speaking, natural
       numbers for scalar multiplication of curve points. *)
 
-  type public_key
+  type public_key [@@deriving sexp_of]
   (** A public key for this curve. Public keys form a curve in 2D space and are
       uniquely identified by their x-coordinate (up to symmetry). *)
 

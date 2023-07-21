@@ -3,17 +3,17 @@ let pp_base ppf arr =
     Fmt.pf ppf "%02X" arr.(i)
   done
 
-type public_key = Callipyge.public Callipyge.key
-type secret_key = Callipyge.secret Callipyge.key
+type public_key = Callipyge.public_key 
+type private_key = Callipyge.private_key 
 
-let pp_secret ppf (arr : secret_key) = pp_base ppf (arr :> int array)
+let pp_secret ppf (arr : private_key) = pp_base ppf (arr :> int array)
 
-let doit ek (e : secret_key) (k : public_key) =
+let doit ek (e : private_key) (k : public_key) =
   Fmt.pr "%a %a " pp_secret e Callipyge.pp_public_key k ;
   Callipyge.ecdh_inplace ~out:ek ~secret:e ~public:k ;
   Fmt.pr "%a\n%!" pp_base ek
 
-let ecdh (e1 : secret_key) (e2 : secret_key) (k : public_key) e1k e2k =
+let ecdh (e1 : private_key) (e2 : private_key) (k : public_key) e1k e2k =
   let equal e1e2k e2e1k =
     let result =
       assert (Array.length e1e2k = 32 && Array.length e2e1k = 32) ;
@@ -41,7 +41,7 @@ let ecdh (e1 : secret_key) (e2 : secret_key) (k : public_key) e1k e2k =
   let pp = pp_base in
   Alcotest.testable pp equal
 
-let step (e1 : secret_key) (e2 : secret_key) (k : public_key) =
+let step (e1 : private_key) (e2 : private_key) (k : public_key) =
   let ecdh = ecdh e1 e2 k in
   ( "ecdh(e2, ecdh(e1, k)) = ecdh(e1, ecdh(e2, k))"
   , `Quick
@@ -66,20 +66,20 @@ let k =
   "\009\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
 
 let tests n =
-  let e1 = Callipyge.secret_key_of_string e1 in
-  let e2 = Callipyge.secret_key_of_string e2 in
+  let e1 = Callipyge.private_key_of_string e1 in
+  let e2 = Callipyge.private_key_of_string e2 in
   let k = Callipyge.public_key_of_string k in
   let step = step e1 e2 k in
   let rec go acc = function 0 -> acc | n -> go (step :: acc) (pred n) in
   go [] n
 
-let public = Alcotest.testable Callipyge.pp_public_key Callipyge.equal_key
+let public = Alcotest.testable Callipyge.pp_public_key Callipyge.equal_public_key
 
 let shared =
   let equal a b =
     Fmt.pr "a: %a.\n%!" Callipyge.pp_shared_key a ;
     Fmt.pr "b: %a.\n%!" Callipyge.pp_shared_key b ;
-    Callipyge.equal_key a b
+    Callipyge.equal_shared_key a b
   in
   Alcotest.testable Callipyge.pp_shared_key equal
 
@@ -102,7 +102,7 @@ let nacl =
       "\x85\x20\xf0\x09\x89\x30\xa7\x54\x74\x8b\x7d\xdc\xb4\x3e\xf7\x5a\x0d\xbf\x3a\x0d\x26\x38\x1a\xf4\xeb\xa4\xa9\x8e\xaa\x9b\x4e\x6a"
   in
   let s_a =
-    Callipyge.secret_key_of_string
+    Callipyge.private_key_of_string
       "\x77\x07\x6d\x0a\x73\x18\xa5\x7d\x3c\x16\xc1\x72\x51\xb2\x66\x45\xdf\x4c\x2f\x87\xeb\xc0\x99\x2a\xb1\x77\xfb\xa5\x1d\xb9\x2c\x2a"
   in
   let p_b =
@@ -110,7 +110,7 @@ let nacl =
       "\xde\x9e\xdb\x7d\x7b\x7d\xc1\xb4\xd3\x5b\x61\xc2\xec\xe4\x35\x37\x3f\x83\x43\xc8\x5b\x78\x67\x4d\xad\xfc\x7e\x14\x6f\x88\x2b\x4f"
   in
   let s_b =
-    Callipyge.secret_key_of_string
+    Callipyge.private_key_of_string
       "\x5d\xab\x08\x7e\x62\x4a\x8a\x4b\x79\xe1\x7f\x8b\x83\x80\x0e\xe6\x6f\x3b\xb1\x29\x26\x18\xb6\xfd\x1c\x2f\x8b\x27\xff\x88\xe0\xeb"
   in
   let p_alice () =
@@ -146,8 +146,8 @@ let oracle =
     let donna_p_b = Oracle.public ~secret:donna_s_b in
     let donna_s_ab = Oracle.shared ~secret:donna_s_a ~public:donna_p_b in
     let donna_s_ba = Oracle.shared ~secret:donna_s_b ~public:donna_p_a in
-    let callipyge_s_a = Callipyge.secret_key_of_string donna_s_a in
-    let callipyge_s_b = Callipyge.secret_key_of_string donna_s_b in
+    let callipyge_s_a = Callipyge.private_key_of_string donna_s_a in
+    let callipyge_s_b = Callipyge.private_key_of_string donna_s_b in
     let callipyge_p_a = Callipyge.public_of_secret callipyge_s_a in
     let callipyge_p_b = Callipyge.public_of_secret callipyge_s_b in
     let callipyge_s_ab =
@@ -165,11 +165,11 @@ let oracle =
     Alcotest.(check key) "equal shared (oracle)" donna_s_ab donna_s_ba ;
     Alcotest.(check key)
       "equal public alice"
-      (Callipyge.string_of_key callipyge_p_a)
+      (Callipyge.string_of_public_key callipyge_p_a)
       donna_p_a ;
     Alcotest.(check key)
       "equal public bob"
-      (Callipyge.string_of_key callipyge_p_b)
+      (Callipyge.string_of_public_key callipyge_p_b)
       donna_p_b
   in
   list_init (fun () -> "oracle", `Quick, test) 64

@@ -1,3 +1,6 @@
+(* Suppress "unused value" compiler warning *)
+[@@@ocaml.warning "-32"]
+
 module Array = Ma
 
 let basev = Array.init 32 (function 0 -> 9 | _ -> 0)
@@ -307,23 +310,36 @@ let curve25519_base q n =
   let basevp = basev in
   curve25519 q n basevp
 
-type _ key = int array
-type public
-type secret
-type shared
+
+type public_key = int array 
+type private_key = int array 
+type shared_key = int array 
+
+let sexp_of_public_key public_key = 
+  let open Base in 
+  sexp_of_array sexp_of_int public_key
+
+let sexp_of_private_key private_key = 
+  let open Base in 
+  sexp_of_array sexp_of_int private_key
+
+let sexp_of_shared_key shared_key = 
+  let open Base in 
+  sexp_of_array sexp_of_int shared_key
+
 
 external identity : 'a -> 'a = "%identity"
 
 let ( <.> ) f g x = f (g x)
 let base = basev
 
-let secret_key_of_string : string -> secret key =
+let private_key_of_string : string -> private_key =
  fun x ->
   if String.length x <> 32
-  then Fmt.invalid_arg "secret_key_of_string: invalid key" ;
+  then Fmt.invalid_arg "private_key_of_string: invalid key" ;
   Array.init 32 (Char.code <.> String.get x)
 
-let secret_key_of_int_array : int array -> secret key =
+let private_key_of_int_array : int array -> private_key =
  fun x ->
   if Array.length x <> 32 || Array.exists (fun x -> x > 0xFF) x
   then
@@ -332,53 +348,75 @@ let secret_key_of_int_array : int array -> secret key =
 
 let null = String.make 32 '\x00'
 
-let public_key_of_string : string -> public key =
+let public_key_of_string : string -> public_key =
  fun x ->
   if String.length x <> 32
   then Fmt.invalid_arg "public_key_of_string: key should consist of 32 bytes" ;
   if String.equal x null
-  then Fmt.invalid_arg "public_key_of_string: null public key" ;
+  then Fmt.invalid_arg "public_key_of_string: null public_key" ;
   Array.init 32 (Char.code <.> String.get x)
 
-let public_key_of_int_array : int array -> public key =
+let public_key_of_int_array : int array -> public_key =
  fun x ->
   if Array.length x <> 32 || Array.exists (fun x -> x > 0xFF) x
   then
     Fmt.invalid_arg "public_key_of_int_array: key should consist of 32 bytes" ;
   if Array.for_all (( = ) 0) x
-  then Fmt.invalid_arg "public_key_of_int_array: null public key" ;
+  then Fmt.invalid_arg "public_key_of_int_array: null public_key" ;
   identity x
 
-let string_of_key : _ key -> string =
+let string_of_public_key : public_key -> string =
  fun x ->
   (* assert (Array.length x = 32); *)
   String.init 32 (Char.chr <.> Array.get x)
 
-let ecdh_base_inplace : out:int array -> secret:secret key -> unit =
+let string_of_private_key : private_key -> string =
+  fun x ->
+    (* assert (Array.length x = 32); *)
+    String.init 32 (Char.chr <.> Array.get x)
+
+let string_of_shared_key : shared_key -> string =
+  fun x ->
+    (* assert (Array.length x = 32); *)
+    String.init 32 (Char.chr <.> Array.get x)    
+   
+
+let ecdh_base_inplace : out:int array -> secret:private_key -> unit =
  fun ~out ~secret -> curve25519_base out secret
 
 let ecdh_inplace :
-    out:int array -> secret:secret key -> public:public key -> unit =
+    out:int array -> secret:private_key -> public:public_key -> unit =
  fun ~out ~secret ~public -> curve25519 out secret public
 
-let public_of_secret : secret key -> public key =
+let public_of_secret : private_key -> public_key =
  fun secret ->
   let out = Array.make 32 0 in
   ecdh_base_inplace ~out ~secret ;
   out
 
-let shared : secret:secret key -> public:public key -> public key =
+let shared : secret:private_key -> public:public_key -> public_key =
  fun ~secret ~public ->
   let out = Array.make 32 0 in
   ecdh_inplace ~out ~secret ~public ;
   out
 
 let[@noalloc] [@inline] public_key_of_shared x = identity x
-let[@noalloc] [@inline] secret_key_of_shared x = identity x
-let pp_public_key : public key Fmt.t = fun ppf key -> pp ppf key
-let pp_shared_key : shared key Fmt.t = fun ppf key -> pp ppf key
+let[@noalloc] [@inline] private_key_of_shared x = identity x
+let pp_public_key : public_key Fmt.t = fun ppf key -> pp ppf key
+let pp_shared_key : shared_key Fmt.t = fun ppf key -> pp ppf key
 
-let equal_key : _ key -> _ key -> bool =
+let equal_public_key : public_key -> public_key -> bool =
  fun a b ->
   (* assert (Array.length a = 32 && Array.length b = 32); *)
-  Eqaf.equal (string_of_key a) (string_of_key b)
+  Eqaf.equal (string_of_public_key a) (string_of_public_key b)
+
+let equal_private_key : private_key -> private_key -> bool =
+fun a b ->
+  (* assert (Array.length a = 32 && Array.length b = 32); *)
+  Eqaf.equal (string_of_private_key a) (string_of_private_key b)  
+
+
+let equal_shared_key : shared_key -> shared_key -> bool =
+  fun a b ->
+    (* assert (Array.length a = 32 && Array.length b = 32); *)
+    Eqaf.equal (string_of_shared_key a) (string_of_shared_key b)    

@@ -3,16 +3,15 @@
 module type ECDHIntf = sig 
   (** Abstract type for public keys *)
   type public_key
+    [@@deriving sexp_of]
 
   (** Abstract type for private keys *)
   type private_key 
+    [@@deriving sexp_of]
 
   (** The base point [G] of the elliptic curve, 
       also the generator of the cyclic subgroup for ECDH *)
   val base : public_key
-
-  (* No. of bits in the key *)
-  val key_size : int 
 
   val public_key_of_string: string -> public_key
   val private_key_of_string: string -> private_key
