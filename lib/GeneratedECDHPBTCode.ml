@@ -10,6 +10,7 @@ open ECDH_C
 [@@@ocaml.warning "-27-32-33-34"]
 
 type expr =
+  | String of string (* <---- NEW *)
   | Base
   | Public_key_of_string of string
   | Private_key_of_string of string
@@ -28,90 +29,90 @@ module ExprToImpl (M : ECDHIntf) = struct
   include M
 
   type value = 
-    | ValPrivate_key of M.private_key
-    | ValPublic_key of M.public_key
+    | ValPrivateKey of M.private_key
+    | ValPublicKey of M.public_key
     | ValString of string
       [@@deriving sexp_of]
 
   let rec interp (expr : expr) : value = 
     match expr with
-     | Base -> ValPublic_key (M.base)
+     | String s -> ValString s
+     | Base -> ValPublicKey (M.base)
      | Public_key_of_string s ->
-      ValPublic_key (M.public_key_of_string s)
+      ValPublicKey (M.public_key_of_string s)
      | Private_key_of_string s ->
-      ValPrivate_key (M.private_key_of_string s)
+      ValPrivateKey (M.private_key_of_string s)
      | String_of_public_key pk ->
         begin match interp pk with 
-        | ValPublic_key pk' -> ValString (M.string_of_public_key pk')
+        | ValPublicKey pk' -> ValString (M.string_of_public_key pk')
         | _ -> failwith "impossible"
         end 
      | String_of_private_key pk ->
         begin match interp pk with 
-        | ValPrivate_key pk' -> ValString (M.string_of_private_key pk')
+        | ValPrivateKey pk' -> ValString (M.string_of_private_key pk')
         | _ -> failwith "impossible"
         end 
      | Public_key_of_private_key pk ->
         begin match interp pk with 
-        | ValPrivate_key pk' -> ValPublic_key (M.public_key_of_private_key pk')
+        | ValPrivateKey pk' -> ValPublicKey (M.public_key_of_private_key pk')
         | _ -> failwith "impossible"
         end
      | Scalar_mult(pk1, pk2) ->
         begin match interp pk1, interp pk2 with 
-        | ValPrivate_key pk1', ValPublic_key pk2' -> 
-            ValPublic_key (M.scalar_mult pk1' pk2')
+        | ValPrivateKey pk1', ValPublicKey pk2' -> 
+            ValPublicKey (M.scalar_mult pk1' pk2')
         | _ -> failwith "impossible"
         end
      | X25519_ecdh(pk1, pk2) ->
         begin match interp pk1, interp pk2 with 
-        | ValPrivate_key pk1', ValPublic_key pk2' -> 
+        | ValPrivateKey pk1', ValPublicKey pk2' -> 
             ValString (M.x25519_ecdh pk1' pk2')
         | _ -> failwith "impossible"
        end
-
-  let rec gen_expr (ty : ty) : expr Generator.t = 
-    let module G = Generator in 
-    let open G.Let_syntax in 
-    let%bind k = G.size in 
-    match ty, k with 
-      | (Private_key, _) ->
-        let private_key_of_string = 
-          let%bind s = G.string_non_empty in
-          G.return @@ Private_key_of_string s
-        in private_key_of_string
-      | (Public_key, _) ->
-        let public_key_of_string = 
-          let%bind s = G.string_non_empty in
-          G.return @@ Public_key_of_string s in 
-        let public_key_of_private_key = 
-          let%bind pk = [%quickcheck.generator: M.private_key] in
-          G.return @@ Public_key_of_private_key pk in 
-        let scalar_mult = 
-          let%bind pk1 = [%quickcheck.generator: private_key] in
-          let%bind pk2 = [%quickcheck.generator: public_key] in
-          G.return @@ Scalar_mult(pk1, pk2)
-        in G.union [
-          public_key_of_string;
-          public_key_of_private_key;
-          scalar_mult
-        ]
-      | (String, _) ->
-        let string_of_public_key = 
-          let%bind pk = [%quickcheck.generator: public_key] in
-          G.return @@ String_of_public_key pk in 
-        let string_of_private_key = 
-          let%bind pk = [%quickcheck.generator: private_key] in
-          G.return @@ String_of_private_key pk in 
-        let x25519_ecdh = 
-          let%bind pk1 = [%quickcheck.generator: private_key] in
-          let%bind pk2 = [%quickcheck.generator: public_key] in
-          G.return @@ X25519_ecdh(pk1, pk2)
-        in G.union [
-          string_of_public_key;
-          string_of_private_key;
-          x25519_ecdh
-        ]
 end
 
+let rec gen_expr (ty : ty) : expr Generator.t = 
+  let module G = Generator in 
+  let open G.Let_syntax in 
+  let%bind k = G.size in 
+  match ty, k with 
+    | (Private_key, _) ->
+      let private_key_of_string = 
+        let%bind s = gen_hex_string in
+        G.return @@ Private_key_of_string s
+      in private_key_of_string
+    | (Public_key, _) ->
+      let public_key_of_string = 
+        let%bind s = gen_hex_string in
+        G.return @@ Public_key_of_string s in 
+      let public_key_of_private_key = 
+        let%bind pk = G.with_size ~size:(k / 2) (gen_expr Private_key) in
+        G.return @@ Public_key_of_private_key pk in 
+      let scalar_mult = 
+        let%bind pk1 = G.with_size ~size:(k / 2) (gen_expr Private_key) in
+        let%bind pk2 = G.with_size ~size:(k / 2) (gen_expr Public_key) in
+        G.return @@ Scalar_mult(pk1, pk2)
+      in G.union [
+        public_key_of_string;
+        public_key_of_private_key;
+        scalar_mult
+      ]
+    | (String, _) ->
+      let string_of_public_key = 
+        let%bind pk = G.with_size ~size:(k / 2) (gen_expr Public_key) in
+        G.return @@ String_of_public_key pk in 
+      let string_of_private_key = 
+        let%bind pk = G.with_size ~size:(k / 2) (gen_expr Private_key) in
+        G.return @@ String_of_private_key pk in 
+      let x25519_ecdh = 
+        let%bind pk1 = G.with_size ~size:(k / 2) (gen_expr Private_key) in
+        let%bind pk2 = G.with_size ~size:(k / 2) (gen_expr Public_key) in
+        G.return @@ X25519_ecdh(pk1, pk2)
+      in G.union [
+        string_of_public_key;
+        string_of_private_key;
+        x25519_ecdh
+      ]
 
 
 module I1 = ExprToImpl(ECDH_OCaml)

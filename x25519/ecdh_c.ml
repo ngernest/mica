@@ -12,14 +12,12 @@ let gen_hex_digit : char G.t =
   
 (** Generates a hex string of length 64 *)  
 let gen_hex_string : string G.t = 
-  Generator.string_with_length_of ~length:64 gen_hex_digit
+  Generator.string_with_length_of ~length:32 gen_hex_digit
 
 module ECDH_C : ECDHIntf = struct 
   include Callipyge
   let sexp_of_public_key = sexp_of_public_key
   let sexp_of_private_key = sexp_of_private_key
-
-  let base = public_key_of_string "9"  
   
   let public_key_of_string  = public_key_of_string
   let private_key_of_string = private_key_of_string
