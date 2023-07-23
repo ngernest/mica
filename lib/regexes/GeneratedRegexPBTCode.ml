@@ -16,7 +16,16 @@ type expr =
   | Star of expr 
   | MatchString of expr * string 
   | AcceptsEmpty of expr 
-  [@@deriving sexp]
+  [@@deriving sexp, compare, hash]
+
+let rec normalize (e : expr) : expr = 
+  match e with 
+  | Void | Empty | Lit _ -> e 
+  | Alt (e1, e2) -> Alt (normalize e1, normalize e2)
+  | Cat (e1, e2) -> Cat (normalize e1, normalize e2)
+  | Star e -> Star (normalize e)
+  | MatchString (e, s) -> MatchString (normalize e, s)
+  | AcceptsEmpty e -> AcceptsEmpty (normalize e)
 
 type ty = Bool | T
   [@@deriving sexp]
