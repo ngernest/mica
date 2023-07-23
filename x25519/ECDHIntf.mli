@@ -1,8 +1,9 @@
+open Base_quickcheck
 module type ECDHIntf = sig
-  type public_key
-    [@@deriving sexp_of]
-  type private_key 
-    [@@deriving sexp_of]
+  type public_key  [@@deriving sexp_of]
+  type private_key [@@deriving sexp_of]
+  val quickcheck_generator_public_key : public_key Generator.t
+  val quickcheck_generator_private_key : private_key Generator.t
   val base : public_key
   val public_key_of_string : string -> public_key
   val private_key_of_string : string -> private_key

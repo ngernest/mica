@@ -1,3 +1,5 @@
+open Base_quickcheck
+
 (** Module signature for the Elliptic-Curve Diffie-Hellman (ECDH) 
     key exchange protocol *)
 module type ECDHIntf = sig 
@@ -6,6 +8,12 @@ module type ECDHIntf = sig
 
   (** Abstract type for private keys *)
   type private_key [@@deriving sexp_of]
+
+  (** QuickCheck generator for public keys *)
+  val quickcheck_generator_public_key : public_key Generator.t
+
+  (** QuickCheck generator for private keys *)
+  val quickcheck_generator_private_key : private_key Generator.t
 
   (** The base point [G] of the elliptic curve, 
       also the generator of the cyclic subgroup for ECDH *)
@@ -30,3 +38,4 @@ module type ECDHIntf = sig
   (** Computes the shared key as a string *)
   val x25519_ecdh : private_key -> public_key -> string 
 end   
+
