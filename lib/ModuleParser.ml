@@ -32,9 +32,12 @@ let lowercaseIdentP : string A.t =
 let typeParamP : char A.t = 
   quoteP *> lowercaseP    
 
-(** Parses the S-expression PPX annotation, consuming subsequent whitespace *)  
+(** Parses the S-expression PPX annotation, consuming subsequent whitespace 
+    TODO: this parser could be written more cleanly *)  
 let sexpAnnotP : unit A.t = 
-  constP "[@@deriving sexp_of]" () <|> constP "[@@deriving sexp]" ()
+  constP "[@@deriving sexp_of]" ()  
+  <|> constP "[@@deriving sexp]" ()
+  <|> constP "[@@deriving sexp, equal]" ()
 
 (** [sigP p] takes a parser [p], and sandwiches it between parsers
     that parse the "sig" and "end" tokens *)
