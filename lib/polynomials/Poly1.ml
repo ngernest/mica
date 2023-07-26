@@ -56,6 +56,11 @@ module Poly1 : PolyInterface = struct
       if n mod 2 == 0 then y * y 
         else x * y * y
 
+  (* let eval (p : monomial list) (x : int) : int = 
+    match p with 
+    | [] -> 0 
+    | _ -> List.fold_left (fun acc m -> m.coeff * (power x m.degree) + acc) 0 p  *)
+
   let rec eval (p : monomial list) (x : int) : int = 
     match p with
     | [] -> 0

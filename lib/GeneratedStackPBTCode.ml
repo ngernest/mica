@@ -11,6 +11,7 @@ open VariantStack
 
 type expr =
   | Empty
+  | EInt of int
   | Push of int * expr
   | Pop of expr
   | Peek of expr
@@ -38,6 +39,7 @@ module ExprToImpl (M : StackInterface) = struct
   let rec interp (expr : expr) : value = 
     match expr with
      | Empty -> ValT (M.empty)
+     | EInt n -> ValInt n
      | Push(x1, e2) ->
       begin match interp e2 with 
        | ValT e' -> ValT (M.push x1 e')
@@ -85,8 +87,11 @@ let rec gen_expr (ty : ty) : expr Generator.t =
    | (Int, _) ->
       let length = 
         let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in 
-        G.return @@ Length e
-      in length
+        G.return @@ Length e in 
+      let eint = 
+        let%bind n = G.int_inclusive (-10) 10 in 
+        G.return @@ EInt n in 
+      G.union [ length; eint ]
    | (IntOption, _) ->
       let peek = 
         let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in 
