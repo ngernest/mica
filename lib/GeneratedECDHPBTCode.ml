@@ -3,8 +3,8 @@ open Base
 open Base_quickcheck
 open X25519_ecdh
 open ECDHIntf
-open ECDH_OCaml
-open ECDH_C
+open Ecdh_ocaml
+open Ecdh_c
 
 (** Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-27-32-33-34"]
