@@ -879,11 +879,11 @@ let compareImpls (m : moduleSig) : document =
   ^/^ !^ "let module QC = Quickcheck in "
   ^/^ separate_map hardline obsEquiv constrs 
   ^/^ !^ "match combine_errors_unit " 
-    ^^ OCaml.list getTestName tyConstrs ^^ !^ " with "
+  ^^ OCaml.list getTestName tyConstrs ^^ !^ " with "
   ^/^ sBar ^^ !^ "Ok ok" ^^ sArrow ^^ !^ "ok"
   ^/^ sBar ^^ !^ "Error err" ^^ sArrow 
-    ^^ jump 2 1 @@ 
-    !^ "let open Stdlib.Format in "
-    ^/^ !^ "Error.pp err_formatter err;"
-    ^/^ !^ "print_newline " ^^ OCaml.unit
-    ^^ break 1
+  ^^ jump 2 1 @@ 
+  !^ "let open Stdlib.Format in "
+  ^/^ !^ "Error.pp err_formatter err;"
+  ^/^ !^ "print_newline " ^^ OCaml.unit
+  ^^ break 1

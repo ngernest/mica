@@ -10,6 +10,8 @@ open Base_quickcheck
       by Mica (e.g. [lib/generated.ml]). [Open]ing this file 
       prior to [open]ing [lib/generated.ml] will allow these utility functions
       to operate on the concrete definition of the [expr] datatype. 
+    - See [bin/GeneratedSetExecutable.ml] for an example of how to 
+    invoke the functions in this file
 *)
 
 (** Abstract type of {i symbolic expressions} *)

@@ -33,7 +33,8 @@ let () =
     print_newline ()
    
 
-(** TODO: commented out QC code below that records stats *)  
+(** TODO: commented out QC code below that records stats using the 
+    utility functions from [lib/Stats.ml] *)  
 (* let () =   
   let open Printf in 
   let open Hashtbl in 
