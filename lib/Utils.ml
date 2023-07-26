@@ -39,6 +39,13 @@ let sIn : document = spaceLR (!^ "in")
 let comment (body : document) : document = 
   parens @@ enclose (star2 ^^ space) (space ^^ star) body
 
+(** PPrint document containing the macro for suppressing "unused value"
+    warnings in the OCaml compiler *)  
+let suppressUnusedValueWarnings : document =
+  comment (!^ "Suppress \"unused value\" compiler warnings")
+  ^/^ (!^ "[@@@ocaml.warning \"-27-32-33-34\"]") 
+  ^^ hardline   
+
 (** Given a filepath to a .ml/.mli file, retrieves the corresponding name of the 
     top-level module signature. 
     - {b Note}: The name of the module signature must be the same as the .ml/.mli file. *)  

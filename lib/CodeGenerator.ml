@@ -27,9 +27,7 @@ let imports ~(externalLib : string option) ~(sigName : string) ~(modName1 : stri
   ^/^ !^ ("open " ^ m1)
   ^/^ !^ ("open " ^ m2)
   ^^ hardline
-  ^/^ comment (!^ "Suppress \"unused value\" compiler warnings")
-  ^/^ (!^ "[@@@ocaml.warning \"-27-32-33-34\"]") 
-  ^^ hardline 
+  ^/^ suppressUnusedValueWarnings 
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
     followed by a newline *)
@@ -811,9 +809,12 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
   ^/^ comment (!^ "Usage: " ^^ 
     brackets @@ !^ (Printf.sprintf "dune exec -- %s.exe" @@ 
       String.capitalize @@ chop_extension execFilePath))
-  ^/^ !^ ("open Core")
+  ^^ break 1
+  ^/^ suppressUnusedValueWarnings
+  ^/^ (!^ "open Core")
+  ^/^ (!^ "open Lib.Stats")
   ^/^ !^ ("open " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
-  ^/^ hardline
+  ^/^ break 1
 
 (** Produces Quickcheck code in the executable that tests two modules 
     for observational equivalence based on [expr]s that return some [tyConstr] of type [ty], 
