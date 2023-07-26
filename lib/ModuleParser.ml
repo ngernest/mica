@@ -59,6 +59,18 @@ let baseTypeP : ty A.t =
   <|> constP "\'a" Alpha 
   <|> constP "t" T
 
+(** Parses the names of common Jane Street libraries *)  
+let libraryNameP : string A.t = 
+  A.choice [
+    A.string "Base_quickcheck.Generator";
+    A.string "Base_quickcheck";
+    A.string "Base"; 
+    A.string "Core.Quickcheck.Generator";
+    A.string "Core.Quickcheck";
+    A.string "Core";
+    A.string "Stdio";
+  ]
+
 (** General parser for parameterized types, eg. options/pairs/lists *)  
 let paramTypeP : ty A.t = 
   fix @@ fun paramType -> 
@@ -74,7 +86,8 @@ let paramTypeP : ty A.t =
     eg. the type [M.t] from another module [M] *)    
 let opaqueTypeP : ty A.t = 
   (fun modName typeName -> Opaque (modName ^ typeName))
-    <$> identP ~firstCharP:(upperCaseP) () <*> wsP (A.string ".t")
+    <$> (libraryNameP <|> identP ~firstCharP:(upperCaseP) ())
+    <*> wsP (A.string ".t")
     
 (** Parser for the [NamedAbstract] case of the [ty] datatype, 
     i.e. parser for named monomorphic abstract types,
