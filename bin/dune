@@ -32,7 +32,21 @@
  (modules GeneratedMapExecutable)
  (libraries lib core stdio)
  (preprocess 
-  (pps ppx_sexp_conv ppx_jane)))       
+  (pps ppx_sexp_conv ppx_jane)))      
+
+(executable
+ (name GeneratedStackExecutable)
+ (modules GeneratedStackExecutable)
+ (libraries lib core stdio)
+ (preprocess 
+  (pps ppx_sexp_conv ppx_jane)))     
+
+(executable
+ (name GeneratedPolyExecutable)
+ (modules GeneratedPolyExecutable)
+ (libraries lib core stdio)
+ (preprocess 
+  (pps ppx_sexp_conv ppx_jane)))   
 
 (executable
  (name GeneratedECDHExecutable)
