@@ -7,6 +7,10 @@ equivalent by generating random sequences of commands using Core.QuickCheck.
 Documentation (generated with Odoc) located at:      
 https://ngernest.github.io/module_pbt/module_pbt/index.html
 
+**Note**: The `main` branch of this repo was last updated on May 26 2023 and contains public-facing code.                      
+The `dev` branch contains newer updates but may contain breaking changes.              
+Please contact `ngernest@seas.upenn.edu` if you notice any issues or if you have any questions.              
+
 ## Description of source files
 - `lib/Parser.ml`: parser utility functions, modified from the Angstrom parser-combinator library
 - `lib/ParserTypes.ml`: Datatypes defining an AST for module signatures
