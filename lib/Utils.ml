@@ -34,6 +34,9 @@ let star2 : document = star ^^ star
 (** Produces a PPrint document [" in "] with spaces on either side *)  
 let sIn : document = spaceLR (!^ "in")
 
+(** Produces a PPrint document [" = "] with spaces on either side *)  
+let sEquals : document = spaceLR equals
+
 (** Takes a PPrint document [body] and wraps it in the OCaml comment syntax, 
     i.e. [comment body] is displayed as [(** body *)] *)
 let comment (body : document) : document = 

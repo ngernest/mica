@@ -816,23 +816,36 @@ let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : documen
   ^/^ !^ ("open " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
   ^/^ break 1
 
+(** Given [tyConstr], a constructor in the [ty] datatype to an OCaml datatype, 
+    [getTestName tyConstr] produces an interstitial variable name corresponding 
+    to this type with the prefix ["test_"], in the form of a PPrint document 
+    - For example, [getTestName Int] produces ["test_int"] (as a PPrint document) *)
+let getTestName (tyConstr : string) : document = 
+  !^ ("test_" ^ String.lowercase tyConstr)
+
 (** Produces Quickcheck code in the executable that tests two modules 
     for observational equivalence based on [expr]s that return some [tyConstr] of type [ty], 
     and pattern matching on the equivalent [valConstr]s that they return *)
 let obsEquiv (tyConstr, valConstr : string * string) : document = 
-  let vars    : string list = genVarNamesN ~n:2 (ty_of_string tyConstr) in
-  let varDocs : document list = List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
-  let baseTy  : string = 
+  let vars : string list = 
+    genVarNamesN ~n:2 (ty_of_string tyConstr) in
+  let varDocs : document list = 
+    List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
+  let baseTy : string = 
     if isOpaqueTy tyConstr 
       then "Lib." ^ reifyOpaqueTyConstr tyConstr
     else addSpaceToTyStr (String.lowercase tyConstr) in
-
-  !^ "QC.test (gen_expr " ^^ (!^ tyConstr) ^^ !^ ") ~sexp_of:sexp_of_expr ~f:(fun e ->"
+  !^ "let " ^^ getTestName tyConstr ^^ sEquals
+  ^^ !^ "QC.test_or_error (gen_expr " ^^ !^ tyConstr ^^ !^ ") ~sexp_of:sexp_of_expr "
+  ^^ jump 2 1 @@ 
+  !^ "~f:(fun e" ^^ sArrow 
   ^^ jump 2 1 @@ 
   !^ "match (I1.interp e, I2.interp e) with "
-  ^/^ sBar ^^ OCaml.tuple varDocs ^^ sArrow ^^ (!^ "[%test_eq: " ^^ (!^ baseTy) ^^ !^ "] ")
-  ^^ separate_map space (!^) vars 
-  ^/^ sBar ^^ (!^ "v1, v2") ^^ sArrow ^^ (!^ "failwith @@ displayError e v1 v2);") 
+  ^/^ sBar ^^ OCaml.tuple varDocs ^^ sArrow ^^ 
+    jump 2 1 (!^ "try_with ~backtrace:false (fun () -> [%test_eq: " 
+              ^^ !^ baseTy ^^ !^ "] ")
+  ^^ separate_map space (!^) vars ^^ rparen
+  ^/^ sBar ^^ !^ "v1, v2" ^^ sArrow ^^ !^ "error_string @@ displayError e v1 v2)" ^^ sIn 
   ^^ hardline
 
 (** [isExcludedType ty] returns true if the type [ty] is 
@@ -859,6 +872,18 @@ let rec isExcludedType (ty : ty) : bool =
 let compareImpls (m : moduleSig) : document = 
   let constrs = List.filter (tyAndValADTConstructors ~camelCase:true m) 
     ~f:(fun (ty, _) -> not @@ isExcludedType (ty_of_string ty)) in 
+  let tyConstrs = List.map ~f:fst constrs in 
   !^ "let () = "
-  ^^ jump 2 1 @@ !^ "let module QC = Quickcheck in "
-  ^/^ separate_map hardline obsEquiv constrs
+  ^^ jump 2 1 @@ 
+  !^ "let open Or_error in "
+  ^/^ !^ "let module QC = Quickcheck in "
+  ^/^ separate_map hardline obsEquiv constrs 
+  ^/^ !^ "match combine_errors_unit " 
+    ^^ OCaml.list getTestName tyConstrs ^^ !^ " with "
+  ^/^ sBar ^^ !^ "Ok ok" ^^ sArrow ^^ !^ "ok"
+  ^/^ sBar ^^ !^ "Error err" ^^ sArrow 
+    ^^ jump 2 1 @@ 
+    !^ "let open Stdlib.Format in "
+    ^/^ !^ "Error.pp err_formatter err;"
+    ^/^ !^ "print_newline " ^^ OCaml.unit
+    ^^ break 1
