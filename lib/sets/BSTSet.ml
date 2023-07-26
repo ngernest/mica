@@ -4,7 +4,7 @@ open SetInterface
 type 'a tree =
   | Empty
   | Node of 'a tree * 'a * 'a tree
-  [@@deriving sexp]
+  [@@deriving sexp, equal]
 
 let leaf x = Node (Empty, x, Empty)
 
@@ -65,7 +65,7 @@ module BSTSet : SetInterface = struct
       less than [x], and all values in [rt] are strictly greater than [x]. *)
   
   type 'a t = 'a tree
-    [@@deriving sexp]
+    [@@deriving sexp, equal]
 
   let empty = Empty
 
