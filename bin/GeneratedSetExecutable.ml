@@ -76,36 +76,58 @@ let printPercent (h : ('a, int) Hashtbl.t) (printKey : 'a -> string)
   let total = of_int (sumValues h) in 
   printf "%s : %.2f%%\n" (printKey key) (occurrences /. total *. 100.0)
 
-let () =   
-  let open Printf in 
-  let open Hashtbl in 
+
+let () = 
+  let open Or_error in 
+  let module QC = Core.Quickcheck in 
+  let test_bool = QC.test_or_error (gen_expr Bool) ~sexp_of:sexp_of_expr 
+    ~f:(fun e ->
+      match (I1.interp e, I2.interp e) with 
+      | ValBool b1, ValBool b2 -> 
+          try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2) 
+      | v1, v2 -> error_string @@ displayError e v1 v2) in 
+
+  let test_int = QC.test_or_error (gen_expr Int) ~sexp_of:sexp_of_expr 
+    ~f:(fun e ->
+      match (I1.interp e, I2.interp e) with 
+      | ValInt n1, ValInt n2 -> 
+          try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2) 
+      | v1, v2 -> error_string @@ displayError e v1 v2) in
+  
+  match combine_errors_unit [test_bool; test_int] with 
+  | Ok ok -> ok
+  | Error err -> Error.pp Stdlib.Format.err_formatter err
+   
+
+(** TODO: commented out QC code below that records stats *)  
+(* let () =   
+  (* let open Hashtbl in 
   let bh1 = create (module Bool) in 
   let bh2 = create (module Bool) in 
 
   let ih1 = create (module Int) in 
-  let ih2 = create (module Int) in 
+  let ih2 = create (module Int) in  *)
 
   let module QC = Core.Quickcheck in 
   QC.test (gen_expr Bool) ~sexp_of:sexp_of_expr ~f:(fun e ->
     match (I1.interp e, I2.interp e) with 
-     | (ValBool b1, ValBool b2) -> incr bh1 b1; 
-                                   incr bh2 b2;
-                                   [%test_eq: bool] b1 b2
+     | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
+        (* begin try [%test_eq: bool] b1 b2 with 
+        | _ -> let output = { expr = e; v1; v2 } in 
+          raise (Bad_output output)
+        end *)
+                                   
      | v1, v2 -> failwith @@ displayError e v1 v2);
 
   QC.test (gen_expr Int) ~sexp_of:sexp_of_expr ~f:(fun e ->
     match (I1.interp e, I2.interp e) with 
-     | (ValInt n1, ValInt n2) -> incr ih1 n1; 
-                                 incr ih2 n2;
-                                 [%test_eq: int] n1 n2
-     | v1, v2 -> failwith @@ displayError e v1 v2);
+     | (ValInt n1, ValInt n2) -> [%test_eq: int] n1 n2
+      (* incr ih1 n1;  *)
+                                 (* incr ih2 n2; *)
+                                 
+     | v1, v2 -> failwith @@ displayError e v1 v2) *)
 
-  printf "\nBool distribution:\n";
-  (* Uncomment to print raw values *)
-  (* printf "Module 1:\n";
-  bh1 |> [%sexp_of : (bool, int) Hashtbl.t] |> print_s; 
-  printf "Module 2:\n";
-  bh2 |> [%sexp_of : (bool, int) Hashtbl.t] |> print_s;  *)
+  (* printf "\nBool distribution:\n";
   printf "Module 1:\n";
   iter_keys bh1 ~f:(printPercent bh1 string_of_bool);
   printf "Module 2:\n";
@@ -115,4 +137,4 @@ let () =
   printf "Module 1:\n";
   iter_keys ih1 ~f:(printPercent ih1 string_of_int);
   printf "Module 2:\n";
-  iter_keys ih2 ~f:(printPercent ih2 string_of_int);
+  iter_keys ih2 ~f:(printPercent ih2 string_of_int) *)
