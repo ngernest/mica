@@ -1,13 +1,13 @@
 (* Suppress "unused value" compiler warning *)
 [@@@ocaml.warning "-32"]
 
-module Array = Ma
+(* module Array = Ma *)
 
-let basev = Array.init 32 (function 0 -> 9 | _ -> 0)
-let minusp = Array.init 32 (function 0 -> 19 | 31 -> 128 | _ -> 0)
+let basev = Ma.init 32 (function 0 -> 9 | _ -> 0)
+let minusp = Ma.init 32 (function 0 -> 19 | 31 -> 128 | _ -> 0)
 
 let pp ppf arr =
-  for i = 0 to Array.length arr - 1 do
+  for i = 0 to Ma.length arr - 1 do
     Fmt.pf ppf "%02X" arr.(i)
   done
 
@@ -50,7 +50,7 @@ let squeeze a a_offset =
   a.(a_offset + 31) <- !u
 
 let freeze a a_offset =
-  let a_orig = Array.init 32 (fun j -> a.(a_offset + j)) in
+  let a_orig = Ma.init 32 (fun j -> a.(a_offset + j)) in
   add a 0 a 0 minusp 0 ;
   let negative = -((a.(a_offset + 31) lsr 7) land 1) in
   for j = 0 to 31 do
@@ -120,21 +120,21 @@ let select p q r s b =
   done
 
 let main_loop work e =
-  let xzm1 = Array.make 64 0 in
-  let xzm = Array.make 64 0 in
-  let xzmb = Array.make 64 0 in
-  let xzm1b = Array.make 64 0 in
-  let xznb = Array.make 64 0 in
-  let xzn1b = Array.make 64 0 in
-  let a0 = Array.make 64 0 in
-  let a1 = Array.make 64 0 in
-  let b0 = Array.make 64 0 in
-  let b1 = Array.make 64 0 in
-  let c1 = Array.make 64 0 in
-  let r = Array.make 32 0 in
-  let s = Array.make 32 0 in
-  let t = Array.make 32 0 in
-  let u = Array.make 32 0 in
+  let xzm1 = Ma.make 64 0 in
+  let xzm = Ma.make 64 0 in
+  let xzmb = Ma.make 64 0 in
+  let xzm1b = Ma.make 64 0 in
+  let xznb = Ma.make 64 0 in
+  let xzn1b = Ma.make 64 0 in
+  let a0 = Ma.make 64 0 in
+  let a1 = Ma.make 64 0 in
+  let b0 = Ma.make 64 0 in
+  let b1 = Ma.make 64 0 in
+  let c1 = Ma.make 64 0 in
+  let r = Ma.make 32 0 in
+  let s = Ma.make 32 0 in
+  let t = Ma.make 32 0 in
+  let u = Ma.make 32 0 in
   for j = 0 to 31 do
     xzm1.(j) <- work.(j)
   done ;
@@ -169,16 +169,16 @@ let main_loop work e =
   done
 
 let recip outv outv_offset z z_offset =
-  let z2 = Array.make 32 0 in
-  let z9 = Array.make 32 0 in
-  let z11 = Array.make 32 0 in
-  let z2_5_0 = Array.make 32 0 in
-  let z2_10_0 = Array.make 32 0 in
-  let z2_20_0 = Array.make 32 0 in
-  let z2_50_0 = Array.make 32 0 in
-  let z2_100_0 = Array.make 32 0 in
-  let t0 = Array.make 32 0 in
-  let t1 = Array.make 32 0 in
+  let z2 = Ma.make 32 0 in
+  let z9 = Ma.make 32 0 in
+  let z11 = Ma.make 32 0 in
+  let z2_5_0 = Ma.make 32 0 in
+  let z2_10_0 = Ma.make 32 0 in
+  let z2_20_0 = Ma.make 32 0 in
+  let z2_50_0 = Ma.make 32 0 in
+  let z2_100_0 = Ma.make 32 0 in
+  let t0 = Ma.make 32 0 in
+  let t1 = Ma.make 32 0 in
   square z2 0 z z_offset ;
   (* 2 *)
   square t1 0 z2 0 ;
@@ -286,8 +286,8 @@ let recip outv outv_offset z z_offset =
 (* 2^255 - 21 *)
 
 let curve25519 q n p =
-  let work = Array.make 96 0 in
-  let e = Array.make 32 0 in
+  let work = Ma.make 96 0 in
+  let e = Ma.make 32 0 in
   for i = 0 to 31 do
     e.(i) <- n.(i)
   done ;
@@ -337,11 +337,11 @@ let private_key_of_string : string -> private_key =
  fun x ->
   if String.length x <> 32
   then Fmt.invalid_arg "private_key_of_string: invalid key" ;
-  Array.init 32 (Char.code <.> String.get x)
+  Ma.init 32 (Char.code <.> String.get x)
 
 let private_key_of_int_array : int array -> private_key =
  fun x ->
-  if Array.length x <> 32 || Array.exists (fun x -> x > 0xFF) x
+  if Ma.length x <> 32 || Ma.exists (fun x -> x > 0xFF) x
   then
     Fmt.invalid_arg "public_key_of_int_array: key should consist of 32 bytes" ;
   identity x
@@ -354,31 +354,34 @@ let public_key_of_string : string -> public_key =
   then Fmt.invalid_arg "public_key_of_string: key should consist of 32 bytes" ;
   if String.equal x null
   then Fmt.invalid_arg "public_key_of_string: null public_key" ;
-  Array.init 32 (Char.code <.> String.get x)
+  Ma.init 32 (Char.code <.> String.get x)
 
 let public_key_of_int_array : int array -> public_key =
  fun x ->
-  if Array.length x <> 32 || Array.exists (fun x -> x > 0xFF) x
+  if Ma.length x <> 32 || Ma.exists (fun x -> x > 0xFF) x
   then
     Fmt.invalid_arg "public_key_of_int_array: key should consist of 32 bytes" ;
-  if Array.for_all (( = ) 0) x
+  if Ma.for_all (( = ) 0) x
   then Fmt.invalid_arg "public_key_of_int_array: null public_key" ;
   identity x
 
 let string_of_public_key : public_key -> string =
  fun x ->
-  (* assert (Array.length x = 32); *)
-  String.init 32 (Char.chr <.> Array.get x)
+  (* Commented out experimentation implementation *)
+  (* Array.map (fun i -> Printf.sprintf "%x" i) x 
+    |> Array.to_list 
+    |> String.concat "" *)
+  String.init 32 (Char.chr <.> Ma.get x)
 
 let string_of_private_key : private_key -> string =
   fun x ->
-    (* assert (Array.length x = 32); *)
-    String.init 32 (Char.chr <.> Array.get x)
+    (* assert (Ma.length x = 32); *)
+    String.init 32 (Char.chr <.> Ma.get x)
 
 let string_of_shared_key : shared_key -> string =
   fun x ->
-    (* assert (Array.length x = 32); *)
-    String.init 32 (Char.chr <.> Array.get x)    
+    (* assert (Ma.length x = 32); *)
+    String.init 32 (Char.chr <.> Ma.get x)    
    
 
 let ecdh_base_inplace : out:int array -> secret:private_key -> unit =
@@ -390,13 +393,13 @@ let ecdh_inplace :
 
 let public_of_secret : private_key -> public_key =
  fun secret ->
-  let out = Array.make 32 0 in
+  let out = Ma.make 32 0 in
   ecdh_base_inplace ~out ~secret ;
   out
 
 let shared : secret:private_key -> public:public_key -> public_key =
  fun ~secret ~public ->
-  let out = Array.make 32 0 in
+  let out = Ma.make 32 0 in
   ecdh_inplace ~out ~secret ~public ;
   out
 
@@ -407,16 +410,16 @@ let pp_shared_key : shared_key Fmt.t = fun ppf key -> pp ppf key
 
 let equal_public_key : public_key -> public_key -> bool =
  fun a b ->
-  (* assert (Array.length a = 32 && Array.length b = 32); *)
+  (* assert (Ma.length a = 32 && Ma.length b = 32); *)
   Eqaf.equal (string_of_public_key a) (string_of_public_key b)
 
 let equal_private_key : private_key -> private_key -> bool =
 fun a b ->
-  (* assert (Array.length a = 32 && Array.length b = 32); *)
+  (* assert (Ma.length a = 32 && Ma.length b = 32); *)
   Eqaf.equal (string_of_private_key a) (string_of_private_key b)  
 
 
 let equal_shared_key : shared_key -> shared_key -> bool =
   fun a b ->
-    (* assert (Array.length a = 32 && Array.length b = 32); *)
+    (* assert (Ma.length a = 32 && Ma.length b = 32); *)
     Eqaf.equal (string_of_shared_key a) (string_of_shared_key b)    

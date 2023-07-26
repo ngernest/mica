@@ -50,7 +50,7 @@ module ECDH_OCaml : ECDHIntf = struct
   let quickcheck_generator_private_key : private_key G.t = 
     let open G.Let_syntax in 
     gen_hex_string >>| private_key_of_string
-    
+
   let quickcheck_generator_public_key : public_key G.t = 
     let open G.Let_syntax in 
     gen_hex_string >>| public_key_of_string
