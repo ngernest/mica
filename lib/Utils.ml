@@ -5,6 +5,8 @@ open Stdio
 (** This file contains general utility functions that are called 
     by the other files. *)
 
+(** {1 Utility functions} *)    
+
 (** [writeDoc outc doc] writes the PPrint document [doc] to an Out_channel [doc] 
     (eg. [stdout]) *)
 let writeDoc (outc : Out_channel.t) (doc : document) : unit = 
@@ -76,3 +78,11 @@ let uncurry3 f (a, b, c) = f a b c
 
 (** [parensStr s] parenthesizes the string [s] *)
 let parensStr (s : string) : string = "(" ^ s ^ ")"
+
+(** {1 Constants} *)
+
+(** No. of chars to print out for booleans *)
+let boolPrecision = 5
+
+(** No. of chars to print out for booleans *)
+let intPrecision = 3

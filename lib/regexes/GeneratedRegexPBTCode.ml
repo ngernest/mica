@@ -17,7 +17,8 @@ type expr =
   | MatchString of expr * string 
   | AcceptsEmpty of expr 
   [@@deriving sexp, compare, hash]
-
+  
+(** "Shrinker" for regexes *)  
 let rec normalize (e : expr) : expr = 
   match e with 
   | Void | Empty | Lit _ -> e 
@@ -112,8 +113,43 @@ let displayError (e : expr) (v1 : I1.value) (v2 : I2.value) : string =
     (Sexp.to_string @@ [%sexp_of: I2.value] v2)
 
 
+(** The type of [expr]s that produce observable values
+    - Note that for this interface, only the expr constructors [MatchString] 
+    and [AcceptsEmpty] produce observable values (bools) *)
+type observableExpr = [`MatchString | `AcceptsEmpty]
+  [@@deriving sexp, compare, hash]
 
+(** Picks out the last constructor invoked in an [expr] value, returning 
+    an [observableExpr] *)  
+let last (e : expr) : observableExpr = 
+  match e with 
+  | MatchString _ -> `MatchString
+  | AcceptsEmpty _ -> `AcceptsEmpty
+  | _ -> failwith "TODO"
+
+(** Auxiliary module that derives comparison and hash functions 
+    for the type [observableExpr] *)
+module ObservableExpr = struct 
+  module T = struct 
+    type t = observableExpr 
+      [@@deriving sexp, compare, hash]      
+  end 
+
+  include T
+  include Comparator.Make(T)
+end   
  
+(** Auxiliary module that derives comparison and hash functions 
+    for the type [observableExpr * bool * bool] *)
+module ExprBool = struct 
+  module T = struct 
+    type t = observableExpr * bool * bool
+      [@@deriving sexp, compare, hash]      
+  end 
+
+  include T
+  include Comparator.Make(T)
+end 
 
 
 

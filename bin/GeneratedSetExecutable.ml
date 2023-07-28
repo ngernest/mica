@@ -65,8 +65,10 @@ let () =
   
   printf "\nBool distribution:\n";
   printf "\t Module 1 \t Module 2 \n";
-  List.iter2_exn bh1' bh2' ~f:(printPercents ~f:string_of_bool ~numChars:5);
+  List.iter2_exn bh1' bh2' 
+    ~f:(printPercents ~printKey:string_of_bool ~precision:boolPrecision);
 
   printf "\nInt distribution:\n";
   printf "\t Module 1 \t Module 2 \n";
-  List.iter2_exn ih1' ih2' ~f:(printPercents ~f:string_of_int ~numChars:3);  
+  List.iter2_exn ih1' ih2' 
+    ~f:(printPercents ~printKey:string_of_int ~precision:intPrecision);  

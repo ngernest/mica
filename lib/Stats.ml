@@ -35,6 +35,7 @@ module Expr = struct
   include Comparator.Make(T)  
 end
 
+
 (** Given a sequence [seq] of generated [expr]s, [seq_coverage seq] 
     produces a [Map] which maps each unique [expr] to its frequency in [seq] *)
 let seq_coverage (seq : expr Sequence.t) : int Map.M(Expr).t = 
@@ -95,18 +96,29 @@ let sortByPercent (h : ('a, int) Hashtbl.t) : (float * 'a) list =
     |> rev
 
 (** Prints the percentages of two pairs, each of type [float * 'a list] 
-    - The argument [~f] converts type ['a] to [string] for printing
-    - The argument [~numChars] specifies the no. of characters to print
-      in the string representation of the ['a] type*)    
-let printPercents (p1, k1 : float * 'a) (p2, k2 : float * 'a) 
-                  ~(f: 'a -> string) ~(numChars : int): unit = 
-  printf "\t %*s : %.2f \t %*s : %.2f\n" numChars (f k1) p1 numChars (f k2) p2
+    - The argument [~printKey] converts type ['a] to [string] for printing
+    - The argument [~precision] specifies the no. of characters to print
+      in the string representation of the ['a] type. 
+      The default precision is 10. *)    
+let printPercents ?(precision = 10) (p1, k1 : float * 'a) (p2, k2 : float * 'a) 
+                  ~(printKey: 'a -> string) : unit = 
+  printf "\t %*s : %.2f \t %*s : %.2f\n" 
+    precision (printKey k1) p1 
+    precision (printKey k2) p2
+
+(** Prints a percentage of a pair of type [float * 'a], where 
+    the percentage is the first element of the pair 
+    - See [printPercents] for explanations of the named arguments [precision]
+      and [printKey] *)
+let printPercent ?(precision = 10) (p, k : float * 'a) 
+                ~(printKey : 'a -> string) : unit = 
+  printf "\t %*s %.2f \n" precision (printKey k) p 
         
 (** Prints the percentage of each [key]'s occurrence in the hashtable [h], 
     using [printKey] as the serialization for [key]s of type ['a] *)
-let printPercent (h : ('a, int) Hashtbl.t) (printKey : 'a -> string) 
+(* let printPercent (h : ('a, int) Hashtbl.t) (printKey : 'a -> string) 
                  (key : 'a) : unit = 
   let open Float in 
   let occurrences = of_int (Hashtbl.find_exn h key) in 
   let total = of_int (sumValues h) in 
-  printf "\t %s : %.2f%%\n" (printKey key) (occurrences /. total *. 100.0)
+  printf "\t %s : %.2f%%\n" (printKey key) (occurrences /. total *. 100.0) *)
