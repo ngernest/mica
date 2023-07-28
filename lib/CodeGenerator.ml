@@ -880,7 +880,16 @@ let compareImpls (m : moduleSig) : document =
   ^/^ separate_map hardline obsEquiv constrs 
   ^/^ !^ "match combine_errors_unit " 
   ^^ OCaml.list getTestName tyConstrs ^^ !^ " with "
-  ^/^ sBar ^^ !^ "Ok ok" ^^ sArrow ^^ !^ "ok"
+
+  (** All observational equivalence tests pass *)
+  ^/^ sBar ^^ !^ "Ok ok" ^^ sArrow 
+  ^^ jump 2 1 (!^ "let numPassed = QC.default_can_generate_trial_count in "
+  ^/^ !^ "let numDiscarded = QC.(default_trial_count - numPassed) in "
+  ^/^ !^ "printf " 
+  ^^ OCaml.string "\n Mica: OK, passed %d tests; %d discarded. \n"
+  ^^ jump 1 1 !^ " numPassed numDiscarded;")
+
+  (** There is a test which fails *)
   ^/^ sBar ^^ !^ "Error err" ^^ sArrow 
   ^^ jump 2 1 @@ 
   !^ "let open Stdlib.Format in "
