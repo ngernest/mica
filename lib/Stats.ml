@@ -74,6 +74,34 @@ let genExprWithLog (gen : expr Generator.t)
 let sumValues (h : ('a, int) Hashtbl.t) : int = 
   Hashtbl.fold h ~init:0 ~f:(fun ~key:_ ~data acc -> acc + data) 
 
+(** Takes a hashtable mapping ['a] keys to their occurrences, 
+    and converts it into a hashtable mapping ['a] to their frequency 
+    (as a percentage) *)
+let computePercents (h : ('a, int) Hashtbl.t) : ('a, float) Hashtbl.t = 
+  let open Float in 
+  let total = of_int (sumValues h) in 
+  Hashtbl.map h ~f:(fun n -> of_int n /. total *. 100.0)
+
+(** Takes a hashtable mapping ['a] keys to their integer frequency, 
+    computes the frequency of each key as a percentage, then 
+    returns a [float * 'a list] association list sorted in descending order 
+    of percentage (highest frequency comes first)  *)  
+let sortByPercent (h : ('a, int) Hashtbl.t) : (float * 'a) list = 
+  let open List in 
+  computePercents h 
+    |> Hashtbl.to_alist 
+    |> Assoc.inverse 
+    |> sort ~compare:(fun (f1, _) (f2, _) -> compare_float f1 f2)
+    |> rev
+
+(** Prints the percentages of two pairs, each of type [float * 'a list] 
+    - The argument [~f] converts type ['a] to [string] for printing
+    - The argument [~numChars] specifies the no. of characters to print
+      in the string representation of the ['a] type*)    
+let printPercents (p1, k1 : float * 'a) (p2, k2 : float * 'a) 
+                  ~(f: 'a -> string) ~(numChars : int): unit = 
+  printf "\t %*s : %.2f \t %*s : %.2f\n" numChars (f k1) p1 numChars (f k2) p2
+        
 (** Prints the percentage of each [key]'s occurrence in the hashtable [h], 
     using [printKey] as the serialization for [key]s of type ['a] *)
 let printPercent (h : ('a, int) Hashtbl.t) (printKey : 'a -> string) 
@@ -81,4 +109,4 @@ let printPercent (h : ('a, int) Hashtbl.t) (printKey : 'a -> string)
   let open Float in 
   let occurrences = of_int (Hashtbl.find_exn h key) in 
   let total = of_int (sumValues h) in 
-  printf "%s : %.2f%%\n" (printKey key) (occurrences /. total *. 100.0)
+  printf "\t %s : %.2f%%\n" (printKey key) (occurrences /. total *. 100.0)

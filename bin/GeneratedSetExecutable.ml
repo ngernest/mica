@@ -7,8 +7,9 @@
 open Core
 open Lib.Stats
 open Lib.GeneratedSetPBTCode
+open Lib.Utils
 
-let () = 
+(* let () = 
   let open Or_error in 
   let module QC = Quickcheck in 
   let test_bool = QC.test_or_error (gen_expr Bool) ~sexp_of:sexp_of_expr 
@@ -30,12 +31,12 @@ let () =
   | Error err -> 
     let open Stdlib.Format in 
     Error.pp err_formatter err;
-    print_newline ()
+    print_newline () *)
    
 
-(** TODO: commented out QC code below that records stats using the 
+(** Commented out QC code below that records stats using the 
     utility functions from [lib/Stats.ml] *)  
-(* let () =   
+let () =   
   let open Printf in 
   let open Hashtbl in 
   let bh1 = create (module Bool) in 
@@ -58,16 +59,14 @@ let () =
                                  incr ih2 n2;
                                  [%test_eq: int] n1 n2    
      | v1, v2 -> failwith @@ displayError e v1 v2);
+
+  let (bh1', bh2') = map2 ~f:sortByPercent (bh1, bh2) in 
+  let (ih1', ih2') = map2 ~f:sortByPercent (ih1, ih2) in 
   
   printf "\nBool distribution:\n";
-  printf "Module 1:\n";
-  iter_keys bh1 ~f:(printPercent bh1 string_of_bool);
-  printf "Module 2:\n";
-  iter_keys bh2 ~f:(printPercent bh2 string_of_bool);
+  printf "\t Module 1 \t Module 2 \n";
+  List.iter2_exn bh1' bh2' ~f:(printPercents ~f:string_of_bool ~numChars:5);
 
   printf "\nInt distribution:\n";
-  printf "Module 1:\n";
-  iter_keys ih1 ~f:(printPercent ih1 string_of_int);
-  printf "Module 2:\n";
-  iter_keys ih2 ~f:(printPercent ih2 string_of_int) *)
- 
+  printf "\t Module 1 \t Module 2 \n";
+  List.iter2_exn ih1' ih2' ~f:(printPercents ~f:string_of_int ~numChars:3);  
