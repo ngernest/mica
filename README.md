@@ -1,12 +1,21 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
-(Submission for the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition))
+(Submitted to the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition))
 
 **Mica** checks whether two OCaml modules implementing the same signature are observationally 
 equivalent. Mica does this by parsing the signature & *automatically* generating 
 property-based testing code specialised to the signature.
 
-Documentation: https://ngernest.github.io/mica/mica/index.html
+[Mica docs](https://ngernest.github.io/mica/mica/index.html) 
+
+ICFP SRC documents:              
+- [Extended Abstract](./talks/icfp_src_abstract.pdf) 
+- Poster (to come!)
+- Talk (to come!)
+
+Presentation slides on Mica:                 
+- [Penn PLClub talk](./talks/mica_plclub_talk.pdf) (45 mins) 
+- [OPLSS '23 talk](./talks/mica_oplss_slides.pdf) (10 mins)
         
 ## Description of source files
 - `lib/Parser.ml`: parser utility functions, modified from the Angstrom parser-combinator library
