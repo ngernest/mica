@@ -12,13 +12,13 @@ module VariantStack : StackInterface = struct
   
   let peek s = 
     match s with 
-    | Nil -> failwith "can't peek from an empty stack" 
-    | Cons (x, _) -> x
+    | Nil -> None
+    | Cons (x, _) -> Some x
 
   let pop s = 
     match s with 
-    | Nil -> s
-    | Cons (_, xs) -> xs
+    | Nil -> None
+    | Cons (_, xs) -> Some xs
 
   let clear _ = ()
 

@@ -1,8 +1,21 @@
 open Core 
+open PPrint
+open Stdio
+
+open Parser
+open ParserTypes
+open ModuleParser
+open CodeGenerator
+open Utils
+
+(** Suppress unused value compiler warnings *)
+[@@@ocaml.warning "-27-32-34"]
 
 (** Parses user input from the command-line, in particular the filepaths 
     of the [.ml] files containing the signature & the two modules for testing.
     (Code adapted from Real World OCaml, Chapter 16) *)
+
+(** {1 Utility functions for command-line parsing} *)    
 
 (** Prompts the user to enter a value, where [name] is the name of the value, 
     and [of_string] if a function converting the string input to type ['a] *)
@@ -34,12 +47,104 @@ let is_filename (filename : string) : string =
     input file isn't some Unix file type that can’t be read *)      
 let regular_file =
   Command.Arg_type.create is_filename
+    
+(** {1 Useful filepaths & flags} *)    
 
-(* (DEPRECATED) Creates a parser that:
-    (1) Defines a cmd-line argument type which ensures that the 
-    input file isn't some Unix file type that can’t be read, and 
-    (2) Prompts the user if no value is provided 
-*)         
-let anon_prompt_reg_file (name : string) : string Command.Param.t = 
-  anon_prompt name is_filename
+(** Name of the generated file containing the PBT code *)
+let pbtFilePath : string = "./lib/Generated.ml"
 
+(** Name of the generated executable file which compares two modules
+    for observational equivalence *)
+let execFilePath : string = "./bin/compare_impls.ml"
+
+
+(** Documentation string for a flag specifying whether QuickCheck int generators 
+    should only generate non-negative ints *)
+let nonNegIntsDoc : string = 
+  "Specify if QuickCheck int generators should only generate non-negative ints"
+
+(** Docstring for a flag specifying the name of an opaque type 
+    contained inside the module signature *)    
+let opaqueTypeDoc : string = 
+  "Name of an opaque type in the module signature"
+
+(** Docstring for a flag specifying the name of the external library 
+    (eg. the Diffie-Hellman x25519 example, see readme) *)  
+let externalLibDoc : string = 
+  "Name of the external library in which the modules reside (if applicable)"  
+
+(** {1 Writing the generated PBT code to an output file} *)   
+
+(** Writes the generated PBT code to the file at [pbtFilePath] 
+    [m] is the parsed module signature AST 
+    [functorName] is the name of the functor that produces the test harness
+    [sigName, modName1, modName2] are the names of the signature/two module implementations *)
+let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : string)
+  ~(sigName : string) ~(externalLib : string option) ~(nonNegOnly: bool) (modName1 : string) (modName2 : string) : unit = 
+
+  let pbtFile = Out_channel.create ~append:false pbtFilePath in
+  writeDoc pbtFile 
+    (imports ~externalLib ~sigName ~modName1 ~modName2 ^/^ exprADTDecl m ^/^ tyADTDecl m);
+  writeDoc pbtFile (functorDef m ~sigName ~functorName);
+  writeDoc pbtFile (genExprDef ~nonNegOnly m);
+  writeDoc pbtFile (implModuleBindings ~functorName modName1 modName2);
+  writeDoc pbtFile displayErrorDef;
+  Out_channel.close pbtFile
+
+(** {1 Parsing user input from the command-line} *)  
+  
+(** Parses the names of the signature & implementation files from the cmd-line *)
+let cmdLineParser : Command.t =
+  Command.basic
+    ~summary:"Mica: Automated Property-Based Testing for OCaml modules"
+    ~readme:(fun () -> 
+      "For detailed documentation, please consult the docs at ngernest.github.io/module_pbt")
+    (let%map_open.Command 
+      sigFile = anon ("signature_file" %: regular_file) 
+      and implFile1 = anon ("implementation_file_1" %: regular_file)
+      and implFile2 = anon ("implementation_file_2" %: regular_file) 
+      and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc
+      and externalLib = flag "-library" (optional string) ~doc:externalLibDoc in
+    fun () -> 
+      let functorName = "ExprToImpl" in
+      let moduleString = string_of_file sigFile in 
+      let (sigName, modName1, modName2) = 
+        map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
+      begin match (run_parser moduleTypeP moduleString) with 
+        | Ok m -> 
+          writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~externalLib ~nonNegOnly 
+            modName1 modName2;
+
+          (* TODO (stretch-goal): automatically append executable stanza to Dune file *)
+
+          let executable = Out_channel.create ~append:false execFilePath in
+            writeDoc executable (executableImports ~pbtFilePath ~execFilePath);
+            writeDoc executable (compareImpls m);
+
+            Out_channel.close executable;
+            printf "\nGenerated PBT code: ./lib/generated.ml\n";
+            printf "Generated executable: ./bin/compare_impls.exe\n"
+
+        | Error err -> printf "error = %s\n" err
+      end)
+
+
+
+(* Commented out code for basic testing *)
+(* let testParser : Command.t =
+  Command.basic
+    ~summary:"Automated Property-Based Testing for OCaml modules"
+    ~readme:(fun () -> "TODO: Complete readme")
+    (let%map_open.Command 
+      sigFile = anon ("signature file" %: regular_file) 
+      and opaqueTypes = flag "-opaque-type" (listed string) ~doc:opaqueTypeDoc in
+    fun () -> 
+      let functorName = "ExprToImpl" in
+      let moduleString = string_of_file sigFile in 
+      let sigName = getModuleSigName sigFile in 
+      begin match (run_parser (moduleTypeP ~opaqueTypes ()) moduleString) with 
+        | Ok m -> 
+          writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~nonNegOnly:false "" ""
+          
+        | Error err -> printf "error = %s\n" err
+      end)       *)

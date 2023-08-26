@@ -3,7 +3,8 @@
 (library
  (name lib)
  (public_name module_pbt)
- (libraries base_quickcheck base core stdio angstrom core_unix pprint core_unix.command_unix)
+ (libraries base_quickcheck base core stdio angstrom core_unix pprint 
+            core_unix.command_unix re)
  (preprocess
   (pps ppx_jane))
  (inline_tests))

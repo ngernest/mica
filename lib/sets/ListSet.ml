@@ -5,7 +5,7 @@ module ListSet : SetInterface = struct
           The empty list [[]] represents the empty set. 
       RI: The list must not contain duplicates. *)
   type 'a t = 'a Base.List.t 
-    [@@deriving sexp]
+    [@@deriving sexp, equal]
 
   let empty = []
 

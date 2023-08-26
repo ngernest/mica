@@ -1,9 +1,14 @@
 (* Adatpted from code by Shayne Fletcher *)
 
+(* Disable "unused-values" compiler warnings *)
+[@@@ocaml.warning "-32-34-27"]
+
 open PolyInterface
 
-module Polynomial2 : PolyInterface = struct
-  (* Invariant : Ordered by powers, lower order terms at the front *)
+module Poly2 : PolyInterface = struct
+  (** Polynomials are represented as association lists,
+      where each element is a pair of the form (coefficient, degree). 
+      - Invariant: Ordered by powers, lower order terms at the front *)
   type t = (Base.Int.t * Base.Int.t) Base.List.t 
     [@@deriving sexp]
 
@@ -36,10 +41,10 @@ module Polynomial2 : PolyInterface = struct
         else (c, k1) :: (add r1 r2)
       else (c2, k2) :: (add p1 r2)
 
-  let create l =
-    List.fold_left (fun acc (c, k) ->
-      add (monomial c k) acc) zero l
+  let create (l : (int * int) list) : (int * int) list =
+    List.fold_left (fun acc (c, k) -> add (monomial c k) acc) zero l
 
+  (** Helper function for polynomial multiplication, called by [mult] below *)
   let rec times (c, k) = function
   | [] -> []
   | (c1, k1) :: q ->
@@ -47,6 +52,7 @@ module Polynomial2 : PolyInterface = struct
     if c2 = 0 then times (c, k) q
     else (c2, k + k1) :: times (c, k) q
 
+  (** Polynomial multiplication *)
   let mult p = List.fold_left (fun r m -> add r (times m p)) zero
 
   let rec equal p1 p2 =
@@ -56,21 +62,25 @@ module Polynomial2 : PolyInterface = struct
       k1 = k2 && c1 = c2 && equal q1 q2
     | _ -> false
 
-  let rec pow c = function
-  | 0 -> 1
-  | 1 -> c
-  | k ->
-    let l = pow c (k lsr 1) in
-    let l2 = l * l in
-    if k land 1 = 0 then l2 else c * l2
+  let rec power (x : int) (n : int) : int = 
+    match n with 
+    | 0 -> 1
+    | 1 -> x
+    | k ->
+      let l = power x (k lsr 1) in
+      let l2 = l * l in
+      if k land 1 = 0 then l2 
+        else x * l2
 
-  let eval p c = match List.rev p with
-  | [] -> 0
-  | (h :: t) ->
-    let reduce (a, k) (b, l) =
-      let n = pow c (k - l) in
-      let t = (a * n) + b in
-      (t, l)  in
-    let a, k = List.fold_left reduce h t in
-    (pow c k) * a
+  let eval (polynomial : (int * int) list) (x : int) : int = 
+    match List.rev polynomial with
+    | [] -> 0
+    | (hd :: tl) ->
+      let reduce (accCoeff, accDeg : int * int) 
+                 (coeff, deg : int * int) : int * int =
+        let xPower   = power x (accDeg - deg) in
+        let newCoeff = (accCoeff * xPower) + coeff in
+        (newCoeff, deg) in
+      let constTerm, k = List.fold_left reduce hd tl in
+      (power x k) * constTerm
 end

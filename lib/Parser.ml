@@ -44,6 +44,12 @@ let is_whitespace (c : char) : bool =
   | '\x20' | '\x0a' | '\x0d' | '\x09' -> true
   | _ -> false  
 
+(** [is_parens c] returns true if [c] is a parenthesis character *)  
+let is_parens (c : char) : bool = 
+  match c with 
+  | '(' | ')' -> true 
+  | _ -> false 
+
 (******************************************************************************)
 (** {1 Simple parsers} *)  
 

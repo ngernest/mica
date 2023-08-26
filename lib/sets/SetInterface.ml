@@ -1,6 +1,6 @@
 module type SetInterface = sig
   type 'a t
-    [@@deriving sexp]
+    [@@deriving sexp, equal]
   val empty : 'a t
   val is_empty : 'a t -> bool 
   val mem : 'a -> 'a t -> bool

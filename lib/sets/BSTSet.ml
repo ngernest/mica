@@ -4,7 +4,7 @@ open SetInterface
 type 'a tree =
   | Empty
   | Node of 'a tree * 'a * 'a tree
-  [@@deriving sexp]
+  [@@deriving sexp, equal]
 
 let leaf x = Node (Empty, x, Empty)
 
@@ -65,13 +65,13 @@ module BSTSet : SetInterface = struct
       less than [x], and all values in [rt] are strictly greater than [x]. *)
   
   type 'a t = 'a tree
-    [@@deriving sexp]
+    [@@deriving sexp, equal]
 
   let empty = Empty
 
   let is_empty t = 
     match t with 
-    | Empty -> true 
+    | Empty -> true
     | Node _ -> false 
 
   (** [add x t] inserts [x] into the BST [t] *)
@@ -147,7 +147,10 @@ module BSTSet : SetInterface = struct
       match t with
       | Empty -> true
       | Node (_, _, _) -> 
-          if walk t (fun _ -> true) then true else false
+        (* To introduce a bug, replace with [fun _ -> false] 
+           See comment above function for details *)  
+        if walk t (fun _ -> true) then true else false
+          
   
 
   (* Note that two binary search trees can be equal as sets without having the
