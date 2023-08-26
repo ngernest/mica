@@ -9,6 +9,7 @@ open Lib.Stats
 open Lib.GeneratedSetPBTCode
 open Lib.Utils
 
+
 (* let () = 
   let open Or_error in 
   let module QC = Quickcheck in 
@@ -36,7 +37,7 @@ open Lib.Utils
 
 (** Commented out QC code below that records stats using the 
     utility functions from [lib/Stats.ml] *)  
-let () =   
+(* let () =   
   let open Printf in 
   let open Hashtbl in 
   let bh1 = create (module Bool) in 
@@ -71,4 +72,4 @@ let () =
   printf "\nInt distribution:\n";
   printf "\t Module 1 \t Module 2 \n";
   List.iter2_exn ih1' ih2' 
-    ~f:(printPercents ~printKey:string_of_int ~precision:intPrecision);  
+    ~f:(printPercents ~printKey:string_of_int ~precision:intPrecision);   *)

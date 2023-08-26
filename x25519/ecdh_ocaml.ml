@@ -12,7 +12,7 @@ module G = Generator
 let gen_hex_digit : char Generator.t = 
   Generator.(union [char_digit; char_uniform_inclusive 'a' 'f'])
   
-(** Generates a hex string of length 64 *)  
+(** Generates a hex string of length 32 *)  
 let gen_hex_string : string Generator.t = 
   Generator.string_with_length_of ~length:32 gen_hex_digit
 

@@ -8,11 +8,29 @@ module G = Generator
 
 (** Generates a hexadecimal digit *)  
 let gen_hex_digit : char G.t = 
-  Generator.(union [char_digit; char_uniform_inclusive 'a' 'f'])
+  G.(union [char_digit; char_uniform_inclusive 'a' 'f'])
+
+
+
+let gen_hex_charcode : string G.t = 
+  let open Base.String in 
+  G.map2 gen_hex_digit gen_hex_digit 
+    ~f:(fun c1 c2 -> of_char_list [c1; c2])
+
+let gen_hex_charcode' : string G.t = 
+  let open Base in 
+  G.map3 (G.return {|\x|}) gen_hex_digit gen_hex_digit 
+    ~f:(fun x c1 c2 -> x ^ String.of_char_list [c1; c2])    
+
+  (* let%bind (a, b) = G.both gen_hex_digit gen_hex_digit in 
+  of_char_list [a, b] *)
   
 (** Generates a hex string of length 64 *)  
 let gen_hex_string : string G.t = 
-  Generator.string_with_length_of ~length:32 gen_hex_digit
+  let open G.Let_syntax in 
+  let open Base in 
+  G.list_with_length ~length:32 gen_hex_charcode' >>| String.concat 
+  (* ~sep:(String.escaped {|\x|}) *)
 
 module ECDH_C : ECDHIntf = struct 
   include Callipyge

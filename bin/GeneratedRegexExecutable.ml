@@ -26,7 +26,7 @@ let () =
     Error.pp err_formatter err;
     print_newline ()
 
-let () =   
+(* let () =   
   let open Printf in 
   let open Hashtbl in 
 
@@ -69,4 +69,4 @@ let () =
   printf "\nBool distribution:\n";
   printf "\t Module 1 \t Module 2 \n";
   List.iter2_exn bh1' bh2' 
-    ~f:(printPercents ~printKey:string_of_bool ~precision:boolPrecision);
+    ~f:(printPercents ~printKey:string_of_bool ~precision:boolPrecision); *)
