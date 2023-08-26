@@ -98,7 +98,7 @@ let cmdLineParser : Command.t =
   Command.basic
     ~summary:"Mica: Automated Property-Based Testing for OCaml modules"
     ~readme:(fun () -> 
-      "For detailed documentation, please consult the docs at ngernest.github.io/module_pbt")
+      "For detailed documentation, please consult the docs at ngernest.github.io/mica")
     (let%map_open.Command 
       sigFile = anon ("signature_file" %: regular_file) 
       and implFile1 = anon ("implementation_file_1" %: regular_file)

@@ -1,4 +1,4 @@
-{0 Mica: Automated Property-Based Testing for OCaml Modules}
+{0 Mica: Automated Differential Testing for OCaml Modules}
 Welcome to the documentation page for our automated PBT tool, {b Mica}!
 
 {1 Overview}
