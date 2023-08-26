@@ -19,7 +19,16 @@
  (name mica)
  (synopsis "Automated Differential Testing for OCaml Modules")
  (description "A longer description")
- (depends ocaml dune)
+ (depends 
+   (ocaml
+     (>= 4.13)) 
+    dune
+    (odoc :with-doc)
+    angstrom
+    base
+    base_quickcheck
+    pprint
+    core)
  (tags
   (topics "to describe" your project)))
 
