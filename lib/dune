@@ -2,7 +2,7 @@
 
 (library
  (name lib)
- (public_name module_pbt)
+ (public_name mica)
  (libraries base_quickcheck base core stdio angstrom core_unix pprint 
             core_unix.command_unix re)
  (preprocess
@@ -10,4 +10,4 @@
  (inline_tests))
 
 (documentation
- (package module_pbt)) 
+ (package mica)) 

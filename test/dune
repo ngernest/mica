@@ -1,5 +1,0 @@
-(test
- (name module_pbt_test)
- (libraries base_quickcheck base core stdio ppx_jane lib)
- (preprocess
-  (pps ppx_jane)))

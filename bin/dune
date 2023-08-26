@@ -1,5 +1,5 @@
 (executable
- (public_name module_pbt)
+ (public_name mica)
  (name main)
  (modules main)
  (libraries lib core angstrom stdio pprint)

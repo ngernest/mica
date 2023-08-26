@@ -1,11 +1,11 @@
 (lang dune 3.4)
 
-(name module_pbt)
+(name mica)
 
 (generate_opam_files true)
 
 (source
- (github ngernest/module_pbt))
+ (github ngernest/mica))
 
 (authors "Ernest Ng <ngernest@seas.upenn.edu>")
 
@@ -13,11 +13,11 @@
 
 (license LICENSE)
 
-(documentation https://url/to/documentation)
+(documentation https://ngernest.github.io/mica/)
 
 (package
- (name module_pbt)
- (synopsis "A short synopsis")
+ (name mica)
+ (synopsis "Automated Differential Testing for OCaml Modules")
  (description "A longer description")
  (depends ocaml dune)
  (tags
