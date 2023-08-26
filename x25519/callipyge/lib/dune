@@ -1,6 +1,0 @@
-(library
- (name callipyge)
- (public_name module_pbt.callipyge)
- (preprocess
-  (pps ppx_jane))
- (libraries fmt eqaf base))

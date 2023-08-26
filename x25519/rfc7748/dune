@@ -1,7 +1,0 @@
-(library
- (name rfc7748)
- (public_name module_pbt.rfc7748)
- (preprocess
-  (pps ppx_jane))
- (libraries zarith base)
-)
