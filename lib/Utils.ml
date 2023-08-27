@@ -70,10 +70,10 @@ let map2 ~f (a1, a2) = (f a1, f a2)
 (** Applies a function pointwise on a triple *)  
 let map3 ~f (a1, a2, a3) = (f a1, f a2, f a3)    
  
-(** Converts a curried arity-3 function to its uncurried equivalent *)    
+(** Converts an uncurried function to its curried equivalent *)    
 let curry3 f a b c = f (a, b, c)
 
-(** Converts an uncurried arity-3 function to its curried equivalent *)
+(** Converts a curried function to a function on a triple *)
 let uncurry3 f (a, b, c) = f a b c
 
 (** [parensStr s] parenthesizes the string [s] *)
