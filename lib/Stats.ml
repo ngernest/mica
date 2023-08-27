@@ -113,12 +113,4 @@ let printPercents ?(precision = 10) (p1, k1 : float * 'a) (p2, k2 : float * 'a)
 let printPercent ?(precision = 10) (p, k : float * 'a) 
                 ~(printKey : 'a -> string) : unit = 
   printf "\t %*s %.2f \n" precision (printKey k) p 
-        
-(** Prints the percentage of each [key]'s occurrence in the hashtable [h], 
-    using [printKey] as the serialization for [key]s of type ['a] *)
-(* let printPercent (h : ('a, int) Hashtbl.t) (printKey : 'a -> string) 
-                 (key : 'a) : unit = 
-  let open Float in 
-  let occurrences = of_int (Hashtbl.find_exn h key) in 
-  let total = of_int (sumValues h) in 
-  printf "\t %s : %.2f%%\n" (printKey key) (occurrences /. total *. 100.0) *)
+      

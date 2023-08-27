@@ -1,5 +1,10 @@
 (** Signature for a functional / persistent map abstract data type. 
-    Adapted from the Cornell CS 3110 textbook, chapter 8. *)
+    Adapted from the Cornell CS 3110 textbook, chapter 8. 
+
+    To test Mica with the map modules, please run Mica on 
+    [MapInterface.ml], {i not} this file. 
+    (The Mica parser currently does not support parsing of comments.)
+*)
 
 module type MapInterface = sig 
     (** The abstract type of maps. 

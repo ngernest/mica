@@ -1,4 +1,8 @@
-(** An interface for regular-expression matchers *)
+(** An interface for regular-expression matchers. 
+    To test Mica with the regex modules, please run Mica on [RegexMatcher.mli], 
+    {i not} this file. 
+    (The Mica parser currently does not support parsing of comments.)
+*)
 module type RegexMatcher = sig 
   (** Abstract type of regexes *)
   type t 
