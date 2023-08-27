@@ -239,48 +239,4 @@ module RedBlackMap : MapInterface = struct
   let from_list (lst : AssocList.t) : rbtree = 
     List.fold_left (fun acc (k, v) -> insert (k, v) acc) empty lst
 
-(** NB: the code below for checking Red-Black Tree invariants 
-    has been commented out, as it has not been adapted to 
-    work with Germane & Might's implementation of Red-Black tree deletion 
-    involving "double-black" nodes *)
-
-  (** Are the elements in the list ordered by the provided operation? *)
-  (* let rec orderedBy (op : 'a -> 'a -> bool) (lst : 'a list) : bool = 
-    match lst with 
-    | x::y::xs -> op x y && orderedBy op (y::xs)
-    | _ -> true
-
-  (** A red-black tree is a BST if an inorder traversal is strictly ordered. *)
-  let isBST (t : rbtree) : bool = 
-    let open Base.List in 
-    orderedBy (<) @@ map ~f:fst (bindings t)
-
-  let isRootBlack = failwith "TOOD"
-
-  (** Computes the "black height" of a tree, i.e. the number of black nodes 
-      from the root to every leaf. It is an invariant that this number is the 
-      same for every path in the tree, so we only need to look at one side. *)
-  let rec blackHeight (t : rbtree) : int = 
-    match t with 
-    | Empty _ -> 1
-    | Node (c, lt, _, _) -> blackHeight lt + (if c == Black then 1 else 0)
-
-  (** For all nodes in the tree, all downward paths from the node to E contain 
-      the same number of black nodes. *)
-  let rec consistentBlackHeight (t : rbtree) : bool = 
-    match t with 
-    | Empty _ -> true 
-    | Node (_, lt, _, rt) -> 
-      blackHeight lt == blackHeight rt 
-      && consistentBlackHeight lt 
-      && consistentBlackHeight rt
-
-  let rec noRedRed (t : rbtree) : bool = 
-    match t with 
-    | Node (Red, lt, _, rt) -> color lt == Black & color rt == Black && noRedRed lt && noRedRed rt
-    | Node (Black, lt, _, rt) -> noRedRed lt && noRedRed rt
-    | Empty _ -> true  *)
-
-  
-
 end
