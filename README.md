@@ -1,5 +1,9 @@
 # Mica: Automated Property-Based Testing for OCaml Modules 
 
+NB: This branch contains some **experimental** code pertaining to making Mica work with a
+module signature for the Diffie-Hellman key exchange protocol. There may be breaking changes
+in this repo. Please refer to the **main** branch if you wish to use Mica. 
+
 This repo contains the implementation for **Mica**, a tool which parses any generic OCaml module signature, 
 and checks whether two modules implementing the signature are observationally 
 equivalent by generating random sequences of commands using Core.QuickCheck.
