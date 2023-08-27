@@ -1,8 +1,7 @@
 # Frontend to dune
 # Taken from https://github.com/mjambon/dune-starter/tree/master
 
-.PHONY: default build install uninstall test clean fmt
-.IGNORE: fmt
+.PHONY: default build install uninstall clean
 
 default: build
 
@@ -26,8 +25,3 @@ clean:
 	rm -f bin/compare_impls.ml
 	touch bin/compare_impls.ml
 	dune clean
-	
-
-fmt:
-	dune build @fmt
-	dune promote
