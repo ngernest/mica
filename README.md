@@ -4,7 +4,7 @@
 
 **Mica** checks whether two OCaml modules implementing the same signature are observationally 
 equivalent. Mica does this by parsing the signature & *automatically* generating 
-property-based testing code specialised to the signature.
+property-based testing (PBT) code specialised to the signature.
 
 [Mica docs](https://ngernest.github.io/mica/mica/index.html) 
 
@@ -14,36 +14,49 @@ ICFP SRC documents:
 - Talk (to come!)
 
 Presentation slides on Mica:                 
-- [Penn PLClub talk](./talks/mica_plclub_talk.pdf) (45 mins) 
-- [OPLSS '23 talk](./talks/mica_oplss_slides.pdf) (10 mins)
+- [Penn PLClub talk](./talks/mica_plclub_talk.pdf) (~45 mins) 
+- [OPLSS '23 talk](./talks/mica_oplss_slides.pdf) (~10 mins)
         
-## Description of source files
-- `lib/Parser.ml`: parser utility functions, modified from the Angstrom parser-combinator library
-- `lib/ParserTypes.ml`: Datatypes defining an AST for module signatures
-- `lib/ModuleParser.ml`: Parser for OCaml module signatures
-- `lib/CodeGenerator.ml`: Takes a parsed AST representing a module signature and generates the appropriate PBT code 
-- `lib/CmdLineParser.ml`: Parses user input from the command line
-- `bin/main.ml`: Entry point for the Mica executable
+## Description of source files 
+All source files are located in the [`lib`](./lib) subdirectory, 
+with the exception of [`bin/main.ml`](./bin/main.ml), which serves as the 
+entry point for the Mica executable. 
+
+The core components of Mica are located in these files: 
+- [`Parser.ml`](./lib/Parser.ml): parser utility functions, modified from the Angstrom parser-combinator library
+- [`ParserTypes.ml`](./lib/ParserTypes.ml): Datatypes defining an AST for OCaml module signatures
+- [`ModuleParser.ml`](./lib/ModuleParser.ml): Parser for OCaml module signatures
+- [`CodeGenerator.ml`](./lib/CodeGenerator.ml): Takes a parsed AST representing a module signature & generates specialized PBT code 
+- [`CmdLineParser.ml`](./lib/CmdLineParser.ml): Parses user input from the command line
+
+Auxiliary utility files:
+- [`Utils.ml`](./lib/Utils.ml): Utility functions for the code generator
+- [`Stats.ml`](./lib/Stats.ml): Functions for examining the distribution of randomly generated symbolic expressions
+- [`Latin.ml`](./lib/Latin.ml): QuickCheck generator for Latin words (taken from [Lorem Ipsum](https://en.wikipedia.org/wiki/Lorem_ipsum) placeholder text)
+
 
 ## Examples 
 The `lib` directory also contains five example module signatures, 
 each of which has two different implementations. Mica has been tested
 extensively with these five pairs of modules. 
 
+The code for these example modules has been adapted from various sources, 
+listed in the [references](#references) section of this README.
+
 **1. Finite Sets** (Lists & BSTs)
   - Signature: [`SetInterface.ml`](./lib/sets/SetInterface.ml)
   - List implementation: [`ListSet.ml`](./lib/sets/ListSet.ml)
   - BST implementation: [`BSTSet.ml`](./lib/sets/BSTSet.ml)
 
-**2. Regex matchers** (Brzozowski derivatives & DFAs)
+**2. Regex matchers** ([Brzozowski derivatives](https://en.wikipedia.org/wiki/Lorem_ipsum) & DFAs)
   - Signature: [`RegexMatcher.mli`](./lib/regexes/RegexMatcher.mli) (Commented version: [`RegexMatcher.ml`](./lib/regexes/RegexMatcher.ml))
   - Brzozowski derivatives: [`Brzozowski.ml`](./lib/regexes/Brzozowski.ml)
   - DFAs: [`DFA.ml`](./lib/regexes/DFA.ml)
 
-**3. Polynomials** (Horner schema & list folds)
+**3. Polynomials** ([Horner schema](https://en.wikipedia.org/wiki/Horner%27s_method) & list folds)
   - Signature: [`PolyInterface.ml`](./lib/polynomials/PolyInterface.ml)
-  - Polynomial evaluation using list folds: [`Poly1.ml`](./lib/polynomials/Poly1.ml) (adapted from Jean-Christophe Filliatre)
-  - Polynomial evaluation using Horner's algorithm: [`Poly2.ml`]((./lib/polynomials/Poly2.ml)) (adapted from Shayne Fletcher)
+  - Polynomial evaluation using list folds: [`Poly1.ml`](./lib/polynomials/Poly1.ml) 
+  - Polynomial evaluation using Horner's algorithm: [`Poly2.ml`]((./lib/polynomials/Poly2.ml))
 
 **4. Functional Maps** (Association lists & Red-black trees)
   - Signature: [`MapInterface.ml`](./lib/maps/MapInterface.ml) (Commented version: [`MapInterface.mli`](./lib/maps/MapInterface.mli))
@@ -52,9 +65,9 @@ extensively with these five pairs of modules.
   - Red-Black tree maps: [`RedBlackMap.ml`](./lib/maps/RedBlackMap.ml)
 
 **5. Stacks** (List & algebraic data type representations)
-  - Signature: `StackInterface.ml`
-  - Implementation using lists: `ListStack.ml`
-  - Implementation using custom ADTs: `VariantStack.ml`
+  - Signature: [`StackInterface.ml`](./lib/stacks/StackInterface.ml)
+  - Implementation using lists: [`ListStack.ml`](./lib/stacks/ListStack.ml)
+  - Implementation using custom ADT: [`VariantStack.ml`](./lib/stacks/VariantStack.ml)
 
 ## Building & running
 Run `make` (or `dune build`) to build and compile the library.         
@@ -79,17 +92,20 @@ both correctly implement the interface `SetInterface`.
 The files `lib/GeneratedSetPBTCode.ml` and `lib/GeneratedSetExecutable.ml` contain PBT code that is 
 automatically generated by Mica. 
 
-### Dependencies:
-- [Base](https://github.com/janestreet/base)
-- [Core](https://github.com/janestreet/core)
+### Dependencies
+Please see `mica.opam` for a full list of dependencies. 
+Mica has been primarily tested with version 4.13.1 of the OCaml base compiler. 
+- [Base](https://github.com/janestreet/base) and [Base_quickcheck](https://github.com/janestreet/base_quickcheck)
+- [Core](https://github.com/janestreet/core) 
+(in particular [Core.Quickcheck](https://blog.janestreet.com/quickcheck-for-core/))
 - [Angstrom](https://github.com/inhabitedtype/angstrom)
 - [PPrint](https://github.com/fpottier/pprint)
 - [Stdio](https://github.com/janestreet/stdio)
 
 ## Acknowledgements
 I'm incredibly fortunate to have two fantastic advisors: [Harry Goldstein](https://harrisongoldste.in) & Prof. [Benjamin Pierce](https://www.cis.upenn.edu/~bcpierce/). Harry & Benjamin have 
-provided lots of useful feedback on the design of Mica, and I'm grateful for 
-their mentorship.
+provided lots of useful feedback on the design of Mica, and I'm extremely grateful for 
+their mentorship. 
 
 I'd also like to thank:
 - Penn's [PLClub](https://www.cis.upenn.edu/~plclub/) for their feedback on my presentation slides
@@ -99,8 +115,8 @@ my questions about QCSTM and Core.Quickcheck
 
 
 ## Origin of name
-Mica stands for "Module-Implementation Comparison Automation". Mica's name, a type of 
-[mineral](https://en.wikipedia.org/wiki/Mica) commonly found in rocks, was inspired 
+Mica stands for "Module-Implementation Comparison Automation". Mica is also a type
+[mineral](https://en.wikipedia.org/wiki/Mica) commonly found in rocks -- this name was inspired 
 by several relevant OCaml libraries that are also named after stones/rocks:         
 - [Monolith](https://gitlab.inria.fr/fpottier/monolith) (Randomised testing tool for OCaml modules)
 - [Opal](https://github.com/pyrocat101/opal) (parser combinator library)
@@ -135,7 +151,8 @@ Functional maps:
 - [Colin Shaw's RB tree implementation](https://github.com/CompScienceClub/ocaml-red-black-trees)
 - [Benedikt Meurer RB tree implementation](https://github.com/bmeurer/ocaml-rbtrees/blob/master/src/rbset.ml)
 - [Cornell CS 3110 textbook, chapter 8](https://cs3110.github.io/textbook/chapters/ds/rb.html#id1)            
-The implementation of red-black tree deletion follows the approach taken by [Germane & Might (2014)](https://matt.might.net/papers/germane2014deletion.pdf).
+- The implementation of red-black tree deletion follows the approach taken by 
+[Germane & Might (2014)](https://matt.might.net/papers/germane2014deletion.pdf).
 
 Stacks:
 - [Cornell CS 3110 textbook, chapter 5](https://cs3110.github.io/textbook/chapters/modules/functional_data_structures.html#stacks)
