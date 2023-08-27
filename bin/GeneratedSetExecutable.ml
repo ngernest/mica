@@ -1,4 +1,4 @@
-(** Generated executable for testing observational equivalence of two modules *)
+(** Auto-generated executable for testing observational equivalence of two modules *)
 (** Usage: [dune exec -- ./bin/GeneratedSetExecutable.exe] *)
 
 (* Suppress "unused value" compiler warnings *)

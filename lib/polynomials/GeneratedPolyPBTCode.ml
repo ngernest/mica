@@ -1,4 +1,4 @@
-(** Generated property-based testing code *)
+(** Auto-generated property-based testing code *)
 open Base
 open Base_quickcheck
 
@@ -12,7 +12,6 @@ open Poly2
 type expr =
   | Zero
   | One
-  | EInt of int
   | Power of int * int
   | Monomial of int * int
   | Add of expr * expr
@@ -39,7 +38,6 @@ module ExprToImpl (M : PolyInterface) = struct
     match expr with
      | Zero -> ValT (M.zero)
      | One -> ValT (M.one)
-     | EInt n -> ValInt n
      | Power(n1, n2) -> ValInt (M.power n1 n2)
      | Monomial(n1, n2) -> ValT (M.monomial n1 n2)
      | Add(e1, e2) ->
@@ -86,11 +84,8 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let eval = 
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in 
         let%bind n2 = G.small_positive_or_zero_int in
-        G.return @@ Eval(e1, n2) in 
-      let eint = 
-        let%bind n = G.small_positive_or_zero_int in 
-        G.return @@ EInt n in 
-      G.union [ power; eval; eint ]
+        G.return @@ Eval(e1, n2)
+      in G.union [ power; eval ]
    | (T, _) ->
       let monomial = 
         let%bind n1 = G.small_positive_or_zero_int in

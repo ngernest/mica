@@ -16,9 +16,10 @@ open Utils
     The [sigName, modName1, modName2] arguments are the names of the 
     module signatures & the two module implementations, which must
     be the same as their corresponding [.ml] files. *)
-let imports ~(externalLib : string option) ~(sigName : string) ~(modName1 : string) ~(modName2 : string) : document = 
+let imports ~(externalLib : string option) ~(sigName : string) 
+            ~(modName1 : string) ~(modName2 : string) : document = 
   let sigN, m1, m2 = map3 ~f:String.capitalize (sigName, modName1, modName2) in 
-  comment (!^ "Generated property-based testing code")
+  comment (!^ "Auto-generated property-based testing code")
   ^/^ (!^ "open Base") 
   ^/^ (!^ "open Base_quickcheck")
   ^/^ !^ (Option.value_map externalLib 
@@ -38,7 +39,6 @@ let sexpAnnotation : document =
     (represented as a string) *)
 let ppxQuickCheckMacro (ty : string) : document =
   !^ ("[%quickcheck.generator: " ^ ty ^ "]") 
-
 
 (** [isArrowType v] returns true if the value declaration [v] has an arrow type *)  
 let isArrowType (v : valDecl) : bool = 
@@ -805,7 +805,7 @@ let displayErrorDef : document =
     [filepath] is the filepath to the executable file *)  
 let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : document = 
   let open Core.Filename in 
-  comment (!^ "Generated executable for testing observational equivalence of two modules")
+  comment (!^ "Auto-generated executable for testing observational equivalence of two modules")
   ^/^ comment (!^ "Usage: " ^^ 
     brackets @@ !^ (Printf.sprintf "dune exec -- %s.exe" @@ 
       String.capitalize @@ chop_extension execFilePath))

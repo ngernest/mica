@@ -1,4 +1,4 @@
-(** Generated property-based testing code *)
+(** Auto-generated property-based testing code *)
 open Base
 open Base_quickcheck
 open MapInterface
