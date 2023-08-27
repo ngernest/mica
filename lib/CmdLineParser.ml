@@ -103,6 +103,7 @@ let cmdLineParser : Command.t =
       sigFile = anon ("signature_file" %: regular_file) 
       and implFile1 = anon ("implementation_file_1" %: regular_file)
       and implFile2 = anon ("implementation_file_2" %: regular_file) 
+      and silent = flag "-silent" no_arg ~doc:" Don't print anything to stdout"
       and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc
       and externalLib = flag "-library" (optional string) ~doc:externalLibDoc in
     fun () -> 
@@ -120,8 +121,9 @@ let cmdLineParser : Command.t =
             writeDoc executable (compareImpls m);
 
             Out_channel.close executable;
-            printf "\nGenerated PBT code: ./lib/generated.ml\n";
-            printf "Generated executable: ./bin/compare_impls.exe\n"
+            if not silent then 
+              printf {|\nGenerated PBT code: ./lib/generated.ml\n
+                         Generated executable: ./bin/compare_impls.exe\n|};
 
         | Error err -> printf "error = %s\n" err
       end)
