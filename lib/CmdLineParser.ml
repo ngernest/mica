@@ -8,7 +8,7 @@ open ModuleParser
 open CodeGenerator
 open Utils
 
-(** Suppress unused value compiler warnings *)
+(* Suppress unused value compiler warnings *)
 [@@@ocaml.warning "-27-32-34"]
 
 (** Parses user input from the command-line, in particular the filepaths 
@@ -18,8 +18,8 @@ open Utils
 (** {1 Utility functions for command-line parsing} *)    
 
 (** Prompts the user to enter a value, where [name] is the name of the value, 
-    and [of_string] if a function converting the string input to type ['a] *)
-let prompt_for_string (name : string) (of_string : string -> 'a) : 'a =
+    and [of_string] if a function converting the string input to type ['a]. *)
+let prompt_for_string ~(name : string) ~(of_string : string -> 'a) : 'a =
   printf "enter %s: %!" name;
   match In_channel.input_line In_channel.stdin with
   | None -> failwith "no value entered. aborting."
@@ -27,13 +27,13 @@ let prompt_for_string (name : string) (of_string : string -> 'a) : 'a =
 
 (** Creates a parser that automatically prompts the user with the message [name] 
     if a value isn’t provided, where [of_string] is used to convert the 
-    user input from string to type ['a] *)  
-let anon_prompt (name : string) (of_string : string -> 'a) : 'a Command.Param.t =
+    user input from string to type ['a]. *)  
+let anon_prompt ~(name : string) ~(of_string : string -> 'a) : 'a Command.Param.t =
   let arg = Command.Arg_type.create of_string in
   let%map_open.Command value = anon (maybe (name %: arg)) in
   match value with
   | Some v -> v
-  | None -> prompt_for_string name of_string
+  | None -> prompt_for_string ~name ~of_string
 
 (** Checks if a string is a valid readable filename *)  
 let is_filename (filename : string) : string =
@@ -57,21 +57,15 @@ let pbtFilePath : string = "./lib/Generated.ml"
     for observational equivalence *)
 let execFilePath : string = "./bin/compare_impls.ml"
 
-
-(** Documentation string for a flag specifying whether QuickCheck int generators 
+(** Docstring for an optional flag specifying whether QuickCheck int generators 
     should only generate non-negative ints *)
 let nonNegIntsDoc : string = 
-  "Specify if QuickCheck int generators should only generate non-negative ints"
+  " Specify if QuickCheck int generators should only generate non-negative ints"
 
-(** Docstring for a flag specifying the name of an opaque type 
-    contained inside the module signature *)    
-let opaqueTypeDoc : string = 
-  "Name of an opaque type in the module signature"
-
-(** Docstring for a flag specifying the name of the external library 
-    (eg. the Diffie-Hellman x25519 example, see readme) *)  
+(** Docstring for an optional flag specifying the name of the external library 
+    (if applicable) *)  
 let externalLibDoc : string = 
-  "Name of the external library in which the modules reside (if applicable)"  
+  " Name of the external library in which the modules reside (if applicable)"  
 
 (** {1 Writing the generated PBT code to an output file} *)   
 
@@ -80,7 +74,8 @@ let externalLibDoc : string =
     [functorName] is the name of the functor that produces the test harness
     [sigName, modName1, modName2] are the names of the signature/two module implementations *)
 let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : string)
-  ~(sigName : string) ~(externalLib : string option) ~(nonNegOnly: bool) (modName1 : string) (modName2 : string) : unit = 
+  ~(sigName : string) ~(externalLib : string option) ~(nonNegOnly: bool) 
+  (modName1 : string) (modName2 : string) : unit = 
 
   let pbtFile = Out_channel.create ~append:false pbtFilePath in
   writeDoc pbtFile 
@@ -96,14 +91,14 @@ let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string) ~(functorName : strin
 (** Parses the names of the signature & implementation files from the cmd-line *)
 let cmdLineParser : Command.t =
   Command.basic
-    ~summary:"Mica: Automated Property-Based Testing for OCaml modules"
+    ~summary:"Mica: Automated Differential Testing for OCaml Modules"
     ~readme:(fun () -> 
-      "For detailed documentation, please consult the docs at ngernest.github.io/mica")
+      "Docs: ngernest.github.io/mica. README: github.com/ngernest/mica.")
     (let%map_open.Command 
       sigFile = anon ("signature_file" %: regular_file) 
       and implFile1 = anon ("implementation_file_1" %: regular_file)
       and implFile2 = anon ("implementation_file_2" %: regular_file) 
-      and silent = flag "-silent" no_arg ~doc:" Don't print anything to stdout"
+      and silent = flag "-silent" no_arg ~doc:" Suppress printing to stdout"
       and nonNegOnly = flag "-non-negative-ints-only" no_arg ~doc:nonNegIntsDoc
       and externalLib = flag "-library" (optional string) ~doc:externalLibDoc in
     fun () -> 
@@ -113,17 +108,17 @@ let cmdLineParser : Command.t =
         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in 
       begin match (run_parser moduleTypeP moduleString) with 
         | Ok m -> 
-          writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~externalLib ~nonNegOnly 
-            modName1 modName2;
+          writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~externalLib 
+            ~nonNegOnly modName1 modName2;
 
           let executable = Out_channel.create ~append:false execFilePath in
             writeDoc executable (executableImports ~pbtFilePath ~execFilePath);
             writeDoc executable (compareImpls m);
-
             Out_channel.close executable;
-            if not silent then 
-              printf {|\nGenerated PBT code: ./lib/generated.ml\n
-                         Generated executable: ./bin/compare_impls.exe\n|};
+
+          if not silent then 
+            printf @@ "\nGenerated PBT code: ./lib/generated.ml\n
+                        Generated executable: ./bin/compare_impls.exe\n";
 
         | Error err -> printf "error = %s\n" err
       end)
