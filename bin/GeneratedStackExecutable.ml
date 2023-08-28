@@ -1,7 +1,7 @@
 (** Auto-generated executable for testing observational equivalence of two modules *)
 (** Usage: [dune exec -- ./bin/GeneratedStackExecutable.exe] *)
 
-(* Suppress "unused value" compiler warnings *)
+(** Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-27-32-33-34"]
 
 open Core
@@ -45,7 +45,11 @@ let () =
     test_intoption;
     test_unit
   ] with 
-   | Ok ok -> ok
+   | Ok ok ->
+    let numPassed = QC.default_can_generate_trial_count in 
+    let numDiscarded = QC.(default_trial_count - numPassed) in 
+    printf "\n Mica: OK, passed %d tests; %d discarded. \n"
+      numPassed numDiscarded;
    | Error err ->
     let open Stdlib.Format in 
     Error.pp err_formatter err;

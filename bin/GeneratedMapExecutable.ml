@@ -19,7 +19,11 @@ let () =
        | v1, v2 -> error_string @@ displayError e v1 v2) in
 
   match combine_errors_unit [ test_stringoption ] with 
-   | Ok ok -> ok
+   | Ok ok ->
+    let numPassed = QC.default_can_generate_trial_count in 
+    let numDiscarded = QC.(default_trial_count - numPassed) in 
+    printf "\n Mica: OK, passed %d tests; %d discarded. \n"
+      numPassed numDiscarded;
    | Error err ->
     let open Stdlib.Format in 
     Error.pp err_formatter err;
