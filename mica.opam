@@ -24,6 +24,7 @@ depends: [
   "base_quickcheck"
   "pprint"
   "core"
+  "core_bench"
 ]
 build: [
   ["dune" "subst"] {dev}

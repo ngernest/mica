@@ -18,11 +18,7 @@ Presentation slides on Mica:
 - [OPLSS '23 talk](./talks/mica_oplss_slides.pdf) (~10 mins)
         
 ## Description of source files 
-All source files are located in the [`lib`](./lib) subdirectory, 
-with the exception of [`bin/main.ml`](./bin/main.ml), which serves as the 
-entry point for the Mica executable. 
-
-The core components of Mica are located in these files: 
+Core components of Mica:
 - [`Parser.ml`](./lib/Parser.ml): parser utility functions, modified from the Angstrom parser-combinator library
 - [`ParserTypes.ml`](./lib/ParserTypes.ml): Datatypes defining an AST for OCaml module signatures
 - [`ModuleParser.ml`](./lib/ModuleParser.ml): Parser for OCaml module signatures
@@ -34,6 +30,9 @@ Auxiliary utility files:
 - [`Stats.ml`](./lib/Stats.ml): Functions for examining the distribution of randomly generated symbolic expressions
 - [`Latin.ml`](./lib/Latin.ml): QuickCheck generator for Latin words (taken from [Lorem Ipsum](https://en.wikipedia.org/wiki/Lorem_ipsum) placeholder text)
 
+Executables (located in [`bin`](./bin)):
+- [`Main.ml`](./bin/main.ml): Entry point for the Mica executable
+- [`Benchmark.ml`](./bin/benchmark.ml): Runs performance benchmarks on Mica and the auto-generated PBT executables
 
 ## Examples 
 The `lib` directory also contains five example module signatures, 
@@ -102,6 +101,7 @@ Mica has been primarily tested with version 4.13.1 of the OCaml base compiler.
 - [Stdio](https://github.com/janestreet/stdio)
 - [Re](https://github.com/ocaml/ocaml-re)
 - [Odoc](https://github.com/ocaml/ocaml-re) (for generating documentation)
+- [Core_bench](https://github.com/janestreet/core_bench) (for running benchmarks)
 
 ## Acknowledgements
 I'm incredibly fortunate to have two fantastic advisors: [Harry Goldstein](https://harrisongoldste.in) & Prof. [Benjamin Pierce](https://www.cis.upenn.edu/~bcpierce/). Harry & Benjamin have 

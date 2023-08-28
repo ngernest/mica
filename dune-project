@@ -24,4 +24,5 @@
   base
   base_quickcheck
   pprint
-  core))
+  core
+  core_bench))

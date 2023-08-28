@@ -3,7 +3,9 @@ open Core_bench.Bench
 open Lib.CmdLineParser
 
 (** Benchmarks Mica's parser & code generator, along with the 
-    auto-generated PBT executable produced by Mica. *)
+    auto-generated PBT executable produced by Mica. The benchmarks 
+    are run on all five example modules in the [lib] directory.  
+    (Sets, Regexes, Polynomials, Maps, Stacks). *)
 
 (** Auxiliary module containing parameters and arguments for running 
     benchmark tests, e.g. the names of relevant modules *)
