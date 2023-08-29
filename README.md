@@ -1,5 +1,7 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
+[![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/ngernest/mica/main&logo=ocaml)](https://ocaml.ci.dev/github/ngernest/mica)
+
 (Submitted to the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition))
 
 **Mica** checks whether two OCaml modules implementing the same signature are observationally 
