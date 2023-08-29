@@ -4,4 +4,3 @@ _build
 .vscode/
 .ocamlformat
 lib/Generated.ml
-bin/compare_impls.ml
