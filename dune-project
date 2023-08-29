@@ -23,6 +23,6 @@
   (angstrom (>= 0.15.0))
   base
   base_quickcheck
-  pprint
+  (pprint (>= 20220103))
   core
   core_bench))
