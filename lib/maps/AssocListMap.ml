@@ -9,7 +9,7 @@ module G = Generator
     - Adapted from Cornell CS 3110 textbook, chapter 8. *)
 
 module AssocListMap : MapInterface = struct
-
+  type t = AssocList.t [@@deriving sexp]
   (** AF: The association list [[(k1, v1); (k2, v2); ...; (kn, vn)]] 
           is the map {k1 : v1, k2 : v2, .., kn : vn}. 
           If a key appears more than once in the list, then in the
@@ -17,12 +17,9 @@ module AssocListMap : MapInterface = struct
           [[(k, v1); (k, v2)]] represents {k : v1}. The empty list represents
           the empty map.
           RI: none. *)
-  type t = AssocList.t
-    [@@deriving sexp]
 
   (** Efficiency: O(1). *)
-  let insert (k, v) m = 
-    (k, v) :: m
+  let insert (k, v) m = (k, v) :: m
 
   (** [find k m] is [Some v] if [k] is bound to [v] in [m], 
       and [None] if not. Efficiency: O(n) *)
@@ -46,21 +43,19 @@ module AssocListMap : MapInterface = struct
       - Remove duplicates
       - Create pairs of remaining keys and values 
       Efficiency: O(n log n). *)
-  let keys (m : ('a * 'b) list) : 'a list = 
+  let keys (m : ('a * 'b) list) : 'a list =
     m |> List.map fst |> List.sort_uniq Stdlib.compare
 
   (** [binding m k] is [(k, v)], where [v] is the value that [k] binds in [m].
       Requires: [k] is a key in [m].
       Efficiency: O(n). *)
-  let binding (m : AssocList.t) (k : int) : int * string = 
-    (k, List.assoc k m)
+  let binding (m : AssocList.t) (k : int) : int * string = (k, List.assoc k m)
 
   (** [bindings m] is an association list containing the same bindings 
       as [m]. There are no duplicate keys in the list. 
       Efficiency: O(n log n) + O(n) * O(n), which is O(n^2). 
       (In the worst-case, there are n keys for [m].) *)
-  let bindings (m : AssocList.t) : AssocList.t = 
-    List.map (binding m) (keys m)
+  let bindings (m : AssocList.t) : AssocList.t = List.map (binding m) (keys m)
 end
 
 (** {1 Utility functions} *)
@@ -70,34 +65,34 @@ end
     - The two lists can't contain any duplicates
     - The two lists must contain the same elements though 
       not necessarily in the same order *)
-let cmp_set_like_lists lst1 lst2 = 
-  let uniq1 = List.sort_uniq compare lst1 in 
-  let uniq2 = List.sort_uniq compare lst2 in 
-  List.length lst1 = List.length uniq1 
-  && List.length lst2 = List.length uniq2 
+let cmp_set_like_lists lst1 lst2 =
+  let uniq1 = List.sort_uniq compare lst1 in
+  let uniq2 = List.sort_uniq compare lst2 in
+  List.length lst1 = List.length uniq1
+  && List.length lst2 = List.length uniq2
   && uniq1 = uniq2
 
-(** [pp_string s] pretty-prints the string [s] *)  
-let pp_string s = "\"" ^ s ^ "\""  
+(** [pp_string s] pretty-prints the string [s] *)
+let pp_string s = "\"" ^ s ^ "\""
 
 (** [pp_list pp_elt lst] pretty-prints the list [lst], 
     using [pp_elt] to pretty-print each element of [lst] *)
-let pp_list (pp_elt : 'a -> string) (lst : 'a list) : string = 
+let pp_list (pp_elt : 'a -> string) (lst : 'a list) : string =
   (* [pp_elts] is the pretty-printed list *)
-  let pp_elts (lst : 'a list) : string = 
+  let pp_elts (lst : 'a list) : string =
     (* Walks over the list, using [pp_elt] to print up to 100 elements *)
-    let rec loop (n : int) (acc : string) (l : 'a list) : string = 
-      begin match l with 
-      | [] -> acc 
-      | [h] -> acc ^ pp_elt h 
-      | h1 :: (_ :: _ as t') -> 
-        if n = 100 then acc ^ "..." (* stop printing *)
-        else loop (n + 1) (acc ^ (pp_elt h1) ^ "; ") t'
-      end in 
-    loop 0 "" lst 
-  in "[" ^ pp_elts lst ^ "]"
+    let rec loop (n : int) (acc : string) (l : 'a list) : string =
+      match l with
+      | [] -> acc
+      | [ h ] -> acc ^ pp_elt h
+      | h1 :: (_ :: _ as t') ->
+          if n = 100 then acc ^ "..." (* stop printing *)
+          else loop (n + 1) (acc ^ pp_elt h1 ^ "; ") t'
+    in
+    loop 0 "" lst
+  in
+  "[" ^ pp_elts lst ^ "]"
 
 (** [pp_pair pp1 pp2 (a, b)] pretty-prints [(a, b)] 
-    using [pp1] for [a] and [pp2] for [b] *)  
-let pp_pair pp1 pp2 (a, b) = 
-  pp1 a ^ pp2 b  
+    using [pp1] for [a] and [pp2] for [b] *)
+let pp_pair pp1 pp2 (a, b) = pp1 a ^ pp2 b

@@ -1,6 +1,6 @@
 module type RegexMatcher = sig
-  type t
-    [@@deriving sexp]
+  type t [@@deriving sexp]
+
   val void : t
   val empty : t
   val lit : char -> t

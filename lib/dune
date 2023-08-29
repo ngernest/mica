@@ -3,12 +3,19 @@
 (library
  (name lib)
  (public_name mica)
- (libraries base_quickcheck base core stdio angstrom core_unix pprint 
-            core_unix.command_unix re)
+ (libraries
+  base_quickcheck
+  base
+  core
+  stdio
+  angstrom
+  core_unix
+  pprint
+  core_unix.command_unix
+  re)
  (preprocess
   (pps ppx_jane))
  (inline_tests))
 
 (documentation
  (package mica))
- 

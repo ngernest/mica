@@ -11,47 +11,46 @@
  (modules benchmark)
  (libraries lib core core_bench)
  (preprocess
-  (pps ppx_sexp_conv ppx_jane)))  
+  (pps ppx_sexp_conv ppx_jane)))
 
 (executable
  (name compare_impls)
  (modules compare_impls)
  (libraries lib core stdio)
- (preprocess 
-  (pps ppx_sexp_conv ppx_jane)))  
+ (preprocess
+  (pps ppx_sexp_conv ppx_jane)))
 
 (executable
  (name GeneratedRegexExecutable)
  (modules GeneratedRegexExecutable)
  (libraries lib core stdio)
- (preprocess 
-  (pps ppx_sexp_conv ppx_jane)))  
+ (preprocess
+  (pps ppx_sexp_conv ppx_jane)))
 
 (executable
  (name GeneratedSetExecutable)
  (modules GeneratedSetExecutable)
  (libraries lib core stdio)
- (preprocess 
-  (pps ppx_sexp_conv ppx_jane)))  
+ (preprocess
+  (pps ppx_sexp_conv ppx_jane)))
 
 (executable
  (name GeneratedMapExecutable)
  (modules GeneratedMapExecutable)
  (libraries lib core stdio)
- (preprocess 
-  (pps ppx_sexp_conv ppx_jane)))      
+ (preprocess
+  (pps ppx_sexp_conv ppx_jane)))
 
 (executable
  (name GeneratedStackExecutable)
  (modules GeneratedStackExecutable)
  (libraries lib core stdio)
- (preprocess 
-  (pps ppx_sexp_conv ppx_jane)))     
+ (preprocess
+  (pps ppx_sexp_conv ppx_jane)))
 
 (executable
  (name GeneratedPolyExecutable)
  (modules GeneratedPolyExecutable)
  (libraries lib core stdio)
- (preprocess 
-  (pps ppx_sexp_conv ppx_jane)))  
- 
+ (preprocess
+  (pps ppx_sexp_conv ppx_jane)))
