@@ -20,7 +20,7 @@
   (ocaml (>= 4.13))
   dune
   (odoc :with-doc)
-  angstrom
+  (angstrom (>= 0.15.0))
   base
   base_quickcheck
   pprint
