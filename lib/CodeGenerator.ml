@@ -16,42 +16,35 @@ open Utils
     The [sigName, modName1, modName2] arguments are the names of the 
     module signatures & the two module implementations, which must
     be the same as their corresponding [.ml] files. *)
-let imports ~(externalLib : string option) ~(sigName : string) 
-            ~(modName1 : string) ~(modName2 : string) : document = 
-  let sigN, m1, m2 = map3 ~f:String.capitalize (sigName, modName1, modName2) in 
-  comment (!^ "Auto-generated property-based testing code")
-  ^/^ (!^ "open Base") 
-  ^/^ (!^ "open Base_quickcheck")
-  ^/^ !^ (Option.value_map externalLib 
-          ~f:(fun libName -> "open " ^ String.capitalize libName) ~default:"")
-  ^/^ !^ ("open " ^ sigN)
-  ^/^ !^ ("open " ^ m1)
-  ^/^ !^ ("open " ^ m2)
-  ^^ hardline
-  ^/^ suppressUnusedValueWarnings 
+let imports ~(externalLib : string option) ~(sigName : string)
+    ~(modName1 : string) ~(modName2 : string) : document =
+  let sigN, m1, m2 = map3 ~f:String.capitalize (sigName, modName1, modName2) in
+  comment !^"Auto-generated property-based testing code"
+  ^/^ !^"open Base" ^/^ !^"open Base_quickcheck"
+  ^/^ !^(Option.value_map externalLib
+           ~f:(fun libName -> "open " ^ String.capitalize libName)
+           ~default:"")
+  ^/^ !^("open " ^ sigN)
+  ^/^ !^("open " ^ m1)
+  ^/^ !^("open " ^ m2)
+  ^^ hardline ^/^ suppressUnusedValueWarnings
 
 (** Document for printing the PPX annotation for S-Expr serialization (indented),
     followed by a newline *)
-let sexpAnnotation : document = 
-  blank 2 ^^ !^ "[@@deriving sexp_of]" ^^ hardline   
-  
+let sexpAnnotation : document = blank 2 ^^ !^"[@@deriving sexp_of]" ^^ hardline
+
 (** Document for invoking the ppx_quickcheck macro for a particular type [ty] 
     (represented as a string) *)
 let ppxQuickCheckMacro (ty : string) : document =
-  !^ ("[%quickcheck.generator: " ^ ty ^ "]") 
+  !^("[%quickcheck.generator: " ^ ty ^ "]")
 
-(** [isArrowType v] returns true if the value declaration [v] has an arrow type *)  
-let isArrowType (v : valDecl) : bool = 
-  match valType v with 
-  | Func1 _ | Func2 _ -> true 
-  | _ -> false  
+(** [isArrowType v] returns true if the value declaration [v] has an arrow type *)
+let isArrowType (v : valDecl) : bool =
+  match valType v with Func1 _ | Func2 _ -> true | _ -> false
 
-(** [tyIsArrow ty] returns true if [ty] correspons to an arrow type *)    
-let tyIsArrow (ty : ty) : bool = 
-  match ty with 
-  | Func1 _ | Func2 _ -> true 
-  | _ -> false    
-
+(** [tyIsArrow ty] returns true if [ty] correspons to an arrow type *)
+let tyIsArrow (ty : ty) : bool =
+  match ty with Func1 _ | Func2 _ -> true | _ -> false
 
 (** [isOpaqueTy ty] returns [true] if [ty] is a string corresponding to 
     an "opaque" type, i.e. a type originating from another module
@@ -59,131 +52,129 @@ let tyIsArrow (ty : ty) : bool =
       where [AssocList] is some externally-defined module 
     - Note: the only critiera for evaluating if a type is an opaque type 
       is just checking if the type name ends with the substring ".t" 
-      (this heuristic may be replaced with a more robust mechanism in the future) *)    
-let isOpaqueTy (ty : string) : bool = 
-  let open Re.Str in 
-  let opaqueTypeRegex = regexp {|^[A-Z]+[A-Za-z0-9']*T$|} in 
-  string_match opaqueTypeRegex ty 0     
-    
+      (this heuristic may be replaced with a more robust mechanism in the future) *)
+let isOpaqueTy (ty : string) : bool =
+  let open Re.Str in
+  let opaqueTypeRegex = regexp {|^[A-Z]+[A-Za-z0-9']*T$|} in
+  string_match opaqueTypeRegex ty 0
+
 (** Extracts all the "identity elements" defined within a module signature,
     e.g. [mempty] for monoids, or [zero] & [one] for semirings
     - For our purposes, we assume any declaration of the form [val x : t] 
       in the module signature, where [t] is the module's abstract type, 
       is an identity element *)
 let getIdentityElements (m : moduleSig) =
-  let collectIdElts (acc : string list) (v : valDecl) : string list = 
-    begin match valType v with 
+  let collectIdElts (acc : string list) (v : valDecl) : string list =
+    match valType v with
     | T | AlphaT | NamedAbstract _ -> (String.capitalize @@ valName v) :: acc
     | _ -> acc
-    end in 
+  in
   List.fold ~init:[] ~f:collectIdElts m.valDecls
 
 (** Extracts the argument types of functions defined in the module signature,
     and generates constructors for the [expr] ADT 
     that take these types as type parameters *)
-let extractArgTypes (v : valDecl) : document = 
-  let open String in 
+let extractArgTypes (v : valDecl) : document =
+  let open String in
   let constr = capitalize (valName v) in
-  match valType v with 
-  | Func1 (arg, _) -> 
-    !^ constr
-    ^^ (!^ " of ")
-    ^^ (!^ (string_of_ty ~alpha:"int" arg))
-  | Func2 (arg1, arg2, _) -> 
-    !^ constr
-    ^^ !^ " of "
-    ^^ !^ (string_of_ty ~alpha:"int" arg1)
-    ^^ !^ " * "
-    ^^ !^ (string_of_ty ~alpha:"int" arg2)
-  | _ -> !^ constr
+  match valType v with
+  | Func1 (arg, _) -> !^constr ^^ !^" of " ^^ !^(string_of_ty ~alpha:"int" arg)
+  | Func2 (arg1, arg2, _) ->
+      !^constr ^^ !^" of "
+      ^^ !^(string_of_ty ~alpha:"int" arg1)
+      ^^ !^" * "
+      ^^ !^(string_of_ty ~alpha:"int" arg2)
+  | _ -> !^constr
 
-(** Generates the definition of the [expr] ADT *)  
-let exprADTDecl (m : moduleSig) : document = 
-  prefix 2 1 
-  (!^ "type expr =")
-  (barSpace ^^ (group @@ 
-    separate_map (hardline ^^ barSpace) extractArgTypes m.valDecls 
-    ^/^ sexpAnnotation))  
+(** Generates the definition of the [expr] ADT *)
+let exprADTDecl (m : moduleSig) : document =
+  prefix 2 1 !^"type expr ="
+    (barSpace ^^ group
+    @@ separate_map (hardline ^^ barSpace) extractArgTypes m.valDecls
+    ^/^ sexpAnnotation)
 
 (** Helper function for printing out OCaml constructors
-    (Wrapper for the [OCaml.variant] function in the [PPrint] library) *)    
-let printConstructor (constr : string) (args : string list) : document = 
-  match args with 
-  | [] -> !^ constr
-  | [arg] -> !^ constr ^^ blank 1 ^^ !^ arg
+    (Wrapper for the [OCaml.variant] function in the [PPrint] library) *)
+let printConstructor (constr : string) (args : string list) : document =
+  match args with
+  | [] -> !^constr
+  | [ arg ] -> !^constr ^^ blank 1 ^^ !^arg
   | _ -> OCaml.variant "expr" constr 1 (List.map ~f:string args)
 
-(* If [s] is a string that is a constructor corresponding to an opaque type, 
-  eg. [s = "AssocListT"] (corresponding to ["AssocList.t"], where [AssocList] 
-  is some external module), then [reifyOpaqueTyConstr s] replace the capital "T" 
-  at the end of the string with the suffix [".t"]. 
-  That is, ["AssocListT"] becomes ["AssocList.t"]. *)
-let reifyOpaqueTyConstr (s : string) : string = 
-  let open Re.Str in 
+(* If [s] is a string that is a constructor corresponding to an opaque type,
+   eg. [s = "AssocListT"] (corresponding to ["AssocList.t"], where [AssocList]
+   is some external module), then [reifyOpaqueTyConstr s] replace the capital "T"
+   at the end of the string with the suffix [".t"].
+   That is, ["AssocListT"] becomes ["AssocList.t"]. *)
+let reifyOpaqueTyConstr (s : string) : string =
+  let open Re.Str in
   replace_first (regexp {|T$|}) ".t" s
 
-(* [splitCamelCaseTyString] takes [s], a camel-case string 
+(* [splitCamelCaseTyString] takes [s], a camel-case string
    representation of a type, and extracts all the base types
    by using a regex that matches on each capital letter & splitting on them *)
-let splitCamelCaseTyString (s : string) : string list = 
-  let open Re.Str in 
-  let capitalRegex = regexp {|\([A-Z]\)|} in 
+let splitCamelCaseTyString (s : string) : string list =
+  let open Re.Str in
+  let capitalRegex = regexp {|\([A-Z]\)|} in
   global_substitute capitalRegex (replace_matched {| \1|}) s
-    |> String.split ~on:' ' 
-    |> List.filter ~f:(fun s -> not @@ String.is_empty s) 
-    |> List.map ~f:String.lowercase     
+  |> String.split ~on:' '
+  |> List.filter ~f:(fun s -> not @@ String.is_empty s)
+  |> List.map ~f:String.lowercase
 
 (** [ty_of_string s] converts a string [s] denoting a type to the equivalent 
     [ty] ADT constructor of its {i base type} by running the parser [typeP] 
     (defined in [Lib.ModuleParser]) over [s]. 
-    - Note: The string [s] must be in camel-case *) 
-let ty_of_string (s : string) : ty = 
-  let isOpaque = isOpaqueTy s in 
-  let tys = 
-    if isOpaque then [reifyOpaqueTyConstr s] 
-    else splitCamelCaseTyString s in 
-  match tys with 
+    - Note: The string [s] must be in camel-case *)
+let ty_of_string (s : string) : ty =
+  let isOpaque = isOpaqueTy s in
+  let tys =
+    if isOpaque then [ reifyOpaqueTyConstr s ] else splitCamelCaseTyString s
+  in
+  match tys with
   | [] -> failwith "Can't extract a type parameter from an empty string"
-  | [str] -> 
-    begin match (run_parser typeP str) with 
-    | Ok ty -> ty 
-    | Error err -> 
-      failwith @@ Printf.sprintf 
-        "Error %s : couldn't parse the string \"%s\"\n" err str
-    end
-  | ty1 :: ty2 :: "pair" :: remainingTys -> 
-    let newTy = String.concat ~sep:" " @@ parensStr (ty1 ^ " * " ^ ty2) :: remainingTys in 
-    begin match (run_parser typeP newTy) with 
-    | Ok ty -> ty 
-    | Error err -> 
-      failwith @@ Printf.sprintf 
-        "Error %s : couldn't parse the string \"%s\"\n" err newTy
-    end
-  | _ -> 
-    let newTy = String.concat ~sep:" " tys in 
-    begin match (run_parser typeP newTy) with 
-    | Ok ty -> ty 
-    | Error err -> 
-      failwith @@ Printf.sprintf 
-        "Error %s : couldn't parse the string \"%s\"\n" err newTy
-    end
+  | [ str ] -> (
+      match run_parser typeP str with
+      | Ok ty -> ty
+      | Error err ->
+          failwith
+          @@ Printf.sprintf "Error %s : couldn't parse the string \"%s\"\n" err
+               str)
+  | ty1 :: ty2 :: "pair" :: remainingTys -> (
+      let newTy =
+        String.concat ~sep:" " @@ (parensStr (ty1 ^ " * " ^ ty2) :: remainingTys)
+      in
+      match run_parser typeP newTy with
+      | Ok ty -> ty
+      | Error err ->
+          failwith
+          @@ Printf.sprintf "Error %s : couldn't parse the string \"%s\"\n" err
+               newTy)
+  | _ -> (
+      let newTy = String.concat ~sep:" " tys in
+      match run_parser typeP newTy with
+      | Ok ty -> ty
+      | Error err ->
+          failwith
+          @@ Printf.sprintf "Error %s : couldn't parse the string \"%s\"\n" err
+               newTy)
 
 (** Takes [tyName], the name of a named abstract type (eg. [public_key]), 
     and produces a varname as follows:
     - Split on underscores
     - fetch the 1st letter of each substring
     - Concat all the 1st letters of the substrings 
-    - eg. if the type name is [public_key], then the varname is [pk] *)    
-let namedAbsTyVarNameHelper (tyName : string) : string = 
-  let open List in 
-  let splitSubstrs = String.split tyName ~on:'_' |> 
-                     map ~f:(fun s -> String.prefix s 1) in 
+    - eg. if the type name is [public_key], then the varname is [pk] *)
+let namedAbsTyVarNameHelper (tyName : string) : string =
+  let open List in
+  let splitSubstrs =
+    String.split tyName ~on:'_' |> map ~f:(fun s -> String.prefix s 1)
+  in
   fold ~f:(fun acc c -> acc ^ c) ~init:"" splitSubstrs
-  
+
 (** [varNameHelper ty] returns an appropriate variable name corresponding 
-    to [ty], eg. [varNameHelper Int = n] *)  
-let rec varNameHelper (ty : ty) : string = 
-  match ty with 
+    to [ty], eg. [varNameHelper Int = n] *)
+let rec varNameHelper (ty : ty) : string =
+  match ty with
   | Alpha -> "x"
   | T | AlphaT -> "e"
   | Int -> "n"
@@ -192,41 +183,43 @@ let rec varNameHelper (ty : ty) : string =
   | String -> "s"
   | Unit -> "u"
   | NamedAbstract tyName -> namedAbsTyVarNameHelper tyName
-  | Opaque s -> String.uncapitalize s |> namedAbsTyVarNameHelper 
+  | Opaque s -> String.uncapitalize s |> namedAbsTyVarNameHelper
   | List argTy -> varNameHelper argTy ^ "s"
   | Option argTy -> varNameHelper argTy
   | Pair (_, _) -> "p"
   | _ -> String.prefix (string_of_ty ty) 1
 
 (** Special case of [genVarNames] when we only have one argument type.  
-    If [prime = true], add a single quote to the end of the variable name *)    
-let genVarNameSingleton ?(prime = false) (argTy : ty) : string = 
-  let varName = varNameHelper argTy in 
+    If [prime = true], add a single quote to the end of the variable name *)
+let genVarNameSingleton ?(prime = false) (argTy : ty) : string =
+  let varName = varNameHelper argTy in
   if prime then varName ^ "\'" else varName
 
 (** Generates [n] unique variable names corresponding to a type [ty]. 
-    For example, [genVarNamesN 3 Int] produces [["n1"; "n2"; "n3"]].  *)  
-let genVarNamesN ~(n : int) (ty : ty) : string list = 
-  replicate ~n (varNameHelper ty) |> 
-  List.mapi ~f:(fun i arg -> arg ^ Int.to_string @@ i + 1)
+    For example, [genVarNamesN 3 Int] produces [["n1"; "n2"; "n3"]].  *)
+let genVarNamesN ~(n : int) (ty : ty) : string list =
+  replicate ~n (varNameHelper ty)
+  |> List.mapi ~f:(fun i arg -> arg ^ Int.to_string @@ (i + 1))
 
 (** Takes a list of argument types, and generates corresponding variable names 
     which are unique for each element of the list 
     eg. [genVarNames [Int; Int; Char] = [n1; n2; c]] *)
-let genVarNames ?(prime = false) (argTys : ty list) : string list = 
-  match argTys with 
+let genVarNames ?(prime = false) (argTys : ty list) : string list =
+  match argTys with
   | [] -> []
-  | [ty] -> [genVarNameSingleton ty]
-  | _ -> List.mapi 
-    ~f:(fun i ty -> let var = genVarNameSingleton ty ^ Int.to_string (i + 1) in 
-        if prime then var ^ "\'" else var) 
-    argTys
+  | [ ty ] -> [ genVarNameSingleton ty ]
+  | _ ->
+      List.mapi
+        ~f:(fun i ty ->
+          let var = genVarNameSingleton ty ^ Int.to_string (i + 1) in
+          if prime then var ^ "\'" else var)
+        argTys
 
 (** Fetches the [expr] constructor corresponding to a [val] declaration 
     in a module *)
-let getExprConstructorName (v : valDecl) : string = 
+let getExprConstructorName (v : valDecl) : string =
   String.capitalize @@ valName v
-    
+
 (** Fetches the constructor corresponding to a [val] 
     declaration in the [expr] ADT, 
     returning a pair of the form [(args, constructor applied to args)], 
@@ -234,82 +227,82 @@ let getExprConstructorName (v : valDecl) : string =
     - The auxiliary argument [idElts] is a list of names of the identity elements
     defined in the module signature (eg. [mempty] for monoids) 
     - See [getIdentityElements] for further details on identity elements *)
-let getExprConstructor ~(idElts : string list) (v : valDecl) : string list * document = 
-  let open List in 
+let getExprConstructor ~(idElts : string list) (v : valDecl) :
+    string list * document =
+  let open List in
   let constr = getExprConstructorName v in
   (* Check if the constructor corresponds to an identity element in the signature *)
-  let isIdElt = mem idElts constr ~equal:String.equal in 
-  match isIdElt, valType v with 
-  | true, _ -> ([], !^ constr)
-  | _, Int -> (["n"], printConstructor constr ["n"])
-  | _, Char -> (["c"], printConstructor constr ["c"])
-  | _, Bool -> (["b"], printConstructor constr ["b"])
+  let isIdElt = mem idElts constr ~equal:String.equal in
+  match (isIdElt, valType v) with
+  | true, _ -> ([], !^constr)
+  | _, Int -> ([ "n" ], printConstructor constr [ "n" ])
+  | _, Char -> ([ "c" ], printConstructor constr [ "c" ])
+  | _, Bool -> ([ "b" ], printConstructor constr [ "b" ])
   | _, Unit -> ([], OCaml.unit)
-  | _, String -> (["s"], printConstructor constr ["s"])
-  | _, Alpha -> (["a"], printConstructor constr ["a"])
-  | _, T | _, AlphaT -> (["t"], printConstructor constr ["t"])
-  | _, (NamedAbstract _ as absTy) -> 
-    let varName = varNameHelper absTy in 
-    ([varName], printConstructor constr [varName])
-  | _, (Opaque _ as opaqueTy) -> 
-    (* For opaque types, the varname is the 1st letter of the type's name *)
-    let varName = varNameHelper opaqueTy in 
-    ([varName], printConstructor constr [varName])
-  | _, Option argTy | _, List argTy | _, Func1 (argTy, _) -> 
-    let arg = genVarNames [argTy] in 
-    (arg, printConstructor constr arg)
-  | _, Pair (arg1, arg2) | _, Func2 (arg1, arg2, _) -> 
-    let args = genVarNames [arg1; arg2] in 
-    (args, printConstructor constr args)
+  | _, String -> ([ "s" ], printConstructor constr [ "s" ])
+  | _, Alpha -> ([ "a" ], printConstructor constr [ "a" ])
+  | _, T | _, AlphaT -> ([ "t" ], printConstructor constr [ "t" ])
+  | _, (NamedAbstract _ as absTy) ->
+      let varName = varNameHelper absTy in
+      ([ varName ], printConstructor constr [ varName ])
+  | _, (Opaque _ as opaqueTy) ->
+      (* For opaque types, the varname is the 1st letter of the type's name *)
+      let varName = varNameHelper opaqueTy in
+      ([ varName ], printConstructor constr [ varName ])
+  | _, Option argTy | _, List argTy | _, Func1 (argTy, _) ->
+      let arg = genVarNames [ argTy ] in
+      (arg, printConstructor constr arg)
+  | _, Pair (arg1, arg2) | _, Func2 (arg1, arg2, _) ->
+      let args = genVarNames [ arg1; arg2 ] in
+      (args, printConstructor constr args)
 
 (** [extractReturnType camelCase v] extracts the string 
     representation of the return type of a function, 
     if [v] is a [valDecl] corresponding to an arrow type. 
     - For non-arrow types, this function just extracts the type itself. 
     - The optional argument [camelCase] determines whether the string 
-    returned should be in camelCase or not. *)    
-let extractReturnType ?(camelCase = true) (v : valDecl) : string = 
-  match valType v with 
-  | Func1 (_, ret) | Func2 (_, _, ret) -> 
-    string_of_ty ~t:"T" ~alpha:"Int" ~camelCase ret
+    returned should be in camelCase or not. *)
+let extractReturnType ?(camelCase = true) (v : valDecl) : string =
+  match valType v with
+  | Func1 (_, ret) | Func2 (_, _, ret) ->
+      string_of_ty ~t:"T" ~alpha:"Int" ~camelCase ret
   | ty -> string_of_ty ~t:"T" ~alpha:"Int" ~camelCase ty
 
 (** Fetches the unique return types across the functions / values 
     in a module signature. 
     - The optional argument [camelCase] determines whether the string 
-    returned should be in camelCase or not. *)  
-let uniqRetTypesInSig ?(camelCase = true) (m : moduleSig) : string list = 
+    returned should be in camelCase or not. *)
+let uniqRetTypesInSig ?(camelCase = true) (m : moduleSig) : string list =
   let open String in
-  List.dedup_and_sort ~compare:compare
-    @@ List.map ~f:(fun v -> extractReturnType ~camelCase v |> capitalize) m.valDecls
+  List.dedup_and_sort ~compare
+  @@ List.map
+       ~f:(fun v -> extractReturnType ~camelCase v |> capitalize)
+       m.valDecls
 
-(** Generates the definition of the [ty] ADT *)  
-let tyADTDecl (m : moduleSig) : document = 
-  let retTypes = uniqRetTypesInSig m in 
-  prefix 2 1
-  (!^ "type ty =")
-  (group @@ separate_map (!^ " | ") (!^) retTypes
-    ^/^ sexpAnnotation
-    ^^ hardline)
+(** Generates the definition of the [ty] ADT *)
+let tyADTDecl (m : moduleSig) : document =
+  let retTypes = uniqRetTypesInSig m in
+  prefix 2 1 !^"type ty ="
+    (group
+    @@ separate_map !^" | " ( !^ ) retTypes
+    ^/^ sexpAnnotation ^^ hardline)
 
 (** Given a [val] declaration inside a module (eg. [val f : 'a -> 'a]), 
     returns the corresponding function name (eg. [M.f]) *)
-let getFuncName (v : valDecl) : document = 
-  !^ ("M." ^ valName v)     
+let getFuncName (v : valDecl) : document = !^("M." ^ valName v)
 
 (** Like [valADTConstructor] (see below), but returns a string 
-    instead of a PPrint document *)  
-let valADTConstructorString (ty : string) : string = 
+    instead of a PPrint document *)
+let valADTConstructorString (ty : string) : string =
   "Val" ^ String.capitalize ty
 
 (** [valADTConstructor ty] generates the constructor name for the 
-    [value] ADT corresponding to the type [ty] *)  
-let valADTConstructor (ty : string) : document = 
-  !^ (valADTConstructorString ty)
+    [value] ADT corresponding to the type [ty] *)
+let valADTConstructor (ty : string) : document = !^(valADTConstructorString ty)
 
 (** Generates the list of constructor names (strings) for the [ty] ADT
     - The optional argument [camelCase] determines whether the strings 
-    returned should be in camelCase or not. *)  
+    returned should be in camelCase or not. *)
 let tyADTConstructors ?(camelCase = true) (m : moduleSig) : string list =
   uniqRetTypesInSig ~camelCase m
 
@@ -317,32 +310,32 @@ let tyADTConstructors ?(camelCase = true) (m : moduleSig) : string list =
     where each element is a constructor for the 
     [ty] ADT & its associated constructor for the [value] ADT. 
     - The optional argument [camelCase] determines whether the strings 
-    returned should be in camelCase or not. *)  
-let tyAndValADTConstructors ?(camelCase = true) (m : moduleSig) : (string * string) list = 
-  List.map ~f:(fun ty -> ty, valADTConstructorString ty) 
-  (tyADTConstructors ~camelCase m)
+    returned should be in camelCase or not. *)
+let tyAndValADTConstructors ?(camelCase = true) (m : moduleSig) :
+    (string * string) list =
+  List.map
+    ~f:(fun ty -> (ty, valADTConstructorString ty))
+    (tyADTConstructors ~camelCase m)
 
 (** Takes [s], a string reprentation of a type, 
     and instantiates the abstract type [t] to [int M.t] 
     where [M] is some module defined elsewhere. 
     - Example: [instantiate "toption" = "int M.t option"] 
-    - If [s] doesn't contain the prefix ["t"], [s] is left unchanged  *)  
-let instantiateT (s : string) = 
-  let open String in 
-  if is_prefix ~prefix:"t" s 
-  then "int M.t" ^ drop_prefix s 1
-  else s
+    - If [s] doesn't contain the prefix ["t"], [s] is left unchanged  *)
+let instantiateT (s : string) =
+  let open String in
+  if is_prefix ~prefix:"t" s then "int M.t" ^ drop_prefix s 1 else s
 
 (** Takes [s], a string reprentation of a type, 
     and adds a space to [s] if [s] represents a parameterized type. 
     - Example: [addSpaceToTyStr "intoption" = "int option"] 
     - If [s] doesn't contain the suffix ["list"] or ["option"], [s] is left unchanged. *)
-let addSpaceToTyStr (s : string) = 
-  let open String in 
-  if is_suffix ~suffix:"option" s 
-    then chop_suffix_exn ~suffix:"option" s ^ " option"
-  else if is_suffix ~suffix:"list" s 
-    then chop_suffix_exn ~suffix:"list" s ^ " list"
+let addSpaceToTyStr (s : string) =
+  let open String in
+  if is_suffix ~suffix:"option" s then
+    chop_suffix_exn ~suffix:"option" s ^ " option"
+  else if is_suffix ~suffix:"list" s then
+    chop_suffix_exn ~suffix:"list" s ^ " list"
   else s
 
 (** [destructAbsTy] takes an abstract type [absTy] and produces a PPrint document 
@@ -350,22 +343,19 @@ let addSpaceToTyStr (s : string) =
     (represented as the inhabitant [T0 "t"] of the type [abstractType]) corresponds
     to ["M.t"]. 
     - Note: any polymorphic type variables are automatically instantiated with [int], 
-    so ['a t] becomes ["int M.t"]. *)  
-let destructAbsTy (absTy : abstractType) : document = 
-  match absTy with 
-  | T0 tyName      -> !^ ("M." ^ tyName)
-  | T1 (_, tyName) -> !^ ("int M." ^ tyName) 
+    so ['a t] becomes ["int M.t"]. *)
+let destructAbsTy (absTy : abstractType) : document =
+  match absTy with
+  | T0 tyName -> !^("M." ^ tyName)
+  | T1 (_, tyName) -> !^("int M." ^ tyName)
 
 (** Takes a list [absTys] of abstract types and checks if the string [s] 
-    is the name of an abstract type *)  
-let rec lookupAbsTy (s : string) (absTys : abstractType list) = 
-  match absTys with 
-  | [] -> None 
-  | (T0 tyName as absTy) :: ts | (T1 (_, tyName) as absTy) :: ts -> 
-    if String.equal s tyName 
-      then Some absTy 
-    else lookupAbsTy s ts
-
+    is the name of an abstract type *)
+let rec lookupAbsTy (s : string) (absTys : abstractType list) =
+  match absTys with
+  | [] -> None
+  | (T0 tyName as absTy) :: ts | (T1 (_, tyName) as absTy) :: ts ->
+      if String.equal s tyName then Some absTy else lookupAbsTy s ts
 
 (** [valADTParam moduleAbsTy ty] takes [ty], a string representation 
     of the corresponding type, and generates the type parameter for the 
@@ -377,134 +367,146 @@ let rec lookupAbsTy (s : string) (absTys : abstractType list) =
       where "AssocList" is an externally-defined module)
     - If the module's abstract type [M.t] is polymorphic (i.e. ['a M.t]), 
       we instantiate ['a] with [int], 
-      otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)    
-let valADTParam ~(moduleAbsTys : abstractType list) ?(isOpaque = false) (ty : string) : document = 
-  let tys = 
-    begin match String.length ty, isOpaque with 
-    | _, true -> [reifyOpaqueTyConstr ty]
+      otherwise we leave the abstract type monomorphic (i.e. just [M.t]) *)
+let valADTParam ~(moduleAbsTys : abstractType list) ?(isOpaque = false)
+    (ty : string) : document =
+  let tys =
+    match (String.length ty, isOpaque) with
+    | _, true -> [ reifyOpaqueTyConstr ty ]
     | n, false when n > 1 -> splitCamelCaseTyString ty
-    | _, false -> String.(lowercase ty |> split ~on: ' ')
-    end in 
-  match tys with 
+    | _, false -> String.(lowercase ty |> split ~on:' ')
+  in
+  match tys with
   | [] -> failwith "Can't extract a type parameter from an empty string"
-  | [str] -> 
-    if String.(is_suffix str ~suffix:"list" || is_suffix str ~suffix:"option")
-      then !^ (addSpaceToTyStr str |> instantiateT)
-    else begin match lookupAbsTy str moduleAbsTys with 
-      | None -> !^ str 
-      | Some (T0 tyName)      -> !^ ("M." ^ tyName)
-      | Some (T1 (_, tyName)) -> !^ ("int M." ^ tyName)
-      end 
-  | ty1 :: ty2 :: "pair" :: remainingTys -> 
-    (* We represent [["a"; "b"; "pair"]] as the type expression ["a * b"] *)
-    separate_map space (!^) 
-      (parensStr (instantiateT ty1 ^ " * " ^ instantiateT ty2) :: remainingTys)
-  | tys -> 
-    separate_map space (fun ty -> !^ (instantiateT ty)) tys 
- 
+  | [ str ] -> (
+      if String.(is_suffix str ~suffix:"list" || is_suffix str ~suffix:"option")
+      then !^(addSpaceToTyStr str |> instantiateT)
+      else
+        match lookupAbsTy str moduleAbsTys with
+        | None -> !^str
+        | Some (T0 tyName) -> !^("M." ^ tyName)
+        | Some (T1 (_, tyName)) -> !^("int M." ^ tyName))
+  | ty1 :: ty2 :: "pair" :: remainingTys ->
+      (* We represent [["a"; "b"; "pair"]] as the type expression ["a * b"] *)
+      separate_map space ( !^ )
+        (parensStr (instantiateT ty1 ^ " * " ^ instantiateT ty2) :: remainingTys)
+  | tys -> separate_map space (fun ty -> !^(instantiateT ty)) tys
+
 (** [valADTTypeDef moduleAbsTy ty] generates both the constructor & type parameter 
     for the [value] ADT corresponding to the type [ty]
     - The auxiliary argument [moduleAbsTy] is the abstract type defined in the module, 
       which is used to determine if the abstract type needs to be instantiated
       with a concrete type (this logic is handled in [valADTParam])
-    - Note: This function is a helper function called by [valADTDefn] *)  
-let valADTTypeDef ~(moduleAbsTys : abstractType list) (ty : string) : document = 
-  let isOpaque = isOpaqueTy ty in 
-  valADTConstructor ty 
-  ^^ (!^ " of ")
-  ^^ valADTParam ~moduleAbsTys ~isOpaque ty      
+    - Note: This function is a helper function called by [valADTDefn] *)
+let valADTTypeDef ~(moduleAbsTys : abstractType list) (ty : string) : document =
+  let isOpaque = isOpaqueTy ty in
+  valADTConstructor ty ^^ !^" of " ^^ valADTParam ~moduleAbsTys ~isOpaque ty
 
 (** Generates the [value] ADT definition that is contained within 
-    the module returned by the [ExprToImpl] functor *)  
-let valADTDefn (m : moduleSig) : document = 
-  let valueTypes : string list = uniqRetTypesInSig m in 
-  prefix 2 1 
-  (!^ "type value = ")
-  (barSpace ^^ 
-    (group @@ separate_map (hardline ^^ barSpace) 
-      (fun ty -> valADTTypeDef ~moduleAbsTys:m.abstractTypes ty) 
-      valueTypes 
-    ^/^ sexpAnnotation))  
+    the module returned by the [ExprToImpl] functor *)
+let valADTDefn (m : moduleSig) : document =
+  let valueTypes : string list = uniqRetTypesInSig m in
+  prefix 2 1 !^"type value = "
+    (barSpace ^^ group
+    @@ separate_map (hardline ^^ barSpace)
+         (fun ty -> valADTTypeDef ~moduleAbsTys:m.abstractTypes ty)
+         valueTypes
+    ^/^ sexpAnnotation)
 
 (** Given an argument and its type, determines if we need to recursively call 
     [interp] on the argument for the inner pattern match in [interp] *)
-let interpIsNeeded (argTy : ty) : bool = 
-  match argTy with 
-  | AlphaT | T -> true
-  | _ -> false
+let interpIsNeeded (argTy : ty) : bool =
+  match argTy with AlphaT | T -> true | _ -> false
 
 (** Auxiliary data type for indicating the position of a non-[expr] argument
     to a function *)
-type argPos = Fst | Snd
-  [@@deriving sexp]
+type argPos = Fst | Snd [@@deriving sexp]
 
 (** Pattern matches [interp] on one argument of type [expr].  
     If [nonExprArg] is [Some] of some value, it is placed
-    in the appropriate argument position during function application. *)  
-let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document) (arg : ident) (retTy : ty) : document = 
-  let open PPrint in 
-  (* Obtain appropriate constructors based on the arg & return types *)    
-  let (argTyConstr, retTyConstr) = 
-    map2 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true)) (argTy, retTy) in
-  (* Generate a fresh variable name *)  
+    in the appropriate argument position during function application. *)
+let interpOnce (argTy : ty) ?(nonExprArg = None) (funcName : document)
+    (arg : ident) (retTy : ty) : document =
+  let open PPrint in
+  (* Obtain appropriate constructors based on the arg & return types *)
+  let argTyConstr, retTyConstr =
+    map2
+      ~f:
+        (Fn.compose valADTConstructor
+           (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true))
+      (argTy, retTy)
+  in
+  (* Generate a fresh variable name *)
   let arg' = genVarNameSingleton ~prime:true argTy in
   (* Identify the position of any arguments whose type are not [expr] *)
-  let funcApp = 
-    begin match nonExprArg with 
-    | None -> funcName ^^ space ^^ (!^ arg') 
-    | Some (nonExprArg, Fst) -> funcName ^^ (spaceLR (!^ nonExprArg) ^^ (!^ arg'))
-    | Some (nonExprArg, Snd) -> funcName ^^ (spaceLR (!^ arg') ^^ (!^ nonExprArg))
-    end in 
-  align @@ (!^ "begin match interp ") ^^ (!^ arg) ^^ (!^ " with ")
-    ^/^ (!^ " | ") ^^ argTyConstr
-    ^^ (space ^^ !^ arg') 
-    ^^ sArrow ^^ spaceR retTyConstr ^^ parens funcApp
-    ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
-    ^/^ (!^ "end")
+  let funcApp =
+    match nonExprArg with
+    | None -> funcName ^^ space ^^ !^arg'
+    | Some (nonExprArg, Fst) -> funcName ^^ spaceLR !^nonExprArg ^^ !^arg'
+    | Some (nonExprArg, Snd) -> funcName ^^ spaceLR !^arg' ^^ !^nonExprArg
+  in
+  align @@ !^"begin match interp " ^^ !^arg ^^ !^" with " ^/^ !^" | "
+  ^^ argTyConstr ^^ (space ^^ !^arg') ^^ sArrow ^^ spaceR retTyConstr
+  ^^ parens funcApp
+  ^/^ (!^" | _ -> failwith " ^^ OCaml.string "impossible")
+  ^/^ !^"end"
 
-(** Pattern matches [interp] on two arguments, both of type [expr] *)      
-let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document) 
-                (arg1 : ident) (arg2 : ident) (retTy : ty) : document = 
-  let open PPrint in 
-  (* Obtain appropriate constructors based on the arg & return types *)              
-  let (arg1TyConstr, arg2TyConstr, retTyConstr) = 
-    map3 ~f:(Fn.compose valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true)) (arg1Ty, arg2Ty, retTy) in
-  (* Generate fresh variable names *)    
-  match List.map ~f:(!^) (genVarNames ~prime:true [arg1Ty; arg2Ty]) with 
-   | [arg1'; arg2'] -> 
-     align @@ (!^ "begin match ") 
-      ^^ (OCaml.tuple [!^ ("interp " ^ arg1); !^ ("interp " ^ arg2)]) 
-      ^^ (!^ " with ")
-      ^/^ (!^ " | ") ^^ OCaml.tuple [arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2']
-      ^^ sArrow ^^ spaceR retTyConstr ^^ parens (funcName ^^ (spaceLR arg1') ^^ arg2')
-      ^/^ (!^ " | _ -> failwith " ^^ OCaml.string "impossible")
-      ^/^ (!^ "end")
+(** Pattern matches [interp] on two arguments, both of type [expr] *)
+let interpTwice (arg1Ty : ty) (arg2Ty : ty) (funcName : document) (arg1 : ident)
+    (arg2 : ident) (retTy : ty) : document =
+  let open PPrint in
+  (* Obtain appropriate constructors based on the arg & return types *)
+  let arg1TyConstr, arg2TyConstr, retTyConstr =
+    map3
+      ~f:
+        (Fn.compose valADTConstructor
+           (string_of_ty ~t:"T" ~alpha:"Int" ~camelCase:true))
+      (arg1Ty, arg2Ty, retTy)
+  in
+  (* Generate fresh variable names *)
+  match List.map ~f:( !^ ) (genVarNames ~prime:true [ arg1Ty; arg2Ty ]) with
+  | [ arg1'; arg2' ] ->
+      align @@ !^"begin match "
+      ^^ OCaml.tuple [ !^("interp " ^ arg1); !^("interp " ^ arg2) ]
+      ^^ !^" with " ^/^ !^" | "
+      ^^ OCaml.tuple
+           [ arg1TyConstr ^^ space ^^ arg1'; arg2TyConstr ^^ space ^^ arg2' ]
+      ^^ sArrow ^^ spaceR retTyConstr
+      ^^ parens (funcName ^^ spaceLR arg1' ^^ arg2')
+      ^/^ (!^" | _ -> failwith " ^^ OCaml.string "impossible")
+      ^/^ !^"end"
   | _ -> failwith "error generating fresh variable names"
 
-(** Produces the inner pattern match ([interp e]) in the [interp] function *) 
-let interpExprPatternMatch (v, args : valDecl * string list) : document = 
-  let open PPrint in 
+(** Produces the inner pattern match ([interp e]) in the [interp] function *)
+let interpExprPatternMatch ((v, args) : valDecl * string list) : document =
+  let open PPrint in
   let funcName = getFuncName v in
-  match valType v, args with 
-  | Func1 (argTy, retTy), [arg] -> 
-    if interpIsNeeded argTy
-    then interpOnce argTy funcName arg retTy
-    else 
-      (* Generate the appropriate constructor based on the return type *)
-      let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
-      retTyConstr ^^ space ^^ parens (funcName ^^ space ^^ (!^ arg))
-  | Func2 (arg1Ty, arg2Ty, retTy), [arg1; arg2] -> 
-    begin match interpIsNeeded arg1Ty, interpIsNeeded arg2Ty with 
-    | true, true -> interpTwice arg1Ty arg2Ty funcName arg1 arg2 retTy
-    | true, _ -> interpOnce arg1Ty ~nonExprArg:(Some (arg2, Snd)) funcName arg1 retTy 
-    | _, true -> interpOnce ~nonExprArg:(Some (arg1, Fst)) arg2Ty funcName arg2 retTy 
-    | _, _ -> 
-      let retTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy) in
-      retTyConstr ^^ space ^^ parens (funcName ^^ spaceLR (!^ arg1) ^^ (!^ arg2))
-    end
-  | valTy, _ -> 
-    let valTyConstr = valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy) in
-    valTyConstr ^^ space ^^ parens funcName
+  match (valType v, args) with
+  | Func1 (argTy, retTy), [ arg ] ->
+      if interpIsNeeded argTy then interpOnce argTy funcName arg retTy
+      else
+        (* Generate the appropriate constructor based on the return type *)
+        let retTyConstr =
+          valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy)
+        in
+        retTyConstr ^^ space ^^ parens (funcName ^^ space ^^ !^arg)
+  | Func2 (arg1Ty, arg2Ty, retTy), [ arg1; arg2 ] -> (
+      match (interpIsNeeded arg1Ty, interpIsNeeded arg2Ty) with
+      | true, true -> interpTwice arg1Ty arg2Ty funcName arg1 arg2 retTy
+      | true, _ ->
+          interpOnce arg1Ty ~nonExprArg:(Some (arg2, Snd)) funcName arg1 retTy
+      | _, true ->
+          interpOnce ~nonExprArg:(Some (arg1, Fst)) arg2Ty funcName arg2 retTy
+      | _, _ ->
+          let retTyConstr =
+            valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" retTy)
+          in
+          retTyConstr ^^ space ^^ parens (funcName ^^ spaceLR !^arg1 ^^ !^arg2))
+  | valTy, _ ->
+      let valTyConstr =
+        valADTConstructor (string_of_ty ~t:"T" ~alpha:"Int" valTy)
+      in
+      valTyConstr ^^ space ^^ parens funcName
 
 (** [interpDefn m] generates the definition of the [interp] function, 
     which evaluates [expr]s based on the value declarations defined in the 
@@ -514,36 +516,34 @@ let interpExprPatternMatch (v, args : valDecl * string list) : document =
     - Fetching the [expr] ADT constructors & arguments based on the 
       declarations inside [m]
     - Generating the pattern matches inside the [interp] function *)
-let interpDefn (m : moduleSig) : document = 
-  let idElts = getIdentityElements m in 
-  let (exprConstrArgs, exprConstrs) = 
-    List.unzip @@ List.map ~f:(getExprConstructor ~idElts) m.valDecls in
-  let innerPatternMatches = 
-    List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls exprConstrArgs) in
-  (** [interpHelper i constr] takes in a PPrint document [constr] 
-    at index [i], and concatenates it with the appropriate pattern matching code *)    
-  let interpHelper (i : int) (exprConstr : document) : document = 
-    let pattern = List.nth_exn innerPatternMatches i in 
-    break 1 
-    ^^ sBar ^^ exprConstr ^^ sArrow 
-    ^^ jump 2 0 pattern
+let interpDefn (m : moduleSig) : document =
+  let idElts = getIdentityElements m in
+  let exprConstrArgs, exprConstrs =
+    List.unzip @@ List.map ~f:(getExprConstructor ~idElts) m.valDecls
   in
-  hang 2 @@ 
-  !^ "let rec interp (expr : expr) : value = " 
-  ^/^ (!^ "match expr with")
-  ^^ (concat (List.mapi ~f:interpHelper exprConstrs)) 
+  let innerPatternMatches =
+    List.map ~f:interpExprPatternMatch (List.zip_exn m.valDecls exprConstrArgs)
+  in
+  (** [interpHelper i constr] takes in a PPrint document [constr] 
+    at index [i], and concatenates it with the appropriate pattern matching code *)
+  let interpHelper (i : int) (exprConstr : document) : document =
+    let pattern = List.nth_exn innerPatternMatches i in
+    break 1 ^^ sBar ^^ exprConstr ^^ sArrow ^^ jump 2 0 pattern
+  in
+  hang 2
+  @@ !^"let rec interp (expr : expr) : value = "
+  ^/^ !^"match expr with"
+  ^^ concat (List.mapi ~f:interpHelper exprConstrs)
   ^^ break 1
 
-(** Generates the definition of the [ExprToImpl] functor *)  
-let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : document = 
-  let sigN = String.capitalize sigName in 
-  hang 2 @@ 
-  !^  (Printf.sprintf "module %s (M : %s) = struct " functorName sigN)
-  ^/^ (!^ "include M" ^^ hardline)
-  ^/^ (valADTDefn m)
-  ^/^ (interpDefn m)
-  ^/^ (!^ "end")  
-  ^^ hardline
+(** Generates the definition of the [ExprToImpl] functor *)
+let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) :
+    document =
+  let sigN = String.capitalize sigName in
+  hang 2
+  @@ !^(Printf.sprintf "module %s (M : %s) = struct " functorName sigN)
+  ^/^ (!^"include M" ^^ hardline)
+  ^/^ valADTDefn m ^/^ interpDefn m ^/^ !^"end" ^^ hardline
 
 (** [getGenerator ty] takes in a type [ty] and produces a PPrint document
     containing the corresponding QuickCheck generator for that type. 
@@ -553,26 +553,26 @@ let functorDef (m : moduleSig) ~(sigName : string) ~(functorName : string) : doc
       negative & positive ints. 
     - Note that polymorphic types (eg. [Alpha]) are instantiated as ints
     - This is a helper function called by [argGen]. *)
-let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document = 
-  let open PPrint in 
-  match ty with 
-  | Int | Alpha     -> 
-    if nonNegOnly then !^ "G.small_positive_or_zero_int"
-    else !^ "G.int_inclusive (-10) 10"
-  | Char            -> !^ "G.char_alpha"
-  | Bool            -> !^ "G.bool"
-  | Unit            -> !^ "G.unit"
-  | String          -> !^ "G.string_non_empty"
-  | Option argTy    -> !^ "G.option @@ " ^^ getGenerator ~nonNegOnly argTy
-  | List argTy      -> !^ "G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
-  | Pair (ty1, ty2) -> 
-    let (g1, g2) = map2 ~f:(getGenerator ~nonNegOnly) (ty1, ty2) in 
-    !^ "G.both" ^^ spaceLR (parens g1) ^^ parens g2
-  | NamedAbstract tyName  | Opaque tyName -> 
-    ppxQuickCheckMacro tyName
-  | Func1 _ | Func2 _ | T | AlphaT -> 
-    failwith @@ Printf.sprintf "Error: Can't fetch generator for type %s" 
-    (string_of_ty ~t:"T" ~alpha:"Alpha" ty)
+let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
+  let open PPrint in
+  match ty with
+  | Int | Alpha ->
+      if nonNegOnly then !^"G.small_positive_or_zero_int"
+      else !^"G.int_inclusive (-10) 10"
+  | Char -> !^"G.char_alpha"
+  | Bool -> !^"G.bool"
+  | Unit -> !^"G.unit"
+  | String -> !^"G.string_non_empty"
+  | Option argTy -> !^"G.option @@ " ^^ getGenerator ~nonNegOnly argTy
+  | List argTy -> !^"G.list @@ " ^^ jump 2 1 @@ getGenerator ~nonNegOnly argTy
+  | Pair (ty1, ty2) ->
+      let g1, g2 = map2 ~f:(getGenerator ~nonNegOnly) (ty1, ty2) in
+      !^"G.both" ^^ spaceLR (parens g1) ^^ parens g2
+  | NamedAbstract tyName | Opaque tyName -> ppxQuickCheckMacro tyName
+  | Func1 _ | Func2 _ | T | AlphaT ->
+      failwith
+      @@ Printf.sprintf "Error: Can't fetch generator for type %s"
+           (string_of_ty ~t:"T" ~alpha:"Alpha" ty)
 
 (** Produces the code for a monadic bind of [arg] to a QuickCheck generator 
     producing a value of type [ty], where [ty] must be a non-arrow type.
@@ -581,41 +581,44 @@ let rec getGenerator ?(nonNegOnly = false) (ty : ty) : document =
       generators should only generate non-negative ints
     - If the optional argument [pairName] (of type [string option]) is [Some p] 
       and [ty] is of the form [Pair (_, _)], [p] will be used as the variable 
-      name for the overall pair. *)  
-let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) : document = 
-  let open Printf in 
-  let binding = !^ (sprintf "let%%bind %s = " arg) in
-  match ty with 
-  | Int | Alpha       -> binding ^^ getGenerator ~nonNegOnly Int    ^^ sIn
-  | Char              -> binding ^^ getGenerator ~nonNegOnly Char   ^^ sIn
-  | Bool              -> binding ^^ getGenerator ~nonNegOnly Bool   ^^ sIn
-  | Unit              -> binding ^^ getGenerator ~nonNegOnly Unit   ^^ sIn
-  | String            -> binding ^^ getGenerator ~nonNegOnly String ^^ sIn
-  | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty     ^^ sIn
-  | Opaque _ | NamedAbstract _ ->
-    binding ^^ getGenerator ~nonNegOnly ty ^^ sIn
-  | Pair (ty1, ty2)   -> 
-    let lst = if phys_equal ty1 ty2 
-      then genVarNamesN ~n:2 ty1 
-      else genVarNames [ty1; ty2] in 
-    begin match lst with 
-    | [v1; v2] -> 
-      (* Let [p] be the variable name for the overall pair *)
-      let p = Option.value_or_thunk pairName ~default:(fun () -> genVarNameSingleton ty) in 
-      !^ (sprintf "let%%bind (%s, %s) as %s = " v1 v2 p) 
-      ^^ getGenerator ~nonNegOnly ty ^^ sIn 
-    | _ -> failwith "Error generating fresh varnames for Pair type"
-    end 
-  | T | AlphaT -> 
-    !^ (sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in " 
-        arg (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
+      name for the overall pair. *)
+let argGen ?(nonNegOnly = false) ?(pairName = None) (arg : string) (ty : ty) :
+    document =
+  let open Printf in
+  let binding = !^(sprintf "let%%bind %s = " arg) in
+  match ty with
+  | Int | Alpha -> binding ^^ getGenerator ~nonNegOnly Int ^^ sIn
+  | Char -> binding ^^ getGenerator ~nonNegOnly Char ^^ sIn
+  | Bool -> binding ^^ getGenerator ~nonNegOnly Bool ^^ sIn
+  | Unit -> binding ^^ getGenerator ~nonNegOnly Unit ^^ sIn
+  | String -> binding ^^ getGenerator ~nonNegOnly String ^^ sIn
+  | Option _ | List _ -> binding ^^ getGenerator ~nonNegOnly ty ^^ sIn
+  | Opaque _ | NamedAbstract _ -> binding ^^ getGenerator ~nonNegOnly ty ^^ sIn
+  | Pair (ty1, ty2) -> (
+      let lst =
+        if phys_equal ty1 ty2 then genVarNamesN ~n:2 ty1
+        else genVarNames [ ty1; ty2 ]
+      in
+      match lst with
+      | [ v1; v2 ] ->
+          (* Let [p] be the variable name for the overall pair *)
+          let p =
+            Option.value_or_thunk pairName ~default:(fun () ->
+                genVarNameSingleton ty)
+          in
+          !^(sprintf "let%%bind (%s, %s) as %s = " v1 v2 p)
+          ^^ getGenerator ~nonNegOnly ty
+          ^^ sIn
+      | _ -> failwith "Error generating fresh varnames for Pair type")
+  | T | AlphaT ->
+      !^(sprintf "let%%bind %s = G.with_size ~size:(k / 2) (gen_expr %s) in "
+           arg
+           (string_of_ty ~t:"T" ~alpha:"Alpha" ty))
   | Func1 _ | Func2 _ -> failwith "Higher-order functions not supported"
 
-(** [isPairType ty] returns [true] if [ty] is a pair type, [false] otherwise *)  
-let isPairType (ty : ty) : bool = 
-  match ty with 
-  | Pair (_, _) -> true 
-  | _ -> false 
+(** [isPairType ty] returns [true] if [ty] is a pair type, [false] otherwise *)
+let isPairType (ty : ty) : bool =
+  match ty with Pair (_, _) -> true | _ -> false
 
 (** Takes in the following arguments:
     - [nonNegOnly]: An optional argument specifying whether QuickCheck's int 
@@ -639,30 +642,36 @@ let isPairType (ty : ty) : bool =
     {[
       let%bind arg = G.int in G.return @@ Mem(x, e)
     ]}
-    where [G] = [Base_quickcheck.Generator]. *)  
-let genExprPatternRHS 
-  ?(nonNegOnly = false)
-  (tyConstr, funcTy, args, constr, funcApp : string * ty * string list * string * document) 
-  : string * (ty * document * string) = 
-  let patternName = String.uncapitalize constr in 
-  let preamble = !^ ("let " ^ patternName ^ " = ") in
-  let monadicReturn = !^ "G.return @@ " ^^ funcApp in
-  match funcTy, args with 
-  | Func1 (argTy, _), [arg] -> 
-    let pairName = Option.some_if (isPairType argTy) arg in 
-    let patternRHS = 
-      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly ~pairName arg argTy ^/^ monadicReturn in
-    tyConstr, (funcTy, patternRHS, patternName)
-  | Func2 (arg1Ty, arg2Ty, _), [arg1; arg2] -> 
-    (* If [arg1Ty] or [arg2Ty] is a pair type, treat the corresponding 
-       variable name as the name for the overall pair *)
-    let pairName1 = Option.some_if (isPairType arg1Ty) arg1 in 
-    let pairName2 = Option.some_if (isPairType arg2Ty) arg2 in 
-    let patternRHS = 
-      preamble ^^ jump 2 1 @@ argGen ~nonNegOnly ~pairName:pairName1 arg1 arg1Ty 
-        ^/^ argGen ~nonNegOnly ~pairName:pairName2 arg2 arg2Ty ^/^ monadicReturn in
-    tyConstr, (funcTy, patternRHS, patternName)
-  | _ -> tyConstr, (funcTy, (!^ "failwith ") ^^ OCaml.string "TODO", "no pattern")
+    where [G] = [Base_quickcheck.Generator]. *)
+let genExprPatternRHS ?(nonNegOnly = false)
+    ((tyConstr, funcTy, args, constr, funcApp) :
+      string * ty * string list * string * document) :
+    string * (ty * document * string) =
+  let patternName = String.uncapitalize constr in
+  let preamble = !^("let " ^ patternName ^ " = ") in
+  let monadicReturn = !^"G.return @@ " ^^ funcApp in
+  match (funcTy, args) with
+  | Func1 (argTy, _), [ arg ] ->
+      let pairName = Option.some_if (isPairType argTy) arg in
+      let patternRHS =
+        preamble ^^ jump 2 1
+        @@ argGen ~nonNegOnly ~pairName arg argTy
+        ^/^ monadicReturn
+      in
+      (tyConstr, (funcTy, patternRHS, patternName))
+  | Func2 (arg1Ty, arg2Ty, _), [ arg1; arg2 ] ->
+      (* If [arg1Ty] or [arg2Ty] is a pair type, treat the corresponding
+         variable name as the name for the overall pair *)
+      let pairName1 = Option.some_if (isPairType arg1Ty) arg1 in
+      let pairName2 = Option.some_if (isPairType arg2Ty) arg2 in
+      let patternRHS =
+        preamble ^^ jump 2 1
+        @@ argGen ~nonNegOnly ~pairName:pairName1 arg1 arg1Ty
+        ^/^ argGen ~nonNegOnly ~pairName:pairName2 arg2 arg2Ty
+        ^/^ monadicReturn
+      in
+      (tyConstr, (funcTy, patternRHS, patternName))
+  | _ -> (tyConstr, (funcTy, !^"failwith " ^^ OCaml.string "TODO", "no pattern"))
 
 (** {b Arguments}:
     - [tyConstr] (constructor for the [ty] ADT representing 
@@ -674,46 +683,46 @@ let genExprPatternRHS
     {[ (tyConstr, ty, constructorArgs, constructor, constructor applied to args) ]} 
     e.g. 
     {[ (Bool, Func2(Alpha, Expr, Bool), ["x", "e"], "Mem", !^ "Mem(x,e)") ]} *)
-let getExprConstructorWithArgs (tyConstr : string) 
-  (ty : ty) (constr : string) : string * ty * string list * string * document = 
-  match ty, constr with 
-  | _, "Empty" -> (tyConstr, ty, [], constr, !^ constr)
-  | Int, _     -> (tyConstr, ty, ["n"], constr, printConstructor constr ["n"])
-  | Char, _    -> (tyConstr, ty, ["c"], constr, printConstructor constr ["c"])
-  | Bool, _    -> (tyConstr, ty, ["b"], constr, printConstructor constr ["b"])
-  | Unit, _    -> (tyConstr, ty, [], constr, OCaml.unit)
-  | String, _  -> (tyConstr, ty, ["s"], constr, printConstructor constr ["s"])
-  | Alpha, _   -> (tyConstr, ty, ["a"], constr, printConstructor constr ["a"])
-  | T, _ | AlphaT, _ -> 
-    (tyConstr, ty, ["t"], constr, printConstructor constr ["t"])
-  | Opaque _ as absTy, _ | (NamedAbstract _ as absTy, _) -> 
-    let var = varNameHelper absTy in 
-    (tyConstr, ty, [var], constr, printConstructor constr [var])
+let getExprConstructorWithArgs (tyConstr : string) (ty : ty) (constr : string) :
+    string * ty * string list * string * document =
+  match (ty, constr) with
+  | _, "Empty" -> (tyConstr, ty, [], constr, !^constr)
+  | Int, _ -> (tyConstr, ty, [ "n" ], constr, printConstructor constr [ "n" ])
+  | Char, _ -> (tyConstr, ty, [ "c" ], constr, printConstructor constr [ "c" ])
+  | Bool, _ -> (tyConstr, ty, [ "b" ], constr, printConstructor constr [ "b" ])
+  | Unit, _ -> (tyConstr, ty, [], constr, OCaml.unit)
+  | String, _ -> (tyConstr, ty, [ "s" ], constr, printConstructor constr [ "s" ])
+  | Alpha, _ -> (tyConstr, ty, [ "a" ], constr, printConstructor constr [ "a" ])
+  | T, _ | AlphaT, _ ->
+      (tyConstr, ty, [ "t" ], constr, printConstructor constr [ "t" ])
+  | (Opaque _ as absTy), _ | (NamedAbstract _ as absTy), _ ->
+      let var = varNameHelper absTy in
+      (tyConstr, ty, [ var ], constr, printConstructor constr [ var ])
   | Option argTy, _ | List argTy, _ | Func1 (argTy, _), _ ->
-    let arg = genVarNames [argTy] in 
-    (tyConstr, ty, arg, constr, printConstructor constr arg)
-  | Pair (arg1, arg2), _ | Func2 (arg1, arg2, _), _ -> 
-    let args = genVarNames [arg1; arg2] in 
-    (tyConstr, ty, args, constr, printConstructor constr args)
-    
+      let arg = genVarNames [ argTy ] in
+      (tyConstr, ty, arg, constr, printConstructor constr arg)
+  | Pair (arg1, arg2), _ | Func2 (arg1, arg2, _), _ ->
+      let args = genVarNames [ arg1; arg2 ] in
+      (tyConstr, ty, args, constr, printConstructor constr args)
+
 (** Returns an association list of constructors for the [ty] ADT 
-  where each element is the form [(<constructor for the ty ADT>, ty)] *)    
-let genExprPatterns (m : moduleSig) = 
+  where each element is the form [(<constructor for the ty ADT>, ty)] *)
+let genExprPatterns (m : moduleSig) =
   let open List in
-  m.valDecls 
-    |> filter ~f:(fun v -> tyIsArrow (valType v)) 
-    |> map ~f:(fun v -> 
-        (String.capitalize @@ extractReturnType v, 
-         valType v, 
-         getExprConstructorName v))
-    |> map ~f:(uncurry3 getExprConstructorWithArgs)
-    |> map ~f:(genExprPatternRHS 
-        ~nonNegOnly:(phys_equal m.intFlag NonNegativeOnly))
+  m.valDecls
+  |> filter ~f:(fun v -> tyIsArrow (valType v))
+  |> map ~f:(fun v ->
+         ( String.capitalize @@ extractReturnType v,
+           valType v,
+           getExprConstructorName v ))
+  |> map ~f:(uncurry3 getExprConstructorWithArgs)
+  |> map
+       ~f:(genExprPatternRHS ~nonNegOnly:(phys_equal m.intFlag NonNegativeOnly))
 
 (** [setNonNegIntFlag m] sets the [intFlag] field of the module signature [m]
     to [NonNegativeOnly], indicating that QuickCheck's int generators
-    should only generate non-negative ints. *)    
-let setNonNegIntFlag (m : moduleSig) : moduleSig = 
+    should only generate non-negative ints. *)
+let setNonNegIntFlag (m : moduleSig) : moduleSig =
   { m with intFlag = NonNegativeOnly }
 
 (** Produces the definition of the [gen_expr] Quickcheck generator for 
@@ -729,124 +738,132 @@ let setNonNegIntFlag (m : moduleSig) : moduleSig =
       the identity element (or one of them, if there are multiple) 
       of the signature. 
     - See [getIdentityElements] for a further discussion
-      on identity elements. *)  
-let genExprDef ~(nonNegOnly : bool) (modSig : moduleSig) : document = 
-
-  let m = if nonNegOnly then setNonNegIntFlag modSig else modSig in 
+      on identity elements. *)
+let genExprDef ~(nonNegOnly : bool) (modSig : moduleSig) : document =
+  let m = if nonNegOnly then setNonNegIntFlag modSig else modSig in
 
   (* Generator for the identity element(s) in the module signature *)
-  let idEltGenerator : document = 
-    let idElts = getIdentityElements m in 
-    begin match idElts with 
+  let idEltGenerator : document =
+    let idElts = getIdentityElements m in
+    match idElts with
     | [] -> failwith "Missing identity element(s) in module signature"
-    | [mempty] -> (!^ "return ") ^^ (!^ mempty)
-    | _ -> !^ "G.union " ^^ OCaml.list (fun e -> !^ "G.return " ^^ !^ e) idElts 
-    end in 
+    | [ mempty ] -> !^"return " ^^ !^mempty
+    | _ -> !^"G.union " ^^ OCaml.list (fun e -> !^"G.return " ^^ !^e) idElts
+  in
 
   (* [patterns] is a [(tyConstr, (funcTy, patternRHS, patternName) list)] *)
-  let patterns : (string, (ty * document * string) list) List.Assoc.t = 
-    genExprPatterns m
-      |> List.Assoc.sort_and_group ~compare:compare_string in
+  let patterns : (string, (ty * document * string) list) List.Assoc.t =
+    genExprPatterns m |> List.Assoc.sort_and_group ~compare:compare_string
+  in
 
-  let completePatterns = 
-    List.map patterns ~f:(fun (tyConstr, patternRHSes) -> 
-      let patternLHS = OCaml.tuple [!^ tyConstr; underscore] in
+  let completePatterns =
+    List.map patterns ~f:(fun (tyConstr, patternRHSes) ->
+        let patternLHS = OCaml.tuple [ !^tyConstr; underscore ] in
 
-      let patternRHS = 
-        begin match patternRHSes with 
-        | [] -> (!^ "failwith ") ^^ OCaml.string "Error generating [gen_expr]" 
-        | [(_, rhs, patternName)] -> rhs ^/^ !^ ("in " ^ patternName)
-        | patterns -> 
-          let (_, rhses, patternNames) = List.unzip3 patterns in 
-          separate (!^ " in " ^^ hardline) rhses ^/^ (!^ "in G.union ") ^^ OCaml.list (!^) patternNames
-        end in 
+        let patternRHS =
+          match patternRHSes with
+          | [] -> !^"failwith " ^^ OCaml.string "Error generating [gen_expr]"
+          | [ (_, rhs, patternName) ] -> rhs ^/^ !^("in " ^ patternName)
+          | patterns ->
+              let _, rhses, patternNames = List.unzip3 patterns in
+              separate (!^" in " ^^ hardline) rhses
+              ^/^ !^"in G.union "
+              ^^ OCaml.list ( !^ ) patternNames
+        in
 
-      hardline ^^ sBar ^^ 
-      patternLHS ^^ sArrow ^^ jump 4 0 patternRHS) in 
-  
-  hardline
-  ^^ hang 2 @@ 
-  !^ "let rec gen_expr (ty : ty) : expr Generator.t = " 
-  ^/^ (!^ "let module G = Generator in ")
-  ^/^ (!^ "let open G.Let_syntax in ")
-  ^/^ (!^ "let%bind k = G.size in ")
-  ^/^ (!^ "match ty, k with ")
-  ^/^ (sBar ^^ OCaml.tuple [!^ "T"; OCaml.int 0] ^^ sArrow ^^ idEltGenerator)
+        hardline ^^ sBar ^^ patternLHS ^^ sArrow ^^ jump 4 0 patternRHS)
+  in
+
+  hardline ^^ hang 2
+  @@ !^"let rec gen_expr (ty : ty) : expr Generator.t = "
+  ^/^ !^"let module G = Generator in "
+  ^/^ !^"let open G.Let_syntax in "
+  ^/^ !^"let%bind k = G.size in "
+  ^/^ !^"match ty, k with "
+  ^/^ (sBar ^^ OCaml.tuple [ !^"T"; OCaml.int 0 ] ^^ sArrow ^^ idEltGenerator)
   ^^ concat completePatterns
 
 (** Produces a PPrint document representing an OCaml functor application, where 
     [functorName] is the name of the functor, and [arg] is the name
-    of the argument to the functor *)  
-let functorApp ~(functorName : moduleName) (arg : string) : document = 
-  OCaml.variant "functorApp" functorName 1 [!^ arg]
+    of the argument to the functor *)
+let functorApp ~(functorName : moduleName) (arg : string) : document =
+  OCaml.variant "functorApp" functorName 1 [ !^arg ]
 
 (** Produces the module bindings for the two module implemntations [I1, I2], 
     where [functorName] is the name of the functor that procduces the PBT test harness,
-    and [modName1] & [modName2] are the names of the two module implementaitons *)  
-let implModuleBindings ~(functorName : moduleName) (modName1 : string) (modName2 : string) : document = 
-  let (m1, m2) = map2 ~f:String.capitalize (modName1, modName2) in 
-  let i1 = !^ "module I1 = " ^^ (functorApp ~functorName m1) in 
-  let i2 = !^ "module I2 = " ^^ (functorApp ~functorName m2) in
+    and [modName1] & [modName2] are the names of the two module implementaitons *)
+let implModuleBindings ~(functorName : moduleName) (modName1 : string)
+    (modName2 : string) : document =
+  let m1, m2 = map2 ~f:String.capitalize (modName1, modName2) in
+  let i1 = !^"module I1 = " ^^ functorApp ~functorName m1 in
+  let i2 = !^"module I2 = " ^^ functorApp ~functorName m2 in
   hardline ^/^ i1 ^/^ i2 ^/^ hardline
 
 (***********************************************************************************)
 (** {1 Functions for generating the executable for comparing two modules} *)
 
 (** Generates the definition of a [displayError] helper function 
-    for displaying error messages when QuickCheck tests fail *)  
-let displayErrorDef : document = 
-  !^ "let displayError (e : expr) (v1 : I1.value) (v2 : I2.value) : string = "
-  ^^ jump 2 1 @@ !^ "Printf.sprintf " ^^ OCaml.string "e = %s, v1 = %s, v2 = %s\n" 
-  ^^ jump 2 1 @@ !^ "(Sexp.to_string @@ sexp_of_expr e)"
-  ^/^ !^ "(Sexp.to_string @@ [%sexp_of: I1.value] v1)"
-  ^/^ !^ "(Sexp.to_string @@ [%sexp_of: I2.value] v2)"
+    for displaying error messages when QuickCheck tests fail *)
+let displayErrorDef : document =
+  !^"let displayError (e : expr) (v1 : I1.value) (v2 : I2.value) : string = "
+  ^^ jump 2 1 @@ !^"Printf.sprintf "
+  ^^ OCaml.string "e = %s, v1 = %s, v2 = %s\n"
+  ^^ jump 2 1
+  @@ !^"(Sexp.to_string @@ sexp_of_expr e)"
+  ^/^ !^"(Sexp.to_string @@ [%sexp_of: I1.value] v1)"
+  ^/^ !^"(Sexp.to_string @@ [%sexp_of: I2.value] v2)"
 
 (** Generate requisite imports for the executable file, where 
-    [filepath] is the filepath to the executable file *)  
-let executableImports ~(pbtFilePath : string) ~(execFilePath : string) : document = 
-  let open Core.Filename in 
-  comment (!^ "Auto-generated executable for testing observational equivalence of two modules")
-  ^/^ comment (!^ "Usage: " ^^ 
-    brackets @@ !^ (Printf.sprintf "dune exec -- %s.exe" @@ 
-      String.capitalize @@ chop_extension execFilePath))
-  ^^ break 1
-  ^/^ suppressUnusedValueWarnings
-  ^/^ (!^ "open Core")
-  ^/^ (!^ "open Lib.Stats")
-  ^/^ !^ ("open " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
+    [filepath] is the filepath to the executable file *)
+let executableImports ~(pbtFilePath : string) ~(execFilePath : string) :
+    document =
+  let open Core.Filename in
+  comment
+    !^"Auto-generated executable for testing observational equivalence of two \
+       modules"
+  ^/^ comment
+        (!^"Usage: " ^^ brackets
+        @@ !^(Printf.sprintf "dune exec -- %s.exe"
+             @@ String.capitalize
+             @@ chop_extension execFilePath))
+  ^^ break 1 ^/^ suppressUnusedValueWarnings ^/^ !^"open Core"
+  ^/^ !^"open Lib.Stats"
+  ^/^ !^("open " ^ "Lib." ^ String.capitalize @@ getModuleSigName pbtFilePath)
   ^/^ break 1
 
 (** Given [tyConstr], a constructor in the [ty] datatype to an OCaml datatype, 
     [getTestName tyConstr] produces an interstitial variable name corresponding 
     to this type with the prefix ["test_"], in the form of a PPrint document 
     - For example, [getTestName Int] produces ["test_int"] (as a PPrint document) *)
-let getTestName (tyConstr : string) : document = 
-  !^ ("test_" ^ String.lowercase tyConstr)
+let getTestName (tyConstr : string) : document =
+  !^("test_" ^ String.lowercase tyConstr)
 
 (** Produces Quickcheck code in the executable that tests two modules 
     for observational equivalence based on [expr]s that return some [tyConstr] of type [ty], 
     and pattern matching on the equivalent [valConstr]s that they return *)
-let obsEquiv (tyConstr, valConstr : string * string) : document = 
-  let vars : string list = 
-    genVarNamesN ~n:2 (ty_of_string tyConstr) in
-  let varDocs : document list = 
-    List.map ~f:(fun var -> !^ valConstr ^^ space ^^ !^ var) vars in 
-  let baseTy : string = 
-    if isOpaqueTy tyConstr 
-      then "Lib." ^ reifyOpaqueTyConstr tyConstr
-    else addSpaceToTyStr (String.lowercase tyConstr) in
-  !^ "let " ^^ getTestName tyConstr ^^ sEquals
-  ^^ !^ "QC.test_or_error (gen_expr " ^^ !^ tyConstr ^^ !^ ") ~sexp_of:sexp_of_expr "
-  ^^ jump 2 1 @@ 
-  !^ "~f:(fun e" ^^ sArrow 
-  ^^ jump 2 1 @@ 
-  !^ "match (I1.interp e, I2.interp e) with "
-  ^/^ sBar ^^ OCaml.tuple varDocs ^^ sArrow ^^ 
-    jump 2 1 (!^ "try_with ~backtrace:false (fun () -> [%test_eq: " 
-              ^^ !^ baseTy ^^ !^ "] ")
-  ^^ separate_map space (!^) vars ^^ rparen
-  ^/^ sBar ^^ !^ "v1, v2" ^^ sArrow ^^ !^ "error_string @@ displayError e v1 v2)" ^^ sIn 
-  ^^ hardline
+let obsEquiv ((tyConstr, valConstr) : string * string) : document =
+  let vars : string list = genVarNamesN ~n:2 (ty_of_string tyConstr) in
+  let varDocs : document list =
+    List.map ~f:(fun var -> !^valConstr ^^ space ^^ !^var) vars
+  in
+  let baseTy : string =
+    if isOpaqueTy tyConstr then "Lib." ^ reifyOpaqueTyConstr tyConstr
+    else addSpaceToTyStr (String.lowercase tyConstr)
+  in
+  !^"let " ^^ getTestName tyConstr ^^ sEquals
+  ^^ !^"QC.test_or_error (gen_expr "
+  ^^ !^tyConstr
+  ^^ !^") ~sexp_of:sexp_of_expr "
+  ^^ jump 2 1 @@ !^"~f:(fun e" ^^ sArrow ^^ jump 2 1
+  @@ !^"match (I1.interp e, I2.interp e) with "
+  ^/^ sBar ^^ OCaml.tuple varDocs ^^ sArrow
+  ^^ jump 2 1
+       (!^"try_with ~backtrace:false (fun () -> [%test_eq: "
+       ^^ !^baseTy ^^ !^"] ")
+  ^^ separate_map space ( !^ ) vars
+  ^^ rparen ^/^ sBar ^^ !^"v1, v2" ^^ sArrow
+  ^^ !^"error_string @@ displayError e v1 v2)"
+  ^^ sIn ^^ hardline
 
 (** [isExcludedType ty] returns true if the type [ty] is 
     a return type to be excluded from consideration when 
@@ -859,40 +876,40 @@ let obsEquiv (tyConstr, valConstr : string * string) : document =
     - Note: we cannot test opaque types and named abstract types
       directly for observational equivalence
       (due to encapsulation, we can't inspect these types directly) 
-    - Note that arrow types are not considered by this function. *)  
-let rec isExcludedType (ty : ty) : bool = 
-  match ty with 
-  | T | AlphaT | Opaque _ | NamedAbstract _ -> true 
+    - Note that arrow types are not considered by this function. *)
+let rec isExcludedType (ty : ty) : bool =
+  match ty with
+  | T | AlphaT | Opaque _ | NamedAbstract _ -> true
   | Option argTy | List argTy -> isExcludedType argTy
   | Pair (ty1, ty2) -> isExcludedType ty1 || isExcludedType ty2
-  | _ -> false 
+  | _ -> false
 
 (** Generate the executable code for testing observational equivalence
-    of two modules *)  
-let compareImpls (m : moduleSig) : document = 
-  let constrs = List.filter (tyAndValADTConstructors ~camelCase:true m) 
-    ~f:(fun (ty, _) -> not @@ isExcludedType (ty_of_string ty)) in 
-  let tyConstrs = List.map ~f:fst constrs in 
-  !^ "let () = "
-  ^^ jump 2 1 @@ 
-  !^ "let open Or_error in "
-  ^/^ !^ "let module QC = Quickcheck in "
-  ^/^ separate_map hardline obsEquiv constrs 
-  ^/^ !^ "match combine_errors_unit " 
-  ^^ OCaml.list getTestName tyConstrs ^^ !^ " with "
-
+    of two modules *)
+let compareImpls (m : moduleSig) : document =
+  let constrs =
+    List.filter (tyAndValADTConstructors ~camelCase:true m) ~f:(fun (ty, _) ->
+        not @@ isExcludedType (ty_of_string ty))
+  in
+  let tyConstrs = List.map ~f:fst constrs in
+  !^"let () = " ^^ jump 2 1 @@ !^"let open Or_error in "
+  ^/^ !^"let module QC = Quickcheck in "
+  ^/^ separate_map hardline obsEquiv constrs
+  ^/^ !^"match combine_errors_unit "
+  ^^ OCaml.list getTestName tyConstrs
+  ^^ !^" with "
   (** All observational equivalence tests pass *)
-  ^/^ sBar ^^ !^ "Ok ok" ^^ sArrow 
-  ^^ jump 2 1 (!^ "let numPassed = QC.default_can_generate_trial_count in "
-  ^/^ !^ "let numDiscarded = QC.(default_trial_count - numPassed) in "
-  ^/^ !^ "printf " 
-  ^^ OCaml.string "\n Mica: OK, passed %d tests; %d discarded. \n"
-  ^^ jump 1 1 !^ " numPassed numDiscarded;")
-
+  ^/^ sBar
+  ^^ !^"Ok ok" ^^ sArrow
+  ^^ jump 2 1
+       (!^"let numPassed = QC.default_can_generate_trial_count in "
+       ^/^ !^"let numDiscarded = QC.(default_trial_count - numPassed) in "
+       ^/^ !^"printf "
+       ^^ OCaml.string "\n Mica: OK, passed %d tests; %d discarded. \n"
+       ^^ jump 1 1 !^" numPassed numDiscarded;")
   (** There is a test which fails *)
-  ^/^ sBar ^^ !^ "Error err" ^^ sArrow 
-  ^^ jump 2 1 @@ 
-  !^ "let open Stdlib.Format in "
-  ^/^ !^ "Error.pp err_formatter err;"
-  ^/^ !^ "print_newline " ^^ OCaml.unit
-  ^^ break 1
+  ^/^ sBar
+  ^^ !^"Error err" ^^ sArrow ^^ jump 2 1
+  @@ !^"let open Stdlib.Format in "
+  ^/^ !^"Error.pp err_formatter err;"
+  ^/^ !^"print_newline " ^^ OCaml.unit ^^ break 1
