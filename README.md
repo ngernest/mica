@@ -1,14 +1,13 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
-[![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/ngernest/mica/main&logo=ocaml)](https://ocaml.ci.dev/github/ngernest/mica)
+[![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/ngernest/mica/main&logo=ocaml&style=for-the-badge)](https://ocaml.ci.dev/github/ngernest/mica) 
+[![view - Documentation](https://img.shields.io/badge/view-Documentation-blue?style=for-the-badge)](https://ngernest.github.io/mica/mica/index.html)
 
 (Submitted to the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition))
 
 **Mica** checks whether two OCaml modules implementing the same signature are observationally 
 equivalent. Mica does this by parsing the signature & *automatically* generating 
 property-based testing (PBT) code specialised to the signature.
-
-[Mica docs](https://ngernest.github.io/mica/mica/index.html) 
 
 ICFP SRC documents:              
 - [Extended Abstract](./talks/icfp_src_abstract.pdf) 
@@ -104,6 +103,7 @@ Mica has been primarily tested with version 4.13.1 of the OCaml base compiler.
 - [Re](https://github.com/ocaml/ocaml-re)
 - [Odoc](https://github.com/ocaml/ocaml-re) (for generating documentation)
 - [Core_bench](https://github.com/janestreet/core_bench) (for running benchmarks)
+- [OCaml-CI](https://github.com/ocurrent/ocaml-ci) (for CI)
 
 ## Acknowledgements
 I'm incredibly fortunate to have two fantastic advisors: [Harry Goldstein](https://harrisongoldste.in) & Prof. [Benjamin Pierce](https://www.cis.upenn.edu/~bcpierce/). Harry & Benjamin have 
