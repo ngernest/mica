@@ -7,11 +7,16 @@
   (pps ppx_assert ppx_sexp_conv ppx_jane)))
 
 (executable
- (name run_benchmarks)
- (modules run_benchmarks)
- (libraries lib core core_bench)
- (preprocess
-  (pps ppx_sexp_conv ppx_jane)))
+ (public_name mica_qc_bench)
+ (name mica_qc_bench)
+ (modules mica_qc_bench)
+ (libraries lib core_bench))
+
+(executable
+ (public_name mica_bench)
+ (name mica_bench)
+ (modules mica_bench)
+ (libraries lib core_bench))
 
 (executable
  (public_name compare_impls)

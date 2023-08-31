@@ -81,15 +81,7 @@ let mica_qc_bench ~(name : string) ~(argv : string list) ~(exe : string) :
           Command.exec ~summary ~path_to_exe:(`Relative_to_me exe));
     ]
 
-(** [mica_bench name argv] is like [mica_qc_bench], 
-    except it {i only} benchmarks the Mica executable on the example called [name] 
-    with arguments [argv]. The auto-generated PBT executable is {i not}
-    benchmarked.  *)
-let mica_bench ~(name : string) ~(argv : string list) : Test.t =
-  let open BenchmarkParams in
-  Test.create ~name @@ fun () -> Command_unix.run ~argv ~extend cmdLineParser
-
-let () =
+let run_mica_qc_bench : unit =
   let open BenchmarkParams in
   Command_unix.run
   @@ make_command
@@ -101,6 +93,22 @@ let () =
          mica_qc_bench ~name:"Regexes" ~argv:regexArgs ~exe:regexExecutable;
        ]
 
-(* TODO: figure out how to set up a cmd-line flag that specifies
-   if only the mica_benchmark should run, or if mica_qc_benchmark should run *)
+(** [mica_bench name argv] is like [mica_qc_bench], 
+    except it {i only} benchmarks the Mica executable on the example called [name] 
+    with arguments [argv]. The auto-generated PBT executable is {i not}
+    benchmarked.  *)
+let mica_bench ~(name : string) ~(argv : string list) : Test.t =
+  let open BenchmarkParams in
+  Test.create ~name @@ fun () -> Command_unix.run ~argv ~extend cmdLineParser
 
+let run_mica_bench : unit =
+  let open BenchmarkParams in
+  Command_unix.run
+  @@ make_command
+       [
+         mica_bench ~name:"Sets" ~argv:setArgs;
+         mica_bench ~name:"Stacks" ~argv:stackArgs;
+         mica_bench ~name:"Polynomials" ~argv:polyArgs;
+         mica_bench ~name:"Maps" ~argv:mapArgs;
+         mica_bench ~name:"Regexes" ~argv:regexArgs;
+       ]

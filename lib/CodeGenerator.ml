@@ -898,7 +898,7 @@ let compareImpls (m : moduleSig) : document =
   ^/^ !^"match combine_errors_unit "
   ^^ OCaml.list getTestName tyConstrs
   ^^ !^" with "
-  (** All observational equivalence tests pass *)
+  (* Report success if all observational equivalence tests pass *)
   ^/^ sBar
   ^^ !^"Ok ok" ^^ sArrow
   ^^ jump 2 1
@@ -907,7 +907,7 @@ let compareImpls (m : moduleSig) : document =
        ^/^ !^"printf "
        ^^ OCaml.string "\n Mica: OK, passed %d tests; %d discarded. \n"
        ^^ jump 1 1 !^" numPassed numDiscarded;")
-  (** There is a test which fails *)
+  (* Report an error if there's a test which fails *)
   ^/^ sBar
   ^^ !^"Error err" ^^ sArrow ^^ jump 2 1
   @@ !^"let open Stdlib.Format in "
