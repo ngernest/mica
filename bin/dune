@@ -22,6 +22,7 @@
   (pps ppx_sexp_conv ppx_jane)))
 
 (executable
+ (public_name regexes)
  (name GeneratedRegexExecutable)
  (modules GeneratedRegexExecutable)
  (libraries lib core stdio)
@@ -29,6 +30,7 @@
   (pps ppx_sexp_conv ppx_jane)))
 
 (executable
+ (public_name sets)
  (name GeneratedSetExecutable)
  (modules GeneratedSetExecutable)
  (libraries lib core stdio)
@@ -36,6 +38,7 @@
   (pps ppx_sexp_conv ppx_jane)))
 
 (executable
+ (public_name maps)
  (name GeneratedMapExecutable)
  (modules GeneratedMapExecutable)
  (libraries lib core stdio)
@@ -43,6 +46,7 @@
   (pps ppx_sexp_conv ppx_jane)))
 
 (executable
+ (public_name stacks)
  (name GeneratedStackExecutable)
  (modules GeneratedStackExecutable)
  (libraries lib core stdio)
@@ -50,6 +54,7 @@
   (pps ppx_sexp_conv ppx_jane)))
 
 (executable
+ (public_name polynomials)
  (name GeneratedPolyExecutable)
  (modules GeneratedPolyExecutable)
  (libraries lib core stdio)
