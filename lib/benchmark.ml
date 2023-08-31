@@ -1,6 +1,6 @@
 open Core
 open Core_bench.Bench
-open Lib.CmdLineParser
+open CmdLineParser
 
 (** Benchmarks Mica's parser & code generator, along with the 
     auto-generated PBT executable produced by Mica. The benchmarks 
@@ -104,4 +104,3 @@ let () =
 (* TODO: figure out how to set up a cmd-line flag that specifies
    if only the mica_benchmark should run, or if mica_qc_benchmark should run *)
 
-(* TODO: figure out how to get Odoc to generate docs for [benchmark.ml] ? *)
