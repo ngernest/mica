@@ -1,6 +1,6 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
-[![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/ngernest/mica/main&logo=ocaml&style=for-the-badge)](https://ocaml.ci.dev/github/ngernest/mica) 
+[![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/ngernest/mica/main&logo=ocaml&style=for-the-badge&kill_cache=1)](https://ocaml.ci.dev/github/ngernest/mica) 
 [![view - Documentation](https://img.shields.io/badge/view-Documentation-blue?style=for-the-badge)](https://ngernest.github.io/mica/mica/index.html)
 
 (Submitted to the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition))
