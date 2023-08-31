@@ -5,7 +5,7 @@ description:
   "Mica parses any generic OCaml module signature, and checks whether two modules implementing the signature are observationally equivalent by generating random sequences of commands using Core.QuickCheck."
 maintainer: ["Ernest Ng <ngernest@seas.upenn.edu>"]
 authors: ["Ernest Ng <ngernest@seas.upenn.edu>"]
-license: "LICENSE"
+license: "ISC"
 homepage: "https://github.com/ngernest/mica"
 doc: "https://ngernest.github.io/mica/"
 bug-reports: "https://github.com/ngernest/mica/issues"
@@ -20,11 +20,11 @@ depends: [
   "dune" {>= "2.9"}
   "odoc" {with-doc}
   "angstrom" {>= "0.15.0"}
-  "base"
-  "base_quickcheck"
+  "base" {>= "v0.15.1"}
+  "base_quickcheck" {>= "v0.15.0"}
   "pprint" {>= "20220103"}
-  "core"
-  "core_bench"
+  "core" {>= "v0.15.1"}
+  "core_bench" {>= "v0.15.0"}
 ]
 build: [
   ["dune" "subst"] {dev}

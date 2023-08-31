@@ -4,7 +4,7 @@
 (source (github ngernest/mica))
 (authors "Ernest Ng <ngernest@seas.upenn.edu>")
 (maintainers "Ernest Ng <ngernest@seas.upenn.edu>")
-(license LICENSE)
+(license ISC)
 (documentation https://ngernest.github.io/mica/)
 (package
  (name mica)
@@ -21,8 +21,8 @@
   dune
   (odoc :with-doc)
   (angstrom (>= 0.15.0))
-  base
-  base_quickcheck
+  (base (>= v0.15.1))
+  (base_quickcheck (>= v0.15.0))
   (pprint (>= 20220103))
-  core
-  core_bench))
+  (core (>= v0.15.1))
+  (core_bench (>= v0.15.0))))
