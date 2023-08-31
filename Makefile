@@ -1,5 +1,5 @@
 # Frontend to dune
-# Taken from https://github.com/mjambon/dune-starter/tree/master
+# Adapted from https://github.com/mjambon/dune-starter/tree/master
 
 .PHONY: default build install uninstall clean
 
