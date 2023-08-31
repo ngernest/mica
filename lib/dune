@@ -15,8 +15,7 @@
   core_bench
   re)
  (preprocess
-  (pps ppx_jane))
- (inline_tests))
+  (pps ppx_jane)))
 
 (documentation
  (package mica))
