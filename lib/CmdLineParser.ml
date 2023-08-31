@@ -116,6 +116,5 @@ let cmdLineParser : Command.t =
              printf
              @@ "\n\
                  Generated PBT code: ./lib/generated.ml\n\
-                 Generated executable: \
-                 ./bin/compare_impls.exe\n"
+                 Generated executable: ./bin/compare_impls.exe\n"
        | Error err -> printf "error = %s\n" err)

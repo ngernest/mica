@@ -4,7 +4,7 @@ open Angstrom
 open Base
 open Stdio
 
-(** Suppress unused value compiler warnings *)
+(* Suppress unused value compiler warnings *)
 [@@@ocaml.warning "-27-32-34"]
 
 (** A parser for module signatures, based on the 

@@ -6,7 +6,7 @@ open PolyInterface
 open Poly1
 open Poly2
 
-(** Suppress "unused value" compiler warnings *)
+(* Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-27-32-33-34"]
 
 type expr =

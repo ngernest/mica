@@ -6,7 +6,7 @@ open RegexMatcher
     - Adapted from {{: https://www.youtube.com/watch?v=QaMU0wMMczU} Harry Goldstein's video} on DFAs & regexes    
 *)
 
-(** Suppress unused value compiler warnings *)
+(* Suppress unused value compiler warnings *)
 [@@@ocaml.warning "-27-32-34"]
 
 (** Type of regular expressions *)
