@@ -11,10 +11,10 @@ property-based testing (PBT) code specialised to the signature.
 
 ICFP SRC documents:              
 - [Extended Abstract](./talks/icfp_src_abstract.pdf) 
-- Poster (to come!)
+- [Poster](./talks/icfp_src_poster.pdf)
 - Talk (to come!)
 
-Presentation slides on Mica:                 
+Other talks on Mica:                 
 - [Penn PLClub talk](./talks/mica_plclub_talk.pdf) (~45 mins) 
 - [OPLSS '23 talk](./talks/mica_oplss_slides.pdf) (~10 mins)
         
@@ -36,7 +36,7 @@ Executables (located in [`bin`](./bin)):
 - [`Benchmark.ml`](./bin/benchmark.ml): Runs performance benchmarks on Mica and the auto-generated PBT executables
 
 ## Examples 
-The `lib` directory also contains five example module signatures, 
+The [`lib`](./lib) directory also contains five example module signatures, 
 each of which has two different implementations. Mica has been tested
 extensively with these five pairs of modules. 
 

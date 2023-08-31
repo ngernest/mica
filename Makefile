@@ -9,7 +9,7 @@ build:
 	dune build
 
 install:
-	dune install
+	opam install ./ --deps-only
 
 uninstall:
 	dune uninstall
