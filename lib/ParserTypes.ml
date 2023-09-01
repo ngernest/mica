@@ -112,10 +112,6 @@ let rec string_of_ty ?(alpha = "\'a") ?(t = "expr") ?(camelCase = false)
   | Opaque s ->
       if camelCase then split ~on:'.' s |> List.map ~f:capitalize |> concat
       else s
-  (* TODO: figure out if we need to parenthesize parameterized types?
-     (and if so, how to avoid cases where we have parens appearing in
-      the derived constructor names
-      -- maybe only parenthesize if [camelCase] is false) *)
   | Option ty ->
       let tyStr = string_of_ty ~alpha ~t ty in
       if camelCase then concat ~sep @@ (tyStr :: [ "Option" ])
@@ -150,6 +146,7 @@ type valDecl = { valName : string; valType : ty } [@@deriving sexp, fields]
       by default, [intFlag] is set to [AllInts] *)
 type intFlag = AllInts | NonNegativeOnly | PositiveOnly [@@deriving sexp]
 
+(** Record type representing an ML module *)
 type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
@@ -158,7 +155,5 @@ type moduleSig = {
   intFlag : intFlag;
 }
 [@@deriving sexp, fields]
-(** Record type representing an ML module *)
 
-(* TODO: handle parens in arrow types *)
-(* TODO: figure out how to ignore comments in parser *)
+

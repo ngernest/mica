@@ -63,7 +63,7 @@ listed in the [references](#references) section of this README.
     - Example auto-generated code: [`GeneratedSetPBTCode.ml`](./lib/sets/GeneratedSetPBTCode.ml) & 
       [`GeneratedSetExecutable.ml`](./bin/GeneratedSetExecutable.ml)
 
-**2. Regex matchers** ([Brzozowski derivatives](https://en.wikipedia.org/wiki/Lorem_ipsum) & DFAs)
+**2. Regex matchers** ([Brzozowski derivatives](https://en.wikipedia.org/wiki/Brzozowski_derivative) & DFAs)
   - Signature: [`RegexMatcher.mli`](./lib/regexes/RegexMatcher.mli) (Commented version: [`RegexMatcher.ml`](./lib/regexes/RegexMatcher.ml))
   - Brzozowski derivatives: [`Brzozowski.ml`](./lib/regexes/Brzozowski.ml)
   - DFAs: [`DFA.ml`](./lib/regexes/DFA.ml)
@@ -141,7 +141,7 @@ which estimates Mica's runtime over a large no. of runs (~1000) using linear reg
 
 ### Dependencies
 Please see `mica.opam` for a full list of dependencies. 
-Mica has been primarily tested with version 4.13.1 of the OCaml base compiler. 
+Mica has been tested primarily with versions 4.13.1 & 5.0.0 of the OCaml base compiler (on an M1 Mac). 
 - [Base](https://github.com/janestreet/base) & [Base_quickcheck](https://github.com/janestreet/base_quickcheck)
 - [Core](https://github.com/janestreet/core) & [Core.Quickcheck](https://blog.janestreet.com/quickcheck-for-core/)
 - [Angstrom](https://github.com/inhabitedtype/angstrom)
