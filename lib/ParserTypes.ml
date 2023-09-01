@@ -146,7 +146,6 @@ type valDecl = { valName : string; valType : ty } [@@deriving sexp, fields]
       by default, [intFlag] is set to [AllInts] *)
 type intFlag = AllInts | NonNegativeOnly | PositiveOnly [@@deriving sexp]
 
-(** Record type representing an ML module *)
 type moduleSig = {
   moduleName : moduleName;
   moduleType : moduleType;
@@ -155,5 +154,4 @@ type moduleSig = {
   intFlag : intFlag;
 }
 [@@deriving sexp, fields]
-
-
+(** Record type representing an ML module *)
