@@ -6,13 +6,13 @@
 1. [Overview](#overview)
 2. [Description of source files](#description-of-source-files)
 3. [Examples](#examples)
-4. [Building \& running](#building--running)
-  1. [Example (finite sets)](#example-finite-sets)
-  2. [Performance Benchmarks](#performance-benchmarks)
-  3. [Dependencies](#dependencies)
-5. [Acknowledgements](#acknowledgements)
-6. [Origin of name](#origin-of-name)
-7. [References](#references)
+4. [Building \& running](#building--running)       
+5. [Example (finite sets)](#example-finite-sets)          
+6. [Performance Benchmarks](#performance-benchmarks)          
+7. [Dependencies](#dependencies)          
+8. [Acknowledgements](#acknowledgements)
+9. [Origin of name](#origin-of-name)
+10. [References](#references)
 
 ## Overview 
 
@@ -25,7 +25,7 @@ Presented at the [ICFP '23 Student Research Competition](https://icfp23.sigplan.
 ICFP SRC documents:              
 - [Extended Abstract](./talks/icfp_src_abstract.pdf) 
 - [Poster](./talks/icfp_src_poster.pdf)
-- Talk (to come!)
+- [Talk](./talks/mica_icfp_talk.pdf) 
 
 Other talks on Mica:                 
 - [Penn PLClub talk](./talks/mica_plclub_talk.pdf) (~45 mins) 
@@ -47,6 +47,7 @@ Auxiliary utility files:
 Benchmark suites: 
 - [`Mica_QC_Bench.ml`](./bin/mica_qc_bench.ml): Benchmarks Mica's parser, code generator & the auto-generated PBT executables
 - [`Mica_Bench.ml`](./bin/mica_bench.ml): Benchmarks Mica's parser & code generator only 
+
 ## Examples 
 The [`lib`](./lib) directory also contains five example module signatures, 
 each of which has two different implementations. Mica has been tested
