@@ -1,7 +1,7 @@
 module type S = sig 
-  type abs_ty
-end 
-[@@deriving mod_expr]  
+  type 'a t
+end
+[@@deriving mica]  
 
 
 
