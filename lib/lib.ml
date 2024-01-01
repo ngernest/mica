@@ -47,6 +47,12 @@ let generate_expr ~ctxt (_rec_flag, tds) : structure_item list =
           [ Ast_builder.Default.pstr_extension ~loc ext [] ]
       end)
 
+(** [mkError ~local ~global msg] creates an error extension node, 
+    associated with an element in the AST at the location [local],
+    and reports the error message [msg] at the location [global] *)      
+let mkError ~(local : location) ~(global : location) msg : structure_item = 
+  let ext = Location.error_extensionf ~loc:local msg in 
+  Ast_builder.Default.pstr_extension ~loc:global ext []       
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -62,7 +68,8 @@ let generate_expr_from_sig
       begin match mod_type with 
       | { pmty_desc = Pmty_signature sig_items; pmty_loc; _ } -> 
         begin match sig_items with 
-        | [] -> failwith "Module signature must be non-empty"
+        | [] -> [ mkError ~local:pmtd_loc ~global:loc 
+                  "Module signature can't be empty" ]
         | { psig_desc = Psig_type (rec_flag, type_decls); psig_loc } :: tl -> 
           generate_expr ~ctxt (rec_flag, type_decls)
         | { psig_desc; psig_loc } :: tl -> 
@@ -70,10 +77,9 @@ let generate_expr_from_sig
         end
       | _ -> failwith "TODO: other case for mod_type"
       end
-  | { pmtd_type = None; pmtd_loc; _} -> 
-    let ext = Location.error_extensionf ~loc:pmtd_loc 
-      "Can't derive for expressions that aren't module type declarations" in 
-    [ Ast_builder.Default.pstr_extension ~loc ext [] ] 
+  | { pmtd_type = None; pmtd_loc; pmtd_name; _} -> 
+    [ mkError ~local:pmtd_loc ~global:loc 
+      "Can't derive for expressions that aren't module type declarations" ]
   end       
 
 
