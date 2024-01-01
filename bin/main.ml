@@ -1,6 +1,7 @@
-
-type t [@@deriving expr]
-
+module type S = sig 
+  type abs_ty
+end 
+[@@deriving mod_expr]  
 
 
 
