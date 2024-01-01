@@ -1,3 +1,7 @@
+
+; [ppx_deriving] is included as a library dependency, as
+; recommended in https://ocaml-ppx.github.io/ppxlib/ppxlib/writing-ppxs.html#integration-with-dune
+
 (library
  (name lib)
  (public_name ppx_mica)
@@ -6,6 +10,7 @@
  (preprocess 
    (pps ppxlib.metaquot)))
 
+; Compiler flags to suppress warnings about unused values etc.
 (env
  (dev
   (flags
