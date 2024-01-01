@@ -1,0 +1,13 @@
+(library
+ (name lib)
+ (public_name ppx_mica)
+ (kind ppx_deriver)
+ (libraries ppxlib)
+ (preprocess 
+   (pps ppxlib.metaquot)))
+
+(env
+ (dev
+  (flags
+   (:standard -g -w "-26-27-32-33-34-39"))))
+   

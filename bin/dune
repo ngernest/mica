@@ -1,0 +1,6 @@
+(executable
+ (public_name main)
+ (name main)
+ (libraries lib)
+ (preprocess
+  (pps ppx_mica)))
