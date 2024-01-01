@@ -2,7 +2,7 @@ open Ppxlib
 open Ast_helper
 open Ast_builder.Default
 
-module List = ListLabels
+open StdLabels
 
 (******************************************************************************)
 (** {1 Utility functions} *)
