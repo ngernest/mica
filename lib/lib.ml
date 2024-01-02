@@ -11,15 +11,18 @@ open StdLabels
 let entrypoint : unit = 
   print_endline "mica_ppx"  
 
+(** Instantiates all type variables ['a] inside a type with [int] *)  
+let monomorphize (ty : core_type) : core_type = 
+  let loc = ty.ptyp_loc in  
+  match ty.ptyp_desc with 
+  | Ptyp_var _ -> [%type: int]    
+  | _ -> ty
+
 (** [get_type_varams td] extracts the type parameters 
     from the type declaration [td]
     - Type variables (e.g. ['a]) are instantiated with [int] *)  
 let get_type_params (td : type_declaration) : core_type list = 
-  List.map td.ptype_params ~f:(fun (core_ty, _) ->
-    let loc = core_ty.ptyp_loc in  
-    match core_ty.ptyp_desc with 
-    | Ptyp_var _ -> [%type: int]    
-    | _ -> core_ty)
+  List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
 (** [mkError ~local ~global msg] creates an error extension node, 
     associated with an element in the AST at the location [local],
@@ -94,26 +97,34 @@ let mk_constructor ~(name : string) ~(loc : location)
     pcd_attributes = []          
   }     
 
+let get_constructor_arg_tys (ty : core_type) : core_type list = 
+  match (monomorphize ty) with 
+  | ([%type: int] | [%type: string] | [%type: char]) as ty' -> [ty']
+  | { ptyp_desc = Ptyp_constr (lident, _); _ } -> []
+  | _ -> failwith "TODO: get_constructor_arg_tys"
+
+
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)  
 let mk_expr_constructors (sig_items : signature_item list) : constructor_declaration list = 
   List.fold_left sig_items ~init:[] 
-    ~f:(fun acc {psig_desc; _} -> 
+    ~f:(fun acc {psig_desc; psig_loc; _} -> 
       begin match psig_desc with 
       | Psig_type (rec_flag, type_decls) -> 
         (* Walk over all the type declarations in a signature 
           and create a corresponding constructor
           - TODO: maybe this is not needed since [expr] doesn't depend on ['a t] *)
-        acc @ List.fold_left type_decls ~init:[] ~f:(fun innerAcc td -> 
+        List.fold_left type_decls ~init:[] ~f:(fun innerAcc td -> 
           begin match td with 
           | { ptype_kind = Ptype_abstract; ptype_name; ptype_loc; _ } -> 
             (* Constructor name = name of abstract type, capitalized *)
             let name = String.capitalize_ascii ptype_name.txt in  
             mk_constructor ~name ~loc:ptype_loc (get_type_params td) :: innerAcc
-          | _ -> failwith "TODO: maybe throw an exception here & let the caller catch it?"
-          end)
-      | Psig_value { pval_name; pval_type; _} -> 
-          failwith "TODO: handle values" 
+          | _ -> failwith "Expected a type declaration containing an abstract type" 
+          end) @ acc
+      | Psig_value { pval_name; pval_type; pval_loc; _} -> 
+          let name = String.capitalize_ascii pval_name.txt in 
+          mk_constructor ~name ~loc:pval_loc (get_constructor_arg_tys pval_type) :: acc
       | _ -> failwith "TODO: not sure how to handle other kinds of [signature_item_desc]"
       end)
       
@@ -132,12 +143,18 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
         begin match sig_items with 
         | [] -> [ mkError ~local:pmtd_loc ~global:loc 
                   "Module signature can't be empty" ]
-        | { psig_desc = Psig_type (rec_flag, type_decls); _ } :: tl -> 
-          (* TODO: figure out how to recurse over the tail [tl]
-             by calling [mk_expr_constructors] somehow *)
-          generate_expr ~ctxt (rec_flag, type_decls) 
-        | { psig_desc; psig_loc } :: tl -> 
-          failwith "TODO: handle psig_desc"
+        | _ -> 
+          let type_declaration = type_declaration 
+            ~loc 
+            ~name: { txt = "expr"; loc }   (* Name of type *)
+            ~cstrs: []                     (* Type constraints, not needed here *)   
+            ~params: []                    (* Type parameters *)
+            ~kind: (Ptype_variant (mk_expr_constructors sig_items))
+            ~private_: Public 
+            (* [manifest] is the RHS of [type t =...], doesn't apply here *)
+            ~manifest: None in             
+          [{ pstr_loc = loc;
+              pstr_desc = Pstr_type (Recursive, [type_declaration]) }]
         end
       | _ -> failwith "TODO: other case for mod_type"
       end
