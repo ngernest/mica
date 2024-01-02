@@ -65,7 +65,7 @@ let mk_constructor ~(name : string) ~(loc : location)
     For the [Set] module signature example,
     - [val empty : 'a t] corresponds to the 0-arity [Empty] constructor
     - [val is_empty : 'a t -> bool] corresponds to [Is_empty of expr * bool] 
-    - Monormorphic types are preserved. 
+    - Monormorphic primitive types are preserved. 
 
     The [is_arrow] optional 
     named argument specifies whether [ty] is an arrow type: if yes, then 
@@ -76,7 +76,9 @@ let mk_constructor ~(name : string) ~(loc : location)
 let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) : core_type list = 
   let loc = ty.ptyp_loc in 
   match (monomorphize ty) with 
-  | ([%type: int] | [%type: string] | [%type: char]) as ty' -> [ty']
+  | ([%type: int]   | [%type: int32]  | [%type: int64] | [%type: nativeint] |
+     [%type: char]  | [%type: bool]   | [%type: unit] |
+     [%type: float] | [%type: string] ) as ty' -> [ty']
   | { ptyp_desc = Ptyp_constr ({txt = Lident tyconstr; _}, _); _ } as ty' -> 
     if String.equal tyconstr !abstract_ty_name then 
       if is_arrow then [[%type: expr]] else []
