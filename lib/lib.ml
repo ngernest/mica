@@ -83,6 +83,8 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) : core_type
     else [ty']
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _} -> 
     get_constructor_arg_tys ~is_arrow:true t1 @ get_constructor_arg_tys ~is_arrow:true t2
+
+    (* TODO: modify this case to handle curried (arity >= 2) functions *)
   | _ -> failwith "TODO: get_constructor_arg_tys"
 
 (** Walks over all the [val ...] declarations in a module signature
