@@ -29,16 +29,22 @@ let get_type_params (td : type_declaration) : core_type list =
     and reports the error message [msg] at the location [global] *)      
 let mkError ~(local : location) ~(global : location) msg : structure_item = 
   let ext = Location.error_extensionf ~loc:local msg in 
-  pstr_extension ~loc:global ext []        
+  pstr_extension ~loc:global ext []      
+
+(** Name of the abstract type in the module signature, 
+    by default ["t"] *)  
+let abstract_ty_name : string ref = ref "t"  
 
 (******************************************************************************)
 (** {1 Core PPX functionality} *)  
   
-(** [generate_expr ctxt (_rec_flag, tds)] takes [tds],
+(** DEPRECATED: 
+   [generate_expr ctxt (_rec_flag, tds)] takes [tds],
     a list of [type_declarations], and generates 
     the definition of the [expr] algebraic data type. 
     - [_rec_flag] is a flag indicating whether the expressions
     generated are recursive, which is required by Ppxlib but currently unused *)
+(* 
 let generate_expr ~ctxt (_rec_flag, tds) : structure_item list = 
   List.concat_map tds ~f:(fun td -> 
     (* Obtain the current location *)
@@ -76,7 +82,8 @@ let generate_expr ~ctxt (_rec_flag, tds) : structure_item list =
       | { ptype_kind = _; ptype_loc; _ } -> 
          [ mkError ~local:ptype_loc ~global:loc 
            "Can't derive for non-abstract type" ]
-      end)
+      end) 
+*)
 
 (** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
     for an algebraic data type at the location [loc] with 
@@ -97,12 +104,34 @@ let mk_constructor ~(name : string) ~(loc : location)
     pcd_attributes = []          
   }     
 
-let get_constructor_arg_tys (ty : core_type) : core_type list = 
+  
+
+(** Takes [ty], the type of a [val] declaration in a signature,
+    and returns the type of the arguments of the corresponding 
+    constructor for the [expr] datatype. 
+
+    For the [Set] module signature example,
+    - [val empty : 'a t] corresponds to the 0-arity [Empty] constructor
+    - [val is_empty : 'a t -> bool] corresponds to [Is_empty of expr * bool] 
+    - Monormorphic types are preserved. 
+
+    The [is_arrow] optional 
+    named argument specifies whether [ty] is an arrow type: if yes, then 
+    references to abstract types should be replaced with [expr], otherwise
+    an occurrence of an abstract type in an non-arrow type (e.g. [val empty : 'a t])
+    should be ignored (so [val empty : 'a t] corresponds to the 0-arity constructor [Empty]).
+*)  
+let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) : core_type list = 
+  let loc = ty.ptyp_loc in 
   match (monomorphize ty) with 
   | ([%type: int] | [%type: string] | [%type: char]) as ty' -> [ty']
-  | { ptyp_desc = Ptyp_constr (lident, _); _ } -> []
+  | { ptyp_desc = Ptyp_constr ({txt = Lident tyconstr; _}, _); _ } as ty' -> 
+    if String.equal tyconstr !abstract_ty_name then 
+      if is_arrow then [[%type: expr]] else []
+    else [ty']
+  | { ptyp_desc = Ptyp_arrow (_, t1, t2); _} -> 
+    get_constructor_arg_tys ~is_arrow:true t1 @ get_constructor_arg_tys ~is_arrow:true t2
   | _ -> failwith "TODO: get_constructor_arg_tys"
-
 
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)  
@@ -110,18 +139,20 @@ let mk_expr_constructors (sig_items : signature_item list) : constructor_declara
   List.fold_left sig_items ~init:[] 
     ~f:(fun acc {psig_desc; psig_loc; _} -> 
       begin match psig_desc with 
-      | Psig_type (rec_flag, type_decls) -> 
-        (* Walk over all the type declarations in a signature 
+      | Psig_type (rec_flag, type_decls) -> []
+        (* DEPRECATED: Walk over all the type declarations in a signature 
           and create a corresponding constructor
-          - TODO: maybe this is not needed since [expr] doesn't depend on ['a t] *)
-        List.fold_left type_decls ~init:[] ~f:(fun innerAcc td -> 
+          - Note: this is no longer needed since [expr] doesn't depend on ['a t] *)
+        (* List.fold_left type_decls ~init:[] ~f:(fun innerAcc td -> 
           begin match td with 
           | { ptype_kind = Ptype_abstract; ptype_name; ptype_loc; _ } -> 
+            abstract_ty_name := ptype_name.txt;
             (* Constructor name = name of abstract type, capitalized *)
             let name = String.capitalize_ascii ptype_name.txt in  
             mk_constructor ~name ~loc:ptype_loc (get_type_params td) :: innerAcc
-          | _ -> failwith "Expected a type declaration containing an abstract type" 
-          end) @ acc
+          | _ -> Location.raise_errorf ~loc:td.ptype_loc 
+            "Expected a type declaration containing an abstract type" 
+          end) @ acc *)
       | Psig_value { pval_name; pval_type; pval_loc; _} -> 
           let name = String.capitalize_ascii pval_name.txt in 
           mk_constructor ~name ~loc:pval_loc (get_constructor_arg_tys pval_type) :: acc
@@ -149,7 +180,7 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
             ~name: { txt = "expr"; loc }   (* Name of type *)
             ~cstrs: []                     (* Type constraints, not needed here *)   
             ~params: []                    (* Type parameters *)
-            ~kind: (Ptype_variant (mk_expr_constructors sig_items))
+            ~kind: (Ptype_variant (List.rev @@ mk_expr_constructors sig_items))
             ~private_: Public 
             (* [manifest] is the RHS of [type t =...], doesn't apply here *)
             ~manifest: None in             
