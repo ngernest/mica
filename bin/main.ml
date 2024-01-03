@@ -1,5 +1,5 @@
 module type SetInterface = sig
-  (* TODO: support [@@deriving sexp]???*)
+  (* TODO: support [[@@deriving sexp]] annotations the [type 'a t]  declaration? *)
   type 'a t 
 
   val empty : 'a t
@@ -14,23 +14,3 @@ module type SetInterface = sig
 end
 [@@deriving mica]  
 
-
-(* 
-
-Currently generated code: 
-{[
-  type expr = 
-    | T of int 
-]}
-
-Want:
-{[
-  type expr = 
-    | Empty
-]}    
-
-*)
-
-
-
-let () = Lib.entrypoint

@@ -7,10 +7,6 @@ open StdLabels
 (******************************************************************************)
 (** {1 Utility functions} *)
 
-(** Temp dummy definition for testing Dune *)
-let entrypoint : unit = 
-  print_endline "mica_ppx"  
-
 (** Retrieves all elements of a list except the last one *)  
 let rec remove_last (lst : 'a list) : 'a list = 
   match lst with 
