@@ -6,9 +6,9 @@
  (name lib)
  (public_name ppx_mica)
  (kind ppx_deriver)
- (libraries ppxlib ppx_deriving)
+ (libraries base ppxlib ppx_deriving)
  (preprocess 
-   (pps ppxlib.metaquot)))
+   (pps ppxlib.metaquot ppx_jane)))
 
 ; Compiler flags to suppress warnings about unused values etc.
 (env

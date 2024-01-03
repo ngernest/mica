@@ -11,6 +11,12 @@ open StdLabels
 let entrypoint : unit = 
   print_endline "mica_ppx"  
 
+(** Retrieves all elements of a list except the last one *)  
+let rec remove_last (lst : 'a list) : 'a list = 
+  match lst with 
+  | [] | [_] -> [] 
+  | x :: xs -> x :: remove_last xs 
+
 (** Instantiates all type variables ['a] inside a type with [int] *)  
 let monomorphize (ty : core_type) : core_type = 
   let loc = ty.ptyp_loc in  
@@ -84,9 +90,9 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) : core_type
       if is_arrow then [[%type: expr]] else []
     else [ty']
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _} -> 
-    get_constructor_arg_tys ~is_arrow:true t1 @ get_constructor_arg_tys ~is_arrow:true t2
+      get_constructor_arg_tys ~is_arrow:true t1 
+        @ get_constructor_arg_tys ~is_arrow:true t2
 
-    (* TODO: modify this case to handle curried (arity >= 2) functions *)
   | _ -> failwith "TODO: get_constructor_arg_tys"
 
 (** Walks over all the [val ...] declarations in a module signature
@@ -98,7 +104,12 @@ let mk_expr_constructors (sig_items : signature_item list) : constructor_declara
       | Psig_type (rec_flag, type_decls) -> []
       | Psig_value { pval_name; pval_type; pval_loc; _} -> 
           let name = String.capitalize_ascii pval_name.txt in 
-          mk_constructor ~name ~loc:pval_loc (get_constructor_arg_tys pval_type) :: acc
+          (* Exclude the return type of the function from the list 
+             of argument types for the [expr] data constructor *)
+          let arg_tys = remove_last (get_constructor_arg_tys pval_type) in 
+          mk_constructor ~name ~loc:pval_loc arg_tys :: acc
+      | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
+      | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
       | _ -> failwith "TODO: not sure how to handle other kinds of [signature_item_desc]"
       end)
       
@@ -118,7 +129,9 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
         | [] -> [ mkError ~local:pmtd_loc ~global:loc 
                   "Module signature can't be empty" ]
         | _ -> 
-          let type_declaration = type_declaration 
+         
+
+          let td = type_declaration 
             ~loc 
             ~name: { txt = "expr"; loc }   (* Name of type *)
             ~cstrs: []                     (* Type constraints, not needed here *)   
@@ -126,9 +139,13 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
             ~kind: (Ptype_variant (List.rev @@ mk_expr_constructors sig_items))
             ~private_: Public 
             (* [manifest] is the RHS of [type t =...], doesn't apply here *)
-            ~manifest: None in             
+            ~manifest: None in  
+          let attr = attribute ~loc 
+            ~name:{txt = "sexp_of"; loc} 
+            ~payload:(PTyp [%type: expr]) in 
+          let td_with_attr = { td with ptype_attributes = [attr] } in 
           [{ pstr_loc = loc;
-              pstr_desc = Pstr_type (Recursive, [type_declaration]) }]
+              pstr_desc = Pstr_type (Recursive, [td_with_attr]) }]
         end
       | _ -> failwith "TODO: other case for mod_type"
       end
