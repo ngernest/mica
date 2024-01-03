@@ -41,6 +41,9 @@ let mkError ~(local : location) ~(global : location) msg : structure_item =
     by default ["t"] *)  
 let abstract_ty_name : string ref = ref "t"  
 
+(* Note: this currently doesn't work *)
+let attrs : attributes ref = ref []
+
 (******************************************************************************)
 (** {1 Core PPX functionality} *)  
   
@@ -95,13 +98,18 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) : core_type
 
   | _ -> failwith "TODO: get_constructor_arg_tys"
 
+
+
+
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)  
 let mk_expr_constructors (sig_items : signature_item list) : constructor_declaration list = 
   List.fold_left sig_items ~init:[] 
     ~f:(fun acc {psig_desc; psig_loc; _} -> 
       begin match psig_desc with 
-      | Psig_type (rec_flag, type_decls) -> []
+      | Psig_type (rec_flag, type_decls) -> 
+        List.iter ~f:(fun {ptype_attributes; _} -> attrs := ptype_attributes @ !attrs) type_decls;
+        []
       | Psig_value { pval_name; pval_type; pval_loc; _} -> 
           let name = String.capitalize_ascii pval_name.txt in 
           (* Exclude the return type of the function from the list 
@@ -129,8 +137,6 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
         | [] -> [ mkError ~local:pmtd_loc ~global:loc 
                   "Module signature can't be empty" ]
         | _ -> 
-         
-
           let td = type_declaration 
             ~loc 
             ~name: { txt = "expr"; loc }   (* Name of type *)
@@ -141,9 +147,13 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
             (* [manifest] is the RHS of [type t =...], doesn't apply here *)
             ~manifest: None in  
           let attr = attribute ~loc 
-            ~name:{txt = "sexp_of"; loc} 
-            ~payload:(PTyp [%type: expr]) in 
-          let td_with_attr = { td with ptype_attributes = [attr] } in 
+            ~name:{txt = "deriving"; loc} 
+            ~payload:(PStr [{
+              pstr_desc = Pstr_eval 
+                (pexp_ident ~loc {txt = Lident "sexp"; loc}, []);
+              pstr_loc = loc;
+            }]) in 
+          let td_with_attr = { td with ptype_attributes = !attrs } in 
           [{ pstr_loc = loc;
               pstr_desc = Pstr_type (Recursive, [td_with_attr]) }]
         end
