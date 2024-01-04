@@ -3,4 +3,4 @@
  (name main)
  (libraries lib)
  (preprocess
-  (pps ppx_mica)))
+  (pps ppx_jane ppx_mica)))

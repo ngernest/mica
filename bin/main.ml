@@ -1,5 +1,5 @@
 module type SetInterface = sig
-  (* TODO: support [[@@deriving sexp]] annotations the [type 'a t]  declaration? *)
+  (* TODO: support [[@@deriving sexp]] annotations after the [type 'a t] declaration? *)
   type 'a t 
 
   val empty : 'a t
