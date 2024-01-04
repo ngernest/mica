@@ -7,12 +7,6 @@ open StdLabels
 (******************************************************************************)
 (** {1 Utility functions} *)
 
-(** Retrieves all elements of a list except the last one *)  
-let rec remove_last (lst : 'a list) : 'a list = 
-  match lst with 
-  | [] | [_] -> [] 
-  | x :: xs -> x :: remove_last xs
-  
 (** List of OCaml base types 
     - The named argument [loc] is necessary in order for 
     the [Ppxlib.Metaquot] quotations to expand to the appropriate 
@@ -29,6 +23,25 @@ let base_types ~(loc : location) : core_type list = [
   [%type: string] 
 ]  
 
+(** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
+    for an algebraic data type at the location [loc] with 
+    argument types [arg_tys] *)      
+let mk_constructor ~(name : string) ~(loc : location) 
+  ~(arg_tys : core_type list) : constructor_declaration = 
+  { (* Constructor name *)
+    pcd_name = { txt = name; loc };    
+    (* Type variables *)
+    pcd_vars = [];                 
+    (* Constructor arguments *)
+    pcd_args = Pcstr_tuple arg_tys;
+    (* Constructor result *)
+    pcd_res = None;              
+    (* Location of the type *)  
+    pcd_loc = loc;               
+    (* Any PPXes attached to the type *)
+    pcd_attributes = []          
+  }     
+  
 (** Instantiates all type variables ['a] inside a type expression with [int] 
     by recursing over the structure of the type expression. 
     Base types are left unchanged. 
@@ -59,6 +72,32 @@ let rec monomorphize (ty : core_type) : core_type =
 let get_type_params (td : type_declaration) : core_type list = 
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
+(** Converts a type expression [ty] to its camel-case string representation 
+    (for use as a constructor in an algebraic data type) 
+    - The type expression is monomorphized prior to computing its string
+    representation (i.e. ['a] is instantiated to [int]).
+    - Note: polymoprhic variants, objects, extensions/attributes are 
+    not supported by this function.  *)
+let rec string_of_core_type (ty : core_type) : string = 
+  let loc = ty.ptyp_loc in 
+  begin match ty.ptyp_desc with 
+  | Ptyp_var _ | Ptyp_any -> string_of_core_type (monomorphize ty)
+  | Ptyp_constr ({txt = ident; _}, ty_params) -> 
+    let ty_constr_str = Astlib.Longident.flatten ident 
+      |> String.concat ~sep:"" 
+      |> String.capitalize_ascii in 
+    let params_str = String.concat ~sep:"" 
+      (List.map ~f:string_of_core_type ty_params) in 
+    params_str ^ ty_constr_str
+  | Ptyp_tuple tys -> 
+    let ty_strs = List.map tys
+      ~f:(fun ty -> string_of_core_type ty |> String.capitalize_ascii) in 
+    String.concat ~sep:"" ty_strs ^ "Pair"
+  | Ptyp_arrow (_, t1, t2) -> 
+    string_of_core_type t1 ^ string_of_core_type t2
+  | _ -> failwith "type expression not supported by string_of_core_type"
+  end 
+
 (** [mk_adt ~loc ~name constructors] creates the definition of 
     an algebraic data type called [name] at location [loc] 
     with the specified [constructors] *)  
@@ -85,6 +124,26 @@ let mk_error ~(local : location) ~(global : location) msg : structure_item =
     by default ["t"] *)  
 let abstract_ty_name : string ref = ref "t"  
 
-(* Note: this currently doesn't work *)
-let attrs : attributes ref = ref []
+(** [attr loc name] creates an attribute called [name] at [loc] *)
+let attr ~(loc : location) ~(name : string) = 
+  attribute ~loc 
+  ~name:{txt = "deriving"; loc} 
+  ~payload:(PStr [{
+    pstr_desc = Pstr_eval 
+      (pexp_ident ~loc {txt = Lident name; loc}, []);
+    pstr_loc = loc;
+  }]) 
+  
+(** Retrieves all elements of a list except the last one *)  
+let rec remove_last (lst : 'a list) : 'a list = 
+  match lst with 
+  | [] | [_] -> [] 
+  | x :: xs -> x :: remove_last xs
 
+(** Returns the final element of a list (if one exists) 
+    - Raises an exception if the list is empty *)  
+let rec get_last (lst : 'a list) : 'a = 
+  match lst with 
+  | [] -> failwith "List is empty"
+  | [x] -> x   
+  | x :: xs -> get_last xs
