@@ -27,6 +27,6 @@ type expr =
 type ty = Int | Bool | IntT  
 ```
 (you can see this new definition through VS Code's "Generate mli file" functionality).
-Note that the ['a] type parameter has been instantiated with [int]. 
+Note that the ['a] type variable has been instantiated with [int]. 
 
 See `lib/lib.ml` for the details of how this is implemented.
