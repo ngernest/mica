@@ -14,13 +14,17 @@ module type SetInterface = sig
 end
 [@@deriving mica] 
 ```
-and produces a new type definition of the form:
+and produces the following algebraic data type definitions:
 ```ocaml 
+(** Symbolic expressions *)
 type expr =
   | Empty
   | Is_empty of expr
   | Mem of int * expr
   ...
+
+(** Types for symbolic expressions *)
+type ty = Int | Bool | IntT  
 ```
 (you can see this new definition through VS Code's "Generate mli file" functionality).
 Note that the ['a] type parameter has been instantiated with [int]. 
