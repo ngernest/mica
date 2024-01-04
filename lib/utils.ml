@@ -92,7 +92,7 @@ let rec string_of_core_type (ty : core_type) : string =
   | Ptyp_tuple tys -> 
     let ty_strs = List.map tys
       ~f:(fun ty -> string_of_core_type ty |> String.capitalize_ascii) in 
-    String.concat ~sep:"" ty_strs ^ "Pair"
+    String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) -> 
     string_of_core_type t1 ^ string_of_core_type t2
   | _ -> failwith "type expression not supported by string_of_core_type"
@@ -110,8 +110,7 @@ let mk_adt ~(loc : location) ~(name : string)
   ~params: []                    (* Type parameters *)
   ~kind: (Ptype_variant constructors)
   ~private_: Public 
-  (* [manifest] is the RHS of [type t =...], doesn't apply here *)
-  ~manifest: None
+  ~manifest: None                (* RHS of [type t =...], doesn't apply here *)
 
 (** [mk_error ~local ~global msg] creates an error extension node, 
     associated with an element in the AST at the location [local],
