@@ -58,8 +58,6 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) : core_type
   | _ -> failwith "TODO: get_constructor_arg_tys"
 
 
-
-
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)  
 let mk_expr_constructors (sig_items : signature_item list) : constructor_declaration list = 
