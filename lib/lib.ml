@@ -91,18 +91,11 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
       begin match mod_type with 
       | { pmty_desc = Pmty_signature sig_items; pmty_loc; _ } -> 
         begin match sig_items with 
-        | [] -> [ mkError ~local:pmtd_loc ~global:loc 
+        | [] -> [ mk_error ~local:pmtd_loc ~global:loc 
                   "Module signature can't be empty" ]
         | _ -> 
-          let td = type_declaration 
-            ~loc 
-            ~name: { txt = "expr"; loc }   (* Name of type *)
-            ~cstrs: []                     (* Type constraints, not needed here *)   
-            ~params: []                    (* Type parameters *)
-            ~kind: (Ptype_variant (List.rev @@ mk_expr_constructors sig_items))
-            ~private_: Public 
-            (* [manifest] is the RHS of [type t =...], doesn't apply here *)
-            ~manifest: None in  
+          let td = mk_adt ~loc ~name:"expr"
+            ~constructors:(List.rev (mk_expr_constructors sig_items)) in
           let attr = attribute ~loc 
             ~name:{txt = "deriving"; loc} 
             ~payload:(PStr [{
@@ -117,7 +110,7 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
       | _ -> failwith "TODO: other case for mod_type"
       end
   | { pmtd_type = None; pmtd_loc; pmtd_name; _} -> 
-    [ mkError ~local:pmtd_loc ~global:loc 
+    [ mk_error ~local:pmtd_loc ~global:loc 
       "Can't derive for expressions that aren't module type declarations" ]
   end       
 

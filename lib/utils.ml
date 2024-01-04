@@ -59,10 +59,25 @@ let rec monomorphize (ty : core_type) : core_type =
 let get_type_params (td : type_declaration) : core_type list = 
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
-(** [mkError ~local ~global msg] creates an error extension node, 
+(** [mk_adt ~loc ~name constructors] creates the definition of 
+    an algebraic data type called [name] at location [loc] 
+    with the specified [constructors] *)  
+let mk_adt ~(loc : location) ~(name : string) 
+  ~(constructors : constructor_declaration list) : type_declaration = 
+  type_declaration 
+  ~loc 
+  ~name: { txt = name; loc }     (* Name of type *)
+  ~cstrs: []                     (* Type constraints, not needed here *)   
+  ~params: []                    (* Type parameters *)
+  ~kind: (Ptype_variant constructors)
+  ~private_: Public 
+  (* [manifest] is the RHS of [type t =...], doesn't apply here *)
+  ~manifest: None
+
+(** [mk_error ~local ~global msg] creates an error extension node, 
     associated with an element in the AST at the location [local],
     and reports the error message [msg] at the location [global] *)      
-let mkError ~(local : location) ~(global : location) msg : structure_item = 
+let mk_error ~(local : location) ~(global : location) msg : structure_item = 
   let ext = Location.error_extensionf ~loc:local msg in 
   pstr_extension ~loc:global ext []      
 
