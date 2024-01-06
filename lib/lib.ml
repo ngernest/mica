@@ -158,8 +158,8 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in 
   begin match mt with 
   | { pmtd_type = Some mod_type; 
-      pmtd_name = { txt; loc = name_loc }; pmtd_loc; _ } -> 
-      let new_name = { txt = Some txt; loc = name_loc } in 
+      pmtd_name; pmtd_loc; _ } -> 
+      let new_name = { txt = Some "M"; loc } in 
       let functor_expr = mk_functor ~loc new_name mod_type in 
       let mod_binding = module_binding ~loc 
         ~name:{ txt = Some "ExprToImpl"; loc } 
