@@ -129,15 +129,60 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
   end       
 
 
+
 (** Instantiates the PPX deriver *)  
-let module_expr_generator : 
+let expr_generator : 
   (structure_item list, module_type_declaration) Deriving.Generator.t = 
   Deriving.Generator.V2.make_noarg generate_expr_from_sig 
 
-  
 (** Registered PPX deriver *)
-let mod_deriver : Deriving.t = 
+(* let datatype_deriver : Deriving.t = 
   (* Call [Deriving.add] to register the deriver.
      The [str_module_type_decl] indicates that the [[@@deriving ...]]
      syntax extension is to be added after [module type] declarations. *)
-  Deriving.add "mica" ~str_module_type_decl:module_expr_generator
+  Deriving.add "mica_expr" ~str_module_type_decl:expr_generator *)
+
+(******************************************************************************)
+let mk_functor 
+  ~(loc : location) 
+   (arg_name : label option with_loc) 
+   (mod_ty : module_type) : module_expr = 
+  let functor_body = {
+    pmod_desc = Pmod_structure [];
+    pmod_loc = loc;
+    pmod_attributes = []
+  } in 
+  pmod_functor ~loc (Named (arg_name, mod_ty)) functor_body
+
+let generate_functor ~ctxt (mt : module_type_declaration) : structure = 
+  let loc = Expansion_context.Deriver.derived_item_loc ctxt in 
+  begin match mt with 
+  | { pmtd_type = Some mod_type; 
+      pmtd_name = { txt; loc = name_loc }; pmtd_loc; _ } -> 
+      let new_name = { txt = Some txt; loc = name_loc } in 
+      let functor_expr = mk_functor ~loc new_name mod_type in 
+      let mod_binding = module_binding ~loc 
+        ~name:{ txt = Some "ExprToImpl"; loc } 
+        ~expr:functor_expr in 
+      [{ pstr_desc = Pstr_module mod_binding; pstr_loc = loc }]
+  | { pmtd_type = None; pmtd_loc; pmtd_name; _} -> 
+      Location.raise_errorf ~loc
+      "Can't derive for expressions that aren't module type declarations"
+  end       
+ 
+(* let functor_deriver : Deriving.t = 
+  (* Call [Deriving.add] to register the deriver.
+      The [str_module_type_decl] indicates that the [[@@deriving ...]]
+      syntax extension is to be added after [module type] declarations. *)
+  Deriving.add "mica_functor" ~str_module_type_decl:functor_generator *)
+
+(* let top_level = 
+  Deriving.add_alias "mica" 
+    [datatype_deriver; functor_deriver]  *)
+    
+let () = 
+  let datatype_deriver = Deriving.add "mica_expr" ~str_module_type_decl:expr_generator in 
+  let functor_generator = Deriving.Generator.V2.make_noarg generate_functor in 
+  let functor_deriver = Deriving.add "mica_functor" ~str_module_type_decl:functor_generator in 
+  Deriving.add_alias "mica" [datatype_deriver; functor_deriver]
+  |> Deriving.ignore 
