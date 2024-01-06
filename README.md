@@ -14,13 +14,14 @@ module type SetInterface = sig
   ...
 end
 [@@deriving_inline mica_types, mica] 
-(* Auto-generated code is produced here *)
+  (* Auto-generated code is pasted inline into the source file here *)
 [@@@end]
 ```
 and produces the following type and functor definitions respectively:
 ```ocaml 
-(** Symbolic expressions 
-    - Type variables are instantiated with int *)
+(* Boilerplate omitted *)
+
+(** Symbolic expressions, monomorphized *)
 type expr =
   | Empty
   | Is_empty of expr
@@ -30,11 +31,13 @@ type expr =
 (** Types for symbolic expressions *)
 type ty = Int | Bool | IntT 
 
+(** Functor containing interpreter for symbolic expressions *)
 module ExprToImpl(M : SetInterface) = struct ... end 
 ```
-
 The datatype definitions are produced by the `mica_types` PPX deriver 
 which is executed first, and the functor definition is produced by 
 the main `mica` deriver which runs afterwards. 
+
+
 
 See `lib/lib.ml` for implementation details. 
