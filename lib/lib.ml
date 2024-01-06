@@ -160,7 +160,8 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   | { pmtd_type = Some mod_type; 
       pmtd_name; pmtd_loc; _ } -> 
       let new_name = { txt = Some "M"; loc } in 
-      let functor_expr = mk_functor ~loc new_name mod_type in 
+      let mod_type_alias = pmty_ident ~loc { txt = Lident pmtd_name.txt; loc } in 
+      let functor_expr = mk_functor ~loc new_name mod_type_alias in 
       let mod_binding = module_binding ~loc 
         ~name:{ txt = Some "ExprToImpl"; loc } 
         ~expr:functor_expr in 
