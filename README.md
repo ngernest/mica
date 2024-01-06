@@ -1,7 +1,8 @@
 # ppx_mica (WIP)
 
 Current progress:
-We have a PPX deriver that takes an module signature declaration of the form (see `main.ml`):
+We have two PPX derivers that take an module signature declaration of the form 
+(in `bin/main.ml`):
 ```ocaml
 (* bin/main.ml *)
 module type SetInterface = sig
@@ -12,11 +13,14 @@ module type SetInterface = sig
   val mem : 'a -> 'a t -> bool
   ...
 end
-[@@deriving mica] 
+[@@deriving_inline mica_types, mica] 
+(* Auto-generated code is produced here *)
+[@@@end]
 ```
-and produces the following algebraic data type definitions:
+and produces the following type and functor definitions respectively:
 ```ocaml 
-(** Symbolic expressions *)
+(** Symbolic expressions 
+    - Type variables are instantiated with int *)
 type expr =
   | Empty
   | Is_empty of expr
@@ -24,9 +28,13 @@ type expr =
   ...
 
 (** Types for symbolic expressions *)
-type ty = Int | Bool | IntT  
-```
-(you can see this new definition through VS Code's "Generate mli file" functionality).
-Note that the ['a] type variable has been instantiated with [int]. 
+type ty = Int | Bool | IntT 
 
-See `lib/lib.ml` for the details of how this is implemented.
+module ExprToImpl(M : SetInterface) = struct ... end 
+```
+
+The datatype definitions are produced by the `mica_types` PPX deriver 
+which is executed first, and the functor definition is produced by 
+the main `mica` deriver which runs afterwards. 
+
+See `lib/lib.ml` for implementation details. 

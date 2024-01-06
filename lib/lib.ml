@@ -6,7 +6,7 @@ open StdLabels
 open Utils
 
 (******************************************************************************)
-(** {1 Core PPX functionality} *)  
+(** {1 Generator for Auxiliary Datatypes} *)  
   
 (** Takes [ty], the type of a [val] declaration in a signature,
     and returns the type of the arguments of the corresponding 
@@ -133,6 +133,7 @@ let expr_generator :
   Deriving.Generator.V2.make_noarg generate_expr_from_sig 
 
 (******************************************************************************)
+(** {1 Generator for Functors} *)  
 let mk_functor ~(loc : location) 
    (arg_name : label option with_loc) 
    (mod_ty : module_type) : module_expr = 
@@ -164,7 +165,9 @@ let () =
   (* Generate auxiliary type declarations *)
   let datatype_deriver = 
     Deriving.add "mica_types" ~str_module_type_decl:expr_generator in 
-  (* Generate the body of rhte [ExprToImpl] functor *)
+  (* Generate the body of the [ExprToImpl] functor 
+     - Note that we must generate the declarations of auxiliary datatypes 
+       before generating the functor *)
   let functor_generator = 
     Deriving.Generator.V2.make_noarg ~deps:[datatype_deriver] generate_functor in 
   Deriving.add "mica" ~str_module_type_decl:functor_generator
