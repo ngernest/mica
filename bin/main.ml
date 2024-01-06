@@ -12,5 +12,26 @@ module type SetInterface = sig
   val intersect : 'a t -> 'a t -> 'a t
   val invariant : 'a t -> bool
 end
-[@@deriving mica]  
+[@@deriving_inline mica_types, mica]
+(* Auto-generated code *) 
+include
+  struct
+    [@@@ocaml.warning "-60"]
+    type expr =
+      | Empty
+      | Is_empty of expr
+      | Mem of int * expr
+      | Add of int * expr
+      | Rem of int * expr
+      | Size of expr
+      | Union of expr * expr
+      | Intersect of expr * expr
+      | Invariant of expr
+    type ty =
+      | Bool
+      | Int
+      | IntT
+    module ExprToImpl(M:SetInterface) = struct  end
+  end[@@ocaml.doc "@inline"]
+[@@@end]  
 

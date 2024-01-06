@@ -71,7 +71,6 @@ let mk_expr_constructors (sig_items : signature) : constructor_declaration list 
       | _ -> failwith "TODO: not sure how to handle other kinds of [signature_item_desc]"
       end)
 
-
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)  
 let uniq_ret_tys (sig_items : signature) : core_type list = 
@@ -128,23 +127,13 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
       "Can't derive for expressions that aren't module type declarations" ]
   end       
 
-
-
-(** Instantiates the PPX deriver *)  
+(** Instantiates the PPX deriver for [expr]s *)  
 let expr_generator : 
   (structure_item list, module_type_declaration) Deriving.Generator.t = 
   Deriving.Generator.V2.make_noarg generate_expr_from_sig 
 
-(** Registered PPX deriver *)
-(* let datatype_deriver : Deriving.t = 
-  (* Call [Deriving.add] to register the deriver.
-     The [str_module_type_decl] indicates that the [[@@deriving ...]]
-     syntax extension is to be added after [module type] declarations. *)
-  Deriving.add "mica_expr" ~str_module_type_decl:expr_generator *)
-
 (******************************************************************************)
-let mk_functor 
-  ~(loc : location) 
+let mk_functor ~(loc : location) 
    (arg_name : label option with_loc) 
    (mod_ty : module_type) : module_expr = 
   let functor_body = {
@@ -170,20 +159,13 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
       Location.raise_errorf ~loc
       "Can't derive for expressions that aren't module type declarations"
   end       
- 
-(* let functor_deriver : Deriving.t = 
-  (* Call [Deriving.add] to register the deriver.
-      The [str_module_type_decl] indicates that the [[@@deriving ...]]
-      syntax extension is to be added after [module type] declarations. *)
-  Deriving.add "mica_functor" ~str_module_type_decl:functor_generator *)
 
-(* let top_level = 
-  Deriving.add_alias "mica" 
-    [datatype_deriver; functor_deriver]  *)
-    
 let () = 
-  let datatype_deriver = Deriving.add "mica_expr" ~str_module_type_decl:expr_generator in 
-  let functor_generator = Deriving.Generator.V2.make_noarg generate_functor in 
-  let functor_deriver = Deriving.add "mica_functor" ~str_module_type_decl:functor_generator in 
-  Deriving.add_alias "mica" [datatype_deriver; functor_deriver]
+  (* Generate auxiliary type declarations *)
+  let datatype_deriver = 
+    Deriving.add "mica_types" ~str_module_type_decl:expr_generator in 
+  (* Generate the body of rhte [ExprToImpl] functor *)
+  let functor_generator = 
+    Deriving.Generator.V2.make_noarg ~deps:[datatype_deriver] generate_functor in 
+  Deriving.add "mica" ~str_module_type_decl:functor_generator
   |> Deriving.ignore 
