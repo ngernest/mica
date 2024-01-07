@@ -154,13 +154,17 @@ let type_generator :
 (******************************************************************************)
 
 (** {1 Generator for Functors} *)
+
+(** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
     (mod_ty : module_type) : module_expr =
   let m_ident =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
   in
   let m_expr = pmod_ident ~loc m_ident in
-  let functor_body = [ pstr_include ~loc (include_infos ~loc m_expr) ] in
+  let functor_body = [ 
+    pstr_include ~loc (include_infos ~loc m_expr) (* [include M] declaration *)
+  ] in
   let functor_expr =
     {
       pmod_desc = Pmod_structure functor_body;
@@ -170,6 +174,8 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   in
   pmod_functor ~loc (Named (arg_name, mod_ty)) functor_expr
 
+(** Generates the scaffolding for the [ExprToImpl] functor 
+    (e.g. module type declarations) *)  
 let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   begin
