@@ -1,4 +1,6 @@
-module type S = sig 
-  type 'a t 
+module type S = sig
+  type 'a t
+
+  val f : 'a t -> 'a t
 end
-[@@deriving mica_types]  
+[@@deriving mica_types]
