@@ -123,6 +123,17 @@ let mono_pair_list () =
     (monomorphize [%type: ('a * 'b) list])
     [%type: (int * int) list]
 
+let mono_func_1_arg () = 
+  Alcotest.check core_ty_testable "mono_func_1_arg"
+    (monomorphize [%type: 'a -> 'b])
+    [%type: int -> int]
+
+
+let mono_func_2_args () = 
+  Alcotest.check core_ty_testable "mono_func_2_args"
+    (monomorphize [%type: 'a -> 'b -> 'a])
+    [%type: int -> int -> int]
+
 (*******************************************************************************)
 (* Testing [uniq_ret_tys] *)
 let uniq_ret_tys_no_dupes () =
@@ -157,6 +168,27 @@ let uniq_ret_tys_three_tys () =
   Alcotest.check core_ty_list_testable "uniq_ret_tys_three_tys"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: bool] ]
+
+let uniq_ret_ty_1_arg_funcs () = 
+  let sig_items = 
+    [%sig:
+      val f : 'a -> int 
+      val g : int -> string
+      val h : int -> 'a] in 
+  Alcotest.check core_ty_list_testable "uniq_ret_ty_1_arg_funcs"
+    (List.rev @@ uniq_ret_tys sig_items)
+    [ [%type : int]; [%type: string] ]    
+
+let uniq_ret_ty_2_arg_funcs () = 
+  let sig_items = 
+    [%sig:
+      val f : 'a -> int -> 'a 
+      val g : int -> bool -> string
+      val h : bool -> char -> char] in 
+  Alcotest.check core_ty_list_testable "uniq_ret_ty_2_arg_funcs"
+    (List.rev @@ uniq_ret_tys sig_items)
+    [ [%type : int]; [%type: string]; [%type: char] ]        
+
 
 (*******************************************************************************)
 (** Testing [mk_ty_constructors] *)
@@ -242,12 +274,16 @@ let () =
           test_case "'a list list" `Quick mono_double_list;
           test_case "'a * 'b" `Quick mono_pair;
           test_case "('a * 'b) list" `Quick mono_pair_list;
+          test_case "'a -> 'b" `Quick mono_func_1_arg;
+          test_case "'a -> 'b -> 'a" `Quick mono_func_2_args;
         ] );
       ( "no duplicate types in result of [uniq_ret_tys]",
         [
           test_case "1 unique type" `Quick uniq_ret_tys_singleton;
           test_case "2 unique types" `Quick uniq_ret_tys_no_dupes;
           test_case "3 unique types" `Quick uniq_ret_tys_three_tys;
+          test_case "1 arg functions" `Quick uniq_ret_ty_1_arg_funcs;
+          test_case "2 arg functions" `Quick uniq_ret_ty_2_arg_funcs;
         ] );
       ( "Tests for [mk_ty_constructors]",
         [
