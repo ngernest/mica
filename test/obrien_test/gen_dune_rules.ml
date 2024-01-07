@@ -1,10 +1,10 @@
 open Core
 
-(* Code generation for the testing process from:
-    https://tarides.com/blog/2019-05-09-an-introduction-to-ocaml-ppx-ecosystem
+(* Test harness adapted from Alistair O'Brien's PPX template:
+   https://github.com/johnyob/ppx-template/
 *)
 
-let ppx_name = "ppx_template"
+let ppx_name = "ppx_mica"
 
 module Test = struct
   type kind =
@@ -41,7 +41,7 @@ module Test = struct
         Format.fprintf
           ppf
           "; expect the process to succeed, captured in target@,\
-           (run ./%%{pp} --impl %%{input} -o %%{targets})"
+           (run ./%%{pp} -deriving-keep-w32 both --impl %%{input} -o %%{targets})"
     in
     Format.fprintf
       ppf

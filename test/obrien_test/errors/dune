@@ -16,7 +16,7 @@
 (executable
  (name pp)
  (modules pp)
- (libraries ppx_template ppxlib))
+ (libraries ppx_mica ppxlib))
 
 (include dune.inc)
 
@@ -35,6 +35,6 @@
 
 (rule
  (alias runtest)
- (package ppx_template)
+ (package ppx_mica)
  (action
   (diff dune.inc dune.inc.gen)))
