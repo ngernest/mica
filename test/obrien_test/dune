@@ -1,0 +1,6 @@
+(executable
+ (name gen_dune_rules)
+ (modules gen_dune_rules)
+ (libraries core core_unix.sys_unix core_unix.command_unix)
+ (preprocess
+  (pps ppx_jane)))

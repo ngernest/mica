@@ -1,0 +1,40 @@
+; Set OCaml env variables for "dumb" terminals (e.g. we don't want ANSI color chars)
+
+(env
+ (_
+  (env-vars
+   (OCAML_ERROR_STYLE "short")
+   (OCAML_COLOR "never"))))
+
+; Define and build the `pp.ml` executable (used for testing preprocessor)
+
+(rule
+ (targets pp.ml)
+ (action
+  (write-file %{targets} "let () = Ppxlib.Driver.standalone ()")))
+
+(executable
+ (name pp)
+ (modules pp)
+ (libraries ppx_template ppxlib))
+
+(include dune.inc)
+
+; Generate the dune rules for the `errors` directory using `gen_dune_rules`
+
+(rule
+ (targets dune.inc.gen)
+ (deps
+  (source_tree .))
+ (action
+  (with-stdout-to
+   %{targets}
+   (run ../gen_dune_rules.exe -kind errors))))
+
+; Promotes `dune.inc.gen` to `dune.inc` when running `dune runtest --auto-promote`
+
+(rule
+ (alias runtest)
+ (package ppx_template)
+ (action
+  (diff dune.inc dune.inc.gen)))
