@@ -31,7 +31,9 @@ include struct
 
   type ty = Bool | Int | IntT
 
-  module ExprToImpl (M : SetInterface) = struct end
+  module ExprToImpl (M : SetInterface) = struct
+    include M
+  end
 end [@@ocaml.doc "@inline"]
 
 [@@@end]

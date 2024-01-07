@@ -156,10 +156,19 @@ let type_generator :
 (** {1 Generator for Functors} *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
     (mod_ty : module_type) : module_expr =
-  let functor_body =
-    { pmod_desc = Pmod_structure []; pmod_loc = loc; pmod_attributes = [] }
+  let m_ident =
+    { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
   in
-  pmod_functor ~loc (Named (arg_name, mod_ty)) functor_body
+  let m_expr = pmod_ident ~loc m_ident in
+  let functor_body = [ pstr_include ~loc (include_infos ~loc m_expr) ] in
+  let functor_expr =
+    {
+      pmod_desc = Pmod_structure functor_body;
+      pmod_loc = loc;
+      pmod_attributes = [];
+    }
+  in
+  pmod_functor ~loc (Named (arg_name, mod_ty)) functor_expr
 
 let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
