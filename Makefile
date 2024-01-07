@@ -1,9 +1,6 @@
 .PHONY: default build install uninstall test clean format coverage
 .IGNORE: format
 
-UNIT_TESTS=test/utils_test 
-PPX_TESTS=test/ppx_test/passing
-
 default:
 	opam update
 	opam install . --deps-only
