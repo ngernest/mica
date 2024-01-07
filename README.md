@@ -42,9 +42,9 @@ See `lib/lib.ml` for implementation details.
 
 ## Testing 
 1. `test/utils_test` contains `Alcotest` unit tests which test various helper functions
-2. `test/obrien_test` contains `.ml` test files used to test the PPX functionality
-- To add a new test file to the corpus of test files, in either `obrien_test/passing` 
-or `obrien_test/errors`, run:
+2. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
+- To add a new test file to the corpus of test files, in either `ppx_test/passing` 
+or `ppx_test/errors`, run:
 ```bash
 $ touch test_file.{ml,expected} && dune runtest --auto-promote
 ```
