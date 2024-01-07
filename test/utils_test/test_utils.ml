@@ -2,6 +2,7 @@ open Lib__Utils
 open Lib
 open Ppxlib
 open StdLabels
+open Alcotest
 
 (*******************************************************************************)
 (* Boilerplate for making [core_type] a [testable] type in
@@ -15,11 +16,11 @@ let core_type_eq (t1 : core_type) (t2 : core_type) : bool =
 let core_ty_list_eq (tys : core_type list) (tys' : core_type list) : bool =
   List.equal ~eq:core_type_eq tys tys'
 
-let core_ty_testable : core_type Alcotest.testable =
-  Alcotest.testable pp_core_type core_type_eq
+let core_ty_testable : core_type testable =
+  testable pp_core_type core_type_eq
 
-let core_ty_list_testable : core_type list Alcotest.testable =
-  Alcotest.list core_ty_testable
+let core_ty_list_testable : core_type list testable =
+  list core_ty_testable
 
 (*******************************************************************************)
 (* Boilerplate for [type_declaration testable] (currently unused) *)
@@ -35,8 +36,8 @@ let ty_decl_eq
   String.equal (no_loc ty1) (no_loc ty2)
   && List.equal ~eq:core_type_eq ty_args1 ty_args2
 
-let ty_decl_testable : type_declaration Alcotest.testable =
-  Alcotest.testable pp_ty_decl ty_decl_eq
+let ty_decl_testable : type_declaration testable =
+  testable pp_ty_decl ty_decl_eq
 
 (*******************************************************************************)
 (* Boilerplate for [constructor_declaration testable] *)
@@ -68,11 +69,11 @@ let constr_decl_eq cd1 cd2 =
            failwith "Not equal, Pcstr_record not supported"
      end
 
-let constr_decl_testable : constructor_declaration Alcotest.testable =
-  Alcotest.testable pp_constr_decl constr_decl_eq
+let constr_decl_testable : constructor_declaration testable =
+  testable pp_constr_decl constr_decl_eq
 
-let constr_decl_list_testable : constructor_declaration list Alcotest.testable =
-  Alcotest.list constr_decl_testable
+let constr_decl_list_testable : constructor_declaration list testable =
+  list constr_decl_testable
 
 (*******************************************************************************)
 (* Testing that monomorphization preserves core types *)
@@ -82,55 +83,55 @@ let constr_decl_list_testable : constructor_declaration list Alcotest.testable =
 let loc = Location.none
 
 let mono_int () =
-  Alcotest.check core_ty_testable "mono_int"
+  check core_ty_testable "mono_int"
     (monomorphize [%type: int])
     [%type: int]
 
 let mono_string () =
-  Alcotest.check core_ty_testable "mono_bool"
+  check core_ty_testable "mono_bool"
     (monomorphize [%type: string])
     [%type: string]
 
 let mono_bool () =
-  Alcotest.check core_ty_testable "mono_bool"
+  check core_ty_testable "mono_bool"
     (monomorphize [%type: bool])
     [%type: bool]
 
 (*******************************************************************************)
 (* Monomorphization instantiates type variables with [int] *)
 let mono_list () =
-  Alcotest.check core_ty_testable "mono_list"
+  check core_ty_testable "mono_list"
     (monomorphize [%type: 'a list])
     [%type: int list]
 
 let mono_option () =
-  Alcotest.check core_ty_testable "mono_option"
+  check core_ty_testable "mono_option"
     (monomorphize [%type: 'a option])
     [%type: int option]
 
 let mono_double_list () =
-  Alcotest.check core_ty_testable "mono_double_list"
+  check core_ty_testable "mono_double_list"
     (monomorphize [%type: 'a list list])
     [%type: int list list]
 
 let mono_pair () =
-  Alcotest.check core_ty_testable "mono_pair"
+  check core_ty_testable "mono_pair"
     (monomorphize [%type: 'a * 'b])
     [%type: int * int]
 
 let mono_pair_list () =
-  Alcotest.check core_ty_testable "mono_pair_list"
+  check core_ty_testable "mono_pair_list"
     (monomorphize [%type: ('a * 'b) list])
     [%type: (int * int) list]
 
 let mono_func_1_arg () = 
-  Alcotest.check core_ty_testable "mono_func_1_arg"
+  check core_ty_testable "mono_func_1_arg"
     (monomorphize [%type: 'a -> 'b])
     [%type: int -> int]
 
 
 let mono_func_2_args () = 
-  Alcotest.check core_ty_testable "mono_func_2_args"
+  check core_ty_testable "mono_func_2_args"
     (monomorphize [%type: 'a -> 'b -> 'a])
     [%type: int -> int -> int]
 
@@ -143,7 +144,7 @@ let uniq_ret_tys_no_dupes () =
       val y : string
       val z : int]
   in
-  Alcotest.check core_ty_list_testable "uniq_ret_tys_no_dupes"
+  check core_ty_list_testable "uniq_ret_tys_no_dupes"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
 
@@ -154,7 +155,7 @@ let uniq_ret_tys_singleton () =
       val y : int
       val z : int]
   in
-  Alcotest.check core_ty_list_testable "uniq_ret_tys_singleton"
+  check core_ty_list_testable "uniq_ret_tys_singleton"
     (uniq_ret_tys sig_items)
     [ [%type: int] ]
 
@@ -165,7 +166,7 @@ let uniq_ret_tys_three_tys () =
       val y : string
       val z : bool]
   in
-  Alcotest.check core_ty_list_testable "uniq_ret_tys_three_tys"
+  check core_ty_list_testable "uniq_ret_tys_three_tys"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: bool] ]
 
@@ -175,7 +176,7 @@ let uniq_ret_ty_1_arg_funcs () =
       val f : 'a -> int 
       val g : int -> string
       val h : int -> 'a] in 
-  Alcotest.check core_ty_list_testable "uniq_ret_ty_1_arg_funcs"
+  check core_ty_list_testable "uniq_ret_ty_1_arg_funcs"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type : int]; [%type: string] ]    
 
@@ -185,7 +186,7 @@ let uniq_ret_ty_2_arg_funcs () =
       val f : 'a -> int -> 'a 
       val g : int -> bool -> string
       val h : bool -> char -> char] in 
-  Alcotest.check core_ty_list_testable "uniq_ret_ty_2_arg_funcs"
+  check core_ty_list_testable "uniq_ret_ty_2_arg_funcs"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type : int]; [%type: string]; [%type: char] ]        
 
@@ -196,14 +197,14 @@ let uniq_ret_ty_2_arg_funcs () =
 let mk_ty_constructors_single_base_ty () =
   let sig_items = [%sig: val x : int] in
   let expected = mk_constructor ~name:"Int" ~loc:Location.none ~arg_tys:[] in
-  Alcotest.check constr_decl_list_testable "mk_ty_constructors_singleton"
+  check constr_decl_list_testable "mk_ty_constructors_singleton"
     (mk_ty_constructors sig_items)
     [ expected ]
 
 let mk_ty_constructors_single_mono_abs_ty () =
   let sig_items = [%sig: val x : t] in
   let expected = mk_constructor ~name:"T" ~loc:Location.none ~arg_tys:[] in
-  Alcotest.check constr_decl_list_testable
+  check constr_decl_list_testable
     "mk_ty_constructors_single_mono_abs_ty"
     (mk_ty_constructors sig_items)
     [ expected ]
@@ -211,7 +212,7 @@ let mk_ty_constructors_single_mono_abs_ty () =
 let mk_ty_constructors_single_poly_abs_ty () =
   let sig_items = [%sig: val x : 'a t] in
   let expected = mk_constructor ~name:"IntT" ~loc:Location.none ~arg_tys:[] in
-  Alcotest.check constr_decl_list_testable
+  check constr_decl_list_testable
     "mk_ty_constructors_single_poly_abs_ty"
     (mk_ty_constructors sig_items)
     [ expected ]
@@ -227,7 +228,7 @@ let mk_ty_constructors_two_base () =
       ~f:(fun name -> mk_constructor ~name ~loc:Location.none ~arg_tys:[])
       [ "Int"; "String" ]
   in
-  Alcotest.check constr_decl_list_testable "mk_ty_constructors_two"
+  check constr_decl_list_testable "mk_ty_constructors_two"
     (mk_ty_constructors sig_items)
     expected
 
@@ -243,22 +244,39 @@ let mk_ty_constructors_no_dupes () =
       ~f:(fun name -> mk_constructor ~name ~loc:Location.none ~arg_tys:[])
       [ "Int"; "String" ]
   in
-  Alcotest.check constr_decl_list_testable "mk_ty_constructors_no_dupes"
+  check constr_decl_list_testable "mk_ty_constructors_no_dupes"
     (mk_ty_constructors sig_items)
     expected
+
+(*******************************************************************************)    
+(** Testing [get_ret_ty] *)
+
+let get_ret_ty_1_arg_func () = 
+  check core_ty_testable "get_ret_ty_1_arg_func" 
+    (get_ret_ty [%type: string -> int]) [%type: int]
+
+let get_ret_ty_2_arg_func () = 
+  check core_ty_testable "get_ret_ty_1_arg_func" 
+    (get_ret_ty [%type: string -> int -> bool]) [%type: bool]    
+
+let get_ret_ty_3_arg_func () = 
+  check core_ty_testable "get_ret_ty_1_arg_func" 
+    (get_ret_ty [%type: string -> int -> bool -> char]) [%type: char]    
+
+let get_ret_ty_uncurried () = 
+  check core_ty_testable "get_ret_ty_uncurried" 
+    (get_ret_ty [%type: string * int * bool -> char]) [%type: char]  
+
 
 (*******************************************************************************)
 (* TODO:
    - add tests for [mk_expr_constructors]
-   - add tests for [get_ret_ty]
-   - set up test harness for PPX functionality
 *)
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
-  let open Alcotest in
   run "Utils test suite"
     [
       ( "[monomorphize] preserves base types",
@@ -282,8 +300,8 @@ let () =
           test_case "1 unique type" `Quick uniq_ret_tys_singleton;
           test_case "2 unique types" `Quick uniq_ret_tys_no_dupes;
           test_case "3 unique types" `Quick uniq_ret_tys_three_tys;
-          test_case "1 arg functions" `Quick uniq_ret_ty_1_arg_funcs;
-          test_case "2 arg functions" `Quick uniq_ret_ty_2_arg_funcs;
+          test_case "1 arg function" `Quick uniq_ret_ty_1_arg_funcs;
+          test_case "2 arg function" `Quick uniq_ret_ty_2_arg_funcs;
         ] );
       ( "Tests for [mk_ty_constructors]",
         [
@@ -294,5 +312,12 @@ let () =
             mk_ty_constructors_single_mono_abs_ty;
           test_case "two constructors" `Quick mk_ty_constructors_two_base;
           test_case "no duplicates" `Quick mk_ty_constructors_two_base;
+        ] );
+      ("Tests for [get_ret_ty]", 
+        [
+          test_case "1 arg function" `Quick get_ret_ty_1_arg_func;
+          test_case "2 arg function" `Quick get_ret_ty_2_arg_func;
+          test_case "3 arg function" `Quick get_ret_ty_3_arg_func;
+          test_case "uncurried function" `Quick get_ret_ty_uncurried;
         ] );
     ]
