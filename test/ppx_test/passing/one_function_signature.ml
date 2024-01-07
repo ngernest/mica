@@ -5,8 +5,7 @@ module type S = sig
 end
 [@@deriving_inline mica_types]
 
-type expr =
-  | F of expr
-type ty =
-  | IntT
+type expr = F of expr
+type ty = IntT
+
 [@@@end]

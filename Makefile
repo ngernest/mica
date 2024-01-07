@@ -1,4 +1,4 @@
-.PHONY: default build install uninstall test clean format
+.PHONY: default build install uninstall test clean format coverage
 .IGNORE: format
 
 UNIT_TESTS=test/utils_test 

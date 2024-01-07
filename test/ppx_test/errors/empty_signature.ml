@@ -1,2 +1,1 @@
-module type S = sig end
-[@@deriving mica_types, mica]
+module type S = sig end [@@deriving mica_types, mica]

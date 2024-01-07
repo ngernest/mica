@@ -16,11 +16,8 @@ let core_type_eq (t1 : core_type) (t2 : core_type) : bool =
 let core_ty_list_eq (tys : core_type list) (tys' : core_type list) : bool =
   List.equal ~eq:core_type_eq tys tys'
 
-let core_ty_testable : core_type testable =
-  testable pp_core_type core_type_eq
-
-let core_ty_list_testable : core_type list testable =
-  list core_ty_testable
+let core_ty_testable : core_type testable = testable pp_core_type core_type_eq
+let core_ty_list_testable : core_type list testable = list core_ty_testable
 
 (*******************************************************************************)
 (* Boilerplate for [type_declaration testable] (currently unused) *)
@@ -83,9 +80,7 @@ let constr_decl_list_testable : constructor_declaration list testable =
 let loc = Location.none
 
 let mono_int () =
-  check core_ty_testable "mono_int"
-    (monomorphize [%type: int])
-    [%type: int]
+  check core_ty_testable "mono_int" (monomorphize [%type: int]) [%type: int]
 
 let mono_string () =
   check core_ty_testable "mono_bool"
@@ -93,9 +88,7 @@ let mono_string () =
     [%type: string]
 
 let mono_bool () =
-  check core_ty_testable "mono_bool"
-    (monomorphize [%type: bool])
-    [%type: bool]
+  check core_ty_testable "mono_bool" (monomorphize [%type: bool]) [%type: bool]
 
 (*******************************************************************************)
 (* Monomorphization instantiates type variables with [int] *)
@@ -124,13 +117,12 @@ let mono_pair_list () =
     (monomorphize [%type: ('a * 'b) list])
     [%type: (int * int) list]
 
-let mono_func_1_arg () = 
+let mono_func_1_arg () =
   check core_ty_testable "mono_func_1_arg"
     (monomorphize [%type: 'a -> 'b])
     [%type: int -> int]
 
-
-let mono_func_2_args () = 
+let mono_func_2_args () =
   check core_ty_testable "mono_func_2_args"
     (monomorphize [%type: 'a -> 'b -> 'a])
     [%type: int -> int -> int]
@@ -155,8 +147,7 @@ let uniq_ret_tys_singleton () =
       val y : int
       val z : int]
   in
-  check core_ty_list_testable "uniq_ret_tys_singleton"
-    (uniq_ret_tys sig_items)
+  check core_ty_list_testable "uniq_ret_tys_singleton" (uniq_ret_tys sig_items)
     [ [%type: int] ]
 
 let uniq_ret_tys_three_tys () =
@@ -170,26 +161,27 @@ let uniq_ret_tys_three_tys () =
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: bool] ]
 
-let uniq_ret_ty_1_arg_funcs () = 
-  let sig_items = 
+let uniq_ret_ty_1_arg_funcs () =
+  let sig_items =
     [%sig:
-      val f : 'a -> int 
+      val f : 'a -> int
       val g : int -> string
-      val h : int -> 'a] in 
+      val h : int -> 'a]
+  in
   check core_ty_list_testable "uniq_ret_ty_1_arg_funcs"
     (List.rev @@ uniq_ret_tys sig_items)
-    [ [%type : int]; [%type: string] ]    
+    [ [%type: int]; [%type: string] ]
 
-let uniq_ret_ty_2_arg_funcs () = 
-  let sig_items = 
+let uniq_ret_ty_2_arg_funcs () =
+  let sig_items =
     [%sig:
-      val f : 'a -> int -> 'a 
+      val f : 'a -> int -> 'a
       val g : int -> bool -> string
-      val h : bool -> char -> char] in 
+      val h : bool -> char -> char]
+  in
   check core_ty_list_testable "uniq_ret_ty_2_arg_funcs"
     (List.rev @@ uniq_ret_tys sig_items)
-    [ [%type : int]; [%type: string]; [%type: char] ]        
-
+    [ [%type: int]; [%type: string]; [%type: char] ]
 
 (*******************************************************************************)
 (** Testing [mk_ty_constructors] *)
@@ -204,16 +196,14 @@ let mk_ty_constructors_single_base_ty () =
 let mk_ty_constructors_single_mono_abs_ty () =
   let sig_items = [%sig: val x : t] in
   let expected = mk_constructor ~name:"T" ~loc:Location.none ~arg_tys:[] in
-  check constr_decl_list_testable
-    "mk_ty_constructors_single_mono_abs_ty"
+  check constr_decl_list_testable "mk_ty_constructors_single_mono_abs_ty"
     (mk_ty_constructors sig_items)
     [ expected ]
 
 let mk_ty_constructors_single_poly_abs_ty () =
   let sig_items = [%sig: val x : 'a t] in
   let expected = mk_constructor ~name:"IntT" ~loc:Location.none ~arg_tys:[] in
-  check constr_decl_list_testable
-    "mk_ty_constructors_single_poly_abs_ty"
+  check constr_decl_list_testable "mk_ty_constructors_single_poly_abs_ty"
     (mk_ty_constructors sig_items)
     [ expected ]
 
@@ -248,25 +238,28 @@ let mk_ty_constructors_no_dupes () =
     (mk_ty_constructors sig_items)
     expected
 
-(*******************************************************************************)    
+(*******************************************************************************)
 (** Testing [get_ret_ty] *)
 
-let get_ret_ty_1_arg_func () = 
-  check core_ty_testable "get_ret_ty_1_arg_func" 
-    (get_ret_ty [%type: string -> int]) [%type: int]
+let get_ret_ty_1_arg_func () =
+  check core_ty_testable "get_ret_ty_1_arg_func"
+    (get_ret_ty [%type: string -> int])
+    [%type: int]
 
-let get_ret_ty_2_arg_func () = 
-  check core_ty_testable "get_ret_ty_1_arg_func" 
-    (get_ret_ty [%type: string -> int -> bool]) [%type: bool]    
+let get_ret_ty_2_arg_func () =
+  check core_ty_testable "get_ret_ty_1_arg_func"
+    (get_ret_ty [%type: string -> int -> bool])
+    [%type: bool]
 
-let get_ret_ty_3_arg_func () = 
-  check core_ty_testable "get_ret_ty_1_arg_func" 
-    (get_ret_ty [%type: string -> int -> bool -> char]) [%type: char]    
+let get_ret_ty_3_arg_func () =
+  check core_ty_testable "get_ret_ty_1_arg_func"
+    (get_ret_ty [%type: string -> int -> bool -> char])
+    [%type: char]
 
-let get_ret_ty_uncurried () = 
-  check core_ty_testable "get_ret_ty_uncurried" 
-    (get_ret_ty [%type: string * int * bool -> char]) [%type: char]  
-
+let get_ret_ty_uncurried () =
+  check core_ty_testable "get_ret_ty_uncurried"
+    (get_ret_ty [%type: string * int * bool -> char])
+    [%type: char]
 
 (*******************************************************************************)
 (* TODO:
@@ -313,7 +306,7 @@ let () =
           test_case "two constructors" `Quick mk_ty_constructors_two_base;
           test_case "no duplicates" `Quick mk_ty_constructors_two_base;
         ] );
-      ("Tests for [get_ret_ty]", 
+      ( "Tests for [get_ret_ty]",
         [
           test_case "1 arg function" `Quick get_ret_ty_1_arg_func;
           test_case "2 arg function" `Quick get_ret_ty_2_arg_func;

@@ -43,9 +43,9 @@ See `lib/lib.ml` for implementation details.
 ## Testing 
 1. `test/utils_test` contains `Alcotest` unit tests which test various helper functions
 2. `bisect_ppx` is used to compute test coverage
-- Run `make coverage` to generate test coverage report. 
+- Run `make coverage` to generate test coverage report.       
 (Note: before doing so, make sure `test/ppx_test/errors/dune.inc` is blank.)
-1. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
+3. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
 - To add a new test file to the corpus of test files, in either `ppx_test/passing` 
 or `ppx_test/errors`, run:
 ```bash
