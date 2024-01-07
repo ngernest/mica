@@ -4,7 +4,7 @@
  (kind ppx_deriver)
  (libraries base ppxlib ppx_deriving)
  (preprocess
-  (pps ppx_jane ppxlib.metaquot)))
+  (pps ppx_jane ppxlib.metaquot bisect_ppx --conditional)))
 
 (env
  (dev
