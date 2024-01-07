@@ -132,7 +132,17 @@ let attr ~(loc : location) ~(name : string) =
       (pexp_ident ~loc {txt = Lident name; loc}, []);
     pstr_loc = loc;
   }]) 
-  
+
+(*******************************************************************************)
+(** {1 Miscellany} *)  
+
+(** Stripes the location info from a value of type ['a loc] *)
+let no_loc (a_loc : 'a Astlib.Location.loc) : 'a = 
+  a_loc.txt
+
+(** Maps a function component-wise over a pair *)
+let map2 ~f (a1, a2) = (f a1, f a2)
+
 (** Retrieves all elements of a list except the last one *)  
 let rec remove_last (lst : 'a list) : 'a list = 
   match lst with 
