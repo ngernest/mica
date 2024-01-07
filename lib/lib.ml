@@ -89,11 +89,11 @@ let uniq_ret_tys (sig_items : signature) : core_type list =
 let mk_ty_constructors (sig_items : signature) : constructor_declaration list = 
   let ret_tys = uniq_ret_tys sig_items in 
   let uniq_ret_tys = List.sort_uniq ret_tys
-    ~cmp:(fun t1 t2 -> String.compare (string_of_core_type t1) (string_of_core_type t2)) in 
+    ~cmp:(fun t1 t2 -> String.compare (string_of_core_ty t1) (string_of_core_ty t2)) in 
   List.map uniq_ret_tys 
     ~f:(fun ty -> 
       mk_constructor 
-      ~name:(string_of_core_type ty)
+      ~name:(string_of_core_ty ty)
       ~loc:ty.ptyp_loc 
       ~arg_tys:[])       
 

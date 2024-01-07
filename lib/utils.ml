@@ -78,23 +78,23 @@ let get_type_params (td : type_declaration) : core_type list =
     representation (i.e. ['a] is instantiated to [int]).
     - Note: polymoprhic variants, objects, extensions/attributes are 
     not supported by this function.  *)
-let rec string_of_core_type (ty : core_type) : string = 
+let rec string_of_core_ty (ty : core_type) : string = 
   let loc = ty.ptyp_loc in 
   begin match ty.ptyp_desc with 
-  | Ptyp_var _ | Ptyp_any -> string_of_core_type (monomorphize ty)
+  | Ptyp_var _ | Ptyp_any -> string_of_core_ty (monomorphize ty)
   | Ptyp_constr ({txt = ident; _}, ty_params) -> 
     let ty_constr_str = Astlib.Longident.flatten ident 
       |> String.concat ~sep:"" 
       |> String.capitalize_ascii in 
     let params_str = String.concat ~sep:"" 
-      (List.map ~f:string_of_core_type ty_params) in 
+      (List.map ~f:string_of_core_ty ty_params) in 
     params_str ^ ty_constr_str
   | Ptyp_tuple tys -> 
     let ty_strs = List.map tys
-      ~f:(fun ty -> string_of_core_type ty |> String.capitalize_ascii) in 
+      ~f:(fun ty -> string_of_core_ty ty |> String.capitalize_ascii) in 
     String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) -> 
-    string_of_core_type t1 ^ string_of_core_type t2
+    string_of_core_ty t1 ^ string_of_core_ty t2
   | _ -> failwith "type expression not supported by string_of_core_type"
   end 
 
