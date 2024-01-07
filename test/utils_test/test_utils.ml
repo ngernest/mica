@@ -144,7 +144,6 @@ let mk_ty_constructors_single_base_ty () =
   Alcotest.check constr_decl_list_testable "mk_ty_constructors_singleton" 
     (mk_ty_constructors sig_items) [expected]
 
-
 let mk_ty_constructors_single_mono_abs_ty () = 
   let sig_items = [%sig: val x : t ] in 
   let expected = mk_constructor ~name:"T" ~loc:Location.none ~arg_tys:[] in 
@@ -178,8 +177,12 @@ let mk_ty_constructors_no_dupes () =
   Alcotest.check constr_decl_list_testable "mk_ty_constructors_no_dupes"  
     (mk_ty_constructors sig_items) expected
 
-
-
+(*******************************************************************************)
+(* TODO:
+  - add tests for [mk_expr_constructors]
+  - add tests for [get_ret_ty]
+  - set up test harness for PPX functionality
+*)    
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)

@@ -99,9 +99,8 @@ let mk_ty_constructors (sig_items : signature) : constructor_declaration list =
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
-    of an ADT [expr] with one constructor sharing the 
-    same name *)
-let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
+    the [expr] and [ty] algebraic data types *)
+let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
     (mt : module_type_declaration) : structure_item list =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in 
   begin match mt with 
@@ -128,9 +127,9 @@ let generate_expr_from_sig ~(ctxt : Expansion_context.Deriver.t)
   end       
 
 (** Instantiates the PPX deriver for [expr]s *)  
-let expr_generator : 
+let type_generator : 
   (structure_item list, module_type_declaration) Deriving.Generator.t = 
-  Deriving.Generator.V2.make_noarg generate_expr_from_sig 
+  Deriving.Generator.V2.make_noarg generate_types_from_sig 
 
 (******************************************************************************)
 (** {1 Generator for Functors} *)  
@@ -164,7 +163,7 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
 let () = 
   (* Generate auxiliary type declarations *)
   let datatype_deriver = 
-    Deriving.add "mica_types" ~str_module_type_decl:expr_generator in 
+    Deriving.add "mica_types" ~str_module_type_decl:type_generator in 
   (* Generate the body of the [ExprToImpl] functor 
      - Note that we must generate the declarations of auxiliary datatypes 
        before generating the functor *)
