@@ -3,11 +3,10 @@
  (public_name ppx_mica)
  (kind ppx_deriver)
  (libraries base ppxlib ppx_deriving)
- (preprocess 
-   (pps ppx_jane ppxlib.metaquot)))
+ (preprocess
+  (pps ppx_jane ppxlib.metaquot)))
 
 (env
  (dev
   (flags
    (:standard -g -w "-26-27-32-33-34-39"))))
-   

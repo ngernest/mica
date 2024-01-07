@@ -1,0 +1,5 @@
+profile = default
+version = 0.26.0
+margin = 80
+break-cases = nested
+exp-grouping = preserve
