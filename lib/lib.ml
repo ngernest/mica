@@ -28,7 +28,8 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
   match monomorphize ty with
   | ty' when List.mem ty' ~set:(base_types ~loc) ->
       [ ty' ]
-  | { ptyp_desc = Ptyp_constr ({ txt = Lident tyconstr; _ }, _); _ } as ty' ->
+  | { ptyp_desc = Ptyp_constr ({ txt = lident; _ }, _); _ } as ty' ->
+      let tyconstr = String.concat ~sep:"" (Astlib.Longident.flatten lident) in
       if String.equal tyconstr !abstract_ty_name then
         if is_arrow then [ [%type: expr] ] else []
       else [ ty' ]
