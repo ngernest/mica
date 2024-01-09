@@ -93,17 +93,34 @@ let uniq_ret_tys (sig_items : signature) : core_type list =
             acc
       end)
 
-(** Constructs the definition of the [ty] algebraic data type
-    based on the unique return types of all [val] declarations within 
-    the module signature *)
-let mk_ty_constructors (sig_items : signature) : constructor_declaration list =
+(** Helper function for creating the constructors of the [ty] and [value] 
+    algebraic data types 
+    - The argument [sig_items] contains the contents of a module signature
+    - [~f] is a function that specifies how to turn a [core_type] into a 
+    [constructor_declaration] *)
+let mk_constructor_aux (sig_items : signature)
+  ~(f : core_type -> constructor_declaration) : constructor_declaration list = 
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
     List.sort_uniq ret_tys ~cmp:(fun t1 t2 ->
-        String.compare (string_of_core_ty t1) (string_of_core_ty t2))
-  in
+        String.compare (string_of_core_ty t1) (string_of_core_ty t2)) in 
   List.map uniq_ret_tys ~f:(fun ty ->
-      mk_constructor ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+    mk_constructor ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+
+(** Constructs the definition of the [ty] algebraic data type
+    based on the unique return types of all [val] declarations within 
+    the module signature *)    
+let mk_ty_constructors (sig_items : signature) : constructor_declaration list = 
+  mk_constructor_aux sig_items ~f:(fun ty ->
+    mk_constructor ~name:(string_of_core_ty ty) 
+      ~loc:ty.ptyp_loc ~arg_tys:[]) 
+
+(** Constructs the definition of the [value] algebraic data type
+    based on the inhabitants of the [ty] ADT *)        
+let mk_val_constructors (sig_items : signature) = 
+  mk_constructor_aux sig_items ~f:(fun ty -> 
+    mk_constructor ~name:("Val" ^ string_of_core_ty ty) 
+      ~loc:ty.ptyp_loc ~arg_tys:[ty])  
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
