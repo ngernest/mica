@@ -19,6 +19,9 @@ uninstall:
 test:
 	dune runtest 
 
+unit_test: 
+	dune runtest test/utils_test	
+
 clean:
 	dune clean
 	git clean -dfX
