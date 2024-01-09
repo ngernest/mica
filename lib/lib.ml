@@ -99,28 +99,28 @@ let uniq_ret_tys (sig_items : signature) : core_type list =
     - [~f] is a function that specifies how to turn a [core_type] into a 
     [constructor_declaration] *)
 let mk_constructor_aux (sig_items : signature)
-  ~(f : core_type -> constructor_declaration) : constructor_declaration list = 
+    ~(f : core_type -> constructor_declaration) : constructor_declaration list =
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
     List.sort_uniq ret_tys ~cmp:(fun t1 t2 ->
-        String.compare (string_of_core_ty t1) (string_of_core_ty t2)) in 
-  List.map uniq_ret_tys ~f:(fun ty ->
-    mk_constructor ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+        String.compare (string_of_core_ty t1) (string_of_core_ty t2))
+  in
+  List.map uniq_ret_tys ~f
 
 (** Constructs the definition of the [ty] algebraic data type
     based on the unique return types of all [val] declarations within 
-    the module signature *)    
-let mk_ty_constructors (sig_items : signature) : constructor_declaration list = 
+    the module signature *)
+let mk_ty_constructors (sig_items : signature) : constructor_declaration list =
   mk_constructor_aux sig_items ~f:(fun ty ->
-    mk_constructor ~name:(string_of_core_ty ty) 
-      ~loc:ty.ptyp_loc ~arg_tys:[]) 
+      mk_constructor ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
 (** Constructs the definition of the [value] algebraic data type
-    based on the inhabitants of the [ty] ADT *)        
-let mk_val_constructors (sig_items : signature) = 
-  mk_constructor_aux sig_items ~f:(fun ty -> 
-    mk_constructor ~name:("Val" ^ string_of_core_ty ty) 
-      ~loc:ty.ptyp_loc ~arg_tys:[ty])  
+    based on the inhabitants of the [ty] ADT *)
+let mk_val_constructors (sig_items : signature) =
+  mk_constructor_aux sig_items ~f:(fun ty ->
+      mk_constructor
+        ~name:("Val" ^ string_of_core_ty ty)
+        ~loc:ty.ptyp_loc ~arg_tys:[ ty ])
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -174,14 +174,22 @@ let type_generator :
 
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
-    (mod_ty : module_type) : module_expr =
+    (mod_ty : module_type) (sig_items : signature) : module_expr =
+  (* [include M] declaration *)
   let m_ident =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
   in
   let m_expr = pmod_ident ~loc m_ident in
-  let functor_body = [ 
-    pstr_include ~loc (include_infos ~loc m_expr) (* [include M] declaration *)
-  ] in
+  let include_decl = pstr_include ~loc (include_infos ~loc m_expr) in
+
+  (* Declaration for the [value] ADT *)
+  let val_adt =
+    mk_adt ~loc ~name:"value" ~constructors:(mk_val_constructors sig_items)
+  in
+  let val_adt_decl = pstr_type ~loc Recursive [ val_adt ] in
+
+  (* Assembling all the components of the functor *)
+  let functor_body = [ include_decl; val_adt_decl ] in
   let functor_expr =
     {
       pmod_desc = Pmod_structure functor_body;
@@ -192,7 +200,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   pmod_functor ~loc (Named (arg_name, mod_ty)) functor_expr
 
 (** Generates the scaffolding for the [ExprToImpl] functor 
-    (e.g. module type declarations) *)  
+    (e.g. module type declarations) *)
 let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   begin
@@ -202,13 +210,24 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
         let mod_type_alias =
           pmty_ident ~loc { txt = Lident pmtd_name.txt; loc }
         in
-        let functor_expr = mk_functor ~loc new_name mod_type_alias in
-        let mod_binding =
-          module_binding ~loc
-            ~name:{ txt = Some "ExprToImpl"; loc }
-            ~expr:functor_expr
-        in
-        [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
+        begin
+          match mod_type.pmty_desc with
+          | Pmty_signature sig_items ->
+              let functor_expr =
+                mk_functor ~loc new_name mod_type_alias sig_items
+              in
+              let mod_binding =
+                module_binding ~loc
+                  ~name:{ txt = Some "ExprToImpl"; loc }
+                  ~expr:functor_expr
+              in
+              [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
+          | _ ->
+              [
+                mk_error ~local:mod_type.pmty_loc ~global:loc
+                  "Expected a module type expression that was a signature";
+              ]
+        end
     | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
         Location.raise_errorf ~loc
           "Can't derive for expressions that aren't module type declarations"

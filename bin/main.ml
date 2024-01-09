@@ -13,8 +13,8 @@ module type SetInterface = sig
   val invariant : 'a t -> bool
 end
 [@@deriving_inline mica_types, mica]
-
 (* Auto-generated code *)
+
 include struct
   [@@@ocaml.warning "-60"]
 
@@ -33,6 +33,8 @@ include struct
 
   module ExprToImpl (M : SetInterface) = struct
     include M
+
+    type value = ValBool of bool | ValInt of int | ValIntT of int t
   end
 end [@@ocaml.doc "@inline"]
 
