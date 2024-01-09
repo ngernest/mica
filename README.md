@@ -7,7 +7,6 @@ We have two PPX derivers that take an module signature declaration of the form
 (* bin/main.ml *)
 module type SetInterface = sig
   type 'a t 
-
   val empty : 'a t
   val is_empty : 'a t -> bool
   val mem : 'a -> 'a t -> bool
@@ -32,7 +31,14 @@ type expr =
 type ty = Int | Bool | IntT 
 
 (** Functor containing interpreter for symbolic expressions *)
-module ExprToImpl(M : SetInterface) = struct ... end 
+module ExprToImpl(M : SetInterface) = struct 
+  include M 
+  
+  type value = 
+    | ValBool of bool 
+    | ValInt of int 
+    | ValIntT of int t
+end 
 ```
 The datatype definitions are produced by the `mica_types` PPX deriver 
 which is executed first, and the functor definition is produced by 
