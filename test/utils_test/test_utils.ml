@@ -127,6 +127,16 @@ let mono_func_2_args () =
     (monomorphize [%type: 'a -> 'b -> 'a])
     [%type: int -> int -> int]
 
+let mono_poly_abs_type () =
+  check core_ty_testable "mono_poly_abs_type"
+    (monomorphize [%type: 'a t])
+    [%type: int t]
+
+let mono_qualified_poly_abs_type () =
+  check core_ty_testable "mono_qualified_poly_abs_type"
+    (monomorphize [%type: 'a M.t])
+    [%type: int M.t]
+
 (*******************************************************************************)
 (* Testing [uniq_ret_tys] *)
 let uniq_ret_tys_no_dupes () =
@@ -287,6 +297,8 @@ let () =
           test_case "('a * 'b) list" `Quick mono_pair_list;
           test_case "'a -> 'b" `Quick mono_func_1_arg;
           test_case "'a -> 'b -> 'a" `Quick mono_func_2_args;
+          test_case "'a t" `Quick mono_poly_abs_type;
+          test_case "'a M.t" `Quick mono_qualified_poly_abs_type;
         ] );
       ( "no duplicate types in result of [uniq_ret_tys]",
         [
