@@ -3,7 +3,7 @@
 (** Usage: [dune exec -- ./bin/GeneratedSetExecutable.exe] *)
 
 (* Suppress "unused value" compiler warnings *)
-[@@@ocaml.warning "-27-32-33-34"]
+[@@@ocaml.warning "-26-27-32-33-34"]
 
 open Core
 open Lib.Stats
@@ -12,12 +12,18 @@ open Lib.GeneratedSetPBTCode
 let () =
   let open Or_error in
   let module QC = Quickcheck in
+  let module G = QC.Generator in 
+  let seed = `Nondeterministic in 
+  let trials = 20 in 
+  let sexp_of = sexp_of_expr in 
+
+  (* QC.test_distinct_values ~trials ~distinct_values ~compare:compare_expr (gen_expr [] Bool); *)
   let test_bool =
     (* Note that we initialize [gen_expr] with the empty context *)
-    QC.test_or_error (gen_expr [] Bool) 
-      ~seed:`Nondeterministic 
-      ~trials:10 
-      ~sexp_of:sexp_of_expr 
+    QC.test_or_error (G.filter ~f:nontrivial @@ gen_expr [] Bool)
+      ~seed
+      ~trials
+      ~sexp_of
       ~f:(fun e ->
         print_s (sexp_of_expr e); (* TODO: remove *)
         match (I1.interp e, I2.interp e) with
@@ -27,10 +33,10 @@ let () =
   in
 
   let test_int =
-    QC.test_or_error (gen_expr [] Int) 
-      ~seed:`Nondeterministic
-      ~trials:10 
-      ~sexp_of:sexp_of_expr
+    QC.test_or_error (G.filter ~f:nontrivial @@ gen_expr [] Int) 
+      ~seed
+      ~trials
+      ~sexp_of
       ~f:(fun e ->
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->

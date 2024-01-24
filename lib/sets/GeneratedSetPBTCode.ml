@@ -18,7 +18,7 @@ type expr =
   | Size of expr
   | Union of expr * expr
   | Intersect of expr * expr
-[@@deriving sexp_of]
+[@@deriving sexp_of, compare, equal]
 
 type ty = Bool | Int | T [@@deriving sexp_of]
 
@@ -61,14 +61,29 @@ module ExprToImpl (M : SetInterface) = struct
         | _ -> failwith "impossible")
 end
 
+(** Normalizes an [expr] *)
 let normalize (e : expr) : expr = 
   begin match e with 
-  | Union (Empty, e') | Union (e', Empty) -> e'  
-  | Intersect (Empty, e') | Intersect (e', Empty) -> Empty 
+  | Union (Empty, e')
+  | Union (e', Empty) -> e'  
+  | Intersect (Empty, _) 
+  | Intersect (_, Empty) -> Empty 
   | Rem (_, Empty) -> Empty
   | _ -> e 
   end
 
+let nontrivial (e : expr) : bool =   
+  begin match e with 
+  | Union (Empty, _) 
+  | Union (_, Empty)
+  | Intersect (Empty, _) 
+  | Intersect (_, Empty)
+  | Is_empty Empty 
+  | Mem (_, Empty) -> false 
+  | Intersect (e1, e2) | Union (e1, e2) -> not (equal_expr e1 e2)
+  | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
+  | _ -> true
+  end
 
 (* Note that we now take in a context [ctx] of previously generated int's *)
 let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
@@ -112,12 +127,12 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
       let union =
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Union (e1, normalize e2)
+        G.return @@ normalize (Union (normalize e1, normalize e2))
       in
       let intersect =
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Intersect (normalize e1, normalize e2)
+        G.return @@ normalize (Intersect (normalize e1, normalize e2))
       in
       G.union [ add; rem; union; intersect ]
   end
