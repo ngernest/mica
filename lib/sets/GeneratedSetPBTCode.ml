@@ -62,40 +62,38 @@ module ExprToImpl (M : SetInterface) = struct
 end
 
 (** Normalizes an [expr] *)
-let normalize (e : expr) : expr = 
-  begin match e with 
-  | Union (Empty, e')
-  | Union (e', Empty) -> e'  
-  | Intersect (Empty, _) 
-  | Intersect (_, Empty) -> Empty 
+let normalize (e : expr) : expr =
+  match e with
+  | Union (Empty, e') | Union (e', Empty) -> e'
+  | Intersect (Empty, _) | Intersect (_, Empty) -> Empty
   | Rem (_, Empty) -> Empty
-  | _ -> e 
-  end
+  | _ -> e
 
-(** Checks if an [expr] is non-trivial *)  
-let nontrivial (e : expr) : bool =   
-  begin match e with 
-  | Union (Empty, _) 
+(** Checks if an [expr] is non-trivial *)
+let nontrivial (e : expr) : bool =
+  match e with
+  | Union (Empty, _)
   | Union (_, Empty)
-  | Intersect (Empty, _) 
+  | Intersect (Empty, _)
   | Intersect (_, Empty)
-  | Is_empty Empty 
-  | Mem (_, Empty) -> false 
+  | Is_empty Empty
+  | Mem (_, Empty) ->
+      false
   | Intersect (e1, e2) | Union (e1, e2) -> not (equal_expr e1 e2)
   | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
   | _ -> true
-  end
 
 (* Note that we now take in a context [ctx] of previously generated int's *)
 let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
   let module G = Generator in
   let open G.Let_syntax in
   let%bind k = G.size in
-  let genAtom = G.of_list [1; 2; 3; 4; 5] in 
-  let genFromCache = 
+  let genAtom = G.of_list [ 1; 2; 3; 4; 5 ] in
+  let genFromCache =
     if List.is_empty ctx then genAtom
-    else G.weighted_union [ (0.8, G.of_list ctx); (0.2, genAtom) ] in
-  begin match (ty, k) with
+    else G.weighted_union [ (0.8, G.of_list ctx); (0.2, genAtom) ]
+  in
+  match (ty, k) with
   | T, 0 -> return Empty
   | Bool, _ ->
       let is_empty =
@@ -103,8 +101,8 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
         G.return @@ Is_empty (normalize e)
       in
       let mem =
-        let%bind x1 = genFromCache in 
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
+        let%bind x1 = genFromCache in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: ctx) T) in
         G.return @@ Mem (x1, normalize e2)
       in
       G.union [ is_empty; mem ]
@@ -116,13 +114,13 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
       size
   | T, _ ->
       let add =
-        let%bind x1 = genFromCache in 
+        let%bind x1 = genFromCache in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Add (x1, normalize e2)
       in
       let rem =
         let%bind x1 = genFromCache in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: ctx) T) in
         G.return @@ Rem (x1, normalize e2)
       in
       let union =
@@ -136,7 +134,6 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
         G.return @@ normalize (Intersect (normalize e1, normalize e2))
       in
       G.union [ add; rem; union; intersect ]
-  end
 
 module I1 = ExprToImpl (ListSet)
 module I2 = ExprToImpl (BSTSet)

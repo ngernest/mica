@@ -12,20 +12,18 @@ open Lib.GeneratedSetPBTCode
 let () =
   let open Or_error in
   let module QC = Quickcheck in
-  let module G = QC.Generator in 
-  let seed = `Nondeterministic in 
-  let trials = 20 in 
-  let sexp_of = sexp_of_expr in 
-
-  (* QC.test_distinct_values ~trials ~distinct_values ~compare:compare_expr (gen_expr [] Bool); *)
+  let module G = QC.Generator in
+  let seed = `Nondeterministic in
+  let trials = 20 in
+  let sexp_of = sexp_of_expr in
   let test_bool =
     (* Note that we initialize [gen_expr] with the empty context *)
-    QC.test_or_error (G.filter ~f:nontrivial @@ gen_expr [] Bool)
-      ~seed
-      ~trials
-      ~sexp_of
+    QC.test_or_error
+      (G.filter ~f:nontrivial @@ gen_expr [] Bool)
+      ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        print_s (sexp_of_expr e); (* TODO: remove *)
+        print_s (sexp_of_expr e);
+        (* TODO: remove *)
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
@@ -33,10 +31,9 @@ let () =
   in
 
   let test_int =
-    QC.test_or_error (G.filter ~f:nontrivial @@ gen_expr [] Int) 
-      ~seed
-      ~trials
-      ~sexp_of
+    QC.test_or_error
+      (G.filter ~f:nontrivial @@ gen_expr [] Int)
+      ~seed ~trials ~sexp_of
       ~f:(fun e ->
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->
