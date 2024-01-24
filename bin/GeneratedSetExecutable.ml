@@ -13,7 +13,8 @@ let () =
   let open Or_error in
   let module QC = Quickcheck in
   let test_bool =
-    QC.test_or_error (gen_expr Bool) ~sexp_of:sexp_of_expr ~f:(fun e ->
+    (* Note that we initialize [gen_expr] with the empty context *)
+    QC.test_or_error (gen_expr [] Bool) ~sexp_of:sexp_of_expr ~f:(fun e ->
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
@@ -21,7 +22,7 @@ let () =
   in
 
   let test_int =
-    QC.test_or_error (gen_expr Int) ~sexp_of:sexp_of_expr ~f:(fun e ->
+    QC.test_or_error (gen_expr [] Int) ~sexp_of:sexp_of_expr ~f:(fun e ->
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2)

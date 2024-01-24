@@ -71,6 +71,7 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
   let module G = Generator in
   let open G.Let_syntax in
   let%bind k = G.size in
+  let genAtom = G.int_inclusive (-10) 10 in 
   match (ty, k) with
   | T, 0 -> return Empty
   | Bool, _ ->
@@ -79,11 +80,13 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
         G.return @@ Is_empty e
       in
       let mem =
-        let%bind x1 = G.weighted_union [ 
-          (0.7, G.of_list ctx); 
-          (0.3, int_inclusive (-10) 10) 
-        ] in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind x1 = 
+          if List.is_empty ctx then genAtom
+          else G.weighted_union [ 
+            (0.7, G.of_list ctx); 
+            (0.3, genAtom) 
+          ] in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Mem (x1, e2)
       in
       let invariant =
@@ -99,15 +102,17 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
       size
   | T, _ ->
       let add =
-        let%bind x1 = G.int_inclusive (-10) 10 in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr x1::ctx T) in
+        let%bind x1 = genAtom in 
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
         G.return @@ Add (x1, e2)
       in
       let rem =
-        let%bind x1 = G.weighted_union [ 
-          (0.7, G.of_list ctx); 
-          (0.3, int_inclusive (-10) 10) 
-        ] in
+        let%bind x1 = 
+          if List.is_empty ctx then genAtom
+          else G.weighted_union [ 
+            (0.7, G.of_list ctx); 
+            (0.3, genAtom) 
+          ] in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Rem (x1, e2)
       in
