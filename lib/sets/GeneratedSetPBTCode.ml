@@ -71,8 +71,11 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
   let module G = Generator in
   let open G.Let_syntax in
   let%bind k = G.size in
-  let genAtom = G.int_inclusive (-10) 10 in 
-  match (ty, k) with
+  let genAtom = G.of_list [1; 2; 3; 4; 5] in 
+  let genFromCache = 
+    if List.is_empty ctx then genAtom
+    else G.weighted_union [ (0.8, G.of_list ctx); (0.2, genAtom) ] in
+  begin match (ty, k) with
   | T, 0 -> return Empty
   | Bool, _ ->
       let is_empty =
@@ -80,13 +83,8 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
         G.return @@ Is_empty e
       in
       let mem =
-        let%bind x1 = 
-          if List.is_empty ctx then genAtom
-          else G.weighted_union [ 
-            (0.7, G.of_list ctx); 
-            (0.3, genAtom) 
-          ] in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind x1 = genFromCache in 
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
         G.return @@ Mem (x1, e2)
       in
       let invariant =
@@ -102,18 +100,13 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
       size
   | T, _ ->
       let add =
-        let%bind x1 = genAtom in 
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
+        let%bind x1 = genFromCache in 
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Add (x1, e2)
       in
       let rem =
-        let%bind x1 = 
-          if List.is_empty ctx then genAtom
-          else G.weighted_union [ 
-            (0.7, G.of_list ctx); 
-            (0.3, genAtom) 
-          ] in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind x1 = genFromCache in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
         G.return @@ Rem (x1, e2)
       in
       let union =
@@ -127,6 +120,7 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
         G.return @@ Intersect (e1, e2)
       in
       G.union [ add; rem; union; intersect ]
+  end
 
 module I1 = ExprToImpl (ListSet)
 module I2 = ExprToImpl (BSTSet)
