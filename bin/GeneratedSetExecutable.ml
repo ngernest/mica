@@ -1,6 +1,6 @@
 (** Auto-generated executable for testing observational equivalence of two modules *)
 
-(** Usage: [dune exec -- ./bin/GeneratedSetExecutable.exe] *)
+(** Usage: [dune exec -- sets] *)
 
 (* Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-26-27-32-33-34"]
@@ -19,7 +19,7 @@ let () =
   let test_bool =
     (* Note that we initialize [gen_expr] with the empty context *)
     QC.test_or_error
-      (G.filter ~f:nontrivial @@ gen_expr [] Bool)
+      (G.filter ~f:not_trivial @@ gen_expr [] Bool)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
         print_s (sexp_of_expr e);
@@ -32,7 +32,7 @@ let () =
 
   let test_int =
     QC.test_or_error
-      (G.filter ~f:nontrivial @@ gen_expr [] Int)
+      (G.filter ~f:not_trivial @@ gen_expr [] Int)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
         match (I1.interp e, I2.interp e) with

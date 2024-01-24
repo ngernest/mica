@@ -69,8 +69,8 @@ let normalize (e : expr) : expr =
   | Rem (_, Empty) -> Empty
   | _ -> e
 
-(** Checks if an [expr] is non-trivial *)
-let nontrivial (e : expr) : bool =
+(** Checks that an [expr] is not trivial *)
+let not_trivial (e : expr) : bool =
   match e with
   | Union (Empty, _)
   | Union (_, Empty)
