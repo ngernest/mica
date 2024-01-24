@@ -66,7 +66,8 @@ module ExprToImpl (M : SetInterface) = struct
         | _ -> failwith "impossible")
 end
 
-let rec gen_expr (ty : ty) : expr Generator.t =
+(* Note that we now take in a context [ctx] of previously generated int's *)
+let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
   let module G = Generator in
   let open G.Let_syntax in
   let%bind k = G.size in
@@ -74,44 +75,50 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   | T, 0 -> return Empty
   | Bool, _ ->
       let is_empty =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Is_empty e
       in
       let mem =
-        let%bind x1 = G.int_inclusive (-10) 10 in
+        let%bind x1 = G.weighted_union [ 
+          (0.7, G.of_list ctx); 
+          (0.3, int_inclusive (-10) 10) 
+        ] in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
         G.return @@ Mem (x1, e2)
       in
       let invariant =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Invariant e
       in
       G.union [ is_empty; mem; invariant ]
   | Int, _ ->
       let size =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Size e
       in
       size
   | T, _ ->
       let add =
         let%bind x1 = G.int_inclusive (-10) 10 in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr x1::ctx T) in
         G.return @@ Add (x1, e2)
       in
       let rem =
-        let%bind x1 = G.int_inclusive (-10) 10 in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind x1 = G.weighted_union [ 
+          (0.7, G.of_list ctx); 
+          (0.3, int_inclusive (-10) 10) 
+        ] in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Rem (x1, e2)
       in
       let union =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Union (e1, e2)
       in
       let intersect =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         G.return @@ Intersect (e1, e2)
       in
       G.union [ add; rem; union; intersect ]
