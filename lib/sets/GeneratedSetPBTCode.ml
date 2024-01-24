@@ -72,6 +72,7 @@ let normalize (e : expr) : expr =
   | _ -> e 
   end
 
+(** Checks if an [expr] is non-trivial *)  
 let nontrivial (e : expr) : bool =   
   begin match e with 
   | Union (Empty, _) 
