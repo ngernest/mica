@@ -18,7 +18,6 @@ type expr =
   | Size of expr
   | Union of expr * expr
   | Intersect of expr * expr
-  | Invariant of expr
 [@@deriving sexp_of]
 
 type ty = Bool | Int | T [@@deriving sexp_of]
@@ -60,11 +59,16 @@ module ExprToImpl (M : SetInterface) = struct
         match (interp e1, interp e2) with
         | ValT e1', ValT e2' -> ValT (M.intersect e1' e2')
         | _ -> failwith "impossible")
-    | Invariant e -> (
-        match interp e with
-        | ValT e' -> ValBool (M.invariant e')
-        | _ -> failwith "impossible")
 end
+
+let normalize (e : expr) : expr = 
+  begin match e with 
+  | Union (Empty, e') | Union (e', Empty) -> e'  
+  | Intersect (Empty, e') | Intersect (e', Empty) -> Empty 
+  | Rem (_, Empty) -> Empty
+  | _ -> e 
+  end
+
 
 (* Note that we now take in a context [ctx] of previously generated int's *)
 let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
@@ -80,44 +84,40 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
   | Bool, _ ->
       let is_empty =
         let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Is_empty e
+        G.return @@ Is_empty (normalize e)
       in
       let mem =
         let%bind x1 = genFromCache in 
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
-        G.return @@ Mem (x1, e2)
+        G.return @@ Mem (x1, normalize e2)
       in
-      let invariant =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Invariant e
-      in
-      G.union [ is_empty; mem; invariant ]
+      G.union [ is_empty; mem ]
   | Int, _ ->
       let size =
         let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Size e
+        G.return @@ Size (normalize e)
       in
       size
   | T, _ ->
       let add =
         let%bind x1 = genFromCache in 
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Add (x1, e2)
+        G.return @@ Add (x1, normalize e2)
       in
       let rem =
         let%bind x1 = genFromCache in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1::ctx) T) in
-        G.return @@ Rem (x1, e2)
+        G.return @@ Rem (x1, normalize e2)
       in
       let union =
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Union (e1, e2)
+        G.return @@ Union (e1, normalize e2)
       in
       let intersect =
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Intersect (e1, e2)
+        G.return @@ Intersect (normalize e1, normalize e2)
       in
       G.union [ add; rem; union; intersect ]
   end
