@@ -62,12 +62,19 @@ module ExprToImpl (M : SetInterface) = struct
 end
 
 (** Normalizes an [expr] *)
-let normalize (e : expr) : expr =
+let rec normalize (e : expr) : expr =
   match e with
   | Union (Empty, e') | Union (e', Empty) -> e'
   | Intersect (Empty, _) | Intersect (_, Empty) -> Empty
   | Rem (_, Empty) -> Empty
-  | _ -> e
+  | Union (e1, e2) -> Union (normalize e1, normalize e2)
+  | Intersect (e1, e2) -> Intersect (normalize e1, normalize e2)
+  | Add (x, e') -> Add (x, normalize e')
+  | Rem (x, e') -> Rem (x, normalize e')
+  | Mem (x, e) -> Mem (x, normalize e)
+  | Size e -> Size (normalize e)
+  | Is_empty e -> Is_empty (normalize e)
+  | Empty -> Empty
 
 (** Checks that an [expr] is not trivial *)
 let not_trivial (e : expr) : bool =
@@ -98,40 +105,40 @@ let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
   | Bool, _ ->
       let is_empty =
         let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Is_empty (normalize e)
+        G.return @@ normalize @@ Is_empty e
       in
       let mem =
         let%bind x1 = genFromCache in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: ctx) T) in
-        G.return @@ Mem (x1, normalize e2)
+        G.return @@ normalize @@ Mem (x1, e2)
       in
       G.union [ is_empty; mem ]
   | Int, _ ->
       let size =
         let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Size (normalize e)
+        G.return @@ normalize @@ Size e
       in
       size
   | T, _ ->
       let add =
         let%bind x1 = genFromCache in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ Add (x1, normalize e2)
+        G.return @@ normalize @@ Add (x1, e2)
       in
       let rem =
         let%bind x1 = genFromCache in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: ctx) T) in
-        G.return @@ Rem (x1, normalize e2)
+        G.return @@ normalize @@ Rem (x1, e2)
       in
       let union =
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ normalize (Union (normalize e1, normalize e2))
+        G.return @@ normalize (Union (e1, e2))
       in
       let intersect =
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
         let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        G.return @@ normalize (Intersect (normalize e1, normalize e2))
+        G.return @@ normalize (Intersect (e1, e2))
       in
       G.union [ add; rem; union; intersect ]
 
