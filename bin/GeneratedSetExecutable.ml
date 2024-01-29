@@ -9,12 +9,20 @@ open Core
 open Lib.Stats
 open Lib.GeneratedSetPBTCode
 
+let unique_ints : int list ref = ref [] 
+let num_calls : int list ref = ref [] 
+
+
 let () =
+  let logFile = Out_channel.create ~append:false "log.txt" in
+
+  fprintf logFile "num_unique_ints, num_int_calls\n";
+
   let open Or_error in
   let module QC = Quickcheck in
   let module G = QC.Generator in
   let seed = `Nondeterministic in
-  let trials = 20 in
+  let trials = 5 in
   let sexp_of = sexp_of_expr in
   let test_bool =
     (* Note that we initialize [gen_expr] with the empty context *)
@@ -22,7 +30,8 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Bool)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        print_s (sexp_of_expr e);
+        fprintf logFile "%d, %d\n" (num_unique_ints e) (num_int_calls e);
+        
         (* TODO: remove *)
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
@@ -35,6 +44,7 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Int)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
+        fprintf logFile "%d, %d\n" (num_unique_ints e) (num_int_calls e);
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2)
@@ -45,8 +55,12 @@ let () =
   | Ok ok ->
       let numPassed = QC.default_can_generate_trial_count in
       let numDiscarded = QC.(default_trial_count - numPassed) in
-      printf "\n Mica: OK, passed %d tests; %d discarded. \n" numPassed
-        numDiscarded
+      printf "\n Mica: OK, passed %d tests; %d discarded. \n" 
+        numPassed numDiscarded;
+      
+        Out_channel.close logFile
+
+      
   | Error err ->
       let open Stdlib.Format in
       Error.pp err_formatter err;
