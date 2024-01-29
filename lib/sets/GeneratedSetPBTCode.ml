@@ -61,6 +61,25 @@ module ExprToImpl (M : SetInterface) = struct
         | _ -> failwith "impossible")
 end
 
+(** TODO: plot no. of calls to [Add / Rem / Mem] with no. of unique ints? *)
+
+let rec num_int_calls acc (e : expr) : int  = 
+  match e with 
+  | Empty -> acc
+  | Add (_, e') | Rem (_, e') | Mem (_, e') -> num_int_calls (1+acc) e 
+  | Union (e1, e2) | Intersect (e1, e2) -> num_int_calls acc e1 + num_int_calls acc e2 + 1
+  | Is_empty e' | Size e' -> num_int_calls (1+acc) e' 
+
+let rec unique_ints_aux (acc : int list) (e : expr) : int list = 
+  match e with 
+  | Empty -> acc
+  | Add (x, e') | Rem (x, e') | Mem (x, e') -> unique_ints_aux (x::acc) e' 
+  | Union (e1, e2) | Intersect (e1, e2) -> unique_ints_aux acc e1 @ unique_ints_aux acc e2
+  | Is_empty e' | Size e' -> unique_ints_aux acc e'
+(* 
+let unique_ints (e : expr) = 
+  Set.of_list (module Int) (unique_ints_aux [] e) |> Set.length *)
+
 (** Normalizes an [expr] *)
 let rec normalize (e : expr) : expr =
   match e with
