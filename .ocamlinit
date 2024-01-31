@@ -1,0 +1,13 @@
+#require "base";;
+#require "base_quickcheck";;
+#require "ppx_jane";;
+
+#directory "./lib/sets";;
+#mod_use "SetInterface.ml";;
+#mod_use "ListSet.ml";;
+#mod_use "BSTSet.ml";;
+
+#mod_use "GeneratedSetPBTCode.ml";;
+
+open GeneratedSetPBTCode;;
+

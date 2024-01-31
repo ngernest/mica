@@ -1,10 +1,11 @@
-open Base
 (** Auto-generated property-based testing code *)
 
-open Base_quickcheck
 open SetInterface
 open ListSet
 open BSTSet
+
+open Base
+open Base_quickcheck
 
 (* Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-27-32-33-34"]
@@ -67,7 +68,10 @@ let rec num_int_calls_aux (acc : int) (e : expr) : int =
   match e with 
   | Empty -> acc
   | Add (_, e') | Rem (_, e') | Mem (_, e') -> num_int_calls_aux (1+acc) e 
-  | Union (e1, e2) | Intersect (e1, e2) -> num_int_calls_aux acc e1 + num_int_calls_aux acc e2
+  | Union (e1, e2) | Intersect (e1, e2) -> 
+    let n1 = num_int_calls_aux (1+acc) e1 in 
+    let n2 = num_int_calls_aux (1+acc) e2 in 
+    max n1 n2
   | Is_empty e' | Size e' -> num_int_calls_aux (1+acc) e' 
 
 let num_int_calls (e : expr) : int = 
