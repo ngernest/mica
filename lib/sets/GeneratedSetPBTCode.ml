@@ -110,6 +110,7 @@ let not_trivial (e : expr) : bool =
   | Intersect (Empty, _)
   | Intersect (_, Empty)
   | Is_empty Empty
+  | Size Empty
   | Mem (_, Empty) ->
       false
   | Intersect (e1, e2) | Union (e1, e2) -> not (equal_expr e1 e2)

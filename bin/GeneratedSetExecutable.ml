@@ -20,7 +20,7 @@ let () =
   let module QC = Quickcheck in
   let module G = QC.Generator in
   let seed = `Nondeterministic in
-  let trials = 5 in
+  let trials = 7 in
   let sexp_of = sexp_of_expr in
   let test_bool =
     (* Note that we initialize [gen_expr] with the empty context *)
