@@ -16,7 +16,7 @@ let num_calls : int list ref = ref []
 let () =
   let logFile = Out_channel.create ~append:false "log.txt" in
 
-  fprintf logFile "num_unique_ints, num_int_calls\n";
+  fprintf logFile "num_unique_ints, depth\n";
 
   let open Or_error in
   let module QC = Quickcheck in
@@ -30,7 +30,7 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Bool)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        fprintf logFile "%d, %d\n" (num_unique_ints e) (num_int_calls e);
+        fprintf logFile "%d, %d\n" (num_unique_ints e) (depth e);
         
         (* TODO: remove *)
         match (I1.interp e, I2.interp e) with
@@ -44,7 +44,7 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Int)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        fprintf logFile "%d, %d\n" (num_unique_ints e) (num_int_calls e);
+        fprintf logFile "%d, %d\n" (num_unique_ints e) (depth e);
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2)
