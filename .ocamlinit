@@ -1,3 +1,5 @@
+(* [dune utop ./lib/sets -- -implicit-bindings] *)
+
 #require "base";;
 #require "base_quickcheck";;
 #require "ppx_jane";;
