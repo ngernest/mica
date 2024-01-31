@@ -67,7 +67,7 @@ end
 let rec depth_aux (acc : int) (e : expr) : int = 
   match e with 
   | Empty -> acc
-  | Add (_, e') | Rem (_, e') | Mem (_, e') -> depth_aux (1+acc) e 
+  | Add (_, e') | Rem (_, e') | Mem (_, e') -> depth_aux (1+acc) e'
   | Union (e1, e2) | Intersect (e1, e2) -> 
     let n1 = depth_aux (1+acc) e1 in 
     let n2 = depth_aux (1+acc) e2 in 
@@ -87,7 +87,8 @@ let rec unique_ints_aux (acc : int list) (e : expr) : int list =
 let num_unique_ints (e : expr) : int = 
   Set.of_list (module Int) (unique_ints_aux [] e) |> Set.length
 
-(** Normalizes an [expr] *)
+(** Normalizes an [expr] 
+    - Harry: don't do this *)
 let rec normalize (e : expr) : expr =
   match e with
   | Union (Empty, e') | Union (e', Empty) -> e'
@@ -117,7 +118,8 @@ let not_trivial (e : expr) : bool =
   | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
   | _ -> true
 
-(* Note that we now take in a [cache] of previously generated int's *)
+(* Note that we now take in a [cache] of previously generated int's 
+   - Have a map from Tys to previously-generated 5 values *)
 let rec gen_expr (cache : int list) (ty : ty) : expr Generator.t =
   let module G = Generator in
   let open G.Let_syntax in
