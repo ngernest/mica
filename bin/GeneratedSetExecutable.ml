@@ -16,8 +16,6 @@ let num_calls : int list ref = ref []
 let () =
   let logFile = Out_channel.create ~append:false "log.txt" in
 
-  (* fprintf logFile "num_unique_ints, depth\n"; *)
-
   let open Or_error in
   let module QC = Quickcheck in
   let module G = QC.Generator in
@@ -30,7 +28,7 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Bool)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        (* fprintf logFile "%d, %d\n" (num_unique_ints e) (depth e); *)
+        print_s (sexp_of_expr e);
         
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
@@ -43,7 +41,7 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Int)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        (* fprintf logFile "%d, %d\n" (num_unique_ints e) (depth e); *)
+        print_s (sexp_of_expr e);
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2)
@@ -52,12 +50,8 @@ let () =
 
   match combine_errors_unit [ test_bool; test_int ] with
   | Ok ok ->
-      let numPassed = QC.default_can_generate_trial_count in
-      let numDiscarded = QC.(default_trial_count - numPassed) in
-      printf "\n Mica: OK, passed %d tests; %d discarded. \n" 
-        numPassed numDiscarded;
-      
-        Out_channel.close logFile
+      printf "\nTest succeeded\n";
+      Out_channel.close logFile
 
       
   | Error err ->
