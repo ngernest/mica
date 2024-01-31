@@ -64,18 +64,17 @@ end
 
 (** TODO: plot no. of calls to [Add / Rem / Mem] with no. of unique ints? *)
 
-let rec num_int_calls_aux (acc : int) (e : expr) : int = 
+let rec depth_aux (acc : int) (e : expr) : int = 
   match e with 
   | Empty -> acc
-  | Add (_, e') | Rem (_, e') | Mem (_, e') -> num_int_calls_aux (1+acc) e 
+  | Add (_, e') | Rem (_, e') | Mem (_, e') -> depth_aux (1+acc) e 
   | Union (e1, e2) | Intersect (e1, e2) -> 
-    let n1 = num_int_calls_aux (1+acc) e1 in 
-    let n2 = num_int_calls_aux (1+acc) e2 in 
+    let n1 = depth_aux (1+acc) e1 in 
+    let n2 = depth_aux (1+acc) e2 in 
     max n1 n2
-  | Is_empty e' | Size e' -> num_int_calls_aux (1+acc) e' 
+  | Is_empty e' | Size e' -> depth_aux (1+acc) e' 
 
-let num_int_calls (e : expr) : int = 
-  num_int_calls_aux 0 e  
+let depth (e : expr) : int = depth_aux 0 e  
   
 
 let rec unique_ints_aux (acc : int list) (e : expr) : int list = 
@@ -117,54 +116,54 @@ let not_trivial (e : expr) : bool =
   | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
   | _ -> true
 
-(* Note that we now take in a context [ctx] of previously generated int's *)
-let rec gen_expr (ctx : int list) (ty : ty) : expr Generator.t =
+(* Note that we now take in a [cache] of previously generated int's *)
+let rec gen_expr (cache : int list) (ty : ty) : expr Generator.t =
   let module G = Generator in
   let open G.Let_syntax in
   let%bind k = G.size in
   let genAtom = G.of_list [ 1; 2; 3; 4; 5 ] in
   let genFromCache =
-    if List.is_empty ctx then genAtom
-    else G.weighted_union [ (0.8, G.of_list ctx); (0.2, genAtom) ]
+    if List.is_empty cache then genAtom
+    else G.weighted_union [ (0.8, G.of_list cache); (0.2, genAtom) ]
   in
   match (ty, k) with
   | T, 0 -> return Empty
   | Bool, _ ->
       let is_empty =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind e = G.with_size ~size:(k / 2) (gen_expr cache T) in
         G.return @@ normalize @@ Is_empty e
       in
       let mem =
         let%bind x1 = genFromCache in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: ctx) T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: cache) T) in
         G.return @@ normalize @@ Mem (x1, e2)
       in
       G.union [ is_empty; mem ]
   | Int, _ ->
       let size =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind e = G.with_size ~size:(k / 2) (gen_expr cache T) in
         G.return @@ normalize @@ Size e
       in
       size
   | T, _ ->
       let add =
         let%bind x1 = genFromCache in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: cache) T) in
         G.return @@ normalize @@ Add (x1, e2)
       in
       let rem =
         let%bind x1 = genFromCache in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: ctx) T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr (x1 :: cache) T) in
         G.return @@ normalize @@ Rem (x1, e2)
       in
       let union =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr cache T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr cache T) in
         G.return @@ normalize (Union (e1, e2))
       in
       let intersect =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr ctx T) in
+        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr cache T) in
+        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr cache T) in
         G.return @@ normalize (Intersect (e1, e2))
       in
       G.union [ add; rem; union; intersect ]
