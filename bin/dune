@@ -38,7 +38,7 @@
  (public_name sets)
  (name GeneratedSetExecutable)
  (modules GeneratedSetExecutable)
- (libraries lib core stdio)
+ (libraries lib core stdio yojson)
  (preprocess
   (pps ppx_sexp_conv ppx_jane)))
 

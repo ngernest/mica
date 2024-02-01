@@ -8,9 +8,23 @@
 open Core
 open Lib.Stats
 open Lib.GeneratedSetPBTCode
+open Yojson
 
-let unique_ints : int list ref = ref [] 
-let num_calls : int list ref = ref [] 
+
+let json : Yojson.Basic.t = `Assoc [
+  ("type", `String "test_case");
+  ("status", `String "passed");
+  ("status_reason", `String "");
+  ("representation", `String "TODO")
+  (* TODO: continue populating json *)
+]
+
+(** [update_json k v] updates the field [k] in the association list [json] 
+    with the value [v], where [k] & [v] are both strings *)
+let update_json (`Assoc json : Yojson.Basic.t) 
+                 (k : string) (v: string) : Yojson.Basic.t = 
+  let new_json = List.Assoc.add json ~equal:String.equal k (`String v) in 
+  `Assoc new_json
 
 
 let () =
@@ -29,6 +43,7 @@ let () =
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
         print_s (sexp_of_expr e);
+
         
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
