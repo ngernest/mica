@@ -15,19 +15,35 @@ let json : Yojson.Basic.t = `Assoc [
   ("type", `String "test_case");
   ("status", `String "passed");
   ("status_reason", `String "");
-  ("representation", `String "TODO")
-  (* TODO: continue populating json *)
+  ("representation", `Null);
+  ("arguments", `String "TODO: fill in");
+  ("how_generated", `Null);
+  ("features", `String "TODO: to be filled in");
+  ("coverage", `Null);
+  ("timing", `Int 0);
+  ("metadata", `Null);
+  ("property", `String "depth");
+  ("run_start", `Float (Core_unix.time ()));
 ]
 
 (** [update_json k v] updates the field [k] in the association list [json] 
-    with the value [v], where [k] & [v] are both strings 
-    
-    TODO: may need to rewrite to make the pattern match on [Yojson.Basic.t] 
-    more comprehensive *)
-let update_json (`Assoc json : Yojson.Basic.t) 
-                (k : string) (v: string) : Yojson.Basic.t = 
-  let new_json = List.Assoc.add json ~equal:String.equal k (`String v) in 
-  `Assoc new_json
+    with the value [v], where [k] & [v] are both strings *)
+let update_json (json : Yojson.Basic.t) 
+                (k : string) (v: Yojson.Basic.t) : Yojson.Basic.t = 
+  match json with 
+  | `Assoc fields -> 
+    let new_json = List.Assoc.add fields ~equal:String.equal k v in 
+    `Assoc new_json
+  | _ -> failwith "Not an assocation list of json fields"
+
+(** Updates the [representation] field of the json with the string [s] *)  
+let set_rep_json (json: Yojson.Basic.t) (s : string) : Yojson.Basic.t = 
+  update_json json "representation" (`String s)
+
+(** Updates the [features] field of the json to be equal to 
+    [{"depth": n}] for some integer [n] *)
+let set_depth_json (json: Yojson.Basic.t) (n : int) : Yojson.Basic.t = 
+  update_json json "features" (`Assoc [("depth", `Int n)])
 
 
 let () =
@@ -46,7 +62,9 @@ let () =
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
         print_s (sexp_of_expr e);
-
+        let sexp_str = Sexp.to_string (sexp_of_expr e) in 
+        let json1 = set_rep_json json sexp_str in 
+        let json2 = set_depth_json json (depth e) in 
         
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
