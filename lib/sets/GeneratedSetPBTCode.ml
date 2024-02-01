@@ -138,10 +138,12 @@ let not_trivial (e : expr) : bool =
     to a list of pre-generated values *)  
 type bank = int list Map.M(Ty).t 
 
-(** Instantiates a [bank] of pre-generated values *)
+(** Instantiates a [bank] of pre-generated values 
+    - For this example, we just produce a list of 5 random ints *)
 let gen_bank () : bank = 
   let xs = Core.Quickcheck.random_value 
-    ~seed:`Nondeterministic (G.list G.small_strictly_positive_int) in 
+    ~seed:`Nondeterministic 
+    (G.list_with_length ~length:5 G.small_strictly_positive_int) in 
   Map.of_alist_exn (module Ty) [(Int, xs)]
   
 
