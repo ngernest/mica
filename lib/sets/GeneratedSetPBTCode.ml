@@ -7,6 +7,8 @@ open BSTSet
 open Base
 open Base_quickcheck
 
+module G = Generator 
+
 (* Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-27-32-33-34"]
 
@@ -21,13 +23,26 @@ type expr =
   | Intersect of expr * expr
 [@@deriving sexp_of, compare, equal]
 
-type ty = Bool | Int | T [@@deriving sexp_of]
+type ty = Bool | Int | T [@@deriving compare, sexp_of]
+
+(** Module needed to create a [Map] from [ty]'s to pre-generated [value]'s *)
+module Ty = struct 
+  module T = struct 
+    type t = ty 
+    [@@deriving compare, sexp_of]
+  end 
+
+  include T
+  include Comparable.Make(T)
+end 
 
 module ExprToImpl (M : SetInterface) = struct
   include M
 
   type value = ValBool of bool | ValInt of int | ValT of int M.t
   [@@deriving sexp_of]
+
+ 
 
   let rec interp (expr : expr) : value =
     match expr with
@@ -62,7 +77,7 @@ module ExprToImpl (M : SetInterface) = struct
         | _ -> failwith "impossible")
 end
 
-(** TODO: plot no. of calls to [Add / Rem / Mem] with no. of unique ints? *)
+(** TODO: plot depth wrt no. of unique ints? *)
 
 let rec depth_aux (acc : int) (e : expr) : int = 
   match e with 
@@ -103,7 +118,8 @@ let rec normalize (e : expr) : expr =
   | Is_empty e -> Is_empty (normalize e)
   | Empty -> Empty
 
-(** Checks that an [expr] is not trivial *)
+(** Checks that an [expr] is not trivial
+    - Harry: don't do this *)
 let not_trivial (e : expr) : bool =
   match e with
   | Union (Empty, _)
@@ -118,16 +134,28 @@ let not_trivial (e : expr) : bool =
   | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
   | _ -> true
 
+(** A [bank] is just a partial map from base types ([ty]'s) 
+    to a list of pre-generated values *)  
+type bank = int list Map.M(Ty).t 
+
+(** Instantiates a [bank] of pre-generated values *)
+let gen_bank () : bank = 
+  let xs = Core.Quickcheck.random_value 
+    ~seed:`Nondeterministic (G.list G.small_strictly_positive_int) in 
+  Map.of_alist_exn (module Ty) [(Int, xs)]
+  
+
 (* Note that we now take in a [cache] of previously generated int's 
    - Have a map from Tys to previously-generated 5 values *)
 let rec gen_expr (cache : int list) (ty : ty) : expr Generator.t =
-  let module G = Generator in
   let open G.Let_syntax in
   let%bind k = G.size in
-  let genAtom = G.of_list [ 1; 2; 3; 4; 5 ] in
-  let genFromCache =
-    if List.is_empty cache then genAtom
-    else G.weighted_union [ (0.8, G.of_list cache); (0.2, genAtom) ]
+  let%bind xs = G.list G.small_strictly_positive_int in 
+  let bank = gen_bank () in
+  let pickFromBank =  G.of_list (Map.find_exn bank Int) in 
+  let genFromCache = 
+    if List.is_empty cache then pickFromBank
+    else G.weighted_union [ (0.8, G.of_list cache); (0.2, pickFromBank) ]
   in
   match (ty, k) with
   | T, 0 -> return Empty
