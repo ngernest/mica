@@ -20,9 +20,12 @@ let json : Yojson.Basic.t = `Assoc [
 ]
 
 (** [update_json k v] updates the field [k] in the association list [json] 
-    with the value [v], where [k] & [v] are both strings *)
+    with the value [v], where [k] & [v] are both strings 
+    
+    TODO: may need to rewrite to make the pattern match on [Yojson.Basic.t] 
+    more comprehensive *)
 let update_json (`Assoc json : Yojson.Basic.t) 
-                 (k : string) (v: string) : Yojson.Basic.t = 
+                (k : string) (v: string) : Yojson.Basic.t = 
   let new_json = List.Assoc.add json ~equal:String.equal k (`String v) in 
   `Assoc new_json
 
