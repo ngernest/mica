@@ -19,7 +19,7 @@ type expr =
   | Size of expr
   | Union of expr * expr
   | Intersect of expr * expr
-[@@deriving sexp_of, compare, equal]
+[@@deriving sexp_of, compare, equal, to_yojson { exn = true }]
 
 type ty = Bool | Int | T [@@deriving compare, sexp_of]
 

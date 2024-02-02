@@ -13,9 +13,10 @@
   pprint
   core_unix.command_unix
   core_bench
-  re)
+  re
+  ppx_deriving_yojson.runtime)
  (preprocess
-  (pps ppx_jane)))
+  (pps ppx_jane ppx_deriving_yojson)))
 
 (documentation
  (package mica))

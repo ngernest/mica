@@ -10,7 +10,7 @@ open Lib.Stats
 open Lib.GeneratedSetPBTCode
 open Yojson
 
-let json : Yojson.Basic.t =
+let json : Basic.t =
   `Assoc
     [
       ("type", `String "test_case");
@@ -28,12 +28,11 @@ let json : Yojson.Basic.t =
     ]
 
 (** Global list of JSON objects *)
-let jsons : Yojson.Basic.t list ref = ref []
+let jsons : Basic.t list ref = ref []
 
 (** [update_json k v] updates the field [k] in the association list [json] 
     with the value [v], where [k] & [v] are both strings *)
-let update_json (json : Yojson.Basic.t) (k : string) (v : Yojson.Basic.t) :
-    Yojson.Basic.t =
+let update_json (json : Basic.t) (k : string) (v : Basic.t) : Basic.t =
   match json with
   | `Assoc fields ->
       let new_json = List.Assoc.add fields ~equal:String.equal k v in
@@ -41,20 +40,27 @@ let update_json (json : Yojson.Basic.t) (k : string) (v : Yojson.Basic.t) :
   | _ -> failwith "Not an assocation list of json fields"
 
 (** Updates the [representation] field of the json with the string [s] *)
-let set_rep_json (json : Yojson.Basic.t) ~rep:(s : string) : Yojson.Basic.t =
+let set_rep_json (json : Basic.t) ~rep:(s : string) : Basic.t =
   update_json json "representation" (`String s)
 
 (** Updates the [features] field of the json to be equal to 
     [{"depth": n}] for some integer [n] *)
-let set_depth_json (json : Yojson.Basic.t) ~depth:(n : int) : Yojson.Basic.t =
+let set_depth_json (json : Basic.t) ~depth:(n : int) : Basic.t =
   update_json json "features" (`Assoc [ ("depth", `Int n) ])
+
+(** Updates the [arguments] field of the json object *)
+let set_args_json (json : Basic.t) ~(args : Basic.t) : Basic.t =
+  update_json json "arguments" (`Assoc [ ("expr", args) ])
 
 (** Appends a JSON object containing metadata for the expr [e] 
     to the list [jsons] *)
-let update_jsons (e : expr) : unit =
+let append_to_jsons (e : expr) : unit =
   let sexp_str = Sexp.to_string (sexp_of_expr e) in
+  let e_json = Safe.to_basic (expr_to_yojson e) in
   let new_json =
-    set_rep_json json ~rep:sexp_str |> set_depth_json ~depth:(depth e)
+    set_rep_json json ~rep:sexp_str
+    |> set_depth_json ~depth:(depth e)
+    |> set_args_json ~args:e_json
   in
   jsons := new_json :: !jsons
 
@@ -73,7 +79,7 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Bool)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        update_jsons e;
+        append_to_jsons e;
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
@@ -85,7 +91,7 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Int)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        update_jsons e;
+        append_to_jsons e;
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->
             try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2)
@@ -94,7 +100,7 @@ let () =
   Basic.to_channel json_log (`List !jsons);
   Out_channel.close json_log;
   match combine_errors_unit [ test_bool; test_int ] with
-  | Ok ok -> printf "\nTest succeeded\n"
+  | Ok ok -> printf "Test succeeded\n"
   | Error err ->
       let open Stdlib.Format in
       Error.pp err_formatter err
