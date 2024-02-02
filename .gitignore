@@ -3,3 +3,4 @@ _build
 *.txt
 .vscode/
 lib/Generated.ml
+*.json

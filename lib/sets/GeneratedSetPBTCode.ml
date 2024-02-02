@@ -3,11 +3,9 @@
 open SetInterface
 open ListSet
 open BSTSet
-
 open Base
 open Base_quickcheck
-
-module G = Generator 
+module G = Generator
 
 (* Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-27-32-33-34"]
@@ -26,23 +24,20 @@ type expr =
 type ty = Bool | Int | T [@@deriving compare, sexp_of]
 
 (** Module needed to create a [Map] from [ty]'s to pre-generated [value]'s *)
-module Ty = struct 
-  module T = struct 
-    type t = ty 
-    [@@deriving compare, sexp_of]
-  end 
+module Ty = struct
+  module T = struct
+    type t = ty [@@deriving compare, sexp_of]
+  end
 
   include T
-  include Comparable.Make(T)
-end 
+  include Comparable.Make (T)
+end
 
 module ExprToImpl (M : SetInterface) = struct
   include M
 
   type value = ValBool of bool | ValInt of int | ValT of int M.t
   [@@deriving sexp_of]
-
- 
 
   let rec interp (expr : expr) : value =
     match expr with
@@ -79,27 +74,27 @@ end
 
 (** TODO: plot depth wrt no. of unique ints? *)
 
-let rec depth_aux (acc : int) (e : expr) : int = 
-  match e with 
+let rec depth_aux (acc : int) (e : expr) : int =
+  match e with
   | Empty -> acc
-  | Add (_, e') | Rem (_, e') | Mem (_, e') -> depth_aux (1+acc) e'
-  | Union (e1, e2) | Intersect (e1, e2) -> 
-    let n1 = depth_aux (1+acc) e1 in 
-    let n2 = depth_aux (1+acc) e2 in 
-    max n1 n2
-  | Is_empty e' | Size e' -> depth_aux (1+acc) e' 
+  | Add (_, e') | Rem (_, e') | Mem (_, e') -> depth_aux (1 + acc) e'
+  | Union (e1, e2) | Intersect (e1, e2) ->
+      let n1 = depth_aux (1 + acc) e1 in
+      let n2 = depth_aux (1 + acc) e2 in
+      max n1 n2
+  | Is_empty e' | Size e' -> depth_aux (1 + acc) e'
 
-let depth (e : expr) : int = depth_aux 0 e  
-  
+let depth (e : expr) : int = depth_aux 0 e
 
-let rec unique_ints_aux (acc : int list) (e : expr) : int list = 
-  match e with 
+let rec unique_ints_aux (acc : int list) (e : expr) : int list =
+  match e with
   | Empty -> acc
-  | Add (x, e') | Rem (x, e') | Mem (x, e') -> unique_ints_aux (x::acc) e' 
-  | Union (e1, e2) | Intersect (e1, e2) -> unique_ints_aux acc e1 @ unique_ints_aux acc e2
+  | Add (x, e') | Rem (x, e') | Mem (x, e') -> unique_ints_aux (x :: acc) e'
+  | Union (e1, e2) | Intersect (e1, e2) ->
+      unique_ints_aux acc e1 @ unique_ints_aux acc e2
   | Is_empty e' | Size e' -> unique_ints_aux acc e'
 
-let num_unique_ints (e : expr) : int = 
+let num_unique_ints (e : expr) : int =
   Set.of_list (module Int) (unique_ints_aux [] e) |> Set.length
 
 (** Normalizes an [expr] 
@@ -134,28 +129,28 @@ let not_trivial (e : expr) : bool =
   | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
   | _ -> true
 
+type bank = int list Map.M(Ty).t
 (** A [bank] is just a partial map from base types ([ty]'s) 
-    to a list of pre-generated values *)  
-type bank = int list Map.M(Ty).t 
+    to a list of pre-generated values *)
 
 (** Instantiates a [bank] of pre-generated values 
     - For this example, we just produce a list of 5 random ints *)
-let gen_bank () : bank = 
-  let xs = Core.Quickcheck.random_value 
-    ~seed:`Nondeterministic 
-    (G.list_with_length ~length:5 G.small_strictly_positive_int) in 
-  Map.of_alist_exn (module Ty) [(Int, xs)]
-  
+let gen_bank () : bank =
+  let xs =
+    Core.Quickcheck.random_value ~seed:`Nondeterministic
+      (G.list_with_length ~length:5 G.small_strictly_positive_int)
+  in
+  Map.of_alist_exn (module Ty) [ (Int, xs) ]
 
-(* Note that we now take in a [cache] of previously generated int's 
+(* Note that we now take in a [cache] of previously generated int's
    - Have a map from Tys to previously-generated 5 values *)
 let rec gen_expr (cache : int list) (ty : ty) : expr Generator.t =
   let open G.Let_syntax in
   let%bind k = G.size in
-  let%bind xs = G.list G.small_strictly_positive_int in 
+  let%bind xs = G.list G.small_strictly_positive_int in
   let bank = gen_bank () in
-  let pickFromBank =  G.of_list (Map.find_exn bank Int) in 
-  let genFromCache = 
+  let pickFromBank = G.of_list (Map.find_exn bank Int) in
+  let genFromCache =
     if List.is_empty cache then pickFromBank
     else G.weighted_union [ (0.8, G.of_list cache); (0.2, pickFromBank) ]
   in
