@@ -10,15 +10,17 @@ open Lib.Stats
 open Lib.GeneratedSetPBTCode
 open Yojson
 
+let args_ref = ref []
+
 let json : Basic.t =
   `Assoc
     [
       ("type", `String "test_case");
       ("status", `String "passed");
       ("status_reason", `String "");
-      ("representation", `Null);
-      ("arguments", `String "TODO: fill in");
-      ("how_generated", `Null);
+      ("representation", `String "expr");
+      ("arguments", `Assoc !args_ref);
+      ("how_generated", `String "gen_expr");
       ("features", `String "TODO: to be filled in");
       ("coverage", `Null);
       ("timing", `Int 0);
@@ -27,8 +29,8 @@ let json : Basic.t =
       ("run_start", `Float (Core_unix.time ()));
     ]
 
-(** Global list of JSON objects *)
-let jsons : Basic.t list ref = ref []
+
+let final_json = ref json
 
 (** [update_json k v] updates the field [k] in the association list [json] 
     with the value [v], where [k] & [v] are both strings *)
@@ -49,20 +51,18 @@ let set_depth_json (json : Basic.t) ~depth:(n : int) : Basic.t =
   update_json json "features" (`Assoc [ ("depth", `Int n) ])
 
 (** Updates the [arguments] field of the json object *)
-let set_args_json (json : Basic.t) ~(args : Basic.t) : Basic.t =
-  update_json json "arguments" (`Assoc [ ("expr", args) ])
+(* let set_args_json (json : Basic.t) ~(args : Basic.t) : Basic.t =
+  update_json json "arguments" (`Assoc [ ("expr", args) ]) *)
+
+let set_args_json (json : Basic.t) (expr_sexp_str: string) (depth : int) : Basic.t =
+  args_ref := (expr_sexp_str, `Int depth) :: !args_ref;
+  update_json json "arguments" (`Assoc !args_ref)
 
 (** Appends a JSON object containing metadata for the expr [e] 
     to the list [jsons] *)
 let append_to_jsons (e : expr) : unit =
   let sexp_str = Sexp.to_string (sexp_of_expr e) in
-  let e_json = Safe.to_basic (expr_to_yojson e) in
-  let new_json =
-    set_rep_json json ~rep:sexp_str
-    |> set_depth_json ~depth:(depth e)
-    |> set_args_json ~args:e_json
-  in
-  jsons := new_json :: !jsons
+  final_json := set_args_json json sexp_str (depth e)
 
 let () =
   let json_log = Out_channel.create ~append:false "json_objects.json" in
@@ -97,7 +97,7 @@ let () =
             try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2)
         | v1, v2 -> error_string @@ displayError e v1 v2)
   in
-  Basic.to_channel json_log (`List !jsons);
+  Basic.to_channel json_log !final_json;
   Out_channel.close json_log;
   match combine_errors_unit [ test_bool; test_int ] with
   | Ok ok -> printf "Test succeeded\n"
