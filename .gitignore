@@ -4,3 +4,4 @@ _build
 .vscode/
 lib/Generated.ml
 *.json
+*.jsonl

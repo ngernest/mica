@@ -16,6 +16,8 @@ let json : Basic.t =
   `Assoc
     [
       ("type", `String "test_case");
+      ("run_start", `Null);
+      ("property", `String "depth");
       ("status", `String "passed");
       ("status_reason", `String "");
       ("representation", `String "expr");
@@ -25,8 +27,6 @@ let json : Basic.t =
       ("coverage", `Null);
       ("timing", `Int 0);
       ("metadata", `Null);
-      ("property", `String "depth");
-      ("run_start", `Float (Core_unix.time ()));
     ]
 
 
@@ -50,10 +50,15 @@ let set_rep_json (json : Basic.t) ~rep:(s : string) : Basic.t =
 let set_depth_json (json : Basic.t) ~depth:(n : int) : Basic.t =
   update_json json "features" (`Assoc [ ("depth", `Int n) ])
 
-(** Updates the [arguments] field of the json object *)
-(* let set_args_json (json : Basic.t) ~(args : Basic.t) : Basic.t =
-  update_json json "arguments" (`Assoc [ ("expr", args) ]) *)
+(** Updates the [run_start] field of the json object
+    with the current time *)  
+let set_start_time_json (json : Basic.t) () : Basic.t = 
+  update_json json "run_start" @@ `Float (Core_unix.time ())
 
+let set_runtime_json (json : Basic.t) (runtime : float): Basic.t = 
+  update_json json "timing" @@ `Assoc [("execute_test", `Float runtime)]  
+
+(** Updates the [arguments] field of the json object *)
 let set_args_json (json : Basic.t) (expr_sexp_str: string) (depth : int) : Basic.t =
   args_ref := (expr_sexp_str, `Int depth) :: !args_ref;
   update_json json "arguments" (`Assoc !args_ref)
@@ -64,8 +69,11 @@ let append_to_jsons (e : expr) : unit =
   let sexp_str = Sexp.to_string (sexp_of_expr e) in
   final_json := set_args_json json sexp_str (depth e)
 
+
 let () =
-  let json_log = Out_channel.create ~append:false "json_objects.json" in
+  let json_log = Out_channel.create ~append:false "feb_3_testcases.jsonl" in
+
+  let json_seq_ref = ref Seq.empty in 
 
   let open Or_error in
   let module QC = Quickcheck in
@@ -79,10 +87,16 @@ let () =
       (G.filter ~f:not_trivial @@ gen_expr [] Bool)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        append_to_jsons e;
+        let start_time = Core_unix.gettimeofday () in
+        let depth = depth e in 
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
-            try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
+            try_with ~backtrace:false (fun () -> 
+              let end_time = Core_unix.gettimeofday () in 
+              let elapsed = end_time -. start_time in 
+              let final_json = set_runtime_json json elapsed in 
+              json_seq_ref := Seq.cons final_json !json_seq_ref;
+              [%test_eq: bool] b1 b2)
         | v1, v2 -> error_string @@ displayError e v1 v2)
   in
 
