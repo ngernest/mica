@@ -8,11 +8,12 @@ open RedBlackMap
 open Latin
 
 (* Suppress unused value compiler warnings *)
-[@@@ocaml.warning "-27-32-33-34"]
+[@@@ocaml.warning "-26-27-32-33-34"]
 
 module G = Generator
 
-type ty = AssocList | StringOption | T [@@deriving sexp]
+type ty = AssocList | StringOption | T 
+[@@deriving compare, sexp_of]
 
 type expr =
   | Empty
@@ -21,7 +22,17 @@ type expr =
   | Remove of int * expr
   | From_list of AssocList.t
   | Bindings of expr
-[@@deriving sexp]
+[@@deriving sexp_of, equal, to_yojson { exn = true }]
+
+(** Module needed to create a [Map] from [ty]'s to pre-generated [value]'s *)
+module Ty = struct
+  module T = struct
+    type t = ty [@@deriving compare, sexp_of]
+  end
+
+  include T
+  include Comparable.Make (T)
+end
 
 module ExprToImpl (M : MapInterface) = struct
   include M
@@ -31,6 +42,10 @@ module ExprToImpl (M : MapInterface) = struct
     | ValStringOption of string option
     | ValT of M.t
   [@@deriving sexp]
+
+  (** A [bank] is a map from base types ([ty]'s) 
+      to a list of pre-generated [value]'s *)
+  type bank = value list Map.M(Ty).t
 
   let rec interp (expr : expr) : value =
     match expr with
