@@ -41,30 +41,30 @@ let update_json (json : Basic.t) (k : string) (v : Basic.t) : Basic.t =
   | _ -> failwith "Not an AssocList of json fields"
 
 (** Updates the [representation] field of the json with the string [s] *)
-let set_rep_json ~rep:(e : expr) (json : Basic.t) : Basic.t =
+let set_rep ~rep:(e : expr) (json : Basic.t) : Basic.t =
   let expr_str = Sexp.to_string_hum @@ [%sexp_of: expr] e in  
   update_json json "representation" (`String expr_str)
 
 (** Updates the [features] field of the json to be equal to 
     [{"depth": n}] for some integer [n] *)
-let set_depth_json ~depth:(n : int)  (json : Basic.t) : Basic.t =
+let set_depth ~depth:(n : int)  (json : Basic.t) : Basic.t =
   update_json json "features" (`Assoc [ ("depth", `Int n) ])
 
 (** Updates the [run_start] field of the json object
     with the current time *)  
-let set_start_time_json (json : Basic.t) () : Basic.t = 
+let set_start_time (json : Basic.t) : Basic.t = 
   update_json json "run_start" @@ `Float (Core_unix.time ())
 
-let set_runtime_json (runtime : float) (json : Basic.t) : Basic.t = 
+let set_runtime (runtime : float) (json : Basic.t) : Basic.t = 
   update_json json "timing" @@ `Assoc [("execute_test", `Float runtime)]  
 
 (** Updates the [arguments] field of the json object *)
-let set_args_json (e : expr) (json : Basic.t) : Basic.t =
+let set_args (e : expr) (json : Basic.t) : Basic.t =
   let expr_str = Sexp.to_string_hum @@ [%sexp_of: expr] e in 
   update_json json "arguments" @@ `Assoc [("expr", `String expr_str)]
 
 (** Updates the [property] field of the json object *)  
-let set_prop_json (ty : ty) (json : Basic.t) : Basic.t = 
+let set_prop (ty : ty) (json : Basic.t) : Basic.t = 
   let ty_str = Sexp.to_string_hum @@ [%sexp_of: ty] ty in 
   update_json json "property" @@ 
     `String (Printf.sprintf "Obs Equiv for Set at type %s" ty_str)
@@ -73,12 +73,12 @@ let json_pipeline (e : expr) (ty : ty) (start_time : float) (json : Basic.t) : B
   let end_time = Core_unix.gettimeofday () in 
   let elapsed = end_time -. start_time in 
   let depth = depth e in 
-  (* TODO: need to update the property field with the type we're checking OE at *)
-  set_args_json e json
-    |> set_prop_json ty
-    |> set_depth_json ~depth
-    |> set_rep_json ~rep:e
-    |> set_runtime_json elapsed
+  set_start_time json 
+    |> set_args e
+    |> set_prop ty
+    |> set_depth ~depth
+    |> set_rep ~rep:e
+    |> set_runtime elapsed
 
 let () =
   let open Or_error in
@@ -97,6 +97,7 @@ let () =
         | ValBool b1, ValBool b2 ->
             try_with ~backtrace:false (fun () -> 
               let final_json = json_pipeline e Bool start_time json in 
+              Basic.pretty_to_channel stderr final_json;
               json_seq_ref := Seq.cons final_json !json_seq_ref;
               [%test_eq: bool] b1 b2)
         | v1, v2 -> error_string @@ displayError e v1 v2)
@@ -116,9 +117,9 @@ let () =
               [%test_eq: int] n1 n2)
         | v1, v2 -> error_string @@ displayError e v1 v2)
   in
-  Basic.seq_to_file "feb_3_testcases.jsonl" !json_seq_ref;
+  Basic.seq_to_file "feb_14_testcases.jsonl" !json_seq_ref;
   match combine_errors_unit [ test_bool; test_int ] with
-  | Ok ok -> printf "Test succeeded\n"
+  | Ok ok -> printf "\nTest succeeded\n"
   | Error err ->
       let open Stdlib.Format in
       Error.pp err_formatter err
