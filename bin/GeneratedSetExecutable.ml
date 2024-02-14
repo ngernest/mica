@@ -17,16 +17,15 @@ let json : Basic.t =
     [
       ("type", `String "test_case");
       ("run_start", `Null);
-      ("property", `String "depth");
+      ("property", `String "Obs equiv");
       ("status", `String "passed");
       ("status_reason", `String "");
       ("representation", `String "expr");
       ("arguments", `Assoc !args_ref);
       ("how_generated", `String "gen_expr");
-      ("features", `String "TODO: to be filled in");
+      ("features", `Assoc []);
+      ("metadata", `Assoc [("traceback", `Null)]);
       ("coverage", `Null);
-      ("timing", `Int 0);
-      ("metadata", `Null);
     ]
 
 
