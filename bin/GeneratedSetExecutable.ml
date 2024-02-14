@@ -41,14 +41,18 @@ let update_json (json : Basic.t) (k : string) (v : Basic.t) : Basic.t =
   | _ -> failwith "Not an AssocList of json fields"
 
 (** Updates the [representation] field of the json with the string [s] *)
-let set_rep ~rep:(e : expr) (json : Basic.t) : Basic.t =
+let set_representation (e : expr) (json : Basic.t) : Basic.t =
   let expr_str = Sexp.to_string_hum @@ [%sexp_of: expr] e in  
   update_json json "representation" (`String expr_str)
 
 (** Updates the [features] field of the json to be equal to 
     [{"depth": n}] for some integer [n] *)
-let set_depth ~depth:(n : int)  (json : Basic.t) : Basic.t =
-  update_json json "features" (`Assoc [ ("depth", `Int n) ])
+let set_depth (e : expr)  (json : Basic.t) : Basic.t =
+  update_json json "features" @@ 
+    `Assoc [ 
+      ("depth", `Int (depth e));
+      ("num_unique_ints", `Int (num_unique_ints e))
+    ]
 
 (** Updates the [run_start] field of the json object
     with the current time *)  
@@ -69,6 +73,8 @@ let set_prop (ty : ty) (json : Basic.t) : Basic.t =
   update_json json "property" @@ 
     `String (Printf.sprintf "Obs Equiv for Set at type %s" ty_str)
 
+(** End-to-end pipeline for updating the fields in the JSON object
+    needed for Tyche visualization *)    
 let json_pipeline (e : expr) (ty : ty) (start_time : float) (json : Basic.t) : Basic.t = 
   let end_time = Core_unix.gettimeofday () in 
   let elapsed = end_time -. start_time in 
@@ -76,15 +82,15 @@ let json_pipeline (e : expr) (ty : ty) (start_time : float) (json : Basic.t) : B
   set_start_time json 
     |> set_args e
     |> set_prop ty
-    |> set_depth ~depth
-    |> set_rep ~rep:e
+    |> set_depth e
+    |> set_representation e
     |> set_runtime elapsed
 
 let () =
   let open Or_error in
   let json_seq_ref = ref Seq.empty in 
   let seed = `Nondeterministic in
-  let trials = 10 in
+  let trials = 100 in
   let sexp_of = sexp_of_expr in
   let test_bool =
     (* Note that we initialize [gen_expr] with the empty context *)
@@ -97,7 +103,6 @@ let () =
         | ValBool b1, ValBool b2 ->
             try_with ~backtrace:false (fun () -> 
               let final_json = json_pipeline e Bool start_time json in 
-              Basic.pretty_to_channel stderr final_json;
               json_seq_ref := Seq.cons final_json !json_seq_ref;
               [%test_eq: bool] b1 b2)
         | v1, v2 -> error_string @@ displayError e v1 v2)

@@ -129,9 +129,9 @@ let not_trivial (e : expr) : bool =
   | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
   | _ -> true
 
-type bank = int list Map.M(Ty).t
 (** A [bank] is just a partial map from base types ([ty]'s) 
-    to a list of pre-generated [value]'s *)
+    to a list of pre-generated [value]'s *)  
+type bank = int list Map.M(Ty).t
 
 (** Instantiates a [bank] of pre-generated values 
     - For this example, we just produce a list of 5 random ints *)
