@@ -10,6 +10,9 @@ open Lib.Stats
 open Lib.GeneratedSetPBTCode
 open Yojson
 
+module QC = Quickcheck
+module G = QC.Generator
+
 let json : Basic.t =
   `Assoc
     [
@@ -60,30 +63,26 @@ let set_args_json (e : expr) (json : Basic.t) : Basic.t =
   let expr_str = Sexp.to_string_hum @@ [%sexp_of: expr] e in 
   update_json json "arguments" @@ `Assoc [("expr", `String expr_str)]
 
-(** Appends a JSON object containing metadata for the expr [e] 
-    to the list [jsons] *)
-(* let append_to_jsons (e : expr) : unit =
-  let sexp_str = Sexp.to_string (sexp_of_expr e) in
-  final_json := set_args_json sexp_str (depth e) json *)
+(** Updates the [property] field of the json object *)  
+let set_prop_json (ty : ty) (json : Basic.t) : Basic.t = 
+  let ty_str = Sexp.to_string_hum @@ [%sexp_of: ty] ty in 
+  update_json json "property" @@ 
+    `String (Printf.sprintf "Obs Equiv for Set at type %s" ty_str)
 
-let json_pipeline (e : expr) (start_time : float) (json : Basic.t) : Basic.t = 
+let json_pipeline (e : expr) (ty : ty) (start_time : float) (json : Basic.t) : Basic.t = 
   let end_time = Core_unix.gettimeofday () in 
   let elapsed = end_time -. start_time in 
   let depth = depth e in 
   (* TODO: need to update the property field with the type we're checking OE at *)
   set_args_json e json
+    |> set_prop_json ty
     |> set_depth_json ~depth
     |> set_rep_json ~rep:e
     |> set_runtime_json elapsed
 
 let () =
-  let json_log = Out_channel.create ~append:false "feb_3_testcases.jsonl" in
-
-  let json_seq_ref = ref Seq.empty in 
-
   let open Or_error in
-  let module QC = Quickcheck in
-  let module G = QC.Generator in
+  let json_seq_ref = ref Seq.empty in 
   let seed = `Nondeterministic in
   let trials = 10 in
   let sexp_of = sexp_of_expr in
@@ -93,15 +92,11 @@ let () =
       (gen_expr [] Bool)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
-        let start_time = Core_unix.gettimeofday () in
-        let depth = depth e in 
+        let start_time = Core_unix.gettimeofday () in 
         match (I1.interp e, I2.interp e) with
         | ValBool b1, ValBool b2 ->
             try_with ~backtrace:false (fun () -> 
-              let end_time = Core_unix.gettimeofday () in 
-              let elapsed = end_time -. start_time in
-              let j1 = set_runtime_json elapsed json in  
-              let final_json = failwith "TODO" in 
+              let final_json = json_pipeline e Bool start_time json in 
               json_seq_ref := Seq.cons final_json !json_seq_ref;
               [%test_eq: bool] b1 b2)
         | v1, v2 -> error_string @@ displayError e v1 v2)
@@ -112,13 +107,16 @@ let () =
       (gen_expr [] Int)
       ~seed ~trials ~sexp_of
       ~f:(fun e ->
+        let start_time = Core_unix.gettimeofday () in 
         match (I1.interp e, I2.interp e) with
         | ValInt n1, ValInt n2 ->
-            try_with ~backtrace:false (fun () -> [%test_eq: int] n1 n2)
+            try_with ~backtrace:false (fun () -> 
+              let final_json = json_pipeline e Int start_time json in
+              json_seq_ref := Seq.cons final_json !json_seq_ref; 
+              [%test_eq: int] n1 n2)
         | v1, v2 -> error_string @@ displayError e v1 v2)
   in
-  Basic.to_channel json_log !final_json;
-  Out_channel.close json_log;
+  Basic.seq_to_file "feb_3_testcases.jsonl" !json_seq_ref;
   match combine_errors_unit [ test_bool; test_int ] with
   | Ok ok -> printf "Test succeeded\n"
   | Error err ->
