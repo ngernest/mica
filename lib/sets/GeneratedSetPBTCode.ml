@@ -21,7 +21,9 @@ type expr =
   | Intersect of expr * expr
 [@@deriving sexp_of, compare, equal, to_yojson { exn = true }]
 
-type ty = Bool | Int | T [@@deriving compare, sexp_of]
+type ty = Bool | Int | T 
+[@@deriving compare, sexp_of]
+
 
 (** Module needed to create a [Map] from [ty]'s to pre-generated [value]'s *)
 module Ty = struct
