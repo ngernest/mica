@@ -172,6 +172,12 @@ let type_generator :
 (******************************************************************************)
 
 (** {1 Generator for Functors} *)
+
+(** Creates the definition for the [interp] function 
+    (contained inside the body of the [ExprToImpl] functor) 
+    
+    - TODO: figure out how to pass in a list of [expr] constructors
+    so that we can pattern-match on them via anti-quotations *)
 let mk_interp ~(loc : location) : structure_item = 
   (* String literal denoting the argument name *)
   let arg_str = "e" in 
