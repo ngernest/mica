@@ -172,6 +172,22 @@ let type_generator :
 (******************************************************************************)
 
 (** {1 Generator for Functors} *)
+let mk_interp ~(loc : location) : structure_item = 
+  (* String literal denoting the argument name *)
+  let arg_str = "e" in 
+  let arg_ident : expression = pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in 
+  let func_name_pat : pattern = ppat_var ~loc { txt = "interp"; loc } in
+  let cases : case list = [] in 
+  let func_arg : pattern = ppat_var ~loc { txt = arg_str; loc } in
+  (* TODO: update placeholder LHS & RHS of pattern match *)
+  let placeholder_rhs = pexp_constant ~loc (Pconst_integer ("1", None)) in 
+  (* let empty_constr = Ppat_construct ((with_loc (Lident "Empty") ~loc), None) in  *)
+  let wildcard = ppat_any ~loc in 
+  let func_body : expression = [%expr match [%e arg_ident] with [%p wildcard] -> [%e placeholder_rhs]] in 
+  let func_binding : expression = pexp_fun ~loc Nolabel None func_arg func_body in 
+  let func_defn : value_binding = value_binding ~loc ~pat:func_name_pat ~expr:func_binding in 
+  pstr_value ~loc Recursive [func_defn]
+
 
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
@@ -190,7 +206,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   let val_adt_decl = pstr_type ~loc Recursive [ val_adt ] in
 
   (* Assembling all the components of the functor *)
-  let functor_body = [ include_decl; val_adt_decl ] in
+  let functor_body = [ include_decl; val_adt_decl; mk_interp ~loc ] in
   let functor_expr =
     {
       pmod_desc = Pmod_structure functor_body;

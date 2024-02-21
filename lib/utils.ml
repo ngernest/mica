@@ -151,7 +151,11 @@ let attr ~(loc : location) ~(name : string) =
 (*******************************************************************************)
 (** {1 Miscellany} *)
 
-(** Stripes the location info from a value of type ['a loc] *)
+(** Constructs a [loc] given some payload [txt] and a location [loc] *)
+let with_loc (txt : 'a) ~(loc : loc) : 'a Location.loc = 
+  { txt; loc }
+
+(** Strips the location info from a value of type ['a loc] *)
 let no_loc (a_loc : 'a Astlib.Location.loc) : 'a = a_loc.txt
 
 (** Maps a function component-wise over a pair *)
