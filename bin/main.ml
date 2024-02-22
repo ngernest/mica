@@ -40,7 +40,6 @@ include
           | ValInt of int
           | ValIntT of int t
         let rec interp e = match e with | _ -> 1
-        (* TODO: figure out what is causing this extraneous binding *)
         let _ = interp
       end
   end[@@ocaml.doc "@inline"]

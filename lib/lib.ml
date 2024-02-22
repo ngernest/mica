@@ -81,6 +81,15 @@ let mk_expr_constructors (sig_items : signature) : constructor_declaration list
                [signature_item_desc]"
       end)
 
+(** Takes a list of [constructor_declaration]'s and returns 
+    a list of the constructor names (annotated with their locations) *)      
+let get_constructor_names 
+  (cstrs : constructor_declaration list) : (Longident.t Location.loc) list = 
+  List.map cstrs 
+    ~f:(fun {pcd_name = {txt; loc}; _} -> 
+      with_loc (Longident.parse txt) ~loc)
+
+
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)
 let uniq_ret_tys (sig_items : signature) : core_type list =
@@ -189,7 +198,8 @@ let mk_interp ~(loc : location) : structure_item =
   let placeholder_rhs = pexp_constant ~loc (Pconst_integer ("1", None)) in 
   (* let empty_constr = Ppat_construct ((with_loc (Lident "Empty") ~loc), None) in  *)
   let wildcard = ppat_any ~loc in 
-  let func_body : expression = [%expr match [%e arg_ident] with [%p wildcard] -> [%e placeholder_rhs]] in 
+  let func_body : expression = 
+    [%expr match [%e arg_ident] with [%p wildcard] -> [%e placeholder_rhs]] in 
   let func_binding : expression = pexp_fun ~loc Nolabel None func_arg func_body in 
   let func_defn : value_binding = value_binding ~loc ~pat:func_name_pat ~expr:func_binding in 
   pstr_value ~loc Recursive [func_defn]
