@@ -3,8 +3,36 @@ open Ast_helper
 open Ast_builder.Default
 open StdLabels
 
+(*******************************************************************************)
+(** {1 Miscellany} *)
+
+(** Constructs a [loc] given some payload [txt] and a location [loc] *)
+let with_loc (txt : 'a) ~(loc : loc) : 'a Location.loc = 
+  { txt; loc }
+
+(** Strips the location info from a value of type ['a loc] *)
+let no_loc (a_loc : 'a Astlib.Location.loc) : 'a = a_loc.txt
+
+(** Maps a function component-wise over a pair *)
+let map2 ~f (a1, a2) = (f a1, f a2)
+
+(** Retrieves all elements of a list except the last one *)
+let rec remove_last (lst : 'a list) : 'a list =
+  match lst with [] | [ _ ] -> [] | x :: xs -> x :: remove_last xs
+
+(** Returns the final element of a list (if one exists) 
+    - Raises an exception if the list is empty *)
+let rec get_last (lst : 'a list) : 'a =
+  match lst with
+  | [] ->
+      failwith "List is empty"
+  | [ x ] ->
+      x
+  | x :: xs ->
+      get_last xs
+
 (******************************************************************************)
-(** {1 Utility functions} *)
+(** {1 Utility functions for working with Ppxlib} *)
 
 (** List of OCaml base types 
     - The named argument [loc] is necessary in order for 
@@ -80,6 +108,14 @@ let rec monomorphize (ty : core_type) : core_type =
 let get_type_params (td : type_declaration) : core_type list =
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
+(** Takes a list of [constructor_declaration]'s and returns 
+    a list of the constructor names (annotated with their locations) *)      
+let get_constructor_names 
+(cstrs : constructor_declaration list) : (Longident.t Location.loc) list = 
+List.map cstrs 
+  ~f:(fun {pcd_name = {txt; loc}; _} -> 
+    with_loc (Longident.parse txt) ~loc)
+
 (** Converts a type expression [ty] to its camel-case string representation 
     (for use as a constructor in an algebraic data type) 
     - The type expression is monomorphized prior to computing its string
@@ -149,30 +185,4 @@ let attr ~(loc : location) ~(name : string) =
            };
          ])
 
-(*******************************************************************************)
-(** {1 Miscellany} *)
 
-(** Constructs a [loc] given some payload [txt] and a location [loc] *)
-let with_loc (txt : 'a) ~(loc : loc) : 'a Location.loc = 
-  { txt; loc }
-
-(** Strips the location info from a value of type ['a loc] *)
-let no_loc (a_loc : 'a Astlib.Location.loc) : 'a = a_loc.txt
-
-(** Maps a function component-wise over a pair *)
-let map2 ~f (a1, a2) = (f a1, f a2)
-
-(** Retrieves all elements of a list except the last one *)
-let rec remove_last (lst : 'a list) : 'a list =
-  match lst with [] | [ _ ] -> [] | x :: xs -> x :: remove_last xs
-
-(** Returns the final element of a list (if one exists) 
-    - Raises an exception if the list is empty *)
-let rec get_last (lst : 'a list) : 'a =
-  match lst with
-  | [] ->
-      failwith "List is empty"
-  | [ x ] ->
-      x
-  | x :: xs ->
-      get_last xs

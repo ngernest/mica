@@ -13,8 +13,6 @@ module type SetInterface = sig
   val invariant : 'a t -> bool
 end
 [@@deriving_inline mica_types, mica]
-
-
 include
   struct
     [@@@ocaml.warning "-60"]

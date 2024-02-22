@@ -81,15 +81,6 @@ let mk_expr_constructors (sig_items : signature) : constructor_declaration list
                [signature_item_desc]"
       end)
 
-(** Takes a list of [constructor_declaration]'s and returns 
-    a list of the constructor names (annotated with their locations) *)      
-let get_constructor_names 
-  (cstrs : constructor_declaration list) : (Longident.t Location.loc) list = 
-  List.map cstrs 
-    ~f:(fun {pcd_name = {txt; loc}; _} -> 
-      with_loc (Longident.parse txt) ~loc)
-
-
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)
 let uniq_ret_tys (sig_items : signature) : core_type list =
