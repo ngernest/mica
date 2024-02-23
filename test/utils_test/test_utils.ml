@@ -24,7 +24,7 @@ let core_ty_list_testable : core_type list testable = list core_ty_testable
 
 let pp_ty_decl = Ppxlib.Pprintast.type_declaration
 
-(** Equality of [type_declaration]'s is based *)
+(** Equality of [type_declaration]'s is based on their string representations *)
 let ty_decl_eq
     ({ ptype_name = ty1; ptype_params = ty_params1; _ } : type_declaration)
     ({ ptype_name = ty2; ptype_params = ty_params2; _ } : type_declaration) :
