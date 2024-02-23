@@ -173,32 +173,62 @@ let type_generator :
 
 (** {1 Generator for Functors} *)
 
+(** Helper function: given [mod_ty], a module signature,
+    [get_expr_constructors] produces the constructor names of the [expr] datatype
+    that matches the declarations in the module signature *)
+let get_expr_constructors (mod_ty : module_type) : Longident.t Location.loc list
+    =
+  match mod_ty.pmty_desc with
+  | Pmty_signature sig_items ->
+      get_constructor_names @@ mk_expr_constructors sig_items
+  | _ ->
+      failwith "TODO: get_expr_constructors"
+
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
-    
-    - TODO: figure out how to pass in a list of [expr] constructors
-    so that we can pattern-match on them via anti-quotations *)
-let mk_interp ~(loc : location) : structure_item = 
+    - The argument [expr_cstrs] is a list of the 
+    names of the constructors for the [expr] algebraic data type *)
+let mk_interp ~(loc : location) (mod_ty : module_type)
+    (expr_cstrs : Longident.t Location.loc list) : structure_item =
   (* String literal denoting the argument name *)
-  let arg_str = "e" in 
-  let arg_ident : expression = pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in 
+  let arg_str = "e" in
+  let arg_ident : expression =
+    pexp_ident ~loc (with_loc (Lident arg_str) ~loc)
+  in
   let func_name_pat : pattern = ppat_var ~loc { txt = "interp"; loc } in
-  let cases : case list = [] in 
   let func_arg : pattern = ppat_var ~loc { txt = arg_str; loc } in
-  (* TODO: update placeholder LHS & RHS of pattern match *)
-  let placeholder_rhs = pexp_constant ~loc (Pconst_integer ("1", None)) in 
-  (* let empty_constr = Ppat_construct ((with_loc (Lident "Empty") ~loc), None) in  *)
-  let wildcard = ppat_any ~loc in 
-  let func_body : expression = 
-    [%expr match [%e arg_ident] with [%p wildcard] -> [%e placeholder_rhs]] in 
-  let func_binding : expression = pexp_fun ~loc Nolabel None func_arg func_body in 
-  let func_defn : value_binding = value_binding ~loc ~pat:func_name_pat ~expr:func_binding in 
-  pstr_value ~loc Recursive [func_defn]
-
+  (* TODO: update placeholder RHS of pattern match *)
+  let placeholder_rhs = pexp_constant ~loc (Pconst_integer ("1", None)) in
+  (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
+  let patterns : pattern list =
+    List.map expr_cstrs ~f:(fun cstr ->
+        ppat_construct ~loc cstr (Some [%pat? cstr]))
+  in
+  let wildcard : pattern = ppat_any ~loc in
+  (* TODO: figure out how to generate fresh arguments for the [expr] 
+     constructors that match their arity *)
+  let func_body : expression =
+    [%expr
+      match [%e arg_ident] with
+      | [%p List.hd patterns] ->
+          [%e placeholder_rhs]
+      | [%p List.hd (List.tl patterns)] ->
+          [%e placeholder_rhs]
+      | [%p wildcard] ->
+          [%e placeholder_rhs]]
+  in
+  let func_binding : expression =
+    pexp_fun ~loc Nolabel None func_arg func_body
+  in
+  let func_defn : value_binding =
+    value_binding ~loc ~pat:func_name_pat ~expr:func_binding
+  in
+  pstr_value ~loc Recursive [ func_defn ]
 
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
-    (mod_ty : module_type) (sig_items : signature) : module_expr =
+    (mod_ty : module_type) (sig_items : signature)
+    (expr_cstrs : Longident.t Location.loc list) : module_expr =
   (* [include M] declaration *)
   let m_ident =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
@@ -213,7 +243,9 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   let val_adt_decl = pstr_type ~loc Recursive [ val_adt ] in
 
   (* Assembling all the components of the functor *)
-  let functor_body = [ include_decl; val_adt_decl; mk_interp ~loc ] in
+  let functor_body =
+    [ include_decl; val_adt_decl; mk_interp ~loc mod_ty expr_cstrs ]
+  in
   let functor_expr =
     {
       pmod_desc = Pmod_structure functor_body;
@@ -237,8 +269,12 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
         begin
           match mod_type.pmty_desc with
           | Pmty_signature sig_items ->
+              (* Obtain the constructors for the [expr] datatype
+                 based on the module type signature, then pass them
+                 onto [mk_functor] when building the body of the functor *)
+              let expr_cstrs = get_expr_constructors mod_type in
               let functor_expr =
-                mk_functor ~loc new_name mod_type_alias sig_items
+                mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs
               in
               let mod_binding =
                 module_binding ~loc

@@ -7,8 +7,7 @@ open StdLabels
 (** {1 Miscellany} *)
 
 (** Constructs a [loc] given some payload [txt] and a location [loc] *)
-let with_loc (txt : 'a) ~(loc : loc) : 'a Location.loc = 
-  { txt; loc }
+let with_loc (txt : 'a) ~(loc : loc) : 'a Location.loc = { txt; loc }
 
 (** Strips the location info from a value of type ['a loc] *)
 let no_loc (a_loc : 'a Astlib.Location.loc) : 'a = a_loc.txt
@@ -50,7 +49,6 @@ let base_types ~(loc : location) : core_type list =
     [%type: float];
     [%type: string];
   ]
-
 
 (** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
     for an algebraic data type at the location [loc] with 
@@ -109,12 +107,11 @@ let get_type_params (td : type_declaration) : core_type list =
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
 (** Takes a list of [constructor_declaration]'s and returns 
-    a list of the constructor names (annotated with their locations) *)      
-let get_constructor_names 
-(cstrs : constructor_declaration list) : (Longident.t Location.loc) list = 
-List.map cstrs 
-  ~f:(fun {pcd_name = {txt; loc}; _} -> 
-    with_loc (Longident.parse txt) ~loc)
+    a list of the constructor names (annotated with their locations) *)
+let get_constructor_names (cstrs : constructor_declaration list) :
+    Longident.t Location.loc list =
+  List.map cstrs ~f:(fun { pcd_name = { txt; loc }; _ } ->
+      with_loc (Longident.parse txt) ~loc)
 
 (** Converts a type expression [ty] to its camel-case string representation 
     (for use as a constructor in an algebraic data type) 
@@ -184,5 +181,3 @@ let attr ~(loc : location) ~(name : string) =
              pstr_loc = loc;
            };
          ])
-
-
