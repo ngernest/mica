@@ -1,0 +1,25 @@
+(* This line is necessary in order for one to use [ocamlfind] in [utop] *)
+#use "topfind";;
+
+(* Load Omod into Utop *)
+#use "omod.top";;
+
+(* Disable auto-complete suggestions by defaultr *)
+#utop_prompt_dummy;;
+UTop.set_show_box false
+
+(* Entering [ubox();;] toggles auto-complete suggestions on and off*)
+let ubox () =
+  if UTop.get_show_box()
+  then UTop.set_show_box false
+  else UTop.set_show_box true;;
+
+(* Project-specific dependencies *)
+#require "ppx_jane";;
+#require "ppxlib";;
+#require "ppxlib.metaquot";;
+
+(* Make files in the [lib] directory accessible to Utop *)
+#directory "./lib";;
+#mod_use "lib.ml";;
+open Lib
