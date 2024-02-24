@@ -1,8 +1,7 @@
 open Core
 
 (* Test harness adapted from Alistair O'Brien's PPX template:
-   https://github.com/johnyob/ppx-template/
-*)
+   https://github.com/johnyob/ppx-template/ *)
 
 let ppx_name = "ppx_mica"
 
@@ -60,7 +59,8 @@ module Test = struct
   let pp_run_alias_rule ppf ~kind module_name =
     match kind with
     | Passing ->
-        (* If we expect the PPX expansion to succeed, then we should be able to compile the output. *)
+        (* If we expect the PPX expansion to succeed, then we should be able to
+           compile the output. *)
         Format.fprintf ppf
           "@,\
            ; Ensure that the post-processed executable runs correctly@,\

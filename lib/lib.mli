@@ -12,8 +12,9 @@ open Ppxlib
     The [is_arrow] optional 
     named argument specifies whether [ty] is an arrow type: if yes, then 
     references to abstract types should be replaced with [expr], otherwise
-    an occurrence of an abstract type in an non-arrow type (e.g. [val empty : 'a t])
-    should be ignored (so [val empty : 'a t] corresponds to the 0-arity constructor [Empty]). *)
+    an occurrence of an abstract type in an non-arrow type 
+    (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
+    corresponds to the 0-arity constructor [Empty]). *)
 val get_constructor_arg_tys : ?is_arrow:bool -> core_type -> core_type list
 
 (** Extracts the (monomorphized) return type of a type expression 
@@ -55,13 +56,14 @@ val generate_types_from_sig :
   module_type_declaration ->
   structure_item list
 
-(** Instantiates the PPX deriver for [expr]s *)  
+(** Instantiates the PPX deriver for [expr]s *)
 val type_generator :
   (structure_item list, module_type_declaration) Deriving.Generator.t
 
 (** Helper function: given [mod_ty], a module signature,
-    [get_expr_constructors] produces the constructor names of the [expr] datatype
-    that matches the declarations in the module signature *)  
+    [get_expr_constructors] produces the constructor names of the 
+    [expr] datatype that matches the declarations in the 
+    module signature *)
 val get_expr_constructors : module_type -> Longident.t Location.loc list
 
 (** Creates the definition for the [interp] function 

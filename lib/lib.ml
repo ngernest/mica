@@ -67,8 +67,8 @@ let mk_expr_constructors (sig_items : signature) : constructor_declaration list
             []
         | Psig_value { pval_name; pval_type; pval_loc; _ } ->
             let name = String.capitalize_ascii pval_name.txt in
-            (* Exclude the return type of the function from the list
-               of argument types for the [expr] data constructor *)
+            (* Exclude the return type of the function from the list of argument
+               types for the [expr] data constructor *)
             let arg_tys = remove_last (get_constructor_arg_tys pval_type) in
             mk_constructor ~name ~loc:pval_loc ~arg_tys :: acc
         | Psig_attribute attr ->
@@ -269,9 +269,9 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
         begin
           match mod_type.pmty_desc with
           | Pmty_signature sig_items ->
-              (* Obtain the constructors for the [expr] datatype
-                 based on the module type signature, then pass them
-                 onto [mk_functor] when building the body of the functor *)
+              (* Obtain the constructors for the [expr] datatype based on the
+                 module type signature, then pass them onto [mk_functor] when
+                 building the body of the functor *)
               let expr_cstrs = get_expr_constructors mod_type in
               let functor_expr =
                 mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs
@@ -298,9 +298,8 @@ let () =
   let datatype_deriver =
     Deriving.add "mica_types" ~str_module_type_decl:type_generator
   in
-  (* Generate the body of the [ExprToImpl] functor
-     - Note that we must generate the declarations of auxiliary datatypes
-       before generating the functor *)
+  (* Generate the body of the [ExprToImpl] functor - Note that we must generate
+     the declarations of auxiliary datatypes before generating the functor *)
   let functor_generator =
     Deriving.Generator.V2.make_noarg ~deps:[ datatype_deriver ] generate_functor
   in

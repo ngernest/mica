@@ -5,8 +5,8 @@ open StdLabels
 open Alcotest
 
 (*******************************************************************************)
-(* Boilerplate for making [core_type] a [testable] type in
-   the Alcotest harness *)
+(* Boilerplate for making [core_type] a [testable] type in the Alcotest
+   harness *)
 
 let pp_core_type = Ppxlib.Pprintast.core_type
 
@@ -75,8 +75,8 @@ let constr_decl_list_testable : constructor_declaration list testable =
 (*******************************************************************************)
 (* Testing that monomorphization preserves core types *)
 
-(* Strip [core_types] of location info and expose the [loc] parameter
-   (needed for Ppxlib quotations) *)
+(* Strip [core_types] of location info and expose the [loc] parameter (needed
+   for Ppxlib quotations) *)
 let loc = Location.none
 
 let mono_int () =
@@ -272,9 +272,7 @@ let get_ret_ty_uncurried () =
     [%type: char]
 
 (*******************************************************************************)
-(* TODO:
-   - add tests for [mk_expr_constructors]
-*)
+(* TODO: - add tests for [mk_expr_constructors] *)
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)
