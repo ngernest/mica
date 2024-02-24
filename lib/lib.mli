@@ -61,17 +61,16 @@ val type_generator :
   (structure_item list, module_type_declaration) Deriving.Generator.t
 
 (** Helper function: given [mod_ty], a module signature,
-    [get_expr_constructors] produces the constructor names of the 
-    [expr] datatype that matches the declarations in the 
-    module signature *)
-val get_expr_constructors : module_type -> Longident.t Location.loc list
+    [get_expr_constructors] produces [expr] constructor names & arguments
+    that match the declarations in the module signature *)
+val get_expr_constructors : module_type -> (Longident.t Location.loc * pattern) list
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
-    - The argument [expr_cstrs] is a list of the 
-    names of the constructors for the [expr] algebraic data type *)
+    - The argument [expr_cstrs] is a list containing the 
+    names & arg types of the constructors for the [expr] algebraic data type *)
 val mk_interp :
-  loc:location -> module_type -> Longident.t Location.loc list -> structure_item
+  loc:location -> module_type -> (Longident.t Location.loc * pattern) list -> structure_item
 
 (** Creates the body of the [ExprToImpl] functor *)
 val mk_functor :
@@ -79,7 +78,7 @@ val mk_functor :
   string option Location.loc ->
   module_type ->
   signature ->
-  Longident.t Location.loc list ->
+  (Longident.t Location.loc * pattern) list ->
   module_expr
 
 (** Generates the scaffolding for the [ExprToImpl] functor 

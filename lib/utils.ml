@@ -36,11 +36,11 @@ let rec get_last (lst : 'a list) : 'a =
 (******************************************************************************)
 (** {1 Pretty-printers } *)
 
-(** Alias for [Format.err_formatter] *)      
+(** Alias for [Format.err_formatter] *)
 let err_fmt : Format.formatter = Format.err_formatter
 
 (** Pretty-printer for [pattern]'s *)
-let pp_pattern : pattern -> unit = Astlib.Pprintast.pattern err_fmt 
+let pp_pattern : pattern -> unit = Astlib.Pprintast.pattern err_fmt
 
 (** Pretty-printer for [core_type]'s *)
 let pp_core_type : core_type -> unit = Astlib.Pprintast.core_type err_fmt
@@ -49,7 +49,8 @@ let pp_core_type : core_type -> unit = Astlib.Pprintast.core_type err_fmt
 let pp_expression : expression -> unit = Astlib.Pprintast.expression err_fmt
 
 (** Pretty-printer for [structure_item]'s *)
-let pp_structure_item : structure_item -> unit = Astlib.Pprintast.structure_item err_fmt
+let pp_structure_item : structure_item -> unit =
+  Astlib.Pprintast.structure_item err_fmt
 
 (******************************************************************************)
 (** {1 Utility functions for working with Ppxlib} *)
@@ -129,35 +130,66 @@ let get_type_params (td : type_declaration) : core_type list =
 
 (** [mk_fresh ~loc i ty] generates a fresh variable at location [loc] 
     that corresponds to the type [ty], with the (integer) index [i] 
-    as a varname suffix *)  
-let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern = 
-  let varname = 
-    begin match ty with 
-    | [%type: int] -> "n"
-    | [%type: bool] -> "b"
-    | [%type: char] -> "c"
-    | [%type: string] -> "s"
-    | [%type: unit] -> "u"
-    | [%type: 'a] -> "x"
-    | [%type: t] | [%type: 'a t] -> "e"
-    | _ -> failwith "TODO: handle lists + tuples etc"
-    end in 
+    as a varname suffix *)
+let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
+  let varname =
+    begin
+      match ty with
+      | [%type: int] ->
+          "n"
+      | [%type: bool] ->
+          "b"
+      | [%type: char] ->
+          "c"
+      | [%type: string] ->
+          "s"
+      | [%type: unit] ->
+          "u"
+      | [%type: 'a] ->
+          "x"
+      | [%type: t] | [%type: 'a t] ->
+          "e"
+      | _ ->
+          failwith "TODO: handle lists + tuples etc"
+    end
+  in
   ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string i))
+
+(** Helper function: [get_constructor_args loc get_ty args] takes [args], a list containing
+    the {i representation} of constructor arguments, applies the function 
+    [get_ty] to each element of [args] and produces a formatted tuple of 
+    constructor arguments (using the [ppat_tuple] smart constructor for the 
+    [pattern] type).  
+    - Note that [args] has type ['a list], i.e. the representation of 
+    constructor arguments is polymorphic -- this function is instantiated 
+    with different types when called in [get_constructor_names] *)
+let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
+    (args : 'a list) : pattern =
+  let arg_tys = List.map ~f:get_ty args in
+  let arg_names = List.mapi ~f:(mk_fresh ~loc) arg_tys in
+  ppat_tuple ~loc arg_names
 
 (** Takes a list of [constructor_declaration]'s and returns 
     a list of the constructor names (annotated with their locations) *)
 let get_constructor_names (cstrs : constructor_declaration list) :
     (Longident.t Location.loc * pattern) list =
-  List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->  
-    let cstr_name = with_loc (Longident.parse txt) ~loc in 
-    begin match pcd_args with 
-    | Pcstr_tuple arg_tys -> 
-      let arg_names = List.mapi ~f:(mk_fresh ~loc) arg_tys in 
-      failwith "TODO"
-    | Pcstr_record arg_lbls -> failwith "TODO"
-    end)
+  List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
+      let cstr_name = with_loc (Longident.parse txt) ~loc in
+      begin
+        match pcd_args with
+        | Pcstr_tuple arg_tys ->
+            let cstr_args = get_constructor_args ~loc Fun.id arg_tys in
+            (cstr_name, cstr_args)
+        | Pcstr_record arg_lbls ->
+            let cstr_args =
+              get_constructor_args ~loc
+                (fun lbl_decl -> lbl_decl.pld_type)
+                arg_lbls
+            in
+            (cstr_name, cstr_args)
+      end)
 
-(** TODO: DEPRECATED, remove *)    
+(** TODO: DEPRECATED, remove *)
 let get_constructor_names_old (cstrs : constructor_declaration list) :
     Longident.t Location.loc list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; _ } ->
