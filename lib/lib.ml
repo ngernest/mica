@@ -205,7 +205,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
         ppat_construct ~loc cstr (Some [%pat? cstr]))
   in
   let wildcard : pattern = ppat_any ~loc in
-  (* TODO: figure out how to generate fresh arguments for the [expr] 
+  (* TODO: figure out how to generate fresh arguments for the [expr]
      constructors that match their arity *)
   let func_body : expression =
     [%expr
