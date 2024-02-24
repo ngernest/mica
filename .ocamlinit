@@ -1,9 +1,6 @@
 (* This line is necessary in order for one to use [ocamlfind] in [utop] *)
 #use "topfind";;
 
-(* Load Omod into Utop *)
-#use "omod.top";;
-
 (* Disable auto-complete suggestions by defaultr *)
 #utop_prompt_dummy;;
 UTop.set_show_box false
@@ -21,5 +18,10 @@ let ubox () =
 
 (* Make files in the [lib] directory accessible to Utop *)
 #directory "./lib";;
+#mod_use "utils.ml";;
 #mod_use "lib.ml";;
+
+open Astlib.Pprintast
+
+open Utils
 open Lib
