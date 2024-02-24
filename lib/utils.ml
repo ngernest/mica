@@ -26,12 +26,9 @@ let rec remove_last (lst : 'a list) : 'a list =
     - Raises an exception if the list is empty *)
 let rec get_last (lst : 'a list) : 'a =
   match lst with
-  | [] ->
-      failwith "List is empty"
-  | [ x ] ->
-      x
-  | x :: xs ->
-      get_last xs
+  | [] -> failwith "List is empty"
+  | [ x ] -> x
+  | x :: xs -> get_last xs
 
 (******************************************************************************)
 (** {1 Pretty-printers } *)
@@ -76,7 +73,7 @@ let base_types ~(loc : location) : core_type list =
     for an algebraic data type at the location [loc] with 
     argument types [arg_tys] *)
 let mk_constructor ~(name : string) ~(loc : location)
-    ~(arg_tys : core_type list) : constructor_declaration =
+  ~(arg_tys : core_type list) : constructor_declaration =
   {
     (* Constructor name *)
     pcd_name = { txt = name; loc };
@@ -103,24 +100,21 @@ let mk_constructor ~(name : string) ~(loc : location)
 let rec monomorphize (ty : core_type) : core_type =
   let loc = ty.ptyp_loc in
   match ty.ptyp_desc with
-  | ty_desc when List.mem ty ~set:(base_types ~loc) ->
-      ty
-  | Ptyp_var _ ->
-      [%type: int]
+  | ty_desc when List.mem ty ~set:(base_types ~loc) -> ty
+  | Ptyp_var _ -> [%type: int]
   | Ptyp_arrow (arg_lbl, t1, t2) ->
-      {
-        ty with
-        ptyp_desc = Ptyp_arrow (arg_lbl, monomorphize t1, monomorphize t2);
-      }
+    {
+      ty with
+      ptyp_desc = Ptyp_arrow (arg_lbl, monomorphize t1, monomorphize t2);
+    }
   | Ptyp_tuple tys ->
-      { ty with ptyp_desc = Ptyp_tuple (List.map ~f:monomorphize tys) }
+    { ty with ptyp_desc = Ptyp_tuple (List.map ~f:monomorphize tys) }
   | Ptyp_constr (ident, ty_params) ->
-      {
-        ty with
-        ptyp_desc = Ptyp_constr (ident, List.map ~f:monomorphize ty_params);
-      }
-  | _ ->
-      ty
+    {
+      ty with
+      ptyp_desc = Ptyp_constr (ident, List.map ~f:monomorphize ty_params);
+    }
+  | _ -> ty
 
 (** [get_type_varams td] extracts the type parameters 
     from the type declaration [td]
@@ -133,25 +127,21 @@ let get_type_params (td : type_declaration) : core_type list =
     as a varname suffix *)
 let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
   let varname =
-    begin
-      match ty with
-      | [%type: int] ->
-          "n"
-      | [%type: bool] ->
-          "b"
-      | [%type: char] ->
-          "c"
-      | [%type: string] ->
-          "s"
-      | [%type: unit] ->
-          "u"
-      | [%type: 'a] ->
-          "x"
-      | [%type: t] | [%type: 'a t] ->
-          "e"
+    match ty with
+    | [%type: int] -> "n"
+    | [%type: bool] -> "b"
+    | [%type: char] -> "c"
+    | [%type: string] -> "s"
+    | [%type: unit] -> "u"
+    | [%type: 'a] -> "x"
+    | [%type: expr] | [%type: t] | [%type: 'a t] -> "e"
+    | { ptyp_desc; _ } -> (
+      match ptyp_desc with
+      | Ptyp_tuple _ -> "p"
+      | Ptyp_arrow _ -> "f"
       | _ ->
-          failwith "TODO: handle lists + tuples etc"
-    end
+        pp_core_type ty;
+        failwith "TODO: [mk_fresh] not supported for types of this shape")
   in
   ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string i))
 
@@ -164,7 +154,7 @@ let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
     constructor arguments is polymorphic -- this function is instantiated 
     with different types when called in [get_constructor_names] *)
 let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
-    (args : 'a list) : pattern =
+  (args : 'a list) : pattern =
   let arg_tys = List.map ~f:get_ty args in
   let arg_names = List.mapi ~f:(mk_fresh ~loc) arg_tys in
   ppat_tuple ~loc arg_names
@@ -172,28 +162,24 @@ let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
 (** Takes a list of [constructor_declaration]'s and returns 
     a list of the constructor names (annotated with their locations) *)
 let get_constructor_names (cstrs : constructor_declaration list) :
-    (Longident.t Location.loc * pattern) list =
+  (Longident.t Location.loc * pattern) list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
-      let cstr_name = with_loc (Longident.parse txt) ~loc in
-      begin
-        match pcd_args with
-        | Pcstr_tuple arg_tys ->
-            let cstr_args = get_constructor_args ~loc Fun.id arg_tys in
-            (cstr_name, cstr_args)
-        | Pcstr_record arg_lbls ->
-            let cstr_args =
-              get_constructor_args ~loc
-                (fun lbl_decl -> lbl_decl.pld_type)
-                arg_lbls
-            in
-            (cstr_name, cstr_args)
-      end)
+    let cstr_name = with_loc (Longident.parse txt) ~loc in
+    match pcd_args with
+    | Pcstr_tuple arg_tys ->
+      let cstr_args = get_constructor_args ~loc Fun.id arg_tys in
+      (cstr_name, cstr_args)
+    | Pcstr_record arg_lbls ->
+      let cstr_args =
+        get_constructor_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
+      in
+      (cstr_name, cstr_args))
 
 (** TODO: DEPRECATED, remove *)
 let get_constructor_names_old (cstrs : constructor_declaration list) :
-    Longident.t Location.loc list =
+  Longident.t Location.loc list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; _ } ->
-      with_loc (Longident.parse txt) ~loc)
+    with_loc (Longident.parse txt) ~loc)
 
 (** Converts a type expression [ty] to its camel-case string representation 
     (for use as a constructor in an algebraic data type) 
@@ -203,36 +189,31 @@ let get_constructor_names_old (cstrs : constructor_declaration list) :
     not supported by this function.  *)
 let rec string_of_core_ty (ty : core_type) : string =
   let loc = ty.ptyp_loc in
-  begin
-    match ty.ptyp_desc with
-    | Ptyp_var _ | Ptyp_any ->
-        string_of_core_ty (monomorphize ty)
-    | Ptyp_constr ({ txt = ident; _ }, ty_params) ->
-        let ty_constr_str =
-          Astlib.Longident.flatten ident
-          |> String.concat ~sep:"" |> String.capitalize_ascii
-        in
-        let params_str =
-          String.concat ~sep:"" (List.map ~f:string_of_core_ty ty_params)
-        in
-        params_str ^ ty_constr_str
-    | Ptyp_tuple tys ->
-        let ty_strs =
-          List.map tys ~f:(fun ty ->
-              string_of_core_ty ty |> String.capitalize_ascii)
-        in
-        String.concat ~sep:"" ty_strs ^ "Product"
-    | Ptyp_arrow (_, t1, t2) ->
-        string_of_core_ty t1 ^ string_of_core_ty t2
-    | _ ->
-        failwith "type expression not supported by string_of_core_type"
-  end
+  match ty.ptyp_desc with
+  | Ptyp_var _ | Ptyp_any -> string_of_core_ty (monomorphize ty)
+  | Ptyp_constr ({ txt = ident; _ }, ty_params) ->
+    let ty_constr_str =
+      Astlib.Longident.flatten ident
+      |> String.concat ~sep:"" |> String.capitalize_ascii
+    in
+    let params_str =
+      String.concat ~sep:"" (List.map ~f:string_of_core_ty ty_params)
+    in
+    params_str ^ ty_constr_str
+  | Ptyp_tuple tys ->
+    let ty_strs =
+      List.map tys ~f:(fun ty ->
+        string_of_core_ty ty |> String.capitalize_ascii)
+    in
+    String.concat ~sep:"" ty_strs ^ "Product"
+  | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
+  | _ -> failwith "type expression not supported by string_of_core_type"
 
 (** [mk_adt ~loc ~name constructors] creates the definition of 
     an algebraic data type called [name] at location [loc] 
     with the specified [constructors] *)
 let mk_adt ~(loc : location) ~(name : string)
-    ~(constructors : constructor_declaration list) : type_declaration =
+  ~(constructors : constructor_declaration list) : type_declaration =
   type_declaration ~loc
     ~name:{ txt = name; loc } (* Name of type *)
     ~cstrs:[] (* Type constraints, not needed here *)

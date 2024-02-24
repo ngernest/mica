@@ -23,23 +23,21 @@ open Utils
     should be ignored (so [val empty : 'a t] corresponds to the 0-arity constructor [Empty]).
 *)
 let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
-    core_type list =
+  core_type list =
   let loc = ty.ptyp_loc in
   match monomorphize ty with
-  | ty' when List.mem ty' ~set:(base_types ~loc) ->
-      [ ty' ]
+  | ty' when List.mem ty' ~set:(base_types ~loc) -> [ ty' ]
   | { ptyp_desc = Ptyp_constr ({ txt = lident; _ }, _); _ } as ty' ->
-      let tyconstr = String.concat ~sep:"" (Astlib.Longident.flatten lident) in
-      if String.equal tyconstr !abstract_ty_name then
-        if is_arrow then [ [%type: expr] ] else []
-      else [ ty' ]
+    let tyconstr = String.concat ~sep:"" (Astlib.Longident.flatten lident) in
+    if String.equal tyconstr !abstract_ty_name then
+      if is_arrow then [ [%type: expr] ] else []
+    else [ ty' ]
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _ } ->
-      get_constructor_arg_tys ~is_arrow:true t1
-      @ get_constructor_arg_tys ~is_arrow:true t2
+    get_constructor_arg_tys ~is_arrow:true t1
+    @ get_constructor_arg_tys ~is_arrow:true t2
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
-      List.concat_map ~f:(get_constructor_arg_tys ~is_arrow) tys
-  | _ ->
-      failwith "TODO: get_constructor_arg_tys"
+    List.concat_map ~f:(get_constructor_arg_tys ~is_arrow) tys
+  | _ -> failwith "TODO: get_constructor_arg_tys"
 
 (** Extracts the (monomorphized) return type of a type expression 
     (i.e. the rightmost type in an arrow type) *)
@@ -49,50 +47,38 @@ let rec get_ret_ty (ty : core_type) : core_type =
   if List.mem ty_mono ~set:(base_types ~loc) then ty_mono
   else
     match ty_mono.ptyp_desc with
-    | Ptyp_constr _ | Ptyp_tuple _ | Ptyp_any | Ptyp_var _ ->
-        ty_mono
-    | Ptyp_arrow (_, _, t2) ->
-        get_ret_ty t2
-    | _ ->
-        failwith "Type expression not supported by get_ret_ty"
+    | Ptyp_constr _ | Ptyp_tuple _ | Ptyp_any | Ptyp_var _ -> ty_mono
+    | Ptyp_arrow (_, _, t2) -> get_ret_ty t2
+    | _ -> failwith "Type expression not supported by get_ret_ty"
 
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)
 let mk_expr_constructors (sig_items : signature) : constructor_declaration list
     =
   List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
-      begin
-        match psig_desc with
-        | Psig_type (rec_flag, type_decls) ->
-            []
-        | Psig_value { pval_name; pval_type; pval_loc; _ } ->
-            let name = String.capitalize_ascii pval_name.txt in
-            (* Exclude the return type of the function from the list of argument
-               types for the [expr] data constructor *)
-            let arg_tys = remove_last (get_constructor_arg_tys pval_type) in
-            mk_constructor ~name ~loc:pval_loc ~arg_tys :: acc
-        | Psig_attribute attr ->
-            failwith "TODO: handle attribute [@@@id]"
-        | Psig_extension (ext, attrs) ->
-            failwith "TODO: handle extensions"
-        | _ ->
-            failwith
-              "TODO: not sure how to handle other kinds of \
-               [signature_item_desc]"
-      end)
+    match psig_desc with
+    | Psig_type (rec_flag, type_decls) -> []
+    | Psig_value { pval_name; pval_type; pval_loc; _ } ->
+      let name = String.capitalize_ascii pval_name.txt in
+      (* Exclude the return type of the function from the list of argument types
+         for the [expr] data constructor *)
+      let arg_tys = remove_last (get_constructor_arg_tys pval_type) in
+      mk_constructor ~name ~loc:pval_loc ~arg_tys :: acc
+    | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
+    | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
+    | _ ->
+      failwith
+        "TODO: not sure how to handle other kinds of [signature_item_desc]")
 
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)
 let uniq_ret_tys (sig_items : signature) : core_type list =
   List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
-      begin
-        match psig_desc with
-        | Psig_value { pval_type; _ } ->
-            let ty = get_ret_ty pval_type in
-            if List.mem ty ~set:acc then acc else ty :: acc
-        | _ ->
-            acc
-      end)
+    match psig_desc with
+    | Psig_value { pval_type; _ } ->
+      let ty = get_ret_ty pval_type in
+      if List.mem ty ~set:acc then acc else ty :: acc
+    | _ -> acc)
 
 (** Helper function for creating the constructors of the [ty] and [value] 
     algebraic data types 
@@ -100,11 +86,11 @@ let uniq_ret_tys (sig_items : signature) : core_type list =
     - [~f] is a function that specifies how to turn a [core_type] into a 
     [constructor_declaration] *)
 let mk_constructor_aux (sig_items : signature)
-    ~(f : core_type -> constructor_declaration) : constructor_declaration list =
+  ~(f : core_type -> constructor_declaration) : constructor_declaration list =
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
     List.sort_uniq ret_tys ~cmp:(fun t1 t2 ->
-        String.compare (string_of_core_ty t1) (string_of_core_ty t2))
+      String.compare (string_of_core_ty t1) (string_of_core_ty t2))
   in
   List.map uniq_ret_tys ~f
 
@@ -113,60 +99,53 @@ let mk_constructor_aux (sig_items : signature)
     the module signature *)
 let mk_ty_constructors (sig_items : signature) : constructor_declaration list =
   mk_constructor_aux sig_items ~f:(fun ty ->
-      mk_constructor ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+    mk_constructor ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
 (** Constructs the definition of the [value] algebraic data type
     based on the inhabitants of the [ty] ADT *)
 let mk_val_constructors (sig_items : signature) =
   mk_constructor_aux sig_items ~f:(fun ty ->
-      mk_constructor
-        ~name:("Val" ^ string_of_core_ty ty)
-        ~loc:ty.ptyp_loc ~arg_tys:[ ty ])
+    mk_constructor
+      ~name:("Val" ^ string_of_core_ty ty)
+      ~loc:ty.ptyp_loc ~arg_tys:[ ty ])
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
     the [expr] and [ty] algebraic data types *)
 let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
-    (mt : module_type_declaration) : structure_item list =
+  (mt : module_type_declaration) : structure_item list =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
-  begin
-    match mt with
-    | { pmtd_type = Some mod_type; pmtd_name; pmtd_loc; _ } -> begin
-        match mod_type with
-        | { pmty_desc = Pmty_signature sig_items; pmty_loc; _ } -> begin
-            match sig_items with
-            | [] ->
-                [
-                  mk_error ~local:pmtd_loc ~global:loc
-                    "Module signature can't be empty";
-                ]
-            | _ ->
-                let expr_td =
-                  mk_adt ~loc ~name:"expr"
-                    ~constructors:(List.rev (mk_expr_constructors sig_items))
-                in
-                let ty_td =
-                  mk_adt ~loc ~name:"ty"
-                    ~constructors:(mk_ty_constructors sig_items)
-                in
-                [
-                  pstr_type ~loc Recursive [ expr_td ];
-                  pstr_type ~loc Recursive [ ty_td ];
-                ]
-            end
-        | _ ->
-            failwith "TODO: other case for mod_type"
-        end
-    | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
+  match mt with
+  | { pmtd_type = Some mod_type; pmtd_name; pmtd_loc; _ } -> (
+    match mod_type with
+    | { pmty_desc = Pmty_signature sig_items; pmty_loc; _ } -> (
+      match sig_items with
+      | [] ->
         [
-          mk_error ~local:pmtd_loc ~global:loc
-            "Can't derive for expressions that aren't module type declarations";
+          mk_error ~local:pmtd_loc ~global:loc "Module signature can't be empty";
         ]
-  end
+      | _ ->
+        let expr_td =
+          mk_adt ~loc ~name:"expr"
+            ~constructors:(List.rev (mk_expr_constructors sig_items))
+        in
+        let ty_td =
+          mk_adt ~loc ~name:"ty" ~constructors:(mk_ty_constructors sig_items)
+        in
+        [
+          pstr_type ~loc Recursive [ expr_td ];
+          pstr_type ~loc Recursive [ ty_td ];
+        ])
+    | _ -> failwith "TODO: other case for mod_type")
+  | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
+    [
+      mk_error ~local:pmtd_loc ~global:loc
+        "Can't derive for expressions that aren't module type declarations";
+    ]
 
 (** Instantiates the PPX deriver for [expr]s *)
 let type_generator :
-    (structure_item list, module_type_declaration) Deriving.Generator.t =
+  (structure_item list, module_type_declaration) Deriving.Generator.t =
   Deriving.Generator.V2.make_noarg generate_types_from_sig
 
 (******************************************************************************)
@@ -177,19 +156,18 @@ let type_generator :
     [get_expr_constructors] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
 let get_expr_constructors (mod_ty : module_type) :
-    (Longident.t Location.loc * pattern) list =
+  (Longident.t Location.loc * pattern) list =
   match mod_ty.pmty_desc with
   | Pmty_signature sig_items ->
-      get_constructor_names @@ mk_expr_constructors sig_items
-  | _ ->
-      failwith "TODO: get_expr_constructors"
+    get_constructor_names @@ mk_expr_constructors sig_items
+  | _ -> failwith "TODO: get_expr_constructors"
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
     - The argument [expr_cstrs] is a list containing the 
     names & arg types of the constructors for the [expr] algebraic data type *)
 let mk_interp ~(loc : location) (mod_ty : module_type)
-    (expr_cstrs : (Longident.t Location.loc * pattern) list) : structure_item =
+  (expr_cstrs : (Longident.t Location.loc * pattern) list) : structure_item =
   (* String literal denoting the argument name *)
   let arg_str = "e" in
   let arg_ident : expression =
@@ -202,8 +180,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let patterns : pattern list =
     List.map expr_cstrs ~f:(fun (cstr, args) ->
-        [%pat? cstr, [%p args]])
-        (* ppat_construct ~loc cstr (Some [%p args])) *)
+      ppat_construct ~loc cstr (Some args))
   in
   let wildcard : pattern = ppat_any ~loc in
   (* TODO: figure out how to generate fresh arguments for the [expr]
@@ -211,12 +188,9 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   let func_body : expression =
     [%expr
       match [%e arg_ident] with
-      | [%p List.hd patterns] ->
-          [%e placeholder_rhs]
-      | [%p List.hd (List.tl patterns)] ->
-          [%e placeholder_rhs]
-      | [%p wildcard] ->
-          [%e placeholder_rhs]]
+      | [%p List.hd patterns] -> [%e placeholder_rhs]
+      | [%p List.hd (List.tl patterns)] -> [%e placeholder_rhs]
+      | [%p wildcard] -> [%e placeholder_rhs]]
   in
   let func_binding : expression =
     pexp_fun ~loc Nolabel None func_arg func_body
@@ -228,8 +202,8 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
 
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
-    (mod_ty : module_type) (sig_items : signature)
-    (expr_cstrs : (Longident.t Location.loc * pattern) list) : module_expr =
+  (mod_ty : module_type) (sig_items : signature)
+  (expr_cstrs : (Longident.t Location.loc * pattern) list) : module_expr =
   (* [include M] declaration *)
   let m_ident =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
@@ -260,39 +234,33 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
     (e.g. module type declarations) *)
 let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
-  begin
-    match mt with
-    | { pmtd_type = Some mod_type; pmtd_name; pmtd_loc; _ } ->
-        let new_name = { txt = Some "M"; loc } in
-        let mod_type_alias =
-          pmty_ident ~loc { txt = Lident pmtd_name.txt; loc }
-        in
-        begin
-          match mod_type.pmty_desc with
-          | Pmty_signature sig_items ->
-              (* Obtain the constructors for the [expr] datatype based on the
-                 module type signature, then pass them onto [mk_functor] when
-                 building the body of the functor *)
-              let expr_cstrs = get_expr_constructors mod_type in
-              let functor_expr =
-                mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs
-              in
-              let mod_binding =
-                module_binding ~loc
-                  ~name:{ txt = Some "ExprToImpl"; loc }
-                  ~expr:functor_expr
-              in
-              [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
-          | _ ->
-              [
-                mk_error ~local:mod_type.pmty_loc ~global:loc
-                  "Expected a module type expression that was a signature";
-              ]
-        end
-    | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
-        Location.raise_errorf ~loc
-          "Can't derive for expressions that aren't module type declarations"
-  end
+  match mt with
+  | { pmtd_type = Some mod_type; pmtd_name; pmtd_loc; _ } -> (
+    let new_name = { txt = Some "M"; loc } in
+    let mod_type_alias = pmty_ident ~loc { txt = Lident pmtd_name.txt; loc } in
+    match mod_type.pmty_desc with
+    | Pmty_signature sig_items ->
+      (* Obtain the constructors for the [expr] datatype based on the module
+         type signature, then pass them onto [mk_functor] when building the body
+         of the functor *)
+      let expr_cstrs = get_expr_constructors mod_type in
+      let functor_expr =
+        mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs
+      in
+      let mod_binding =
+        module_binding ~loc
+          ~name:{ txt = Some "ExprToImpl"; loc }
+          ~expr:functor_expr
+      in
+      [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
+    | _ ->
+      [
+        mk_error ~local:mod_type.pmty_loc ~global:loc
+          "Expected a module type expression that was a signature";
+      ])
+  | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
+    Location.raise_errorf ~loc
+      "Can't derive for expressions that aren't module type declarations"
 
 let () =
   (* Generate auxiliary type declarations *)
