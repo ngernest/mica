@@ -26,9 +26,9 @@ let pp_ty_decl = Ppxlib.Pprintast.type_declaration
 
 (** Equality of [type_declaration]'s is based on their string representations *)
 let ty_decl_eq
-    ({ ptype_name = ty1; ptype_params = ty_params1; _ } : type_declaration)
-    ({ ptype_name = ty2; ptype_params = ty_params2; _ } : type_declaration) :
-    bool =
+  ({ ptype_name = ty1; ptype_params = ty_params1; _ } : type_declaration)
+  ({ ptype_name = ty2; ptype_params = ty_params2; _ } : type_declaration) : bool
+    =
   let ty_args1, ty_args2 = map2 ~f:(List.map ~f:fst) (ty_params1, ty_params2) in
   String.equal (no_loc ty1) (no_loc ty2)
   && List.equal ~eq:core_type_eq ty_args1 ty_args2
@@ -41,30 +41,21 @@ let ty_decl_testable : type_declaration testable =
 
 (** Pretty printer for the [constructor_declaration] type *)
 let pp_constr_decl (ppf : Stdlib.Format.formatter)
-    (cd : constructor_declaration) : unit =
-  begin
-    match cd.pcd_args with
-    | Pcstr_tuple tys ->
-        let args =
-          String.concat ~sep:" * " (List.map ~f:string_of_core_type tys)
-        in
-        Fmt.pf ppf "%s of %s\n" (no_loc cd.pcd_name) args
-    | Pcstr_record _ ->
-        failwith "Pcstr_record not supported"
-  end
+  (cd : constructor_declaration) : unit =
+  match cd.pcd_args with
+  | Pcstr_tuple tys ->
+    let args = String.concat ~sep:" * " (List.map ~f:string_of_core_type tys) in
+    Fmt.pf ppf "%s of %s\n" (no_loc cd.pcd_name) args
+  | Pcstr_record _ -> failwith "Pcstr_record not supported"
 
 let constr_decl_eq cd1 cd2 =
   let name1, name2 = map2 ~f:no_loc (cd1.pcd_name, cd2.pcd_name) in
   String.equal name1 name2
-  && begin
-       match (cd1.pcd_args, cd2.pcd_args) with
-       | Pcstr_tuple args1, Pcstr_tuple args2 ->
-           core_ty_list_eq args1 args2
-       | Pcstr_tuple _, Pcstr_record _ | Pcstr_record _, Pcstr_tuple _ ->
-           false
-       | _, _ ->
-           failwith "Not equal, Pcstr_record not supported"
-     end
+  &&
+  match (cd1.pcd_args, cd2.pcd_args) with
+  | Pcstr_tuple args1, Pcstr_tuple args2 -> core_ty_list_eq args1 args2
+  | Pcstr_tuple _, Pcstr_record _ | Pcstr_record _, Pcstr_tuple _ -> false
+  | _, _ -> failwith "Not equal, Pcstr_record not supported"
 
 let constr_decl_testable : constructor_declaration testable =
   testable pp_constr_decl constr_decl_eq

@@ -1,7 +1,9 @@
 profile = default
 version = 0.26.0
 margin = 80
-break-cases = nested
-exp-grouping = preserve
+break-cases = fit
+cases-exp-indent = 2
+max-indent = 2
+exp-grouping = parens
 doc-comments = before
 wrap-comments = true

@@ -63,14 +63,18 @@ val type_generator :
 (** Helper function: given [mod_ty], a module signature,
     [get_expr_constructors] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
-val get_expr_constructors : module_type -> (Longident.t Location.loc * pattern) list
+val get_expr_constructors :
+  module_type -> (Longident.t Location.loc * pattern) list
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
     - The argument [expr_cstrs] is a list containing the 
     names & arg types of the constructors for the [expr] algebraic data type *)
 val mk_interp :
-  loc:location -> module_type -> (Longident.t Location.loc * pattern) list -> structure_item
+  loc:location ->
+  module_type ->
+  (Longident.t Location.loc * pattern) list ->
+  structure_item
 
 (** Creates the body of the [ExprToImpl] functor *)
 val mk_functor :

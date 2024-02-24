@@ -11,30 +11,29 @@ module Test = struct
   let pp_executable ppf ~kind (name, modules) =
     match kind with
     | Passing ->
-        Format.fprintf ppf
-          "; The executable under test@,\
-           @[<v 1>(executable@ (name %s)@ (modules %s)@ (preprocess (pps \
-           %s)))@]"
-          name modules ppx_name
+      Format.fprintf ppf
+        "; The executable under test@,\
+         @[<v 1>(executable@ (name %s)@ (modules %s)@ (preprocess (pps %s)))@]"
+        name modules ppx_name
     | Errors ->
-        (* If the PPX errors, then we don't declare the file as an executable
-           (since we don't want to compile it) *)
-        ()
+      (* If the PPX errors, then we don't declare the file as an executable
+         (since we don't want to compile it) *)
+      ()
 
   let pp_rule ppf ~kind (name, module_name) =
     let pp_action ppf () =
       match kind with
       | Errors ->
-          Format.fprintf ppf
-            "; expect the process to fail, capturing stderr@,\
-             @[<v 1>(with-stderr-to@,\
-             %%{targets}@,\
-             (bash \"! ./%%{pp} -no-color --impl %%{input}\"))@]"
+        Format.fprintf ppf
+          "; expect the process to fail, capturing stderr@,\
+           @[<v 1>(with-stderr-to@,\
+           %%{targets}@,\
+           (bash \"! ./%%{pp} -no-color --impl %%{input}\"))@]"
       | Passing ->
-          Format.fprintf ppf
-            "; expect the process to succeed, captured in target@,\
-             (run ./%%{pp} -deriving-keep-w32 both --impl %%{input} -o \
-             %%{targets})"
+        Format.fprintf ppf
+          "; expect the process to succeed, captured in target@,\
+           (run ./%%{pp} -deriving-keep-w32 both --impl %%{input} -o \
+           %%{targets})"
     in
     Format.fprintf ppf
       "; Run the PPX on the `.ml` file@,\
@@ -59,18 +58,17 @@ module Test = struct
   let pp_run_alias_rule ppf ~kind module_name =
     match kind with
     | Passing ->
-        (* If we expect the PPX expansion to succeed, then we should be able to
-           compile the output. *)
-        Format.fprintf ppf
-          "@,\
-           ; Ensure that the post-processed executable runs correctly@,\
-           @[<v 1>(rule@,\
-           (alias runtest)@,\
-           (package %s)@,\
-           @[<v 1>(action@,\
-           @[<hov 2>(run@ ./%s.exe)@])@])@]" ppx_name module_name
-    | Errors ->
-        ()
+      (* If we expect the PPX expansion to succeed, then we should be able to
+         compile the output. *)
+      Format.fprintf ppf
+        "@,\
+         ; Ensure that the post-processed executable runs correctly@,\
+         @[<v 1>(rule@,\
+         (alias runtest)@,\
+         (package %s)@,\
+         @[<v 1>(action@,\
+         @[<hov 2>(run@ ./%s.exe)@])@])@]" ppx_name module_name
+    | Errors -> ()
 
   let pp ppf ~kind filename =
     let name = Filename.chop_extension filename in
@@ -90,14 +88,12 @@ module Test = struct
     type t = { kind : kind; files : string list }
 
     let is_test = function
-      | "pp.ml" ->
-          false
-      | "gen_dune_rules.ml" ->
-          false
+      | "pp.ml" -> false
+      | "gen_dune_rules.ml" -> false
       | filename ->
-          Filename.check_suffix filename ".ml"
-          (* Avoid capturing preprocessed files *)
-          && not (Filename.check_suffix filename ".pp.ml")
+        Filename.check_suffix filename ".ml"
+        (* Avoid capturing preprocessed files *)
+        && not (Filename.check_suffix filename ".pp.ml")
 
     let create ~kind files =
       let files =
@@ -112,12 +108,9 @@ end
 let command =
   let kind =
     Command.Arg_type.create (function
-      | "passing" ->
-          Test.Passing
-      | "errors" ->
-          Errors
-      | kind ->
-          Format.ksprintf failwith "Invalid kind: %s" kind)
+      | "passing" -> Test.Passing
+      | "errors" -> Errors
+      | kind -> Format.ksprintf failwith "Invalid kind: %s" kind)
   in
   Command.basic
     ~summary:(Format.sprintf "Generate dune rules for testing %s" ppx_name)
