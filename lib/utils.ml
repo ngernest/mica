@@ -31,7 +31,7 @@ let rec get_last (lst : 'a list) : 'a =
   | x :: xs -> get_last xs
 
 (******************************************************************************)
-(** {1 Pretty-printers } *)
+(** {1 Pretty-printers} *)
 
 (** Alias for [Format.err_formatter] *)
 let err_fmt : Format.formatter = Format.err_formatter
@@ -174,12 +174,6 @@ let get_constructor_names (cstrs : constructor_declaration list) :
         get_constructor_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
       in
       (cstr_name, cstr_args))
-
-(** TODO: DEPRECATED, remove *)
-let get_constructor_names_old (cstrs : constructor_declaration list) :
-  Longident.t Location.loc list =
-  List.map cstrs ~f:(fun { pcd_name = { txt; loc }; _ } ->
-    with_loc (Longident.parse txt) ~loc)
 
 (** Converts a type expression [ty] to its camel-case string representation 
     (for use as a constructor in an algebraic data type) 
