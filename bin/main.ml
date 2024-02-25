@@ -48,7 +48,7 @@ include
           | Add (n1, e2) -> 1
           | Mem (n1, e2) -> 1
           | Is_empty e1 -> 1
-          | Empty () -> 1
+          | Empty -> 1
         let _ = interp
       end
   end[@@ocaml.doc "@inline"]

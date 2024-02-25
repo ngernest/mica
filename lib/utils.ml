@@ -163,18 +163,20 @@ let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
 (** Takes a list of [constructor_declaration]'s and returns 
     a list of the constructor names (annotated with their locations) *)
 let get_constructor_names (cstrs : constructor_declaration list) :
-  (Longident.t Location.loc * pattern) list =
+  (Longident.t Location.loc * pattern option) list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
     let cstr_name = with_loc (Longident.parse txt) ~loc in
     match pcd_args with
+    (* Handle constructors with no arguments *)
+    | Pcstr_tuple [] -> (cstr_name, None)
     | Pcstr_tuple arg_tys ->
       let cstr_args = get_constructor_args ~loc Fun.id arg_tys in
-      (cstr_name, cstr_args)
+      (cstr_name, Some cstr_args)
     | Pcstr_record arg_lbls ->
       let cstr_args =
         get_constructor_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
       in
-      (cstr_name, cstr_args))
+      (cstr_name, Some cstr_args))
 
 (** Converts a type expression [ty] to its camel-case string representation 
     (for use as a constructor in an algebraic data type) 

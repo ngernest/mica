@@ -156,7 +156,7 @@ let type_generator :
     [get_expr_constructors] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
 let get_expr_constructors (mod_ty : module_type) :
-  (Longident.t Location.loc * pattern) list =
+  (Longident.t Location.loc * pattern option) list =
   match mod_ty.pmty_desc with
   | Pmty_signature sig_items ->
     get_constructor_names @@ mk_expr_constructors sig_items
@@ -167,7 +167,7 @@ let get_expr_constructors (mod_ty : module_type) :
     - The argument [expr_cstrs] is a list containing the 
     names & arg types of the constructors for the [expr] algebraic data type *)
 let mk_interp ~(loc : location) (mod_ty : module_type)
-  (expr_cstrs : (Longident.t Location.loc * pattern) list) : structure_item =
+  (expr_cstrs : (Longident.t Location.loc * pattern option) list) : structure_item =
   (* String literal denoting the argument to [interp] *)
   let arg_str = "e" in
   let arg_ident : expression =
@@ -180,7 +180,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let patterns : pattern list =
     List.map expr_cstrs ~f:(fun (cstr, args) ->
-      ppat_construct ~loc cstr (Some args))
+      ppat_construct ~loc cstr args)
   in
   (* Cases for the pattern match in the body of [interp] *)
   let cases : case list =
@@ -200,7 +200,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (mod_ty : module_type) (sig_items : signature)
-  (expr_cstrs : (Longident.t Location.loc * pattern) list) : module_expr =
+  (expr_cstrs : (Longident.t Location.loc * pattern option) list) : module_expr =
   (* [include M] declaration *)
   let m_ident =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
