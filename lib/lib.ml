@@ -172,12 +172,9 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   (* TODO: update placeholder RHS of pattern match *)
   let placeholder_rhs = pexp_constant ~loc (Pconst_integer ("1", None)) in
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
-  let patterns : pattern list =
-    List.map expr_cstrs ~f:(fun (cstr, args) -> ppat_construct ~loc cstr args)
-  in
-  (* Cases for the pattern match in the body of [interp] *)
   let cases : case list =
-    List.map patterns ~f:(fun pat ->
+    List.map expr_cstrs ~f:(fun (cstr, args) ->
+      let pat = ppat_construct ~loc cstr args in
       case ~lhs:pat ~guard:None ~rhs:placeholder_rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =
