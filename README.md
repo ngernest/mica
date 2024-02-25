@@ -38,6 +38,14 @@ module ExprToImpl(M : SetInterface) = struct
     | ValBool of bool 
     | ValInt of int 
     | ValIntT of int t
+
+  (* Currently working on generating the RHS of the pattern-matches *)
+  let rec interp e =
+    match e with
+    | Empty -> 1
+    | Is_empty e1 -> 1
+    | Mem (n1, e2) -> 1
+    ...
 end 
 ```
 The datatype definitions are produced by the `mica_types` PPX deriver 
