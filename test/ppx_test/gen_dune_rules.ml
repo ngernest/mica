@@ -33,8 +33,7 @@ module Test = struct
         Format.fprintf ppf
           "; expect the process to succeed, captured in target@,\
            (run ./%%{pp} -deriving-keep-w32 both --impl %%{input} -o \
-           %%{targets})"
-    in
+           %%{targets})" in
     Format.fprintf ppf
       "; Run the PPX on the `.ml` file@,\
        @[<v 1>(rule@,\
@@ -75,8 +74,7 @@ module Test = struct
     let module_name = name in
     let modules =
       (* Each test should only consist of a single file (or module) *)
-      module_name
-    in
+      module_name in
     Format.set_margin 80;
     Format.fprintf ppf
       "@[<v 0>; -------- Test: `%s.ml` --------%a@,@,%a@,@,%a%a@,@]@."
@@ -110,19 +108,16 @@ let command =
     Command.Arg_type.create (function
       | "passing" -> Test.Passing
       | "errors" -> Errors
-      | kind -> Format.ksprintf failwith "Invalid kind: %s" kind)
-  in
+      | kind -> Format.ksprintf failwith "Invalid kind: %s" kind) in
   Command.basic
     ~summary:(Format.sprintf "Generate dune rules for testing %s" ppx_name)
     (let%map_open.Command kind =
        flag "-kind"
          (optional_with_default Test.Passing kind)
-         ~doc:"string Test suite kind"
-     in
+         ~doc:"string Test suite kind" in
      fun () ->
        let test_suite =
-         Test.Suite.create ~kind (Sys_unix.readdir "." |> Array.to_list)
-       in
+         Test.Suite.create ~kind (Sys_unix.readdir "." |> Array.to_list) in
        Format.printf "%a\n" Test.Suite.pp test_suite)
 
 let () = Command_unix.run ~version:"1.0" command

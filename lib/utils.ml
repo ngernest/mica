@@ -57,8 +57,7 @@ let pp_structure_item : structure_item -> unit =
     the [Ppxlib.Metaquot] quotations to expand to the appropriate 
     AST fragments representing the base types. *)
 let base_types ~(loc : location) : core_type list =
-  [
-    [%type: int];
+  [ [%type: int];
     [%type: int32];
     [%type: int64];
     [%type: nativeint];
@@ -66,7 +65,7 @@ let base_types ~(loc : location) : core_type list =
     [%type: bool];
     [%type: unit];
     [%type: float];
-    [%type: string];
+    [%type: string]
   ]
 
 (** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
@@ -74,8 +73,7 @@ let base_types ~(loc : location) : core_type list =
     argument types [arg_tys] *)
 let mk_constructor ~(name : string) ~(loc : location)
   ~(arg_tys : core_type list) : constructor_declaration =
-  {
-    (* Constructor name *)
+  { (* Constructor name *)
     pcd_name = { txt = name; loc };
     (* Type variables *)
     pcd_vars = [];
@@ -86,7 +84,7 @@ let mk_constructor ~(name : string) ~(loc : location)
     (* Location of the type *)
     pcd_loc = loc;
     (* Any PPXes attached to the type *)
-    pcd_attributes = [];
+    pcd_attributes = []
   }
 
 (** Instantiates all type variables ['a] inside a type expression with [int] 
@@ -103,16 +101,14 @@ let rec monomorphize (ty : core_type) : core_type =
   | ty_desc when List.mem ty ~set:(base_types ~loc) -> ty
   | Ptyp_var _ -> [%type: int]
   | Ptyp_arrow (arg_lbl, t1, t2) ->
-    {
-      ty with
-      ptyp_desc = Ptyp_arrow (arg_lbl, monomorphize t1, monomorphize t2);
+    { ty with
+      ptyp_desc = Ptyp_arrow (arg_lbl, monomorphize t1, monomorphize t2)
     }
   | Ptyp_tuple tys ->
     { ty with ptyp_desc = Ptyp_tuple (List.map ~f:monomorphize tys) }
   | Ptyp_constr (ident, ty_params) ->
-    {
-      ty with
-      ptyp_desc = Ptyp_constr (ident, List.map ~f:monomorphize ty_params);
+    { ty with
+      ptyp_desc = Ptyp_constr (ident, List.map ~f:monomorphize ty_params)
     }
   | _ -> ty
 
@@ -142,8 +138,7 @@ let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
       | Ptyp_arrow _ -> "f"
       | _ ->
         pp_core_type ty;
-        failwith "TODO: [mk_fresh] not supported for types of this shape")
-  in
+        failwith "TODO: [mk_fresh] not supported for types of this shape") in
   ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string (i + 1)))
 
 (** Helper function: [get_constructor_args loc get_ty args] takes [args], a list containing
@@ -191,17 +186,14 @@ let rec string_of_core_ty (ty : core_type) : string =
   | Ptyp_constr ({ txt = ident; _ }, ty_params) ->
     let ty_constr_str =
       Astlib.Longident.flatten ident
-      |> String.concat ~sep:"" |> String.capitalize_ascii
-    in
+      |> String.concat ~sep:"" |> String.capitalize_ascii in
     let params_str =
-      String.concat ~sep:"" (List.map ~f:string_of_core_ty ty_params)
-    in
+      String.concat ~sep:"" (List.map ~f:string_of_core_ty ty_params) in
     params_str ^ ty_constr_str
   | Ptyp_tuple tys ->
     let ty_strs =
       List.map tys ~f:(fun ty ->
-        string_of_core_ty ty |> String.capitalize_ascii)
-    in
+        string_of_core_ty ty |> String.capitalize_ascii) in
     String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
   | _ -> failwith "type expression not supported by string_of_core_type"
@@ -234,10 +226,8 @@ let attr ~(loc : location) ~(name : string) =
   attribute ~loc ~name:{ txt = "deriving"; loc }
     ~payload:
       (PStr
-         [
-           {
-             pstr_desc =
+         [ { pstr_desc =
                Pstr_eval (pexp_ident ~loc { txt = Lident name; loc }, []);
-             pstr_loc = loc;
-           };
+             pstr_loc = loc
+           }
          ])

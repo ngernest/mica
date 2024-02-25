@@ -135,8 +135,7 @@ let uniq_ret_tys_no_dupes () =
     [%sig:
       val x : int
       val y : string
-      val z : int]
-  in
+      val z : int] in
   check core_ty_list_testable "uniq_ret_tys_no_dupes"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
@@ -146,8 +145,7 @@ let uniq_ret_tys_singleton () =
     [%sig:
       val x : int
       val y : int
-      val z : int]
-  in
+      val z : int] in
   check core_ty_list_testable "uniq_ret_tys_singleton" (uniq_ret_tys sig_items)
     [ [%type: int] ]
 
@@ -156,8 +154,7 @@ let uniq_ret_tys_three_tys () =
     [%sig:
       val x : int
       val y : string
-      val z : bool]
-  in
+      val z : bool] in
   check core_ty_list_testable "uniq_ret_tys_three_tys"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: bool] ]
@@ -167,8 +164,7 @@ let uniq_ret_ty_1_arg_funcs () =
     [%sig:
       val f : 'a -> int
       val g : int -> string
-      val h : int -> 'a]
-  in
+      val h : int -> 'a] in
   check core_ty_list_testable "uniq_ret_ty_1_arg_funcs"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
@@ -178,8 +174,7 @@ let uniq_ret_ty_2_arg_funcs () =
     [%sig:
       val f : 'a -> int -> 'a
       val g : int -> bool -> string
-      val h : bool -> char -> char]
-  in
+      val h : bool -> char -> char] in
   check core_ty_list_testable "uniq_ret_ty_2_arg_funcs"
     (List.rev @@ uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: char] ]
@@ -212,13 +207,11 @@ let mk_ty_constructors_two_base () =
   let sig_items =
     [%sig:
       val x : int
-      val y : string]
-  in
+      val y : string] in
   let expected =
     List.map
       ~f:(fun name -> mk_constructor ~name ~loc:Location.none ~arg_tys:[])
-      [ "Int"; "String" ]
-  in
+      [ "Int"; "String" ] in
   check constr_decl_list_testable "mk_ty_constructors_two"
     (mk_ty_constructors sig_items)
     expected
@@ -228,13 +221,11 @@ let mk_ty_constructors_no_dupes () =
     [%sig:
       val x : int
       val y : string
-      val z : int]
-  in
+      val z : int] in
   let expected =
     List.map
       ~f:(fun name -> mk_constructor ~name ~loc:Location.none ~arg_tys:[])
-      [ "Int"; "String" ]
-  in
+      [ "Int"; "String" ] in
   check constr_decl_list_testable "mk_ty_constructors_no_dupes"
     (mk_ty_constructors sig_items)
     expected
@@ -270,16 +261,13 @@ let get_ret_ty_uncurried () =
 
 let () =
   run "Utils test suite"
-    [
-      ( "[monomorphize] preserves base types",
-        [
-          test_case "int" `Quick mono_int;
+    [ ( "[monomorphize] preserves base types",
+        [ test_case "int" `Quick mono_int;
           test_case "bool" `Quick mono_bool;
-          test_case "string" `Quick mono_string;
+          test_case "string" `Quick mono_string
         ] );
       ( "[monomorphize] instantiates type variables with [int]",
-        [
-          test_case "'a list" `Quick mono_list;
+        [ test_case "'a list" `Quick mono_list;
           test_case "'a option" `Quick mono_option;
           test_case "'a list list" `Quick mono_double_list;
           test_case "'a * 'b" `Quick mono_pair;
@@ -287,31 +275,28 @@ let () =
           test_case "'a -> 'b" `Quick mono_func_1_arg;
           test_case "'a -> 'b -> 'a" `Quick mono_func_2_args;
           test_case "'a t" `Quick mono_poly_abs_type;
-          test_case "'a M.t" `Quick mono_qualified_poly_abs_type;
+          test_case "'a M.t" `Quick mono_qualified_poly_abs_type
         ] );
       ( "no duplicate types in result of [uniq_ret_tys]",
-        [
-          test_case "1 unique type" `Quick uniq_ret_tys_singleton;
+        [ test_case "1 unique type" `Quick uniq_ret_tys_singleton;
           test_case "2 unique types" `Quick uniq_ret_tys_no_dupes;
           test_case "3 unique types" `Quick uniq_ret_tys_three_tys;
           test_case "1 arg function" `Quick uniq_ret_ty_1_arg_funcs;
-          test_case "2 arg function" `Quick uniq_ret_ty_2_arg_funcs;
+          test_case "2 arg function" `Quick uniq_ret_ty_2_arg_funcs
         ] );
       ( "Tests for [mk_ty_constructors]",
-        [
-          test_case "1 base type" `Quick mk_ty_constructors_single_base_ty;
+        [ test_case "1 base type" `Quick mk_ty_constructors_single_base_ty;
           test_case "1 mono abs type" `Quick
             mk_ty_constructors_single_mono_abs_ty;
           test_case "1 poly abs type" `Quick
             mk_ty_constructors_single_mono_abs_ty;
           test_case "two constructors" `Quick mk_ty_constructors_two_base;
-          test_case "no duplicates" `Quick mk_ty_constructors_two_base;
+          test_case "no duplicates" `Quick mk_ty_constructors_two_base
         ] );
       ( "Tests for [get_ret_ty]",
-        [
-          test_case "1 arg function" `Quick get_ret_ty_1_arg_func;
+        [ test_case "1 arg function" `Quick get_ret_ty_1_arg_func;
           test_case "2 arg function" `Quick get_ret_ty_2_arg_func;
           test_case "3 arg function" `Quick get_ret_ty_3_arg_func;
-          test_case "uncurried function" `Quick get_ret_ty_uncurried;
-        ] );
+          test_case "uncurried function" `Quick get_ret_ty_uncurried
+        ] )
     ]

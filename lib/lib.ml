@@ -90,8 +90,7 @@ let mk_constructor_aux (sig_items : signature)
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
     List.sort_uniq ret_tys ~cmp:(fun t1 t2 ->
-      String.compare (string_of_core_ty t1) (string_of_core_ty t2))
-  in
+      String.compare (string_of_core_ty t1) (string_of_core_ty t2)) in
   List.map uniq_ret_tys ~f
 
 (** Constructs the definition of the [ty] algebraic data type
@@ -121,26 +120,21 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
     | { pmty_desc = Pmty_signature sig_items; pmty_loc; _ } -> (
       match sig_items with
       | [] ->
-        [
-          mk_error ~local:pmtd_loc ~global:loc "Module signature can't be empty";
-        ]
+        [ mk_error ~local:pmtd_loc ~global:loc "Module sig can't be empty" ]
       | _ ->
         let expr_td =
           mk_adt ~loc ~name:"expr"
-            ~constructors:(List.rev (mk_expr_constructors sig_items))
-        in
+            ~constructors:(List.rev (mk_expr_constructors sig_items)) in
         let ty_td =
           mk_adt ~loc ~name:"ty" ~constructors:(mk_ty_constructors sig_items)
         in
-        [
-          pstr_type ~loc Recursive [ expr_td ];
-          pstr_type ~loc Recursive [ ty_td ];
+        [ pstr_type ~loc Recursive [ expr_td ];
+          pstr_type ~loc Recursive [ ty_td ]
         ])
     | _ -> failwith "TODO: other case for mod_type")
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
-    [
-      mk_error ~local:pmtd_loc ~global:loc
-        "Can't derive for expressions that aren't module type declarations";
+    [ mk_error ~local:pmtd_loc ~global:loc
+        "Can't derive for expressions that aren't module type declarations"
     ]
 
 (** Instantiates the PPX deriver for [expr]s *)
@@ -167,40 +161,36 @@ let get_expr_constructors (mod_ty : module_type) :
     - The argument [expr_cstrs] is a list containing the 
     names & arg types of the constructors for the [expr] algebraic data type *)
 let mk_interp ~(loc : location) (mod_ty : module_type)
-  (expr_cstrs : (Longident.t Location.loc * pattern option) list) : structure_item =
+  (expr_cstrs : (Longident.t Location.loc * pattern option) list) :
+  structure_item =
   (* String literal denoting the argument to [interp] *)
   let arg_str = "e" in
   let arg_ident : expression =
-    pexp_ident ~loc (with_loc (Lident arg_str) ~loc)
-  in
+    pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in
   let func_name_pat : pattern = ppat_var ~loc { txt = "interp"; loc } in
   let func_arg : pattern = ppat_var ~loc { txt = arg_str; loc } in
   (* TODO: update placeholder RHS of pattern match *)
   let placeholder_rhs = pexp_constant ~loc (Pconst_integer ("1", None)) in
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let patterns : pattern list =
-    List.map expr_cstrs ~f:(fun (cstr, args) ->
-      ppat_construct ~loc cstr args)
+    List.map expr_cstrs ~f:(fun (cstr, args) -> ppat_construct ~loc cstr args)
   in
   (* Cases for the pattern match in the body of [interp] *)
   let cases : case list =
     List.map patterns ~f:(fun pat ->
-      case ~lhs:pat ~guard:None ~rhs:placeholder_rhs)
-  in
-  let wildcard : pattern = ppat_any ~loc in
+      case ~lhs:pat ~guard:None ~rhs:placeholder_rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =
-    pexp_fun ~loc Nolabel None func_arg func_body
-  in
+    pexp_fun ~loc Nolabel None func_arg func_body in
   let func_defn : value_binding =
-    value_binding ~loc ~pat:func_name_pat ~expr:func_binding
-  in
+    value_binding ~loc ~pat:func_name_pat ~expr:func_binding in
   pstr_value ~loc Recursive [ func_defn ]
 
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (mod_ty : module_type) (sig_items : signature)
-  (expr_cstrs : (Longident.t Location.loc * pattern option) list) : module_expr =
+  (expr_cstrs : (Longident.t Location.loc * pattern option) list) : module_expr
+    =
   (* [include M] declaration *)
   let m_ident =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
@@ -216,15 +206,12 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
 
   (* Assembling all the components of the functor *)
   let functor_body =
-    [ include_decl; val_adt_decl; mk_interp ~loc mod_ty expr_cstrs ]
-  in
+    [ include_decl; val_adt_decl; mk_interp ~loc mod_ty expr_cstrs ] in
   let functor_expr =
-    {
-      pmod_desc = Pmod_structure functor_body;
+    { pmod_desc = Pmod_structure functor_body;
       pmod_loc = loc;
-      pmod_attributes = [];
-    }
-  in
+      pmod_attributes = []
+    } in
   pmod_functor ~loc (Named (arg_name, mod_ty)) functor_expr
 
 (** Generates the scaffolding for the [ExprToImpl] functor 
@@ -242,18 +229,15 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
          of the functor *)
       let expr_cstrs = get_expr_constructors mod_type in
       let functor_expr =
-        mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs
-      in
+        mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs in
       let mod_binding =
         module_binding ~loc
           ~name:{ txt = Some "ExprToImpl"; loc }
-          ~expr:functor_expr
-      in
+          ~expr:functor_expr in
       [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
     | _ ->
-      [
-        mk_error ~local:mod_type.pmty_loc ~global:loc
-          "Expected a module type expression that was a signature";
+      [ mk_error ~local:mod_type.pmty_loc ~global:loc
+          "Expected a module type expression that was a signature"
       ])
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
     Location.raise_errorf ~loc
@@ -262,8 +246,7 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
 let () =
   (* Generate auxiliary type declarations *)
   let datatype_deriver =
-    Deriving.add "mica_types" ~str_module_type_decl:type_generator
-  in
+    Deriving.add "mica_types" ~str_module_type_decl:type_generator in
   (* Generate the body of the [ExprToImpl] functor - Note that we must generate
      the declarations of auxiliary datatypes before generating the functor *)
   let functor_generator =
