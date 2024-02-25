@@ -123,8 +123,9 @@ let get_type_params (td : type_declaration) : core_type list =
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
 (** [mk_fresh ~loc i ty] generates a fresh variable at location [loc] 
-    that corresponds to the type [ty], with the (integer) index [i] 
-    as a varname suffix *)
+    that corresponds to the type [ty], with the (integer) index [i + 1] 
+    used as a varname suffix 
+    - We add 1 to [i] so that variable names are 1-indexed *)
 let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
   let varname =
     match ty with
@@ -143,7 +144,7 @@ let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
         pp_core_type ty;
         failwith "TODO: [mk_fresh] not supported for types of this shape")
   in
-  ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string i))
+  ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string (i + 1)))
 
 (** Helper function: [get_constructor_args loc get_ty args] takes [args], a list containing
     the {i representation} of constructor arguments, applies the function 
