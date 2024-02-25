@@ -168,7 +168,7 @@ let get_expr_constructors (mod_ty : module_type) :
     names & arg types of the constructors for the [expr] algebraic data type *)
 let mk_interp ~(loc : location) (mod_ty : module_type)
   (expr_cstrs : (Longident.t Location.loc * pattern) list) : structure_item =
-  (* String literal denoting the argument name *)
+  (* String literal denoting the argument to [interp] *)
   let arg_str = "e" in
   let arg_ident : expression =
     pexp_ident ~loc (with_loc (Lident arg_str) ~loc)
@@ -182,15 +182,13 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
     List.map expr_cstrs ~f:(fun (cstr, args) ->
       ppat_construct ~loc cstr (Some args))
   in
-  let wildcard : pattern = ppat_any ~loc in
-  (* TODO: do a map over all the possible constructors of the [expr] type *)
-  let func_body : expression =
-    [%expr
-      match [%e arg_ident] with
-      | [%p List.hd patterns] -> [%e placeholder_rhs]
-      | [%p List.hd (List.tl patterns)] -> [%e placeholder_rhs]
-      | [%p wildcard] -> [%e placeholder_rhs]]
+  (* Cases for the pattern match in the body of [interp] *)
+  let cases : case list =
+    List.map patterns ~f:(fun pat ->
+      case ~lhs:pat ~guard:None ~rhs:placeholder_rhs)
   in
+  let wildcard : pattern = ppat_any ~loc in
+  let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =
     pexp_fun ~loc Nolabel None func_arg func_body
   in
