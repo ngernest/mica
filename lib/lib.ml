@@ -153,7 +153,7 @@ let get_expr_constructors (mod_ty : module_type) :
   (Longident.t Location.loc * pattern option) list =
   match mod_ty.pmty_desc with
   | Pmty_signature sig_items ->
-    get_constructor_names @@ mk_expr_constructors sig_items
+    get_constructor_names @@ List.rev (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
 (** Creates the definition for the [interp] function 

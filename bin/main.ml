@@ -42,15 +42,15 @@ include
           | ValIntT of int t
         let rec interp e =
           match e with
-          | Invariant e1 -> 1
-          | Intersect (e1, e2) -> 1
-          | Union (e1, e2) -> 1
-          | Size e1 -> 1
-          | Rem (n1, e2) -> 1
-          | Add (n1, e2) -> 1
-          | Mem (n1, e2) -> 1
-          | Is_empty e1 -> 1
           | Empty -> 1
+          | Is_empty e1 -> 1
+          | Mem (n1, e2) -> 1
+          | Add (n1, e2) -> 1
+          | Rem (n1, e2) -> 1
+          | Size e1 -> 1
+          | Union (e1, e2) -> 1
+          | Intersect (e1, e2) -> 1
+          | Invariant e1 -> 1
         let _ = interp
       end
   end[@@ocaml.doc "@inline"]
