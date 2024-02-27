@@ -39,10 +39,11 @@ module ExprToImpl(M : SetInterface) = struct
     | ValInt of int 
     | ValIntT of int t
 
-  (* Currently working on generating the RHS of the pattern-matches *)
+  (* Currently working on generating the RHS of the pattern-matches for 
+     constructors with arguments *)
   let rec interp e =
     match e with
-    | Empty -> 1
+    | Empty -> M.empty
     | Is_empty e1 -> 1
     | Mem (n1, e2) -> 1
     ...

@@ -28,7 +28,7 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
   match monomorphize ty with
   | ty' when List.mem ty' ~set:(base_types ~loc) -> [ ty' ]
   | { ptyp_desc = Ptyp_constr ({ txt = lident; _ }, _); _ } as ty' ->
-    let tyconstr = String.concat ~sep:"" (Astlib.Longident.flatten lident) in
+    let tyconstr = string_of_lident lident in
     if String.equal tyconstr !abstract_ty_name then
       if is_arrow then [ [%type: expr] ] else []
     else [ ty' ]
@@ -156,6 +156,14 @@ let get_expr_constructors (mod_ty : module_type) :
     get_constructor_names @@ List.rev (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
+let mk_interp_case_rhs ~(loc : location) (mod_name : string)
+  (cstr : Longident.t Location.loc) (args : pattern option) : expression =
+  match args with
+  | None -> pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
+  | Some xs ->
+    (* TODO: remove placeholder *)
+    pexp_constant ~loc (Pconst_integer ("1", None))
+
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
     - The argument [expr_cstrs] is a list containing the 
@@ -169,13 +177,12 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
     pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in
   let func_name_pat : pattern = ppat_var ~loc { txt = "interp"; loc } in
   let func_arg : pattern = ppat_var ~loc { txt = arg_str; loc } in
-  (* TODO: update placeholder RHS of pattern match *)
-  let placeholder_rhs = pexp_constant ~loc (Pconst_integer ("1", None)) in
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let cases : case list =
     List.map expr_cstrs ~f:(fun (cstr, args) ->
-      let pat = ppat_construct ~loc cstr args in
-      case ~lhs:pat ~guard:None ~rhs:placeholder_rhs) in
+      let lhs : pattern = ppat_construct ~loc cstr args in
+      let rhs : expression = mk_interp_case_rhs ~loc "M" cstr args in
+      case ~lhs ~guard:None ~rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =
     pexp_fun ~loc Nolabel None func_arg func_body in

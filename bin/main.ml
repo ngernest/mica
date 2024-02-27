@@ -15,7 +15,6 @@ module type SetInterface = sig
 end
 [@@deriving_inline mica_types, mica]
 
-
 include
   struct
     [@@@ocaml.warning "-60"]
@@ -42,7 +41,7 @@ include
           | ValIntT of int t
         let rec interp e =
           match e with
-          | Empty -> 1
+          | Empty -> M.empty
           | Is_empty e1 -> 1
           | Mem (n1, e2) -> 1
           | Add (n1, e2) -> 1
@@ -54,4 +53,5 @@ include
         let _ = interp
       end
   end[@@ocaml.doc "@inline"]
+
 [@@@end]
