@@ -73,9 +73,13 @@ let pp_lident (ppf : Stdlib.Format.formatter) (lident : Longident.t) : unit =
   Fmt.pf ppf "%s" (string_of_lident lident)
 
 (** Equality for [Longident.t]'s is based on their string representations *)
-let lident_eq (l1 : Longident.t) (l2 : Longident.t) : bool =
-  let s1, s2 = map2 ~f:string_of_lident (l1, l2) in
-  String.equal s1 s2
+let rec lident_eq (l1 : Longident.t) (l2 : Longident.t) : bool =
+  match (l1, l2) with
+  | Lident s1, Lident s2 -> String.equal s1 s2
+  | Ldot (p1, s1), Ldot (p2, s2) -> lident_eq p1 p2 && String.equal s1 s2
+  | Lapply (l11, l12), Lapply (l21, l22) ->
+    lident_eq l11 l21 && lident_eq l12 l22
+  | _, _ -> false
 
 let lident_testable : Longident.t testable = testable pp_lident lident_eq
 
@@ -321,8 +325,8 @@ let add_lident_prefix_mod_path () =
 
 let add_lident_prefix_ldot () =
   check lident_testable "add_lident_prefix_ldot"
-    (add_lident_prefix "M1" (Longident.parse "M2.empty"))
-    (Longident.parse "M1.M2.empty")
+    (add_lident_prefix "M1" @@ Ldot (Lident "M2", "empty"))
+    (Ldot (Lident "M1", "M2.empty"))
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)

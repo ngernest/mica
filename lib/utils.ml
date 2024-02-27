@@ -33,7 +33,7 @@ let rec get_last (lst : 'a list) : 'a =
   | x :: xs -> get_last xs
 
 (*******************************************************************************)
-(** {1 Longident utility functions} *)  
+(** {1 Longident utility functions} *)
 
 (** Alias for [String.uncapitalize_ascii] *)
 let uncapitalize = String.uncapitalize_ascii
@@ -47,7 +47,7 @@ let string_of_lident (lident : Longident.t) : string =
   | _ -> String.concat ~sep:"." xs
 
 (** Only uncapitalizes the final [Lident] in a [Longident.t] 
-    (prefixes in [Ldot]'s are left unchanged) *)  
+    (prefixes in [Ldot]'s are left unchanged) *)
 let rec uncapitalize_lident (lident : Longident.t) : Longident.t =
   match lident with
   | Lident s -> Lident (uncapitalize s)
