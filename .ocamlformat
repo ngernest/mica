@@ -1,7 +1,7 @@
 profile = default
 version = 0.26.0
 margin = 80
-break-cases = fit
+break-cases = toplevel
 break-before-in = auto
 cases-exp-indent = 2
 max-indent = 2
