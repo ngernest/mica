@@ -48,7 +48,9 @@ let pp_constr_decl (ppf : Stdlib.Format.formatter)
     Fmt.pf ppf "%s of %s\n" (no_loc cd.pcd_name) args
   | Pcstr_record _ -> failwith "Pcstr_record not supported"
 
-let constr_decl_eq cd1 cd2 =
+(** Equality function for [constructor_declaration]'s *)
+let constr_decl_eq (cd1 : constructor_declaration)
+  (cd2 : constructor_declaration) : bool =
   let name1, name2 = map2 ~f:no_loc (cd1.pcd_name, cd2.pcd_name) in
   String.equal name1 name2
   &&
@@ -62,6 +64,20 @@ let constr_decl_testable : constructor_declaration testable =
 
 let constr_decl_list_testable : constructor_declaration list testable =
   list constr_decl_testable
+
+(*******************************************************************************)
+(** Boilerplate for [Longident.t testable] *)
+
+(** Pretty-printer for [Longident.t] *)
+let pp_lident (ppf : Stdlib.Format.formatter) (lident : Longident.t) : unit =
+  Fmt.pf ppf "%s" (string_of_lident lident)
+
+(** Equality for [Longident.t]'s is based on their string representations *)
+let lident_eq (l1 : Longident.t) (l2 : Longident.t) : bool =
+  let s1, s2 = map2 ~f:string_of_lident (l1, l2) in
+  String.equal s1 s2
+
+let lident_testable : Longident.t testable = testable pp_lident lident_eq
 
 (*******************************************************************************)
 (* Testing that monomorphization preserves core types *)
@@ -257,6 +273,58 @@ let get_ret_ty_uncurried () =
 (* TODO: - add tests for [mk_expr_constructors] *)
 
 (*******************************************************************************)
+
+(** Testing [string_of_lident] *)
+let string_of_lident_trivial () =
+  check string "string_of_lident_trivial" (string_of_lident (Lident "M")) "M"
+
+let string_of_lident_ldot () =
+  check string "string_of_lident_ldot"
+    (string_of_lident (Ldot (Lident "M", "empty")))
+    "M.empty"
+
+let string_of_lident_nested_lot () =
+  check string "string_of_lident_nested_lot"
+    (string_of_lident (Longident.parse "M1.M2.empty"))
+    "M1.M2.empty"
+
+(*******************************************************************************)
+(** Testing [uncapitalize_lident] *)
+
+let uncapitalize_lident_trivial () =
+  check lident_testable "uncapitalize_lident_trivial"
+    (uncapitalize_lident (Lident "Module"))
+    (Lident "module")
+
+let uncapitalize_lident_ldot () =
+  let actual = uncapitalize_lident (Longident.parse "M.Empty") in
+  let expected = Longident.parse "M.empty" in
+  check lident_testable "uncapitalize_lident_ldot" expected actual
+
+let uncapitalize_lident_ldot_nested () =
+  let actual = uncapitalize_lident (Longident.parse "M1.M2.Empty") in
+  let expected = Longident.parse "M1.M2.empty" in
+  check lident_testable "uncapitalize_lident_ldot_nested" expected actual
+
+let uncapitalize_lident_ldot_doubly_nested () =
+  let actual = uncapitalize_lident (Longident.parse "M1.M2.M3.Empty") in
+  let expected = Longident.parse "M1.M2.M3.empty" in
+  check lident_testable "uncapitalize_lident_ldot_nested" expected actual
+
+(*******************************************************************************)
+
+(** Testing [add_lident_prefix] *)
+let add_lident_prefix_mod_path () =
+  check lident_testable "add_lident_prefix_mod_path"
+    (add_lident_prefix "M" (Lident "empty"))
+    (Longident.parse "M.empty")
+
+let add_lident_prefix_ldot () =
+  check lident_testable "add_lident_prefix_ldot"
+    (add_lident_prefix "M1" (Longident.parse "M2.empty"))
+    (Longident.parse "M1.M2.empty")
+
+(*******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
@@ -298,5 +366,21 @@ let () =
           test_case "2 arg function" `Quick get_ret_ty_2_arg_func;
           test_case "3 arg function" `Quick get_ret_ty_3_arg_func;
           test_case "uncurried function" `Quick get_ret_ty_uncurried
+        ] );
+      ( "Tests for [string_of_lident]",
+        [ test_case "lident" `Quick string_of_lident_trivial;
+          test_case "ldot" `Quick string_of_lident_ldot;
+          test_case "nested ldots" `Quick string_of_lident_nested_lot
+        ] );
+      ( "Tests for [uncapitalize_lident]",
+        [ test_case "lident" `Quick uncapitalize_lident_trivial;
+          test_case "ldot" `Quick uncapitalize_lident_ldot;
+          test_case "nested ldots" `Quick uncapitalize_lident_ldot_nested;
+          test_case "doubly-nested ldots" `Quick
+            uncapitalize_lident_ldot_doubly_nested
+        ] );
+      ( "Tests for [add_lident_prefix]",
+        [ test_case "lident" `Quick add_lident_prefix_mod_path;
+          test_case "ldot" `Quick add_lident_prefix_ldot
         ] )
     ]
