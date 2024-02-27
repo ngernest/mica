@@ -72,7 +72,8 @@ let constr_decl_list_testable : constructor_declaration list testable =
 let pp_lident (ppf : Stdlib.Format.formatter) (lident : Longident.t) : unit =
   Fmt.pf ppf "%s" (string_of_lident lident)
 
-(** Equality for [Longident.t]'s is based on their string representations *)
+(** Equality for [Longident.t]'s is based on induction over the structure 
+    of the [Longident] *)
 let rec lident_eq (l1 : Longident.t) (l2 : Longident.t) : bool =
   match (l1, l2) with
   | Lident s1, Lident s2 -> String.equal s1 s2
