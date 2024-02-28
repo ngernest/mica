@@ -153,6 +153,9 @@ let rec monomorphize (ty : core_type) : core_type =
 let get_type_params (td : type_declaration) : core_type list =
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
+(* "Inverse" typing context: maps types to variables *)
+type inv_ctx = (core_type * string) list
+
 (** [mk_fresh ~loc i ty] generates a fresh variable at location [loc] 
     that corresponds to the type [ty], with the (integer) index [i + 1] 
     used as a varname suffix 
@@ -176,11 +179,18 @@ let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
         failwith "TODO: [mk_fresh] not supported for types of this shape") in
   ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string (i + 1)))
 
-(** Helper function: [get_constructor_args loc get_ty args] takes [args], a list containing
-    the {i representation} of constructor arguments, applies the function 
-    [get_ty] to each element of [args] and produces a formatted tuple of 
-    constructor arguments (using the [ppat_tuple] smart constructor for the 
-    [pattern] type).  
+(** Extracts the variable name from a [Ppat_var] pattern 
+    - Raises [Not_found] if the input pattern is not of the form [Ppat_var] *)
+let get_varname ({ ppat_desc; _ } : pattern) : string =
+  match ppat_desc with
+  | Ppat_var { txt; _ } -> txt
+  | _ -> raise Not_found
+
+(** Helper function: [get_constructor_args loc get_ty args] takes [args], 
+    a list containing the {i representation} of constructor arguments, 
+    applies the function [get_ty] to each element of [args] and produces 
+    a formatted tuple of constructor arguments (using the [ppat_tuple] smart 
+    constructor for the [pattern] type).  
     - Note that [args] has type ['a list], i.e. the representation of 
     constructor arguments is polymorphic -- this function is instantiated 
     with different types when called in [get_constructor_names] *)
@@ -188,19 +198,36 @@ let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
   (args : 'a list) : pattern =
   let arg_tys = List.map ~f:get_ty args in
   let arg_names = List.mapi ~f:(mk_fresh ~loc) arg_tys in
+  (* TODO: find a way of returning gamma? *)
+  let gamma : inv_ctx =
+    List.fold_left2
+      ~f:(fun acc var_pat ty -> (ty, get_varname var_pat) :: acc)
+      ~init:[] arg_names arg_tys in
   ppat_tuple ~loc arg_names
 
+(** [find_exprs gamma] extracts all the variables with type [expr] from the 
+    inverse typing context [gamma] *)
+let find_exprs (gamma : inv_ctx) : string list =
+  List.fold_left
+    ~f:(fun acc (ty, var) ->
+      match ty with
+      | [%type: expr] -> var :: acc
+      | _ -> acc)
+    ~init:[] gamma
+
 (** Takes a list of [constructor_declaration]'s and returns 
-    a list of the constructor names (annotated with their locations) *)
+    a list consisting of (constructor name, constructor arguments, typing context) constructor names (annotated with their locations) *)
 let get_constructor_names (cstrs : constructor_declaration list) :
   (Longident.t Location.loc * pattern option) list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
     let cstr_name = with_loc (Longident.parse txt) ~loc in
     match pcd_args with
-    (* Handle constructors with no arguments *)
+    (* Constructors with no arguments *)
     | Pcstr_tuple [] -> (cstr_name, None)
+    (* N-ary constructors (where n > 0) *)
     | Pcstr_tuple arg_tys ->
-      let cstr_args = get_constructor_args ~loc Fun.id arg_tys in
+      let cstr_args : pattern = 
+        get_constructor_args ~loc Fun.id arg_tys in
       (cstr_name, Some cstr_args)
     | Pcstr_record arg_lbls ->
       let cstr_args =
@@ -257,7 +284,7 @@ let mk_error ~(local : location) ~(global : location) msg : structure_item =
 let abstract_ty_name : string ref = ref "t"
 
 (** [attr loc name] creates an attribute called [name] at [loc] *)
-let attr ~(loc : location) ~(name : string) =
+let attr ~(loc : location) ~(name : string) : attribute =
   attribute ~loc ~name:{ txt = "deriving"; loc }
     ~payload:
       (PStr

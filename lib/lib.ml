@@ -160,9 +160,10 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
   (cstr : Longident.t Location.loc) (args : pattern option) : expression =
   match args with
   | None -> pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
-  | Some xs ->
+  | Some _ -> 
     (* TODO: remove placeholder *)
     pexp_constant ~loc (Pconst_integer ("1", None))
+    
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
