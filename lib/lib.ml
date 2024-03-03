@@ -166,11 +166,22 @@ let get_expr_constructors (mod_ty : module_type) :
 let mk_interp_case_rhs ~(loc : location) (mod_name : string)
   (cstr : Longident.t Location.loc) (args : pattern option) ~(gamma : inv_ctx) :
   expression =
-  match args with
-  | None -> pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
-  | Some _ ->
-    (* TODO: lookup in [gamma] *)
+  begin match args with
+  | None -> 
+    (* Constructors with no arguments *)
+    pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
+  | Some { ppat_desc = Ppat_tuple xs; _ } ->
+    (* Constructors with arity n, where n > 0 *)
+    let vars : string list = List.map ~f:get_varname xs in 
+    let expr_vars : string list = find_exprs gamma in 
+    (* TODO: figure out how to generate an expression corresponding
+       to the scrutinee(s) of the inner pattern match (eg [interp e1]) *)
+    let scrutinees : expression = failwith "TODO" in 
     pexp_constant ~loc (Pconst_integer ("1", None))
+  | Some _ -> failwith "TODO: handle other cases for [mk_interp_case_rhs]"
+  end
+    
+  
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
