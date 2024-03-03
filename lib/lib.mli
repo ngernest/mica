@@ -64,7 +64,8 @@ val type_generator :
     [get_expr_constructors] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
 val get_expr_constructors :
-  module_type -> (Longident.t Location.loc * pattern option) list
+  module_type ->
+  (Longident.t Location.loc * pattern option * Utils.inv_ctx) list
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
@@ -73,7 +74,7 @@ val get_expr_constructors :
 val mk_interp :
   loc:location ->
   module_type ->
-  (Longident.t Location.loc * pattern option) list ->
+  (Longident.t Location.loc * pattern option * Utils.inv_ctx) list ->
   structure_item
 
 (** Creates the body of the [ExprToImpl] functor *)
@@ -82,7 +83,7 @@ val mk_functor :
   string option Location.loc ->
   module_type ->
   signature ->
-  (Longident.t Location.loc * pattern option) list ->
+  (Longident.t Location.loc * pattern option * Utils.inv_ctx) list ->
   module_expr
 
 (** Generates the scaffolding for the [ExprToImpl] functor 

@@ -1,11 +1,11 @@
 (* This line is necessary in order for one to use [ocamlfind] in [utop] *)
 #use "topfind";;
 
-(* Disable auto-complete suggestions by defaultr *)
+(* Disable auto-complete suggestions by default *)
 #utop_prompt_dummy;;
 UTop.set_show_box false
 
-(* Entering [ubox();;] toggles auto-complete suggestions on and off*)
+(* Entering [ubox();;] toggles auto-complete suggestions on and off *)
 let ubox () =
   if UTop.get_show_box()
   then UTop.set_show_box false
@@ -16,7 +16,7 @@ let ubox () =
 #require "ppxlib";;
 #require "ppxlib.metaquot";;
 
-(* Make files in the [lib] directory accessible to Utop *)
+(* Ensure that files in [lib] are visible to Utop *)
 #directory "./lib";;
 #mod_use "utils.ml";;
 #mod_use "lib.ml";;

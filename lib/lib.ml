@@ -153,18 +153,23 @@ let type_generator :
     [get_expr_constructors] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
 let get_expr_constructors (mod_ty : module_type) :
-  (Longident.t Location.loc * pattern option) list =
+  (Longident.t Location.loc * pattern option * inv_ctx) list =
   match mod_ty.pmty_desc with
   | Pmty_signature sig_items ->
     get_constructor_names (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
+(** TODO: add comment 
+    
+  - NB: [gamma] is the "inverse typing context" which maps types 
+    to variable names *)  
 let mk_interp_case_rhs ~(loc : location) (mod_name : string)
-  (cstr : Longident.t Location.loc) (args : pattern option) : expression =
+  (cstr : Longident.t Location.loc) (args : pattern option) ~(gamma : inv_ctx) :
+  expression =
   match args with
   | None -> pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
   | Some _ ->
-    (* TODO: remove placeholder *)
+    (* TODO: lookup in [gamma] *)
     pexp_constant ~loc (Pconst_integer ("1", None))
 
 (** Creates the definition for the [interp] function 
@@ -172,7 +177,7 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
     - The argument [expr_cstrs] is a list containing the 
     names & arg types of the constructors for the [expr] algebraic data type *)
 let mk_interp ~(loc : location) (mod_ty : module_type)
-  (expr_cstrs : (Longident.t Location.loc * pattern option) list) :
+  (expr_cstrs : (Longident.t Location.loc * pattern option * inv_ctx) list) :
   structure_item =
   (* String literal denoting the argument to [interp] *)
   let arg_str = "e" in
@@ -182,9 +187,9 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   let func_arg : pattern = ppat_var ~loc { txt = arg_str; loc } in
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let cases : case list =
-    List.map expr_cstrs ~f:(fun (cstr, args) ->
+    List.map expr_cstrs ~f:(fun (cstr, args, gamma) ->
       let lhs : pattern = ppat_construct ~loc cstr args in
-      let rhs : expression = mk_interp_case_rhs ~loc "M" cstr args in
+      let rhs : expression = mk_interp_case_rhs ~loc "M" cstr args ~gamma in
       case ~lhs ~guard:None ~rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =
@@ -196,8 +201,8 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (mod_ty : module_type) (sig_items : signature)
-  (expr_cstrs : (Longident.t Location.loc * pattern option) list) : module_expr
-    =
+  (expr_cstrs : (Longident.t Location.loc * pattern option * inv_ctx) list) :
+  module_expr =
   (* [include M] declaration *)
   let m_ident =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }

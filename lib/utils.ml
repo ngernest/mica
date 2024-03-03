@@ -153,8 +153,12 @@ let rec monomorphize (ty : core_type) : core_type =
 let get_type_params (td : type_declaration) : core_type list =
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
-(* "Inverse" typing context: maps types to variables *)
+(** "Inverse" typing context: maps types to variable names, implemented
+   as an association list *)
 type inv_ctx = (core_type * string) list
+
+(** The empty "inverse" typing context *)
+let empty_ctx : inv_ctx = []
 
 (** [mk_fresh ~loc i ty] generates a fresh variable at location [loc] 
     that corresponds to the type [ty], with the (integer) index [i + 1] 
@@ -195,15 +199,15 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
     constructor arguments is polymorphic -- this function is instantiated 
     with different types when called in [get_constructor_names] *)
 let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
-  (args : 'a list) : pattern =
-  let arg_tys = List.map ~f:get_ty args in
-  let arg_names = List.mapi ~f:(mk_fresh ~loc) arg_tys in
+  (args : 'a list) : pattern * inv_ctx =
+  let arg_tys : core_type list = List.map ~f:get_ty args in
+  let arg_names : pattern list = List.mapi ~f:(mk_fresh ~loc) arg_tys in
   (* TODO: find a way of returning gamma? *)
   let gamma : inv_ctx =
     List.fold_left2
       ~f:(fun acc var_pat ty -> (ty, get_varname var_pat) :: acc)
       ~init:[] arg_names arg_tys in
-  ppat_tuple ~loc arg_names
+  (ppat_tuple ~loc arg_names, gamma)
 
 (** [find_exprs gamma] extracts all the variables with type [expr] from the 
     inverse typing context [gamma] *)
@@ -219,21 +223,22 @@ let find_exprs (gamma : inv_ctx) : string list =
     a list consisting of (constructor name, constructor arguments, 
     typing context) constructor names (annotated with their locations) *)
 let get_constructor_names (cstrs : constructor_declaration list) :
-  (Longident.t Location.loc * pattern option) list =
+  (Longident.t Location.loc * pattern option * inv_ctx) list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
     let cstr_name = with_loc (Longident.parse txt) ~loc in
     match pcd_args with
     (* Constructors with no arguments *)
-    | Pcstr_tuple [] -> (cstr_name, None)
+    | Pcstr_tuple [] -> (cstr_name, None, empty_ctx)
     (* N-ary constructors (where n > 0) *)
     | Pcstr_tuple arg_tys ->
-      let cstr_args : pattern = get_constructor_args ~loc Fun.id arg_tys in
-      (cstr_name, Some cstr_args)
+      let (cstr_args, gamma) : pattern * inv_ctx =
+        get_constructor_args ~loc Fun.id arg_tys in
+      (cstr_name, Some cstr_args, gamma)
     | Pcstr_record arg_lbls ->
-      let cstr_args =
+      let cstr_args, gamma =
         get_constructor_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
       in
-      (cstr_name, Some cstr_args))
+      (cstr_name, Some cstr_args, gamma))
 
 (** Converts a type expression [ty] to its camel-case string representation 
     (for use as a constructor in an algebraic data type) 
