@@ -157,8 +157,7 @@ let uniq_ret_tys_no_dupes () =
       val x : int
       val y : string
       val z : int] in
-  check core_ty_list_testable "uniq_ret_tys_no_dupes"
-    (List.rev @@ uniq_ret_tys sig_items)
+  check core_ty_list_testable "uniq_ret_tys_no_dupes" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
 
 let uniq_ret_tys_singleton () =
@@ -176,8 +175,7 @@ let uniq_ret_tys_three_tys () =
       val x : int
       val y : string
       val z : bool] in
-  check core_ty_list_testable "uniq_ret_tys_three_tys"
-    (List.rev @@ uniq_ret_tys sig_items)
+  check core_ty_list_testable "uniq_ret_tys_three_tys" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: bool] ]
 
 let uniq_ret_ty_1_arg_funcs () =
@@ -186,8 +184,7 @@ let uniq_ret_ty_1_arg_funcs () =
       val f : 'a -> int
       val g : int -> string
       val h : int -> 'a] in
-  check core_ty_list_testable "uniq_ret_ty_1_arg_funcs"
-    (List.rev @@ uniq_ret_tys sig_items)
+  check core_ty_list_testable "uniq_ret_ty_1_arg_funcs" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
 
 let uniq_ret_ty_2_arg_funcs () =
@@ -196,8 +193,7 @@ let uniq_ret_ty_2_arg_funcs () =
       val f : 'a -> int -> 'a
       val g : int -> bool -> string
       val h : bool -> char -> char] in
-  check core_ty_list_testable "uniq_ret_ty_2_arg_funcs"
-    (List.rev @@ uniq_ret_tys sig_items)
+  check core_ty_list_testable "uniq_ret_ty_2_arg_funcs" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: char] ]
 
 (*******************************************************************************)

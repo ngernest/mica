@@ -19,8 +19,9 @@ open Utils
     The [is_arrow] optional 
     named argument specifies whether [ty] is an arrow type: if yes, then 
     references to abstract types should be replaced with [expr], otherwise
-    an occurrence of an abstract type in an non-arrow type (e.g. [val empty : 'a t])
-    should be ignored (so [val empty : 'a t] corresponds to the 0-arity constructor [Empty]).
+    an occurrence of an abstract type in an non-arrow type 
+    (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
+    corresponds to the 0-arity constructor [Empty]).
 *)
 let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
   core_type list =
@@ -55,30 +56,32 @@ let rec get_ret_ty (ty : core_type) : core_type =
     and creates the corresponding definition of the [expr] ADT *)
 let mk_expr_constructors (sig_items : signature) : constructor_declaration list
     =
-  List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
-    match psig_desc with
-    | Psig_type (rec_flag, type_decls) -> []
-    | Psig_value { pval_name; pval_type; pval_loc; _ } ->
-      let name = String.capitalize_ascii pval_name.txt in
-      (* Exclude the return type of the function from the list of argument types
-         for the [expr] data constructor *)
-      let arg_tys = remove_last (get_constructor_arg_tys pval_type) in
-      mk_constructor ~name ~loc:pval_loc ~arg_tys :: acc
-    | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
-    | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
-    | _ ->
-      failwith
-        "TODO: not sure how to handle other kinds of [signature_item_desc]")
+  List.rev
+  @@ List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
+       match psig_desc with
+       | Psig_type (rec_flag, type_decls) -> []
+       | Psig_value { pval_name; pval_type; pval_loc; _ } ->
+         let name = String.capitalize_ascii pval_name.txt in
+         (* Exclude the return type of the function from the list of argument
+            types for the [expr] data constructor *)
+         let arg_tys = remove_last (get_constructor_arg_tys pval_type) in
+         mk_constructor ~name ~loc:pval_loc ~arg_tys :: acc
+       | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
+       | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
+       | _ ->
+         failwith
+           "TODO: not sure how to handle other kinds of [signature_item_desc]")
 
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)
 let uniq_ret_tys (sig_items : signature) : core_type list =
-  List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
-    match psig_desc with
-    | Psig_value { pval_type; _ } ->
-      let ty = get_ret_ty pval_type in
-      if List.mem ty ~set:acc then acc else ty :: acc
-    | _ -> acc)
+  List.rev
+  @@ List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
+       match psig_desc with
+       | Psig_value { pval_type; _ } ->
+         let ty = get_ret_ty pval_type in
+         if List.mem ty ~set:acc then acc else ty :: acc
+       | _ -> acc)
 
 (** Helper function for creating the constructors of the [ty] and [value] 
     algebraic data types 
@@ -124,7 +127,7 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
       | _ ->
         let expr_td =
           mk_adt ~loc ~name:"expr"
-            ~constructors:(List.rev (mk_expr_constructors sig_items)) in
+            ~constructors:(mk_expr_constructors sig_items) in
         let ty_td =
           mk_adt ~loc ~name:"ty" ~constructors:(mk_ty_constructors sig_items)
         in
@@ -153,17 +156,16 @@ let get_expr_constructors (mod_ty : module_type) :
   (Longident.t Location.loc * pattern option) list =
   match mod_ty.pmty_desc with
   | Pmty_signature sig_items ->
-    get_constructor_names @@ List.rev (mk_expr_constructors sig_items)
+    get_constructor_names (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
 let mk_interp_case_rhs ~(loc : location) (mod_name : string)
   (cstr : Longident.t Location.loc) (args : pattern option) : expression =
   match args with
   | None -> pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
-  | Some _ -> 
+  | Some _ ->
     (* TODO: remove placeholder *)
     pexp_constant ~loc (Pconst_integer ("1", None))
-    
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 

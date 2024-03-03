@@ -216,7 +216,8 @@ let find_exprs (gamma : inv_ctx) : string list =
     ~init:[] gamma
 
 (** Takes a list of [constructor_declaration]'s and returns 
-    a list consisting of (constructor name, constructor arguments, typing context) constructor names (annotated with their locations) *)
+    a list consisting of (constructor name, constructor arguments, 
+    typing context) constructor names (annotated with their locations) *)
 let get_constructor_names (cstrs : constructor_declaration list) :
   (Longident.t Location.loc * pattern option) list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
@@ -226,8 +227,7 @@ let get_constructor_names (cstrs : constructor_declaration list) :
     | Pcstr_tuple [] -> (cstr_name, None)
     (* N-ary constructors (where n > 0) *)
     | Pcstr_tuple arg_tys ->
-      let cstr_args : pattern = 
-        get_constructor_args ~loc Fun.id arg_tys in
+      let cstr_args : pattern = get_constructor_args ~loc Fun.id arg_tys in
       (cstr_name, Some cstr_args)
     | Pcstr_record arg_lbls ->
       let cstr_args =
