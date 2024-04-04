@@ -159,6 +159,7 @@ let get_expr_constructors (mod_ty : module_type) :
     get_constructor_names (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
+
 (** TODO: add comment 
     
   - NB: [gamma] is the "inverse typing context" which maps types 
@@ -178,7 +179,17 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
        to the scrutinee(s) of the inner pattern match (eg [interp e1]) *)
     let scrutinees : expression = failwith "TODO" in 
     pexp_constant ~loc (Pconst_integer ("1", None))
-  | Some _ -> failwith "TODO: handle other cases for [mk_interp_case_rhs]"
+  | Some { ppat_desc = Ppat_var x; _} -> 
+    (* TODO: finish this branch??? *)
+    [%expr match interp args.ppat_desc with _ -> 1]
+    (* Stdio.printf "var = %s\n" x.txt;
+    failwith "ppat_desc = ppat_var x" *)
+  | Some pat -> 
+    Stdio.printf "cstr = %s\n" (string_of_lident cstr.txt);
+    Stdio.printf "pat = "; 
+    Pprintast.pattern Format.err_formatter pat; 
+    Stdio.printf "\n";
+    failwith "TODO: catch all case of mk_interp_case_rhs"
   end
     
   

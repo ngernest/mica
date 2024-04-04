@@ -10,7 +10,8 @@
  (modules pp)
  (libraries ppx_mica ppxlib))
 
-(include dune.inc)
+; TODO: uncomment
+; (include dune.inc)
 
 ; Generate the dune rules for the `passing` directory using `gen_dune_rules`
 
