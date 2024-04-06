@@ -162,10 +162,10 @@ let get_expr_constructors (mod_ty : module_type) :
 (** [mk_valt "x" ~loc] creates the pattern [ValT x], 
     consisting of the constructor [Valt] applied to the argument [x] *)
 let mk_valt (x : string) ~(loc : location) : pattern =
-  (** TODO: avoid hard-coding [ValT] since
-      we could have either [ValIntT] or [ValT] *)
-
-  ppat_construct ~loc (with_loc ~loc (Longident.parse "ValT")) (Some [%pat? x])
+  (* TODO: avoid hard-coding [ValT] since we could have either [ValIntT] or
+     [ValT] *)
+  let ident = ppat_var_of_string x ~loc in 
+  ppat_construct ~loc (with_loc ~loc (Longident.parse "ValT")) (Some ident)
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
@@ -204,8 +204,9 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
       | [] -> failwith "impossible"
       | [ x ] -> mk_valt ~loc x
       | _ ->
-        (* TODO: need to generate primes at the end of variables *)        
-        let val_exprs : pattern list = List.map ~f:(mk_valt ~loc) expr_vars in
+        (* TODO: need to generate primes at the end of variables *)
+        let val_exprs : pattern list =
+          List.map ~f:(fun x -> mk_valt ~loc (add_prime x)) expr_vars in
         ppat_tuple ~loc val_exprs in
     (* TODO: figure out how to generate the body of this case stmt *)
     [%expr
