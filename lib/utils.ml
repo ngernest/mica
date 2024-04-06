@@ -174,7 +174,7 @@ let empty_ctx : inv_ctx = []
 let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
   let varname =
     match ty with
-    | [%type: int] -> "n"
+    | [%type: int] -> "x"
     | [%type: bool] -> "b"
     | [%type: char] -> "c"
     | [%type: string] -> "s"
