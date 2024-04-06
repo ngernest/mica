@@ -20,6 +20,9 @@ let no_loc (a_loc : 'a Astlib.Location.loc) : 'a = a_loc.txt
 (** Maps a function component-wise over a pair *)
 let map2 ~f (a1, a2) = (f a1, f a2)
 
+(** Converts a triple to a pair *)
+let triple_to_pair (a, b, _) = (a, b)
+
 (** Retrieves all elements of a list except the last one *)
 let rec remove_last (lst : 'a list) : 'a list =
   match lst with
@@ -111,8 +114,8 @@ let pexp_ident_of_string (x : string) ~(loc : location) : expression =
   pexp_ident ~loc (with_loc (Longident.parse x) ~loc)
 
 (** [ppat_var_of_string x ~loc] creates the pattern [Ppat_var x] 
-    at location [loc] *)  
-let ppat_var_of_string (x : string) ~(loc : location) : pattern = 
+    at location [loc] *)
+let ppat_var_of_string (x : string) ~(loc : location) : pattern =
   ppat_var ~loc (with_loc x ~loc)
 
 (** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
@@ -252,6 +255,17 @@ let get_constructor_names (cstrs : constructor_declaration list) :
         get_constructor_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
       in
       (cstr_name, Some cstr_args, gamma))
+
+(** Takes a [type_declaration] for an algebraic data type 
+    and returns a list of (constructor name, constructor arguments) 
+    - Raises an exception if the [type_declaration] doesn't correspond to an 
+      algebraic data type *)      
+let get_constructors_of_ty_decl (ty_decl : type_declaration) :
+  (Longident.t Location.loc * pattern option) list =
+  match ty_decl.ptype_kind with
+  | Ptype_variant args ->
+    List.map ~f:triple_to_pair (get_constructor_names args)
+  | _ -> failwith "error: expected an algebraic data type definition"
 
 (** Converts a type expression [ty] to its camel-case string representation 
     (for use as a constructor in an algebraic data type) 
