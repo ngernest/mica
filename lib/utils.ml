@@ -105,6 +105,11 @@ let base_types ~(loc : location) : core_type list =
     [%type: string]
   ]
 
+(** [pexp_ident_of_string x ~loc] creates the expression [Pexp_ident x]
+    at location [loc] *)  
+let pexp_ident_of_string (x : string) ~(loc : location) : expression = 
+  pexp_ident ~loc (with_loc (Longident.parse x) ~loc)
+
 (** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
     for an algebraic data type at the location [loc] with 
     argument types [arg_tys] *)
