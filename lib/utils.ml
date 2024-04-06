@@ -291,7 +291,7 @@ let mk_error ~(local : location) ~(global : location) msg : structure_item =
 
 (** Name of the abstract type in the module signature, 
     by default ["t"] *)
-let abstract_ty_name : string ref = ref "t"
+let abstract_ty_name : string = "t"
 
 (** [attr loc name] creates an attribute called [name] at [loc] *)
 let attr ~(loc : location) ~(name : string) : attribute =

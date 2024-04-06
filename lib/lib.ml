@@ -30,7 +30,7 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
   | ty' when List.mem ty' ~set:(base_types ~loc) -> [ ty' ]
   | { ptyp_desc = Ptyp_constr ({ txt = lident; _ }, _); _ } as ty' ->
     let tyconstr = string_of_lident lident in
-    if String.equal tyconstr !abstract_ty_name then
+    if String.equal tyconstr abstract_ty_name then
       if is_arrow then [ [%type: expr] ] else []
     else [ ty' ]
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _ } ->
@@ -205,7 +205,6 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
       | [ x ] -> mk_valt ~loc x
       | _ ->
         (* TODO: need to generate primes at the end of variables *)        
-
         let val_exprs : pattern list = List.map ~f:(mk_valt ~loc) expr_vars in
         ppat_tuple ~loc val_exprs in
     (* TODO: figure out how to generate the body of this case stmt *)
