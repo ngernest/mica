@@ -46,6 +46,7 @@ module ExprToImpl(M : SetInterface) = struct
     | Empty -> M.empty
     | Is_empty e1 -> (match interp e1 with | _ -> 1)
     | Mem (n1, e2) -> (match interp e2 with | _ -> 1)
+    | Union (e1, e2) -> (match (interp e1, interp e2) with | _ -> 1)
     ...
 end 
 ```

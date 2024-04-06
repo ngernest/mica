@@ -185,21 +185,25 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
       match expr_vars with
       | [] -> [%expr 1]
       | [ x ] ->
-        Stdio.printf "x = %s\n" x;
-        let ident = pexp_ident_of_string x ~loc in
+        (* [match interp x with ...] *)
+        let ident : expression = pexp_ident_of_string x ~loc in
         pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ]
-      | y :: ys ->
-        (* TODO: handle [ys] *)
-        Stdio.printf "y = %s\n" y;
-        let ident = pexp_ident_of_string y ~loc in
-        pexp_tuple ~loc [ pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] ]
-    in
+      | ys ->
+        (* [match (interp y1, interp y2, ...) with ...] *)
+        let app_exprs : expression list =
+          List.map
+            ~f:(fun var ->
+              pexp_apply ~loc [%expr interp]
+                [ (Nolabel, pexp_ident_of_string ~loc var) ])
+            ys in
+        pexp_tuple ~loc app_exprs in
     [%expr
       match [%e scrutinees] with
       | _ -> 1]
   | Some { ppat_desc = Ppat_var x; _ } ->
-    let ident = pexp_ident_of_string x.txt ~loc in
-    let scrutinee = pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
+    let ident : expression = pexp_ident_of_string x.txt ~loc in
+    let scrutinee : expression =
+      pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
     [%expr
       match [%e scrutinee] with
       | _ -> 1]
