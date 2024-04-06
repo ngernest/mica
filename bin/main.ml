@@ -41,14 +41,18 @@ include
           match e with
           | Empty -> M.empty
           | Is_empty e1 -> (match interp e1 with | _ -> 1)
-          | Mem (x1, e2) -> (match interp e2 with | _ -> 1)
-          | Add (x1, e2) -> (match interp e2 with | _ -> 1)
-          | Rem (x1, e2) -> (match interp e2 with | _ -> 1)
+          | Mem (x1, e2) -> (match interp e2 with | ValT x -> 1 | _ -> 1)
+          | Add (x1, e2) -> (match interp e2 with | ValT x -> 1 | _ -> 1)
+          | Rem (x1, e2) -> (match interp e2 with | ValT x -> 1 | _ -> 1)
           | Size e1 -> (match interp e1 with | _ -> 1)
           | Union (e1, e2) ->
-              (match ((interp e1), (interp e2)) with | _ -> 1)
+              (match ((interp e1), (interp e2)) with
+               | (ValT x, ValT x) -> 1
+               | _ -> 1)
           | Intersect (e1, e2) ->
-              (match ((interp e1), (interp e2)) with | _ -> 1)
+              (match ((interp e1), (interp e2)) with
+               | (ValT x, ValT x) -> 1
+               | _ -> 1)
           | Invariant e1 -> (match interp e1 with | _ -> 1)
         let _ = interp
       end

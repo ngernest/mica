@@ -159,8 +159,15 @@ let get_expr_constructors (mod_ty : module_type) :
     get_constructor_names (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
-(** TODO: add comment 
-    
+(** [mk_valt "x" ~loc] creates the pattern [ValT x], 
+    consisting of the constructor [Valt] applied to the argument [x] *)
+let mk_valt (x : string) ~(loc : location) : pattern =
+  (** TODO: avoid hard-coding [ValT] since
+      we could have either [ValIntT] or [ValT] *)
+
+  ppat_construct ~loc (with_loc ~loc (Longident.parse "ValT")) (Some [%pat? x])
+
+(** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
     to variable names *)
 let mk_interp_case_rhs ~(loc : location) (mod_name : string)
@@ -168,38 +175,50 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
   expression =
   match args with
   (* Constructors with no arguments *)
-  | None ->
-    pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
+  | None -> pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
   (* Constructors with arity n, where n > 0 *)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
     let vars : string list = List.map ~f:get_varname xs in
     let expr_vars : string list = find_exprs gamma in
     let scrutinees : expression =
       match expr_vars with
-      | [] -> [%expr 1]
+      | [] ->
+        failwith
+          {| impossible: 
+          can't call [mk_interp_case_rhs] with no arguments of type [expr] |}
       | [ x ] ->
         (* [match interp x with ...] *)
         let ident : expression = pexp_ident_of_string x ~loc in
         pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ]
-      | ys ->
+      | _ ->
         (* [match (interp y1, interp y2, ...) with ...] *)
         let app_exprs : expression list =
           List.map
             ~f:(fun var ->
               pexp_apply ~loc [%expr interp]
                 [ (Nolabel, pexp_ident_of_string ~loc var) ])
-            ys in
+            expr_vars in
         pexp_tuple ~loc app_exprs in
-    (** TODO: figure out how to generate the body of this case stmt *)
+    let match_arm : pattern =
+      match expr_vars with
+      | [] -> failwith "impossible"
+      | [ x ] -> mk_valt ~loc x
+      | _ ->
+        (* TODO: need to generate primes at the end of variables *)        
+
+        let val_exprs : pattern list = List.map ~f:(mk_valt ~loc) expr_vars in
+        ppat_tuple ~loc val_exprs in
+    (* TODO: figure out how to generate the body of this case stmt *)
     [%expr
       match [%e scrutinees] with
+      | [%p match_arm] -> 1
       | _ -> 1]
-  (* Constructors with one single argument *)      
+  (* Constructors with one single argument *)
   | Some { ppat_desc = Ppat_var x; _ } ->
     let ident : expression = pexp_ident_of_string x.txt ~loc in
     let scrutinee : expression =
       pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
-    (** TODO: figure out how to generate the body of this case stmt *)      
+    (* TODO: figure out how to generate the body of this case stmt *)
     [%expr
       match [%e scrutinee] with
       | _ -> 1]
