@@ -110,6 +110,11 @@ let base_types ~(loc : location) : core_type list =
 let pexp_ident_of_string (x : string) ~(loc : location) : expression =
   pexp_ident ~loc (with_loc (Longident.parse x) ~loc)
 
+(** [ppat_var_of_string x ~loc] creates the pattern [Ppat_var x] 
+    at location [loc] *)  
+let ppat_var_of_string (x : string) ~(loc : location) : pattern = 
+  ppat_var ~loc (with_loc x ~loc)
+
 (** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
     for an algebraic data type at the location [loc] with 
     argument types [arg_tys] *)
@@ -188,6 +193,9 @@ let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
         pp_core_type ty;
         failwith "TODO: [mk_fresh] not supported for types of this shape") in
   ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string (i + 1)))
+
+(** Turns a variable name [x] into [x'] *)
+let rec add_prime (x : string) : string = x ^ "\'"
 
 (** Extracts the variable name from a [Ppat_var] pattern 
     - Raises [Not_found] if the input pattern is not of the form [Ppat_var] *)
