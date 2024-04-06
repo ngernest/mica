@@ -174,12 +174,11 @@ let empty_ctx : inv_ctx = []
 let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
   let varname =
     match ty with
-    | [%type: int] -> "x"
     | [%type: bool] -> "b"
     | [%type: char] -> "c"
     | [%type: string] -> "s"
     | [%type: unit] -> "u"
-    | [%type: 'a] -> "x"
+    | [%type: int] | [%type: 'a] -> "x"
     | [%type: expr] | [%type: t] | [%type: 'a t] -> "e"
     | { ptyp_desc; _ } -> (
       match ptyp_desc with
