@@ -162,51 +162,53 @@ let get_expr_constructors (mod_ty : module_type) :
 (** TODO: add comment 
     
   - NB: [gamma] is the "inverse typing context" which maps types 
-    to variable names *)  
+    to variable names *)
 let mk_interp_case_rhs ~(loc : location) (mod_name : string)
   (cstr : Longident.t Location.loc) (args : pattern option) ~(gamma : inv_ctx) :
   expression =
   printf "cstr = %s\n" (string_of_lident cstr.txt);
   printf "Gamma:\n";
-  List.iter 
-    ~f:(fun (ty, var) -> printf "(%s, %s)\n" (string_of_core_type ty) var) gamma;
-  begin match args with
-  | None -> 
+  List.iter
+    ~f:(fun (ty, var) -> printf "(%s, %s)\n" (string_of_core_type ty) var)
+    gamma;
+  match args with
+  | None ->
     (* Constructors with no arguments *)
     pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
     (* Constructors with arity n, where n > 0 *)
-    let vars : string list = List.map ~f:get_varname xs in 
-    let expr_vars : string list = find_exprs gamma in 
+    let vars : string list = List.map ~f:get_varname xs in
+    let expr_vars : string list = find_exprs gamma in
     printf "expr_vars:\n";
     List.iter ~f:(printf "\t%s\n") expr_vars;
-    let scrutinees : expression = 
-      begin match expr_vars with 
+    let scrutinees : expression =
+      match expr_vars with
       | [] -> [%expr 1]
-      | [x] -> 
+      | [ x ] ->
         Stdio.printf "x = %s\n" x;
         let ident = pexp_ident_of_string x ~loc in
-        pexp_apply ~loc [%expr interp] [(Nolabel, ident)]
-      | y :: ys -> 
+        pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ]
+      | y :: ys ->
         (* TODO: handle [ys] *)
         Stdio.printf "y = %s\n" y;
         let ident = pexp_ident_of_string y ~loc in
-        pexp_tuple ~loc [pexp_apply ~loc [%expr interp] [(Nolabel, ident)]]
-      end in 
-    [%expr match [%e scrutinees] with _ -> 1]
-  | Some { ppat_desc = Ppat_var x; _} -> 
-    let ident = pexp_ident_of_string x.txt ~loc in 
-    let scrutinee = pexp_apply ~loc [%expr interp] [(Nolabel, ident)] in 
-    [%expr match [%e scrutinee] with _ -> 1]
-  | Some pat -> 
+        pexp_tuple ~loc [ pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] ]
+    in
+    [%expr
+      match [%e scrutinees] with
+      | _ -> 1]
+  | Some { ppat_desc = Ppat_var x; _ } ->
+    let ident = pexp_ident_of_string x.txt ~loc in
+    let scrutinee = pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
+    [%expr
+      match [%e scrutinee] with
+      | _ -> 1]
+  | Some pat ->
     Stdio.printf "cstr = %s\n" (string_of_lident cstr.txt);
-    Stdio.printf "pat = "; 
-    Pprintast.pattern Format.err_formatter pat; 
+    Stdio.printf "pat = ";
+    Pprintast.pattern Format.err_formatter pat;
     Stdio.printf "\n";
     failwith "TODO: catch all case of mk_interp_case_rhs"
-  end
-    
-  
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 

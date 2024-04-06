@@ -106,8 +106,8 @@ let base_types ~(loc : location) : core_type list =
   ]
 
 (** [pexp_ident_of_string x ~loc] creates the expression [Pexp_ident x]
-    at location [loc] *)  
-let pexp_ident_of_string (x : string) ~(loc : location) : expression = 
+    at location [loc] *)
+let pexp_ident_of_string (x : string) ~(loc : location) : expression =
   pexp_ident ~loc (with_loc (Longident.parse x) ~loc)
 
 (** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
