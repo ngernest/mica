@@ -180,26 +180,24 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
     let expr_vars : string list = find_exprs gamma in 
     printf "expr_vars:\n";
     List.iter ~f:(printf "\t%s\n") expr_vars;
-    (* TODO: need to look up only variables that have type [expr] *)
     let scrutinees : expression = 
       begin match expr_vars with 
       | [] -> [%expr 1]
       | [x] -> 
         Stdio.printf "x = %s\n" x;
-        let ident = pexp_ident ~loc (with_loc (Longident.parse x) ~loc) in
+        let ident = pexp_ident_of_string x ~loc in
         pexp_apply ~loc [%expr interp] [(Nolabel, ident)]
       | y :: ys -> 
+        (* TODO: handle [ys] *)
         Stdio.printf "y = %s\n" y;
-        let ident = pexp_ident ~loc (with_loc (Longident.parse y) ~loc) in
+        let ident = pexp_ident_of_string y ~loc in
         pexp_tuple ~loc [pexp_apply ~loc [%expr interp] [(Nolabel, ident)]]
       end in 
     [%expr match [%e scrutinees] with _ -> 1]
-    (* pexp_constant ~loc (Pconst_integer ("1", None)) *)
   | Some { ppat_desc = Ppat_var x; _} -> 
-    (* TODO: finish this branch??? *)
-    [%expr match interp args.ppat_desc with _ -> 1]
-    (* Stdio.printf "var = %s\n" x.txt;
-    failwith "ppat_desc = ppat_var x" *)
+    let ident = pexp_ident_of_string x.txt ~loc in 
+    let scrutinee = pexp_apply ~loc [%expr interp] [(Nolabel, ident)] in 
+    [%expr match [%e scrutinee] with _ -> 1]
   | Some pat -> 
     Stdio.printf "cstr = %s\n" (string_of_lident cstr.txt);
     Stdio.printf "pat = "; 
