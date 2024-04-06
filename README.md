@@ -44,8 +44,8 @@ module ExprToImpl(M : SetInterface) = struct
   let rec interp e =
     match e with
     | Empty -> M.empty
-    | Is_empty e1 -> 1
-    | Mem (n1, e2) -> 1
+    | Is_empty e1 -> (match interp e1 with | _ -> 1)
+    | Mem (n1, e2) -> (match interp e2 with | _ -> 1)
     ...
 end 
 ```
