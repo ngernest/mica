@@ -162,10 +162,10 @@ let get_expr_constructors (mod_ty : module_type) :
 (** [mk_valt "x" ~loc] creates the pattern [ValT x], 
     consisting of the constructor [Valt] applied to the argument [x] *)
 let mk_valt (x : string) ~(loc : location) : pattern =
-  (* TODO: avoid hard-coding [ValT] since we could have either [ValIntT] or
-     [ValT] *)
-  let ident = ppat_var_of_string x ~loc in 
-  ppat_construct ~loc (with_loc ~loc (Longident.parse "ValT")) (Some ident)
+  (* TODO: Call is_abs_ty_parameterized in the call-site 
+    to determine whether to use [ValT] or [ValIntT] *)
+  let ident = ppat_var_of_string x ~loc in
+  ppat_construct ~loc (with_loc ~loc (Longident.parse "ValIntT")) (Some ident)
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
@@ -268,10 +268,10 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   let include_decl = pstr_include ~loc (include_infos ~loc m_expr) in
 
   (* Declaration for the [value] ADT *)
-  let val_adt =
+  let val_adt : type_declaration =
     mk_adt ~loc ~name:"value" ~constructors:(mk_val_constructors sig_items)
   in
-  let val_adt_decl = pstr_type ~loc Recursive [ val_adt ] in
+  let val_adt_decl : structure_item = pstr_type ~loc Recursive [ val_adt ] in
 
   (* Assembling all the components of the functor *)
   let functor_body =

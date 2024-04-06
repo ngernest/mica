@@ -23,6 +23,23 @@ let map2 ~f (a1, a2) = (f a1, f a2)
 (** Converts a triple to a pair *)
 let triple_to_pair (a, b, _) = (a, b)
 
+(** Checks if a list is empty
+    - Backwards-compatible version of [List.is_empty], 
+    which is only available in OCaml 5.1 and newer *)
+let list_is_empty (lst : 'a list) : bool =
+  match lst with
+  | [] -> true
+  | _ -> false
+
+(** Takes the disjunction of a Boolean list
+    - The empty list corresponds to false
+    - Reimplementation of the [or] function in 
+      Haskell's [GHC.Prelude] *)
+let rec list_or (xs : bool list) : bool =
+  match xs with
+  | [] -> false
+  | x :: xs -> x || list_or xs
+
 (** Retrieves all elements of a list except the last one *)
 let rec remove_last (lst : 'a list) : 'a list =
   match lst with
@@ -259,7 +276,7 @@ let get_constructor_names (cstrs : constructor_declaration list) :
 (** Takes a [type_declaration] for an algebraic data type 
     and returns a list of (constructor name, constructor arguments) 
     - Raises an exception if the [type_declaration] doesn't correspond to an 
-      algebraic data type *)      
+      algebraic data type *)
 let get_constructors_of_ty_decl (ty_decl : type_declaration) :
   (Longident.t Location.loc * pattern option) list =
   match ty_decl.ptype_kind with
@@ -325,3 +342,23 @@ let attr ~(loc : location) ~(name : string) : attribute =
              pstr_loc = loc
            }
          ])
+
+(** Returns true the abstract type declaration in a [signature] 
+    is parameterized (e.g. ['a t]), else returns [false] *)         
+let rec is_abs_ty_parameterized (sig_items : signature) : bool =
+  List.fold_left
+    ~f:(fun acc { psig_desc; _ } ->
+      match psig_desc with
+      | Psig_type (_rec_flag, ty_decls) -> (
+        match ty_decls with
+        | [] -> acc
+        | _ ->
+          list_or
+          @@ List.map
+               ~f:(fun { ptype_name; ptype_params; _ } ->
+                 if String.equal ptype_name.txt "t" then
+                   not (list_is_empty ptype_params)
+                 else false)
+               ty_decls)
+      | _ -> acc)
+    ~init:false sig_items
