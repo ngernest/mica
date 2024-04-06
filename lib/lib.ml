@@ -166,21 +166,14 @@ let get_expr_constructors (mod_ty : module_type) :
 let mk_interp_case_rhs ~(loc : location) (mod_name : string)
   (cstr : Longident.t Location.loc) (args : pattern option) ~(gamma : inv_ctx) :
   expression =
-  printf "cstr = %s\n" (string_of_lident cstr.txt);
-  printf "Gamma:\n";
-  List.iter
-    ~f:(fun (ty, var) -> printf "(%s, %s)\n" (string_of_core_type ty) var)
-    gamma;
   match args with
+  (* Constructors with no arguments *)
   | None ->
-    (* Constructors with no arguments *)
     pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
+  (* Constructors with arity n, where n > 0 *)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
-    (* Constructors with arity n, where n > 0 *)
     let vars : string list = List.map ~f:get_varname xs in
     let expr_vars : string list = find_exprs gamma in
-    printf "expr_vars:\n";
-    List.iter ~f:(printf "\t%s\n") expr_vars;
     let scrutinees : expression =
       match expr_vars with
       | [] -> [%expr 1]
@@ -197,13 +190,16 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
                 [ (Nolabel, pexp_ident_of_string ~loc var) ])
             ys in
         pexp_tuple ~loc app_exprs in
+    (** TODO: figure out how to generate the body of this case stmt *)
     [%expr
       match [%e scrutinees] with
       | _ -> 1]
+  (* Constructors with one single argument *)      
   | Some { ppat_desc = Ppat_var x; _ } ->
     let ident : expression = pexp_ident_of_string x.txt ~loc in
     let scrutinee : expression =
       pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
+    (** TODO: figure out how to generate the body of this case stmt *)      
     [%expr
       match [%e scrutinee] with
       | _ -> 1]
