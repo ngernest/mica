@@ -159,7 +159,6 @@ let get_expr_constructors (mod_ty : module_type) :
     get_constructor_names (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
-
 (** TODO: add comment 
     
   - NB: [gamma] is the "inverse typing context" which maps types 
@@ -167,6 +166,10 @@ let get_expr_constructors (mod_ty : module_type) :
 let mk_interp_case_rhs ~(loc : location) (mod_name : string)
   (cstr : Longident.t Location.loc) (args : pattern option) ~(gamma : inv_ctx) :
   expression =
+  printf "cstr = %s\n" (string_of_lident cstr.txt);
+  printf "Gamma:\n";
+  List.iter 
+    ~f:(fun (ty, var) -> printf "(%s, %s)\n" (string_of_core_type ty) var) gamma;
   begin match args with
   | None -> 
     (* Constructors with no arguments *)
@@ -175,10 +178,23 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
     (* Constructors with arity n, where n > 0 *)
     let vars : string list = List.map ~f:get_varname xs in 
     let expr_vars : string list = find_exprs gamma in 
-    (* TODO: figure out how to generate an expression corresponding
-       to the scrutinee(s) of the inner pattern match (eg [interp e1]) *)
-    let scrutinees : expression = failwith "TODO" in 
-    pexp_constant ~loc (Pconst_integer ("1", None))
+    printf "expr_vars:\n";
+    List.iter ~f:(printf "\t%s\n") expr_vars;
+    (* TODO: need to look up only variables that have type [expr] *)
+    let scrutinees : expression = 
+      begin match expr_vars with 
+      | [] -> [%expr 1]
+      | [x] -> 
+        Stdio.printf "x = %s\n" x;
+        let ident = pexp_ident ~loc (with_loc (Longident.parse x) ~loc) in
+        pexp_apply ~loc [%expr interp] [(Nolabel, ident)]
+      | y :: ys -> 
+        Stdio.printf "y = %s\n" y;
+        let ident = pexp_ident ~loc (with_loc (Longident.parse y) ~loc) in
+        pexp_tuple ~loc [pexp_apply ~loc [%expr interp] [(Nolabel, ident)]]
+      end in 
+    [%expr match [%e scrutinees] with _ -> 1]
+    (* pexp_constant ~loc (Pconst_integer ("1", None)) *)
   | Some { ppat_desc = Ppat_var x; _} -> 
     (* TODO: finish this branch??? *)
     [%expr match interp args.ppat_desc with _ -> 1]

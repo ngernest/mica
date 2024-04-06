@@ -9,6 +9,8 @@ open StdLabels
 (*******************************************************************************)
 (** {1 Miscellany} *)
 
+let printf = Stdio.printf
+
 (** Constructs a [loc] given some payload [txt] and a location [loc] *)
 let with_loc (txt : 'a) ~(loc : loc) : 'a Location.loc = { txt; loc }
 
@@ -202,7 +204,6 @@ let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
   (args : 'a list) : pattern * inv_ctx =
   let arg_tys : core_type list = List.map ~f:get_ty args in
   let arg_names : pattern list = List.mapi ~f:(mk_fresh ~loc) arg_tys in
-  (* TODO: find a way of returning gamma? *)
   let gamma : inv_ctx =
     List.fold_left2
       ~f:(fun acc var_pat ty -> (ty, get_varname var_pat) :: acc)
