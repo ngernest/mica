@@ -160,12 +160,16 @@ let get_expr_constructors (mod_ty : module_type) :
   | _ -> failwith "TODO: get_expr_constructors"
 
 (** [mk_valt "x" ~loc] creates the pattern [ValT x], 
-    consisting of the constructor [Valt] applied to the argument [x] *)
-let mk_valt (x : string) ~(loc : location) : pattern =
-  (* TODO: Call is_abs_ty_parameterized in the call-site to determine whether to
-     use [ValT] or [ValIntT] *)
-  let ident = ppat_var_of_string x ~loc in
-  ppat_construct ~loc (with_loc ~loc (Longident.parse "ValIntT")) (Some ident)
+    consisting of the constructor [Valt] applied to the argument [x] 
+    - [abs_ty_parameterized] represents whether the abstract type [t] 
+    in the module signature is parameterized (e.g. ['a t]) or not *)
+let mk_valt (x : string) ~(loc : location) ?(abs_ty_parameterized = false) :
+  pattern =
+  let val_cstr = if abs_ty_parameterized then "ValIntT" else "ValT" in
+  let var_ident = ppat_var_of_string x ~loc in
+  ppat_construct ~loc
+    (with_loc ~loc (Longident.parse val_cstr))
+    (Some var_ident)
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
@@ -202,11 +206,12 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     let match_arm : pattern =
       match expr_vars with
       | [] -> failwith "impossible"
-      | [ x ] -> mk_valt ~loc x
+      | [ x ] -> mk_valt ~loc ~abs_ty_parameterized x
       | _ ->
-        (* TODO: need to generate primes at the end of variables *)
         let val_exprs : pattern list =
-          List.map ~f:(fun x -> mk_valt ~loc (add_prime x)) expr_vars in
+          List.map
+            ~f:(fun x -> mk_valt ~loc ~abs_ty_parameterized (add_prime x))
+            expr_vars in
         ppat_tuple ~loc val_exprs in
     (* TODO: figure out how to generate the body of this case stmt *)
     [%expr
