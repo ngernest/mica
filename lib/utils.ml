@@ -344,7 +344,7 @@ let attr ~(loc : location) ~(name : string) : attribute =
          ])
 
 (** Returns true the abstract type declaration in a [signature] 
-    is parameterized (e.g. ['a t]), else returns [false] *)         
+    is parameterized (e.g. ['a t]), else returns [false] *)
 let rec is_abs_ty_parameterized (sig_items : signature) : bool =
   List.fold_left
     ~f:(fun acc { psig_desc; _ } ->
@@ -356,9 +356,8 @@ let rec is_abs_ty_parameterized (sig_items : signature) : bool =
           list_or
           @@ List.map
                ~f:(fun { ptype_name; ptype_params; _ } ->
-                 if String.equal ptype_name.txt "t" then
-                   not (list_is_empty ptype_params)
-                 else false)
+                 String.equal ptype_name.txt "t"
+                 && not (list_is_empty ptype_params))
                ty_decls)
       | _ -> acc)
     ~init:false sig_items

@@ -162,8 +162,8 @@ let get_expr_constructors (mod_ty : module_type) :
 (** [mk_valt "x" ~loc] creates the pattern [ValT x], 
     consisting of the constructor [Valt] applied to the argument [x] *)
 let mk_valt (x : string) ~(loc : location) : pattern =
-  (* TODO: Call is_abs_ty_parameterized in the call-site 
-    to determine whether to use [ValT] or [ValIntT] *)
+  (* TODO: Call is_abs_ty_parameterized in the call-site to determine whether to
+     use [ValT] or [ValIntT] *)
   let ident = ppat_var_of_string x ~loc in
   ppat_construct ~loc (with_loc ~loc (Longident.parse "ValIntT")) (Some ident)
 
