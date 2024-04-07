@@ -163,7 +163,7 @@ let get_expr_constructors (mod_ty : module_type) :
     consisting of the constructor [Valt] applied to the argument [x] 
     - [abs_ty_parameterized] represents whether the abstract type [t] 
     in the module signature is parameterized (e.g. ['a t]) or not *)
-let mk_valt (x : string) ~(loc : location) ?(abs_ty_parameterized = false) :
+let mk_valt ?(abs_ty_parameterized = false) (x : string) ~(loc : location) :
   pattern =
   let val_cstr = if abs_ty_parameterized then "ValIntT" else "ValT" in
   let var_ident = ppat_var_of_string x ~loc in
