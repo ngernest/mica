@@ -170,9 +170,9 @@ let mk_valt (x : string) ~(loc : location) : pattern =
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
     to variable names *)
-let mk_interp_case_rhs ~(loc : location) (mod_name : string)
-  (cstr : Longident.t Location.loc) (args : pattern option) ~(gamma : inv_ctx) :
-  expression =
+let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
+  ?(abs_ty_parameterized = false) (cstr : Longident.t Location.loc)
+  (args : pattern option) ~(gamma : inv_ctx) : expression =
   match args with
   (* Constructors with no arguments *)
   | None -> pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
@@ -232,8 +232,12 @@ let mk_interp_case_rhs ~(loc : location) (mod_name : string)
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
     - The argument [expr_cstrs] is a list containing the 
-    names & arg types of the constructors for the [expr] algebraic data type *)
+    names & arg types of the constructors for the [expr] algebraic data type
+    - The optional argument [abs_ty_parameterized] represents whether 
+    the abstract type [t] in the module signature is parameterized (e.g. ['a t]) 
+    or not *)
 let mk_interp ~(loc : location) (mod_ty : module_type)
+  ?(abs_ty_parameterized = false)
   (expr_cstrs : (Longident.t Location.loc * pattern option * inv_ctx) list) :
   structure_item =
   (* String literal denoting the argument to [interp] *)
@@ -246,7 +250,9 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   let cases : case list =
     List.map expr_cstrs ~f:(fun (cstr, args, gamma) ->
       let lhs : pattern = ppat_construct ~loc cstr args in
-      let rhs : expression = mk_interp_case_rhs ~loc "M" cstr args ~gamma in
+      let rhs : expression =
+        mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized cstr
+          args in
       case ~lhs ~guard:None ~rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =
@@ -261,11 +267,12 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (expr_cstrs : (Longident.t Location.loc * pattern option * inv_ctx) list) :
   module_expr =
   (* [include M] declaration *)
-  let m_ident =
+  let m_ident : Longident.t Location.loc =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
   in
-  let m_expr = pmod_ident ~loc m_ident in
-  let include_decl = pstr_include ~loc (include_infos ~loc m_expr) in
+  let m_expr : module_expr = pmod_ident ~loc m_ident in
+  let include_decl : structure_item =
+    pstr_include ~loc (include_infos ~loc m_expr) in
 
   (* Declaration for the [value] ADT *)
   let val_adt : type_declaration =
@@ -273,10 +280,15 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   in
   let val_adt_decl : structure_item = pstr_type ~loc Recursive [ val_adt ] in
 
+  let abs_ty_parameterized : bool = is_abs_ty_parameterized sig_items in
+
   (* Assembling all the components of the functor *)
-  let functor_body =
-    [ include_decl; val_adt_decl; mk_interp ~loc mod_ty expr_cstrs ] in
-  let functor_expr =
+  let functor_body : structure_item list =
+    [ include_decl;
+      val_adt_decl;
+      mk_interp ~loc mod_ty ~abs_ty_parameterized expr_cstrs
+    ] in
+  let functor_expr : module_expr =
     { pmod_desc = Pmod_structure functor_body;
       pmod_loc = loc;
       pmod_attributes = []

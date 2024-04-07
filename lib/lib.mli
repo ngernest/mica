@@ -67,6 +67,18 @@ val get_expr_constructors :
   module_type ->
   (Longident.t Location.loc * pattern option * Utils.inv_ctx) list
 
+(** Creates the body of the inner case-statement inside [interp]
+  - NB: [gamma] is the "inverse typing context" which maps types 
+    to variable names *)
+val mk_interp_case_rhs : 
+  loc:location -> 
+  mod_name:string -> 
+  ?abs_ty_parameterized:bool -> 
+  Longident.t Location.loc ->
+  pattern option -> 
+  gamma:Utils.inv_ctx -> 
+  expression 
+
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
     - The argument [expr_cstrs] is a list containing the 
@@ -74,6 +86,7 @@ val get_expr_constructors :
 val mk_interp :
   loc:location ->
   module_type ->
+  ?abs_ty_parameterized:bool ->
   (Longident.t Location.loc * pattern option * Utils.inv_ctx) list ->
   structure_item
 
