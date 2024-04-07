@@ -216,8 +216,8 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     (* TODO: figure out how to generate the body of this case stmt *)
     [%expr
       match [%e scrutinees] with
-      | [%p match_arm] -> 1
-      | _ -> 1]
+      | [%p match_arm] -> failwith 
+      | _ -> failwith "impossible"]
   (* Constructors with one single argument *)
   | Some { ppat_desc = Ppat_var x; _ } ->
     let ident : expression = pexp_ident_of_string x.txt ~loc in
@@ -237,7 +237,9 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
     - The argument [expr_cstrs] is a list containing the 
-    names & arg types of the constructors for the [expr] algebraic data type
+    names & arg types of the constructors for the [expr] algebraic data type, 
+    along with [inv_ctx], an "inverse typing context" that maps [core_type]'s 
+    to variables with that type
     - The optional argument [abs_ty_parameterized] represents whether 
     the abstract type [t] in the module signature is parameterized (e.g. ['a t]) 
     or not *)
