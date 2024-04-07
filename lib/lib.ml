@@ -216,7 +216,7 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     (* TODO: figure out how to generate the body of this case stmt *)
     [%expr
       match [%e scrutinees] with
-      | [%p match_arm] -> failwith 
+      | [%p match_arm] -> failwith "TODO: finish RHS"
       | _ -> failwith "impossible"]
   (* Constructors with one single argument *)
   | Some { ppat_desc = Ppat_var x; _ } ->
