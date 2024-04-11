@@ -1,6 +1,5 @@
 module type QueueIntf = sig
-  type 'a t
-
+  type 'a t [@@deriving sexp_of]
   val create : unit -> int t
   val length : int t -> int
   val is_empty : int t -> bool

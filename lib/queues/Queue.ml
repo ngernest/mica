@@ -3,6 +3,8 @@ open QueueIntf
 module Queue : QueueIntf with type 'a t := 'a Base.Queue.t = struct
   open Base.Queue
 
+  let sexp_of_t = sexp_of_t
+
   let create = create ~capacity:100
   let length = length
   let is_empty = is_empty

@@ -4,6 +4,7 @@ module Linked_queue : QueueIntf with type 'a t := 'a Base.Linked_queue.t =
 struct
   open Base.Linked_queue
 
+  let sexp_of_t = sexp_of_t
   let create = create
   let length = length
   let is_empty = is_empty
