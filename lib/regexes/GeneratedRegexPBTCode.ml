@@ -20,14 +20,12 @@ type expr =
   | AcceptsEmpty of expr
 [@@deriving sexp_of, compare, equal, to_yojson { exn = true }]
 
-type ty = Bool | T 
-[@@deriving sexp_of, compare]
+type ty = Bool | T [@@deriving sexp_of, compare]
 
 (** Module needed to create a [Map] from [ty]'s to pre-generated [value]'s *)
 module Ty = struct
   module T = struct
-    type t = ty 
-    [@@deriving compare, sexp_of]
+    type t = ty [@@deriving compare, sexp_of]
   end
 
   include T
@@ -39,13 +37,13 @@ module ExprToImpl (M : RegexMatcher) = struct
 
   type value = ValBool of bool | ValT of M.t [@@deriving sexp_of]
 
+  type bank = value list Map.M(Ty).t
   (** A [bank] is a map from base types ([ty]'s) 
       to a list of pre-generated [value]'s *)
-  type bank = value list Map.M(Ty).t
 
-  (* let gen_bank () : bank = 
-    let seed = `Nondeterministic in 
-    let length = 5 in failwith "TODO" *)
+  (* let gen_bank () : bank =
+     let seed = `Nondeterministic in
+     let length = 5 in failwith "TODO" *)
 
   let rec interp (expr : expr) : value =
     match expr with

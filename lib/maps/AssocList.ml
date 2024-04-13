@@ -8,7 +8,7 @@ open Base
     following the convention in Jane Street's [Base.Compare] module
     - See https://ocaml.janestreet.com/ocaml-core/v0.12/doc/base/Base/Comparable/index.html *)
 module T = struct
-  type t = (int * string) list 
+  type t = (int * string) list
   [@@deriving sexp, compare, equal, to_yojson { exn = true }]
   (** Definition of the [assoc_list] opaque type *)
 

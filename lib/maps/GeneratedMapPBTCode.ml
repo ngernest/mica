@@ -12,8 +12,7 @@ open Latin
 
 module G = Generator
 
-type ty = AssocList | StringOption | T 
-[@@deriving compare, sexp_of]
+type ty = AssocList | StringOption | T [@@deriving compare, sexp_of]
 
 type expr =
   | Empty
@@ -43,9 +42,9 @@ module ExprToImpl (M : MapInterface) = struct
     | ValT of M.t
   [@@deriving sexp]
 
+  type bank = value list Map.M(Ty).t
   (** A [bank] is a map from base types ([ty]'s) 
       to a list of pre-generated [value]'s *)
-  type bank = value list Map.M(Ty).t
 
   let rec interp (expr : expr) : value =
     match expr with

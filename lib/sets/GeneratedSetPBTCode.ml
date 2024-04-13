@@ -21,9 +21,7 @@ type expr =
   | Intersect of expr * expr
 [@@deriving sexp_of, compare, equal, to_yojson { exn = true }]
 
-type ty = Bool | Int | T 
-[@@deriving compare, sexp_of]
-
+type ty = Bool | Int | T [@@deriving compare, sexp_of]
 
 (** Module needed to create a [Map] from [ty]'s to pre-generated [value]'s *)
 module Ty = struct
@@ -131,9 +129,9 @@ let not_trivial (e : expr) : bool =
   | Add (x1, Add (x2, Empty)) -> not (x1 = x2)
   | _ -> true
 
-(** A [bank] is just a partial map from base types ([ty]'s) 
-    to a list of pre-generated [value]'s *)  
 type bank = int list Map.M(Ty).t
+(** A [bank] is just a partial map from base types ([ty]'s) 
+    to a list of pre-generated [value]'s *)
 
 (** Instantiates a [bank] of pre-generated values 
     - For this example, we just produce a list of 5 random ints *)
