@@ -326,6 +326,52 @@ let add_lident_prefix_ldot () =
     (Ldot (Lident "M1", "M2.empty"))
 
 (*******************************************************************************)
+(** Testing [is_abs_ty_parameterized] *)
+
+let is_abs_ty_parameterized_empty_sig () =
+  check bool "is_abs_ty_parameterized_empty_sig"
+    (is_abs_ty_parameterized [%sig:])
+    false
+
+let is_abs_ty_parameterized_sig_no_abs_ty () =
+  check bool "is_abs_ty_parameterized_sig_no_abs_ty"
+    (is_abs_ty_parameterized
+       [%sig:
+         val f : int -> int
+         val g : int -> bool -> int])
+    false
+
+let is_abs_ty_parameterized_t () =
+  check bool "is_abs_ty_parameterized_t"
+    (is_abs_ty_parameterized
+       [%sig:
+         type t
+
+         val f : t -> int
+         val g : string -> t])
+    false
+
+let is_abs_ty_parameterized_alpha_t () =
+  check bool "is_abs_ty_parameterized_alpha_t"
+    (is_abs_ty_parameterized
+       [%sig:
+         type 'a t
+
+         val f : 'a t -> 'a
+         val g : 'a -> 'a t])
+    true
+
+let is_abs_ty_parameterized_alpha_beta_t () =
+  check bool "is_abs_ty_parameterized_alpha_t"
+    (is_abs_ty_parameterized
+       [%sig:
+         type ('a, 'b) t
+
+         val f : ('a, 'b) t -> 'a
+         val g : ('a, 'b) t -> 'b])
+    true
+
+(*******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
@@ -383,5 +429,13 @@ let () =
       ( "Tests for [add_lident_prefix]",
         [ test_case "lident" `Quick add_lident_prefix_mod_path;
           test_case "ldot" `Quick add_lident_prefix_ldot
+        ] );
+      ( "Tests for [is_abs_ty_parameterized]",
+        [ test_case "empty signature" `Quick is_abs_ty_parameterized_empty_sig;
+          test_case "no abstract types" `Quick
+            is_abs_ty_parameterized_sig_no_abs_ty;
+          test_case "t" `Quick is_abs_ty_parameterized_t;
+          test_case "'a t" `Quick is_abs_ty_parameterized_alpha_t;
+          test_case "('a, 'b) t" `Quick is_abs_ty_parameterized_alpha_beta_t
         ] )
     ]
