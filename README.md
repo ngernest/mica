@@ -44,10 +44,13 @@ module ExprToImpl(M : SetInterface) = struct
   let rec interp e =
     match e with
     | Empty -> M.empty
-    | Is_empty e1 -> (match interp e1 with | _ -> 1)
+    | Is_empty e1 ->
+        (match interp e1 with
+         | ValIntT e1' -> failwith "TODO: finish RHS"
+         | _ -> failwith "impossible")
     | Mem (x1, e2) ->
         (match interp e2 with
-         | ValIntT e2 -> failwith "TODO: finish RHS"
+         | ValIntT e2' -> failwith "TODO: finish RHS"
          | _ -> failwith "impossible")
     | Union (e1, e2) ->
         (match ((interp e1), (interp e2)) with
