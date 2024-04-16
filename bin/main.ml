@@ -43,15 +43,15 @@ include
           | Is_empty e1 -> (match interp e1 with | _ -> 1)
           | Mem (x1, e2) ->
               (match interp e2 with
-               | ValIntT e2 -> failwith "TODO: finish RHS"
+               | ValIntT e2' -> failwith "TODO: finish RHS"
                | _ -> failwith "impossible")
           | Add (x1, e2) ->
               (match interp e2 with
-               | ValIntT e2 -> failwith "TODO: finish RHS"
+               | ValIntT e2' -> failwith "TODO: finish RHS"
                | _ -> failwith "impossible")
           | Rem (x1, e2) ->
               (match interp e2 with
-               | ValIntT e2 -> failwith "TODO: finish RHS"
+               | ValIntT e2' -> failwith "TODO: finish RHS"
                | _ -> failwith "impossible")
           | Size e1 -> (match interp e1 with | _ -> 1)
           | Union (e1, e2) ->

@@ -210,7 +210,7 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     let match_arm : pattern =
       match expr_vars with
       | [] -> failwith "impossible"
-      | [ x ] -> mk_valt_pat ~loc ~abs_ty_parameterized x
+      | [ x ] -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x)
       | _ ->
         let val_exprs : pattern list =
           List.map
