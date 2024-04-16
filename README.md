@@ -45,8 +45,14 @@ module ExprToImpl(M : SetInterface) = struct
     match e with
     | Empty -> M.empty
     | Is_empty e1 -> (match interp e1 with | _ -> 1)
-    | Mem (n1, e2) -> (match interp e2 with | _ -> 1)
-    | Union (e1, e2) -> (match (interp e1, interp e2) with | _ -> 1)
+    | Mem (x1, e2) ->
+        (match interp e2 with
+         | ValIntT e2 -> failwith "TODO: finish RHS"
+         | _ -> failwith "impossible")
+    | Union (e1, e2) ->
+        (match ((interp e1), (interp e2)) with
+         | (ValIntT e1', ValIntT e2') -> failwith "TODO: finish RHS"
+         | _ -> failwith "impossible")
     ...
 end 
 ```
