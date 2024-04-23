@@ -7,51 +7,6 @@ open Utils
 (******************************************************************************)
 (** {1 Generator for Auxiliary Datatypes} *)
 
-(** Takes [ty], the type of a [val] declaration in a signature,
-    and returns the type of the arguments of the corresponding 
-    constructor for the [expr] datatype. 
-
-    For the [Set] module signature example,
-    - [val empty : 'a t] corresponds to the 0-arity [Empty] constructor
-    - [val is_empty : 'a t -> bool] corresponds to [Is_empty of expr * bool] 
-    - Monormorphic primitive types are preserved. 
-
-    The [is_arrow] optional 
-    named argument specifies whether [ty] is an arrow type: if yes, then 
-    references to abstract types should be replaced with [expr], otherwise
-    an occurrence of an abstract type in an non-arrow type 
-    (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
-    corresponds to the 0-arity constructor [Empty]).
-*)
-let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
-  core_type list =
-  let loc = ty.ptyp_loc in
-  match monomorphize ty with
-  | ty' when List.mem ty' ~set:(base_types ~loc) -> [ ty' ]
-  | { ptyp_desc = Ptyp_constr ({ txt = lident; _ }, _); _ } as ty' ->
-    let tyconstr = string_of_lident lident in
-    if String.equal tyconstr abstract_ty_name then
-      if is_arrow then [ [%type: expr] ] else []
-    else [ ty' ]
-  | { ptyp_desc = Ptyp_arrow (_, t1, t2); _ } ->
-    get_constructor_arg_tys ~is_arrow:true t1
-    @ get_constructor_arg_tys ~is_arrow:true t2
-  | { ptyp_desc = Ptyp_tuple tys; _ } ->
-    List.concat_map ~f:(get_constructor_arg_tys ~is_arrow) tys
-  | _ -> failwith "TODO: get_constructor_arg_tys"
-
-(** Extracts the (monomorphized) return type of a type expression 
-    (i.e. the rightmost type in an arrow type) *)
-let rec get_ret_ty (ty : core_type) : core_type =
-  let loc = ty.ptyp_loc in
-  let ty_mono = monomorphize ty in
-  if List.mem ty_mono ~set:(base_types ~loc) then ty_mono
-  else
-    match ty_mono.ptyp_desc with
-    | Ptyp_constr _ | Ptyp_tuple _ | Ptyp_any | Ptyp_var _ -> ty_mono
-    | Ptyp_arrow (_, _, t2) -> get_ret_ty t2
-    | _ -> failwith "Type expression not supported by get_ret_ty"
-
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)
 let mk_expr_constructors (sig_items : signature) : constructor_declaration list

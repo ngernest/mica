@@ -1,26 +1,5 @@
 open Ppxlib
 
-(** Takes [ty], the type of a [val] declaration in a signature,
-    and returns the type of the arguments of the corresponding 
-    constructor for the [expr] datatype. 
-
-    For the [Set] module signature example,
-    - [val empty : 'a t] corresponds to the 0-arity [Empty] constructor
-    - [val is_empty : 'a t -> bool] corresponds to [Is_empty of expr * bool] 
-    - Monormorphic primitive types are preserved. 
-
-    The [is_arrow] optional 
-    named argument specifies whether [ty] is an arrow type: if yes, then 
-    references to abstract types should be replaced with [expr], otherwise
-    an occurrence of an abstract type in an non-arrow type 
-    (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
-    corresponds to the 0-arity constructor [Empty]). *)
-val get_constructor_arg_tys : ?is_arrow:bool -> core_type -> core_type list
-
-(** Extracts the (monomorphized) return type of a type expression 
-    (i.e. the rightmost type in an arrow type) *)
-val get_ret_ty : core_type -> core_type
-
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)
 val mk_expr_constructors : signature -> constructor_declaration list
