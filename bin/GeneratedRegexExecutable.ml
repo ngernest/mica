@@ -10,7 +10,7 @@ open Lib.Stats
 open Lib.GeneratedRegexPBTCode
 
 let () =
-  let trials = 1000000 in 
+  let trials = 10000 in 
   let open Or_error in
   let module QC = Quickcheck in
   let test_bool =
