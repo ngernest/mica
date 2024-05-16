@@ -10,21 +10,19 @@ open Lib.Stats
 open Lib.GeneratedRegexPBTCode
 
 let () =
+  let trials = 1000000 in 
   let open Or_error in
   let module QC = Quickcheck in
   let test_bool =
-    QC.test_or_error (gen_expr Bool) ~sexp_of:sexp_of_expr ~f:(fun e ->
-      match (I1.interp e, I2.interp e) with
-      | ValBool b1, ValBool b2 ->
-        try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
-      | v1, v2 -> error_string @@ displayError e v1 v2) in
+    QC.test_or_error (gen_expr Bool) ~sexp_of:sexp_of_expr ~trials 
+      ~f:(fun e ->
+        match (I1.interp e, I2.interp e) with
+        | ValBool b1, ValBool b2 ->
+          try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
+        | v1, v2 -> error_string @@ displayError e v1 v2) in
 
   match combine_errors_unit [ test_bool ] with
-  | Ok ok ->
-    let numPassed = QC.default_can_generate_trial_count in
-    let numDiscarded = QC.(default_trial_count - numPassed) in
-    printf "\n Mica: OK, passed %d tests; %d discarded. \n" numPassed
-      numDiscarded
+  | Ok ok -> printf "passed all tests!"
   | Error err ->
     let open Stdlib.Format in
     Error.pp err_formatter err;

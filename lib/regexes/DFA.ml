@@ -35,7 +35,8 @@ let rec implode (chars : char list) : string =
 (** {1 DFA representation} *)
 
 type dfa =
-  { acceptsEmpty : bool; [@sexp.bool] next : char -> dfa [@sexp.opaque] }
+  { acceptsEmpty : bool; [@sexp.bool] 
+    next : char -> dfa [@sexp.opaque] }
 [@@deriving fields, sexp]
 
 module DFA : RegexMatcher = struct
