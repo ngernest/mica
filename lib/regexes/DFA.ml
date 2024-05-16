@@ -95,10 +95,11 @@ module DFA : RegexMatcher = struct
   let empty : dfa = star void
 
   let lit (cs : char list) : dfa =
+    let cs' = List.dedup_and_sort cs ~compare:Char.compare in 
     {
       acceptsEmpty = false;
       next = (fun c' -> 
-        if List.mem cs c' ~equal:Char.equal then star void else void);
+        if List.mem cs' c' ~equal:Char.equal then star void else void);
     }
 end
 
