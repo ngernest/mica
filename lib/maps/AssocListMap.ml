@@ -9,7 +9,6 @@ module G = Generator
     - Adapted from Cornell CS 3110 textbook, chapter 8. *)
 
 module AssocListMap : MapInterface = struct
-  type t = AssocList.t [@@deriving sexp]
   (** AF: The association list [[(k1, v1); (k2, v2); ...; (kn, vn)]] 
           is the map {k1 : v1, k2 : v2, .., kn : vn}. 
           If a key appears more than once in the list, then in the
@@ -17,6 +16,7 @@ module AssocListMap : MapInterface = struct
           [[(k, v1); (k, v2)]] represents {k : v1}. The empty list represents
           the empty map.
           RI: none. *)
+  type t = AssocList.t [@@deriving sexp]
 
   (** Efficiency: O(1). *)
   let insert (k, v) m = (k, v) :: m
@@ -86,11 +86,9 @@ let pp_list (pp_elt : 'a -> string) (lst : 'a list) : string =
       | [] -> acc
       | [ h ] -> acc ^ pp_elt h
       | h1 :: (_ :: _ as t') ->
-          if n = 100 then acc ^ "..." (* stop printing *)
-          else loop (n + 1) (acc ^ pp_elt h1 ^ "; ") t'
-    in
-    loop 0 "" lst
-  in
+        if n = 100 then acc ^ "..." (* stop printing *)
+        else loop (n + 1) (acc ^ pp_elt h1 ^ "; ") t' in
+    loop 0 "" lst in
   "[" ^ pp_elts lst ^ "]"
 
 (** [pp_pair pp1 pp2 (a, b)] pretty-prints [(a, b)] 

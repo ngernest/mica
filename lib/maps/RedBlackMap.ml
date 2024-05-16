@@ -20,8 +20,8 @@ open MapInterface
    introduced in Germane & Might's (2014) implementation of red-black tree deletion *)
 type color = Red | Black | BB [@@deriving sexp]
 
-type data = { key : Base.Int.t; value : Base.String.t } [@@deriving sexp]
 (** The type of (key, value) bindings stored at each red-black tree node *)
+type data = { key : Base.Int.t; value : Base.String.t } [@@deriving sexp]
 
 (** The type of red-black trees *)
 type rbtree = Empty of color | Node of color * rbtree * data * rbtree
@@ -35,13 +35,19 @@ let rec min (t : rbtree) : 'a =
   | Node (_, l, _, _) -> min l
 
 let node_val (t : rbtree) : 'a =
-  match t with Empty _ -> failwith "node_val error" | Node (_, _, x, _) -> x
+  match t with
+  | Empty _ -> failwith "node_val error"
+  | Node (_, _, x, _) -> x
 
 let left (t : rbtree) : rbtree =
-  match t with Empty _ -> failwith "left error" | Node (_, l, _, _) -> l
+  match t with
+  | Empty _ -> failwith "left error"
+  | Node (_, l, _, _) -> l
 
 let right (t : rbtree) : rbtree =
-  match t with Empty _ -> failwith "right error" | Node (_, _, _, r) -> r
+  match t with
+  | Empty _ -> failwith "right error"
+  | Node (_, _, _, r) -> r
 
 let add_b (t : rbtree) : rbtree =
   match t with
@@ -57,52 +63,58 @@ let rem_b (t : rbtree) : rbtree =
   | _ -> failwith "rem_b error"
 
 let is_black (t : rbtree) : bool =
-  match t with Empty Black | Node (Black, _, _, _) -> true | _ -> false
+  match t with
+  | Empty Black | Node (Black, _, _, _) -> true
+  | _ -> false
 
 let is_r (t : rbtree) : bool =
-  match t with Node (Red, _, _, _) -> true | _ -> false
+  match t with
+  | Node (Red, _, _, _) -> true
+  | _ -> false
 
 let is_bb (t : rbtree) : bool =
-  match t with Empty BB | Node (BB, _, _, _) -> true | _ -> false
+  match t with
+  | Empty BB | Node (BB, _, _, _) -> true
+  | _ -> false
 
 let rec bal_del_l (t : rbtree) : rbtree =
   match t with
   | Node (Black, d, y, Node (Red, l, z, r)) ->
-      if is_bb d then Node (Black, bal_del_l (Node (Red, d, y, l)), z, r)
-      else Node (Black, d, y, Node (Red, l, z, r))
+    if is_bb d then Node (Black, bal_del_l (Node (Red, d, y, l)), z, r)
+    else Node (Black, d, y, Node (Red, l, z, r))
   | Node (c, d, y, Node (Black, l, z, r)) ->
-      if is_bb d then
-        if is_black l && is_black r then
-          add_b (Node (c, rem_b d, y, Node (Red, l, z, r)))
-        else if is_r l && is_black r then
-          bal_del_l
-            (Node
-               ( c,
-                 d,
-                 y,
-                 Node (Black, left l, node_val l, Node (Red, right l, z, r)) ))
-        else Node (c, Node (Black, rem_b d, y, l), z, add_b r)
-      else Node (c, d, y, Node (Black, l, z, r))
+    if is_bb d then
+      if is_black l && is_black r then
+        add_b (Node (c, rem_b d, y, Node (Red, l, z, r)))
+      else if is_r l && is_black r then
+        bal_del_l
+          (Node
+             ( c,
+               d,
+               y,
+               Node (Black, left l, node_val l, Node (Red, right l, z, r)) ))
+      else Node (c, Node (Black, rem_b d, y, l), z, add_b r)
+    else Node (c, d, y, Node (Black, l, z, r))
   | n -> n
 
 let rec bal_del_r (t : rbtree) : rbtree =
   match t with
   | Node (Black, Node (Red, l, z, r), y, d) ->
-      if is_bb d then Node (Black, l, z, bal_del_r (Node (Red, r, y, d)))
-      else Node (Black, Node (Red, l, z, r), y, d)
+    if is_bb d then Node (Black, l, z, bal_del_r (Node (Red, r, y, d)))
+    else Node (Black, Node (Red, l, z, r), y, d)
   | Node (c, Node (Black, l, z, r), y, d) ->
-      if is_bb d then
-        if is_black l && is_black r then
-          add_b (Node (c, Node (Red, l, z, r), y, rem_b d))
-        else if is_black l && is_r r then
-          bal_del_r
-            (Node
-               ( c,
-                 Node (Black, Node (Red, l, z, left r), node_val r, right r),
-                 y,
-                 d ))
-        else Node (c, add_b l, z, Node (Black, r, y, rem_b d))
-      else Node (c, Node (Black, l, z, r), y, d)
+    if is_bb d then
+      if is_black l && is_black r then
+        add_b (Node (c, Node (Red, l, z, r), y, rem_b d))
+      else if is_black l && is_r r then
+        bal_del_r
+          (Node
+             ( c,
+               Node (Black, Node (Red, l, z, left r), node_val r, right r),
+               y,
+               d ))
+      else Node (c, add_b l, z, Node (Black, r, y, rem_b d))
+    else Node (c, Node (Black, l, z, r), y, d)
   | n -> n
 
 (** {1 Module for maps implemented using red-black trees} *)
@@ -120,9 +132,9 @@ module RedBlackMap : MapInterface = struct
     match t with
     | Empty _ -> None
     | Node (_, lt, x', rt) ->
-        if x'.key < x then find x rt
-        else if x'.key > x then find x lt
-        else Some x'.value
+      if x'.key < x then find x rt
+      else if x'.key > x then find x lt
+      else Some x'.value
 
   (** [balance (c, l, v, r)] implements the 4 possible rotations
       for balancing a red-black tree. *)
@@ -133,22 +145,17 @@ module RedBlackMap : MapInterface = struct
     | Black, Node (Red, a, x, Node (Red, b, y, c)), z, d (* 2 *)
     | Black, a, x, Node (Red, Node (Red, b, y, c), z, d) (* 3 *)
     | Black, a, x, Node (Red, b, y, Node (Red, c, z, d)) (* 4 *) ->
-        Node (Red, Node (Black, a, x, b), y, Node (Black, c, z, d))
+      Node (Red, Node (Black, a, x, b), y, Node (Black, c, z, d))
     | t -> Node (color, lt, data, rt)
 
-  (* The next figure shows the four possible cases in a rotation.
-      In it, a-d are possibly empty subtrees, and x-z are values stored at a node.
-      The nodes colors are indicated with R and B.
+  (* The next figure shows the four possible cases in a rotation. In it, a-d are
+     possibly empty subtrees, and x-z are values stored at a node. The nodes
+     colors are indicated with R and B.
 
-             1             2             3             4
+     1 2 3 4
 
-            Bz            Bz            Bx            Bx
-           / \           / \           / \           / \
-          Ry  d         Rx  d         a   Rz        a   Ry
-         /  \          / \               /  \          /  \
-       Rx   c         a   Ry            Ry   d        b    Rz
-      /  \               /  \          / \                /  \
-     a    b             b    c        b   c              c    d *)
+     Bz Bz Bx Bx / \ / \ / \ / \ Ry d Rx d a Rz a Ry / \ / \ / \ / \ Rx c a Ry
+     Ry d b Rz / \ / \ / \ / \ a b b c b c c d *)
 
   (** Helper function for [insert], which is the same as BST insertion. 
       - Efficiency: O(log n) *)
@@ -157,11 +164,11 @@ module RedBlackMap : MapInterface = struct
     (* Always color new nodes red, even if it violates the local invariant *)
     | Empty c -> Node (Red, Empty c, binding, Empty c)
     | Node (c, l, d, r) ->
-        (* Same as BST insertion,
-           but also call [balance] to restore the local invariant *)
-        if binding.key < d.key then balance (c, insert_aux binding l, d, r)
-        else if binding.key > d.key then balance (c, l, d, insert_aux binding r)
-        else Node (c, l, binding, r)
+      (* Same as BST insertion, but also call [balance] to restore the local
+         invariant *)
+      if binding.key < d.key then balance (c, insert_aux binding l, d, r)
+      else if binding.key > d.key then balance (c, l, d, insert_aux binding r)
+      else Node (c, l, binding, r)
 
   (** [insert (key, value) tree] inserts [x] into the red-black tree [t], 
       calling [insert_aux] to perform the insertion and 
@@ -172,7 +179,7 @@ module RedBlackMap : MapInterface = struct
     let binding = { key; value } in
     match insert_aux binding tree with
     | Empty _ ->
-        failwith "impossible" (* [insert_aux] can never return [Leaf] *)
+      failwith "impossible" (* [insert_aux] can never return [Leaf] *)
     | Node (_, l, v, r) -> Node (Black, l, v, r)
   (* Always color the root black *)
 
@@ -181,22 +188,21 @@ module RedBlackMap : MapInterface = struct
       match t with
       | Empty _ -> t
       | Node (Red, Empty _, x', Empty _) ->
-          if x'.key = x.key then Empty Black else t
+        if x'.key = x.key then Empty Black else t
       | Node (Black, Empty _, x', Empty _) ->
-          if x'.key = x.key then Empty BB else t
+        if x'.key = x.key then Empty BB else t
       | Node (_, Empty _, x', Node (_, l, y', r))
       | Node (_, Node (_, l, y', r), x', Empty _) ->
-          if x'.key = x.key then Node (Black, l, y', r)
-          else if y'.key = x.key then Node (Black, Empty Black, x', Empty Black)
-          else t
+        if x'.key = x.key then Node (Black, l, y', r)
+        else if y'.key = x.key then Node (Black, Empty Black, x', Empty Black)
+        else t
       | Node (c, l, x', r) ->
-          if x'.key < x.key then bal_del_r (Node (c, l, x', remove_aux_int r))
-          else if x'.key > x.key then
-            bal_del_l (Node (c, remove_aux_int l, x', r))
-          else
-            let m = min r in
-            bal_del_r (Node (c, l, m, remove_aux r m))
-    in
+        if x'.key < x.key then bal_del_r (Node (c, l, x', remove_aux_int r))
+        else if x'.key > x.key then
+          bal_del_l (Node (c, remove_aux_int l, x', r))
+        else
+          let m = min r in
+          bal_del_r (Node (c, l, m, remove_aux r m)) in
     remove_aux_int t
 
   (** [remove k lst] removes {i all} bindings for [k] in [lst]. 
@@ -215,8 +221,7 @@ module RedBlackMap : MapInterface = struct
       match tree with
       | Empty _ -> acc
       | Node (c, lt, x, rt) ->
-          bindings_aux ((x.key, x.value) :: bindings_aux acc rt) lt
-    in
+        bindings_aux ((x.key, x.value) :: bindings_aux acc rt) lt in
     bindings_aux [] tree
 
   (** [from_list lst] is a map containing the same bindings as the 

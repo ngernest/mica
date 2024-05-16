@@ -1,5 +1,5 @@
-open Base
 (** Auto-generated property-based testing code *)
+open Base
 
 open Base_quickcheck
 open MapInterface
@@ -36,22 +36,22 @@ module ExprToImpl (M : MapInterface) = struct
     match expr with
     | Empty -> ValT M.empty
     | Insert (p1, e2) -> (
-        match interp e2 with
-        | ValT e' -> ValT (M.insert p1 e')
-        | _ -> failwith "impossible")
+      match interp e2 with
+      | ValT e' -> ValT (M.insert p1 e')
+      | _ -> failwith "impossible")
     | Find (n1, e2) -> (
-        match interp e2 with
-        | ValT e' -> ValStringOption (M.find n1 e')
-        | _ -> failwith "impossible")
+      match interp e2 with
+      | ValT e' -> ValStringOption (M.find n1 e')
+      | _ -> failwith "impossible")
     | Remove (n1, e2) -> (
-        match interp e2 with
-        | ValT e' -> ValT (M.remove n1 e')
-        | _ -> failwith "impossible")
+      match interp e2 with
+      | ValT e' -> ValT (M.remove n1 e')
+      | _ -> failwith "impossible")
     | From_list ps -> ValT (M.from_list ps)
     | Bindings e -> (
-        match interp e with
-        | ValT e' -> ValAssocList (M.bindings e')
-        | _ -> failwith "impossible")
+      match interp e with
+      | ValT e' -> ValAssocList (M.bindings e')
+      | _ -> failwith "impossible")
 end
 
 let rec gen_expr (ty : ty) : expr Generator.t =
@@ -61,36 +61,29 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   match (ty, k) with
   | T, 0 -> return Empty
   | AssocList, _ ->
-      let bindings =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Bindings e
-      in
-      bindings
+    let bindings =
+      let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Bindings e in
+    bindings
   | StringOption, _ ->
-      let find =
-        let%bind n1 = G.int_inclusive (-10) 10 in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Find (n1, e2)
-      in
-      find
+    let find =
+      let%bind n1 = G.int_inclusive (-10) 10 in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Find (n1, e2) in
+    find
   | T, _ ->
-      let insert =
-        let%bind ((n1, s2) as p1) =
-          G.both (G.int_inclusive (-10) 10) genLatin
-        in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Insert (p1, e2)
-      in
-      let remove =
-        let%bind n1 = G.int_inclusive (-10) 10 in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Remove (n1, e2)
-      in
-      let from_list =
-        let%bind ps = [%quickcheck.generator: AssocList.t] in
-        G.return @@ From_list ps
-      in
-      G.union [ insert; remove; from_list ]
+    let insert =
+      let%bind ((n1, s2) as p1) = G.both (G.int_inclusive (-10) 10) genLatin in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Insert (p1, e2) in
+    let remove =
+      let%bind n1 = G.int_inclusive (-10) 10 in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Remove (n1, e2) in
+    let from_list =
+      let%bind ps = [%quickcheck.generator: AssocList.t] in
+      G.return @@ From_list ps in
+    G.union [ insert; remove; from_list ]
 
 module I1 = ExprToImpl (AssocListMap)
 module I2 = ExprToImpl (RedBlackMap)

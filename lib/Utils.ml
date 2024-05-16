@@ -60,8 +60,7 @@ let getModuleSigName (filepath : string) : string =
 (** [replicate n a] produces a list containing [n] copies of [a] *)
 let replicate ~(n : int) (a : 'a) : 'a list =
   let rec helper (n : int) (acc : 'a list) : 'a list =
-    if n = 0 then acc else helper (n - 1) (a :: acc)
-  in
+    if n = 0 then acc else helper (n - 1) (a :: acc) in
   helper n []
 
 (** Applies a function pointwise on a pair *)

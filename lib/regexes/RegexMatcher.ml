@@ -4,30 +4,30 @@
     (The Mica parser currently does not support parsing of comments.)
 *)
 module type RegexMatcher = sig
-  type t [@@deriving sexp]
   (** Abstract type of regexes *)
+  type t [@@deriving sexp]
 
-  val void : t
   (** [void] is the regex that always fails *)
+  val void : t
 
-  val empty : t
   (** [empty] is the regex that accepts the empty string *)
+  val empty : t
 
-  val lit : char list -> t
   (** [lit cs] constructs a regex that matches any character [c] in [cs] *)
+  val lit : char list -> t
 
-  val alt : t -> t -> t
   (** Smart constructor for alternation *)
+  val alt : t -> t -> t
 
-  val cat : t -> t -> t
   (** Smart constructor for concatenation *)
+  val cat : t -> t -> t
 
-  val star : t -> t
   (** Smart constructor for Kleene star *)
+  val star : t -> t
 
-  val matchString : t -> string -> bool
   (** [matchString s re] is [true] if the regex [re] matches the string [s] *)
+  val matchString : t -> string -> bool
 
-  val acceptsEmpty : t -> bool
   (** [acceptsEmpty re] is [true] if [re] accepts the empty string *)
+  val acceptsEmpty : t -> bool
 end

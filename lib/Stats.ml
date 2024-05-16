@@ -14,8 +14,8 @@ open Base_quickcheck
     invoke the functions in this file
 *)
 
-type expr [@@deriving sexp, compare]
 (** Abstract type of {i symbolic expressions} *)
+type expr [@@deriving sexp, compare]
 
 (** Module containing a comparator witness & serialization functions
     for the [expr] datatype. 
@@ -45,28 +45,28 @@ let seq_coverage (seq : expr Sequence.t) : int Map.M(Expr).t =
 let genSeqPrintFreq (gen : expr Generator.t) : unit =
   Printf.printf "Printing sequence\n";
   Test.with_sample_exn gen ~f:(fun seq ->
-      let counts = seq_coverage seq in
-      counts |> [%sexp_of: int Map.M(Expr).t] |> print_s)
+    let counts = seq_coverage seq in
+    counts |> [%sexp_of: int Map.M(Expr).t] |> print_s)
 
 (** [incrFreq m key] increments the frequency of [key] in the map [m] *)
 let incrFreq (m : ('a, int, 'comparator) Map.t) (key : 'a) :
-    ('a, int, 'comparator) Map.t =
+  ('a, int, 'comparator) Map.t =
   Map.update m key ~f:(fun n ->
-      let v = Option.value n ~default:0 in
-      v + 1)
+    let v = Option.value n ~default:0 in
+    v + 1)
 
 (** Increments the value of a key in a Hashtbl mapping ['a] values to [int] *)
 let incrHashtbl (h : ('a, int) Hashtbl.t) (key : 'a) : unit =
   Hashtbl.update h key ~f:(fun n ->
-      let n' = Option.value n ~default:0 in
-      n' + 1)
+    let n' = Option.value n ~default:0 in
+    n' + 1)
 
 (** [genExprWithLog gen h] takes a generator [gen] of [expr]s, 
     and produces a new generator that generates the same values 
     but also increments a hashtable [h] of frequencies (mapping [expr] to [int])
     every time a value is generated *)
 let genExprWithLog (gen : expr Generator.t) (h : (expr, int) Hashtbl.t) :
-    expr Generator.t =
+  expr Generator.t =
   Generator.Debug.monitor gen ~f:(incrHashtbl h)
 
 (** Computes the sum of all the values in the hashmap [h] *)
@@ -97,7 +97,7 @@ let sortByPercent (h : ('a, int) Hashtbl.t) : (float * 'a) list =
       in the string representation of the ['a] type. 
       The default precision is 10. *)
 let printPercents ?(precision = 10) ((p1, k1) : float * 'a)
-    ((p2, k2) : float * 'a) ~(printKey : 'a -> string) : unit =
+  ((p2, k2) : float * 'a) ~(printKey : 'a -> string) : unit =
   printf "\t %*s : %.2f \t %*s : %.2f\n" precision (printKey k1) p1 precision
     (printKey k2) p2
 
@@ -106,5 +106,5 @@ let printPercents ?(precision = 10) ((p1, k1) : float * 'a)
     - See [printPercents] for explanations of the named arguments [precision]
       and [printKey] *)
 let printPercent ?(precision = 10) ((p, k) : float * 'a)
-    ~(printKey : 'a -> string) : unit =
+  ~(printKey : 'a -> string) : unit =
   printf "\t %*s %.2f \n" precision (printKey k) p

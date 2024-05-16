@@ -1,5 +1,5 @@
-open Base
 (** QuickCheck utiltiy generators for placeholder Latin text & other strings *)
+open Base
 
 open Base_quickcheck
 
@@ -8,8 +8,7 @@ let latin : string Sequence.t =
   Sequence.of_lazy
   @@ lazy
        (Sequence.of_list
-          [
-            "Lorem";
+          [ "Lorem";
             "ipsum";
             "dolor";
             "sit";
@@ -108,7 +107,7 @@ let latin : string Sequence.t =
             "ac";
             "neque";
             "pulvinar";
-            "facilisis";
+            "facilisis"
           ])
 
 module G = Generator

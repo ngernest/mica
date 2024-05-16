@@ -20,43 +20,38 @@ module BenchmarkParams = struct
   let extendWithFlag flag = [ "-silent"; flag ]
 
   let setArgs =
-    [
-      "./bin/main.exe";
+    [ "./bin/main.exe";
       "./lib/sets/SetInterface.ml";
       "./lib/sets/ListSet.ml";
-      "./lib/sets/BSTSet.ml";
+      "./lib/sets/BSTSet.ml"
     ]
 
   let stackArgs =
-    [
-      "./bin/main.exe";
+    [ "./bin/main.exe";
       "./lib/stacks/StackInterface.ml";
       "./lib/stacks/ListStack.ml";
-      "./lib/stacks/VariantStack.ml";
+      "./lib/stacks/VariantStack.ml"
     ]
 
   let polyArgs =
-    [
-      "./bin/main.exe";
+    [ "./bin/main.exe";
       "./lib/polynomials/PolyInterface.ml";
       "./lib/polynomials/Poly1.ml";
-      "./lib/polynomials/Poly2.ml";
+      "./lib/polynomials/Poly2.ml"
     ]
 
   let mapArgs =
-    [
-      "./bin/main.exe";
+    [ "./bin/main.exe";
       "./lib/maps/MapInterface.ml";
       "./lib/maps/AssocListMap.ml";
-      "./lib/maps/RedBlackMap.ml";
+      "./lib/maps/RedBlackMap.ml"
     ]
 
   let regexArgs =
-    [
-      "./bin/main.exe";
+    [ "./bin/main.exe";
       "./lib/regexes/RegexMatcher.mli";
       "./lib/regexes/Brzozowski.ml";
-      "./lib/regexes/DFA.ml";
+      "./lib/regexes/DFA.ml"
     ]
 
   let setExecutable = "GeneratedSetExecutable.exe"
@@ -74,47 +69,41 @@ let () =
   let open BenchmarkParams in
   Command_unix.run
   @@ make_command
-       [
-         Test.create_group ~name:"Sets"
-           [
-             Test.create ~name:"Code generation" (fun () ->
-                 Command_unix.run ~argv:setArgs ~extend cmdLineParser);
+       [ Test.create_group ~name:"Sets"
+           [ Test.create ~name:"Code generation" (fun () ->
+               Command_unix.run ~argv:setArgs ~extend cmdLineParser);
              Test.create ~name:"PBT executable" (fun () ->
-                 Command.exec ~summary
-                   ~path_to_exe:(`Relative_to_me setExecutable));
+               Command.exec ~summary
+                 ~path_to_exe:(`Relative_to_me setExecutable))
            ];
          Test.create_group ~name:"Stacks"
-           [
-             Test.create ~name:"Code generation" (fun () ->
-                 Command_unix.run ~argv:stackArgs ~extend cmdLineParser);
+           [ Test.create ~name:"Code generation" (fun () ->
+               Command_unix.run ~argv:stackArgs ~extend cmdLineParser);
              Test.create ~name:"PBT executable" (fun () ->
-                 Command.exec ~summary
-                   ~path_to_exe:(`Relative_to_me stackExecutable));
+               Command.exec ~summary
+                 ~path_to_exe:(`Relative_to_me stackExecutable))
            ];
          Test.create_group ~name:"Polynomials"
-           [
-             Test.create ~name:"Code generation" (fun () ->
-                 Command_unix.run ~argv:polyArgs
-                   ~extend:(fun _ -> [ "-silent"; "-non-negative-ints-only" ])
-                   cmdLineParser);
+           [ Test.create ~name:"Code generation" (fun () ->
+               Command_unix.run ~argv:polyArgs
+                 ~extend:(fun _ -> [ "-silent"; "-non-negative-ints-only" ])
+                 cmdLineParser);
              Test.create ~name:"PBT executable" (fun () ->
-                 Command.exec ~summary
-                   ~path_to_exe:(`Relative_to_me polyExecutable));
+               Command.exec ~summary
+                 ~path_to_exe:(`Relative_to_me polyExecutable))
            ];
          Test.create_group ~name:"Maps"
-           [
-             Test.create ~name:"Code generation" (fun () ->
-                 Command_unix.run ~argv:mapArgs ~extend cmdLineParser);
+           [ Test.create ~name:"Code generation" (fun () ->
+               Command_unix.run ~argv:mapArgs ~extend cmdLineParser);
              Test.create ~name:"PBT executable" (fun () ->
-                 Command.exec ~summary
-                   ~path_to_exe:(`Relative_to_me mapExecutable));
+               Command.exec ~summary
+                 ~path_to_exe:(`Relative_to_me mapExecutable))
            ];
          Test.create_group ~name:"Regexes"
-           [
-             Test.create ~name:"Code generation" (fun () ->
-                 Command_unix.run ~argv:regexArgs ~extend cmdLineParser);
+           [ Test.create ~name:"Code generation" (fun () ->
+               Command_unix.run ~argv:regexArgs ~extend cmdLineParser);
              Test.create ~name:"PBT executable" (fun () ->
-                 Command.exec ~summary
-                   ~path_to_exe:(`Relative_to_me regexExecutable));
-           ];
+               Command.exec ~summary
+                 ~path_to_exe:(`Relative_to_me regexExecutable))
+           ]
        ]

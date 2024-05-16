@@ -1,5 +1,5 @@
-open Base
 (** Auto-generated property-based testing code *)
+open Base
 
 open Base_quickcheck
 open RegexMatcher
@@ -33,25 +33,25 @@ module ExprToImpl (M : RegexMatcher) = struct
     | Empty -> ValT M.empty
     | Lit cs -> ValT (M.lit cs)
     | Alt (e1, e2) -> (
-        match (interp e1, interp e2) with
-        | ValT e1', ValT e2' -> ValT (M.alt e1' e2')
-        | _ -> failwith "impossible")
+      match (interp e1, interp e2) with
+      | ValT e1', ValT e2' -> ValT (M.alt e1' e2')
+      | _ -> failwith "impossible")
     | Cat (e1, e2) -> (
-        match (interp e1, interp e2) with
-        | ValT e1', ValT e2' -> ValT (M.cat e1' e2')
-        | _ -> failwith "impossible")
+      match (interp e1, interp e2) with
+      | ValT e1', ValT e2' -> ValT (M.cat e1' e2')
+      | _ -> failwith "impossible")
     | Star e -> (
-        match interp e with
-        | ValT e' -> ValT (M.star e')
-        | _ -> failwith "impossible")
+      match interp e with
+      | ValT e' -> ValT (M.star e')
+      | _ -> failwith "impossible")
     | MatchString (e1, s2) -> (
-        match interp e1 with
-        | ValT e' -> ValBool (M.matchString e' s2)
-        | _ -> failwith "impossible")
+      match interp e1 with
+      | ValT e' -> ValBool (M.matchString e' s2)
+      | _ -> failwith "impossible")
     | AcceptsEmpty e -> (
-        match interp e with
-        | ValT e' -> ValBool (M.acceptsEmpty e')
-        | _ -> failwith "impossible")
+      match interp e with
+      | ValT e' -> ValBool (M.acceptsEmpty e')
+      | _ -> failwith "impossible")
 end
 
 let rec gen_expr (ty : ty) : expr Generator.t =
@@ -61,36 +61,30 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   match (ty, k) with
   | T, 0 -> G.union [ G.return Empty; G.return Void ]
   | Bool, _ ->
-      let matchString =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind s2 = G.string_non_empty in
-        G.return @@ MatchString (e1, s2)
-      in
-      let acceptsEmpty =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ AcceptsEmpty e
-      in
-      G.union [ matchString; acceptsEmpty ]
+    let matchString =
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
+      let%bind s2 = G.string_non_empty in
+      G.return @@ MatchString (e1, s2) in
+    let acceptsEmpty =
+      let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ AcceptsEmpty e in
+    G.union [ matchString; acceptsEmpty ]
   | T, _ ->
-      let lit =
-        let%bind cs = G.list G.char_alpha in
-        G.return @@ Lit cs
-      in
-      let alt =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Alt (e1, e2)
-      in
-      let cat =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Cat (e1, e2)
-      in
-      let star =
-        let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Star e
-      in
-      G.union [ lit; alt; cat; star ]
+    let lit =
+      let%bind cs = G.list G.char_alpha in
+      G.return @@ Lit cs in
+    let alt =
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Alt (e1, e2) in
+    let cat =
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Cat (e1, e2) in
+    let star =
+      let%bind e = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Star e in
+    G.union [ lit; alt; cat; star ]
 
 module I1 = ExprToImpl (Brzozowski)
 module I2 = ExprToImpl (DFA)

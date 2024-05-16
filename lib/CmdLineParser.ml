@@ -28,10 +28,12 @@ let prompt_for_string ~(name : string) ~(of_string : string -> 'a) : 'a =
     if a value isn’t provided, where [of_string] is used to convert the 
     user input from string to type ['a]. *)
 let anon_prompt ~(name : string) ~(of_string : string -> 'a) :
-    'a Command.Param.t =
+  'a Command.Param.t =
   let arg = Command.Arg_type.create of_string in
   let%map_open.Command value = anon (maybe (name %: arg)) in
-  match value with Some v -> v | None -> prompt_for_string ~name ~of_string
+  match value with
+  | Some v -> v
+  | None -> prompt_for_string ~name ~of_string
 
 (** Checks if a string is a valid readable filename *)
 let is_filename (filename : string) : string =
@@ -70,8 +72,8 @@ let externalLibDoc : string =
     [functorName] is the name of the functor that produces the test harness
     [sigName, modName1, modName2] are the names of the signature/two module implementations *)
 let writeToPBTFile (m : moduleSig) ~(pbtFilePath : string)
-    ~(functorName : string) ~(sigName : string) ~(externalLib : string option)
-    ~(nonNegOnly : bool) (modName1 : string) (modName2 : string) : unit =
+  ~(functorName : string) ~(sigName : string) ~(externalLib : string option)
+  ~(nonNegOnly : bool) (modName1 : string) (modName2 : string) : unit =
   let pbtFile = Out_channel.create ~append:false pbtFilePath in
   writeDoc pbtFile
     (imports ~externalLib ~sigName ~modName1 ~modName2
@@ -100,21 +102,20 @@ let cmdLineParser : Command.t =
        let functorName = "ExprToImpl" in
        let moduleString = string_of_file sigFile in
        let sigName, modName1, modName2 =
-         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2)
-       in
+         map3 ~f:getModuleSigName (sigFile, implFile1, implFile2) in
        match run_parser moduleTypeP moduleString with
        | Ok m ->
-           writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~externalLib
-             ~nonNegOnly modName1 modName2;
+         writeToPBTFile m ~pbtFilePath ~functorName ~sigName ~externalLib
+           ~nonNegOnly modName1 modName2;
 
-           let executable = Out_channel.create ~append:false execFilePath in
-           writeDoc executable (executableImports ~pbtFilePath ~execFilePath);
-           writeDoc executable (compareImpls m);
-           Out_channel.close executable;
+         let executable = Out_channel.create ~append:false execFilePath in
+         writeDoc executable (executableImports ~pbtFilePath ~execFilePath);
+         writeDoc executable (compareImpls m);
+         Out_channel.close executable;
 
-           if not silent then
-             printf
-             @@ "\n\
-                 Generated PBT code: ./lib/generated.ml\n\
-                 Generated executable: ./bin/compare_impls.exe\n"
+         if not silent then
+           printf
+           @@ "\n\
+               Generated PBT code: ./lib/generated.ml\n\
+               Generated executable: ./bin/compare_impls.exe\n"
        | Error err -> printf "error = %s\n" err)

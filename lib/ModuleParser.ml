@@ -14,8 +14,8 @@ open Stdio
     This file depends on helper functions defined in the module [Lib.Parser],
     and datatype definitions defined in [Lib.ParserTypes]. *)
 
-module A = Angstrom
 (** Alias for the [Angstrom] module *)
+module A = Angstrom
 
 (** Parsers for identifiers in OCaml 
     [ident ::= (A..Z | a..z | _) {A..Z | a..z | 0..9 | _ | \'}] *)
@@ -53,14 +53,13 @@ let baseTypeP : ty A.t =
 (** Parses the names of common Jane Street libraries *)
 let libraryNameP : string A.t =
   A.choice
-    [
-      A.string "Base_quickcheck.Generator";
+    [ A.string "Base_quickcheck.Generator";
       A.string "Base_quickcheck";
       A.string "Base";
       A.string "Core.Quickcheck.Generator";
       A.string "Core.Quickcheck";
       A.string "Core";
-      A.string "Stdio";
+      A.string "Stdio"
     ]
 
 (** General parser for parameterized types, eg. options/pairs/lists *)
@@ -68,12 +67,10 @@ let paramTypeP : ty A.t =
   fix @@ fun paramType ->
   let pairP =
     (fun (t1, t2) -> Pair (t1, t2))
-    <$> A.both baseTypeP (stringP "*" *> baseTypeP)
-  in
+    <$> A.both baseTypeP (stringP "*" *> baseTypeP) in
   let optionP =
     (fun ty -> Option ty)
-    <$> (baseTypeP <|> parens paramType <* stringP "option")
-  in
+    <$> (baseTypeP <|> parens paramType <* stringP "option") in
   let listP =
     (fun ty -> List ty) <$> (baseTypeP <|> parens paramType <* stringP "list")
   in
@@ -104,19 +101,16 @@ let abstractTypeP : abstractType A.t =
   let noParam = typeTokenP *> lowercaseIdentP >>| fun tyName -> T0 tyName in
   let withParam =
     typeTokenP *> wsP typeParamP *> lowercaseIdentP >>| fun tyName ->
-    T1 (Alpha, tyName)
-  in
+    T1 (Alpha, tyName) in
   noParam <|> withParam <* sexpAnnotP
 
 (** Parser for arrow types *)
 let arrowTypeP : ty A.t =
   let func1P =
-    (fun arg ret -> Func1 (arg, ret)) <$> typeP <* stringP "->" <*> typeP
-  in
+    (fun arg ret -> Func1 (arg, ret)) <$> typeP <* stringP "->" <*> typeP in
   let func2P =
     (fun arg1 arg2 ret -> Func2 (arg1, arg2, ret))
-    <$> typeP <* stringP "->" <*> typeP <* stringP "->" <*> typeP
-  in
+    <$> typeP <* stringP "->" <*> typeP <* stringP "->" <*> typeP in
   func2P <|> func1P
 
 (** Parser for a value declaration inside a module, 
@@ -129,12 +123,11 @@ let valDeclP : valDecl A.t =
 (** Parser for a module signature *)
 let moduleTypeP : moduleSig A.t =
   (fun moduleName abstractTypes valDecls ->
-    {
-      moduleName;
+    { moduleName;
       moduleType = Intf;
       abstractTypes;
       valDecls;
-      intFlag = AllInts;
+      intFlag = AllInts
     })
   <$> stringP "module type" *> modNameP
   <* stringP "= sig" <*> A.many abstractTypeP <*> A.many valDeclP

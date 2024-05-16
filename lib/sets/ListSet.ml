@@ -1,10 +1,10 @@
 open SetInterface
 
 module ListSet : SetInterface = struct
-  type 'a t = 'a Base.List.t [@@deriving sexp, equal]
   (** AF: The list [a1; ...; an] represents the set {a1, ..., an}. 
           The empty list [[]] represents the empty set. 
       RI: The list must not contain duplicates. *)
+  type 'a t = 'a Base.List.t [@@deriving sexp, equal]
 
   let empty = []
   let is_empty lst = lst == []

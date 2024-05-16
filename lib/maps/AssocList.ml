@@ -8,8 +8,8 @@ open Base
     following the convention in Jane Street's [Base.Compare] module
     - See https://ocaml.janestreet.com/ocaml-core/v0.12/doc/base/Base/Comparable/index.html *)
 module T = struct
-  type t = (int * string) list [@@deriving sexp]
   (** Definition of the [assoc_list] opaque type *)
+  type t = (int * string) list [@@deriving sexp]
 
   (** Polymorphic lexicographic comparison for pair types ['a * 'b], using 
     the default [compare] functions for types ['a] and ['b]. 
@@ -22,7 +22,9 @@ module T = struct
   let lex_compare_pair ((a1, b1) : int * string) ((a2, b2) : int * string) : int
       =
     let compare_fst = compare a1 a2 in
-    match compare_fst with 0 -> String.compare b1 b2 | _ -> compare_fst
+    match compare_fst with
+    | 0 -> String.compare b1 b2
+    | _ -> compare_fst
 
   (** Comparison function for the [assoc_list] opaque type *)
   let compare (lst1 : t) (lst2 : t) : int =

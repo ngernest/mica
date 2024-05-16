@@ -1,5 +1,5 @@
-open Base
 (** Auto-generated property-based testing code *)
+open Base
 
 open Base_quickcheck
 open PolyInterface
@@ -36,22 +36,22 @@ module ExprToImpl (M : PolyInterface) = struct
     | Power (n1, n2) -> ValInt (M.power n1 n2)
     | Monomial (n1, n2) -> ValT (M.monomial n1 n2)
     | Add (e1, e2) -> (
-        match (interp e1, interp e2) with
-        | ValT e1', ValT e2' -> ValT (M.add e1' e2')
-        | _ -> failwith "impossible")
+      match (interp e1, interp e2) with
+      | ValT e1', ValT e2' -> ValT (M.add e1' e2')
+      | _ -> failwith "impossible")
     | Mult (e1, e2) -> (
-        match (interp e1, interp e2) with
-        | ValT e1', ValT e2' -> ValT (M.mult e1' e2')
-        | _ -> failwith "impossible")
+      match (interp e1, interp e2) with
+      | ValT e1', ValT e2' -> ValT (M.mult e1' e2')
+      | _ -> failwith "impossible")
     | Create ps -> ValT (M.create ps)
     | Eval (e1, n2) -> (
-        match interp e1 with
-        | ValT e' -> ValInt (M.eval e' n2)
-        | _ -> failwith "impossible")
+      match interp e1 with
+      | ValT e' -> ValInt (M.eval e' n2)
+      | _ -> failwith "impossible")
     | Equal (e1, e2) -> (
-        match (interp e1, interp e2) with
-        | ValT e1', ValT e2' -> ValBool (M.equal e1' e2')
-        | _ -> failwith "impossible")
+      match (interp e1, interp e2) with
+      | ValT e1', ValT e2' -> ValBool (M.equal e1' e2')
+      | _ -> failwith "impossible")
 end
 
 let rec gen_expr (ty : ty) : expr Generator.t =
@@ -61,48 +61,41 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   match (ty, k) with
   | T, 0 -> G.union [ G.return One; G.return Zero ]
   | Bool, _ ->
-      let equal =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Equal (e1, e2)
-      in
-      equal
+    let equal =
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Equal (e1, e2) in
+    equal
   | Int, _ ->
-      let power =
-        let%bind n1 = G.small_positive_or_zero_int in
-        let%bind n2 = G.small_positive_or_zero_int in
-        G.return @@ Power (n1, n2)
-      in
-      let eval =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind n2 = G.small_positive_or_zero_int in
-        G.return @@ Eval (e1, n2)
-      in
-      G.union [ power; eval ]
+    let power =
+      let%bind n1 = G.small_positive_or_zero_int in
+      let%bind n2 = G.small_positive_or_zero_int in
+      G.return @@ Power (n1, n2) in
+    let eval =
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
+      let%bind n2 = G.small_positive_or_zero_int in
+      G.return @@ Eval (e1, n2) in
+    G.union [ power; eval ]
   | T, _ ->
-      let monomial =
-        let%bind n1 = G.small_positive_or_zero_int in
-        let%bind n2 = G.small_positive_or_zero_int in
-        G.return @@ Monomial (n1, n2)
+    let monomial =
+      let%bind n1 = G.small_positive_or_zero_int in
+      let%bind n2 = G.small_positive_or_zero_int in
+      G.return @@ Monomial (n1, n2) in
+    let add =
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Add (e1, e2) in
+    let mult =
+      let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
+      let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
+      G.return @@ Mult (e1, e2) in
+    let create =
+      let%bind ps =
+        G.list
+        @@ G.both G.small_positive_or_zero_int G.small_positive_or_zero_int
       in
-      let add =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Add (e1, e2)
-      in
-      let mult =
-        let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
-        let%bind e2 = G.with_size ~size:(k / 2) (gen_expr T) in
-        G.return @@ Mult (e1, e2)
-      in
-      let create =
-        let%bind ps =
-          G.list
-          @@ G.both G.small_positive_or_zero_int G.small_positive_or_zero_int
-        in
-        G.return @@ Create ps
-      in
-      G.union [ monomial; add; mult; create ]
+      G.return @@ Create ps in
+    G.union [ monomial; add; mult; create ]
 
 module I1 = ExprToImpl (Poly1)
 module I2 = ExprToImpl (Poly2)
