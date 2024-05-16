@@ -94,11 +94,11 @@ module DFA : RegexMatcher = struct
 
   let empty : dfa = star void
 
-  let lit (c : char) : dfa =
-    let open Char in
+  let lit (cs : char list) : dfa =
     {
       acceptsEmpty = false;
-      next = (fun c' -> if c = c' then star void else void);
+      next = (fun c' -> 
+        if List.mem cs c' ~equal:Char.equal then star void else void);
     }
 end
 

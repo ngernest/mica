@@ -13,8 +13,8 @@ module type RegexMatcher = sig
   val empty : t
   (** [empty] is the regex that accepts the empty string *)
 
-  val lit : char -> t
-  (** [lit c] constructs a regex that matches the character [c] *)
+  val lit : char list -> t
+  (** [lit cs] constructs a regex that matches any character [c] in [cs] *)
 
   val alt : t -> t -> t
   (** Smart constructor for alternation *)

@@ -13,7 +13,7 @@ open RegexMatcher
 type re =
   | Void  (** always fails *)
   | Empty  (** accepts empty string *)
-  | Lit of char  (** Single literal character *)
+  | Lit of char list  (** a list containing unique characters*)
   | Alt of re * re  (** [r1|r2], alternation *)
   | Cat of re * re  (** [r1 r2], concatenation *)
   | Star of re  (** [r*], Kleene star *)
@@ -23,7 +23,7 @@ module Brzozowski : RegexMatcher = struct
   type t = re [@@deriving sexp]
 
   (** [lit c] is an alias for the [Lit] constructor *)
-  let lit c = Lit c
+  let lit cs = Lit (List.dedup_and_sort ~compare:Char.compare cs)
 
   (** [void] is an alias for the [Void] constructor *)
   let void = Void
@@ -33,7 +33,10 @@ module Brzozowski : RegexMatcher = struct
 
   (** Smart constructor for alternation *)
   let alt r1 r2 =
-    match (r1, r2) with _, Void -> r1 | Void, _ -> r2 | _, _ -> Alt (r1, r2)
+    match (r1, r2) with 
+    | _, Void -> r1 
+    | Void, _ -> r2 
+    | _, _ -> Alt (r1, r2)
 
   (** [r1 <|> r2] is the same as [alt r1 r2] *)
   let ( <|> ) r1 r2 : re = alt r1 r2
@@ -55,10 +58,13 @@ module Brzozowski : RegexMatcher = struct
       - Zero or more occurrences of [Void] is empty
       - Two iterations is the same as one, i.e. [star (Star r) = Star r] *)
   let star (re : re) : re =
-    match re with Void | Empty -> Empty | Star re' -> Star re' | _ -> Star re
+    match re with 
+    | Void | Empty -> Empty 
+    | Star re' -> Star re' 
+    | _ -> Star re
 
   (** Example regex, where [ex1 = a(b* | c)] *)
-  let ex1 : re = Lit 'a' ^^ (Star (Lit 'b') <|> Lit 'c')
+  let ex1 : re = Lit ['a'] ^^ (Star (Lit ['b']) <|> Lit ['c'])
 
   (** [acceptsEmpty r] returns [true] when [r] can match the empty string *)
   let rec acceptsEmpty (re : re) : bool =
@@ -73,7 +79,7 @@ module Brzozowski : RegexMatcher = struct
   let rec deriv (re : re) (c : char) : re =
     match re with
     | Void | Empty -> Void
-    | Lit c' when Char.(c = c') -> Empty
+    | Lit cs when List.mem cs c ~equal:Char.equal -> Empty
     | Lit _ -> Void
     | Alt (r1, r2) -> deriv r1 c <|> deriv r2 c
     | Cat (r1, r2) ->
@@ -93,15 +99,15 @@ module Brzozowski : RegexMatcher = struct
   (** Generates a regex of the form [Lit c], 
       i.e. a regex that accepts a particular char [c] *)
   let genLit : re G.t =
-    let%map c = G.of_list [ 'a'; 'b'; 'c'; 'd' ] in
-    Lit c
+    let%map c = G.list G.char_alpha in
+    lit c
 
   (** Generates a character between 'a' and 'd' *)
   let genChar : char G.t = G.of_list [ 'a'; 'b'; 'c'; 'd' ]
 
   (** Generator for regexes *)
 
-  let genRegex : re G.t =
+  (* let genRegex : re G.t =
     G.recursive_union
       [ G.return Void; G.return Empty; (genChar >>| fun c -> Lit c) ]
       ~f:(fun regexGen ->
@@ -112,10 +118,10 @@ module Brzozowski : RegexMatcher = struct
            cat r1 r2);
           (let%map r = regexGen in
            star r);
-        ])
+        ]) *)
 
   (** [genRegexString r] returns for the strings accepted by the regex [r], if any *)
-  let rec genRegexString (r : re) : string G.t option =
+  (* let rec genRegexString (r : re) : string G.t option =
     match r with
     | Void -> None
     | Empty -> Some (G.return "")
@@ -136,6 +142,6 @@ module Brzozowski : RegexMatcher = struct
             Some
               (let%bind n = G.int_uniform_inclusive 0 3 in
                let%bind s = G.list_with_length ~length:n gen in
-               G.return @@ String.concat s))
+               G.return @@ String.concat s)) *)
 end
 (* To test, run [Option.value_map (genRegexString ex1) ~default:"void" ~f:random_value] *)

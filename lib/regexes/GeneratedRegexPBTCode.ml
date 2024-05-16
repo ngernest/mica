@@ -12,7 +12,7 @@ open DFA
 type expr =
   | Void
   | Empty
-  | Lit of char
+  | Lit of char list
   | Alt of expr * expr
   | Cat of expr * expr
   | Star of expr
@@ -31,7 +31,7 @@ module ExprToImpl (M : RegexMatcher) = struct
     match expr with
     | Void -> ValT M.void
     | Empty -> ValT M.empty
-    | Lit c -> ValT (M.lit c)
+    | Lit cs -> ValT (M.lit cs)
     | Alt (e1, e2) -> (
         match (interp e1, interp e2) with
         | ValT e1', ValT e2' -> ValT (M.alt e1' e2')
@@ -73,8 +73,8 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       G.union [ matchString; acceptsEmpty ]
   | T, _ ->
       let lit =
-        let%bind c = G.char_alpha in
-        G.return @@ Lit c
+        let%bind cs = G.list G.char_alpha in
+        G.return @@ Lit cs
       in
       let alt =
         let%bind e1 = G.with_size ~size:(k / 2) (gen_expr T) in
