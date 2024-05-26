@@ -54,10 +54,9 @@ let rec get_last (lst : 'a list) : 'a =
   | [ x ] -> x
   | x :: xs -> get_last xs
 
-
 (** Name of the abstract type in the module signature, 
     by default ["t"] *)
-let abstract_ty_name : string = "t"  
+let abstract_ty_name : string = "t"
 
 (*******************************************************************************)
 (** {1 Longident utility functions} *)
@@ -272,7 +271,7 @@ let rec get_ret_ty (ty : core_type) : core_type =
     match ty_mono.ptyp_desc with
     | Ptyp_constr _ | Ptyp_tuple _ | Ptyp_any | Ptyp_var _ -> ty_mono
     | Ptyp_arrow (_, _, t2) -> get_ret_ty t2
-    | _ -> failwith "Type expression not supported by get_ret_ty"  
+    | _ -> failwith "Type expression not supported by get_ret_ty"
 
 (** Helper function: [get_constructor_args loc get_ty args] takes [args], 
     a list containing the {i representation} of constructor arguments, 
@@ -407,3 +406,34 @@ let rec is_abs_ty_parameterized (sig_items : signature) : bool =
                ty_decls)
       | _ -> acc)
     ~init:false sig_items
+
+(** [mk_valt_pat "x" ~loc] creates the pattern [ValT x], 
+    consisting of the constructor [Valt] applied to the argument [x] 
+    - The named argument [abs_ty_parameterized] represents whether the 
+    abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
+let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : location) :
+  pattern =
+  let val_cstr = if abs_ty_parameterized then "ValIntT" else "ValT" in
+  let var_ident = ppat_var_of_string x ~loc in
+  ppat_construct ~loc
+    (with_loc ~loc (Longident.parse val_cstr))
+    (Some var_ident)
+
+(** [get_match_arm ~loc expr_vars ~abs_ty_parameterized] returns the 
+    match arms of the inner pattern match in [interp], e.g. 
+    an expression of the form [ValIntT e]
+    - The argument [expr_vars] is a list of variable names that 
+    have type [expr]
+    - The named argument [abs_ty_parameterized] represents whether the 
+    abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)    
+let get_match_arm ~(loc : location) (expr_vars : string list) 
+  ~(abs_ty_parameterized : bool) : pattern =
+  match expr_vars with
+  | [] -> failwith "impossible"
+  | [ x ] -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x)
+  | _ ->
+    let val_exprs : pattern list =
+      List.map
+        ~f:(fun x -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x))
+        expr_vars in
+    ppat_tuple ~loc val_exprs
