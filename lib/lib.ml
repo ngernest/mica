@@ -19,7 +19,7 @@ let mk_expr_constructors (sig_items : signature) : constructor_declaration list
          let name = String.capitalize_ascii pval_name.txt in
          (* Exclude the return type of the function from the list of argument
             types for the [expr] data constructor *)
-         let arg_tys = remove_last (get_constructor_arg_tys pval_type) in
+         let arg_tys = remove_last (get_cstr_arg_tys pval_type) in
          mk_constructor ~name ~loc:pval_loc ~arg_tys :: acc
        | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
        | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
@@ -111,10 +111,10 @@ let get_expr_constructors (mod_ty : module_type) :
   (Longident.t Location.loc * pattern option * inv_ctx) list =
   match mod_ty.pmty_desc with
   | Pmty_signature sig_items ->
-    get_constructor_names (mk_expr_constructors sig_items)
+    get_cstr_metadata (mk_expr_constructors sig_items)
   | _ -> failwith "TODO: get_expr_constructors"
 
-(** TODO: implement a version of [mk_valt_pat] that produces *)    
+(** TODO: implement a version of [mk_valt_pat] that produces *)
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
@@ -124,14 +124,15 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   (args : pattern option) ~(gamma : inv_ctx) : expression =
   match args with
   (* Constructors with no arguments *)
-  | None -> 
-    (** TODO: need to produce an application of the [ValIntT] constructor *)
+  | None ->
+    (* TODO: need to produce an application of the [ValIntT] constructor *)
     pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
   (* Constructors with arity n, where n > 0 *)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
     let vars : string list = List.map ~f:get_varname xs in
-    let expr_vars : string list = find_exprs gamma in 
-    let match_arm : pattern = get_match_arm ~loc expr_vars ~abs_ty_parameterized in 
+    let expr_vars : string list = find_exprs gamma in
+    let match_arm : pattern =
+      get_match_arm ~loc expr_vars ~abs_ty_parameterized in
     let scrutinees : expression =
       match expr_vars with
       | [] ->
@@ -161,11 +162,12 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     let ident : expression = pexp_ident_of_string x.txt ~loc in
     let scrutinee : expression =
       pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
-    let match_arm : pattern = get_match_arm ~loc [x.txt] ~abs_ty_parameterized in 
+    let match_arm : pattern =
+      get_match_arm ~loc [ x.txt ] ~abs_ty_parameterized in
     (* TODO: figure out how to generate the body of this case stmt *)
     [%expr
       match [%e scrutinee] with
-      | [%p match_arm] ->  failwith "TODO: finish RHS"
+      | [%p match_arm] -> failwith "TODO: finish RHS"
       | _ -> failwith "impossible"]
   | Some pat ->
     Stdio.printf "cstr = %s\n" (string_of_lident cstr.txt);
@@ -187,7 +189,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   ?(abs_ty_parameterized = false)
   (expr_cstrs : (Longident.t Location.loc * pattern option * inv_ctx) list) :
   structure_item =
-  (* String literal denoting the argument to [interp] *)
+  (* [arg_str] denotes the argument to [interp] *)
   let arg_str = "e" in
   let arg_ident : expression =
     pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in

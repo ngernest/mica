@@ -244,7 +244,7 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
     (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
     corresponds to the 0-arity constructor [Empty]).
 *)
-let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
+let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type) :
   core_type list =
   let loc = ty.ptyp_loc in
   match monomorphize ty with
@@ -255,11 +255,11 @@ let rec get_constructor_arg_tys ?(is_arrow = false) (ty : core_type) :
       if is_arrow then [ [%type: expr] ] else []
     else [ ty' ]
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _ } ->
-    get_constructor_arg_tys ~is_arrow:true t1
-    @ get_constructor_arg_tys ~is_arrow:true t2
+    get_cstr_arg_tys ~is_arrow:true t1
+    @ get_cstr_arg_tys ~is_arrow:true t2
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
-    List.concat_map ~f:(get_constructor_arg_tys ~is_arrow) tys
-  | _ -> failwith "TODO: get_constructor_arg_tys"
+    List.concat_map ~f:(get_cstr_arg_tys ~is_arrow) tys
+  | _ -> failwith "TODO: get_cstr_arg_tys"
 
 (** Extracts the (monomorphized) return type of a type expression 
     (i.e. the rightmost type in an arrow type) *)
@@ -273,15 +273,15 @@ let rec get_ret_ty (ty : core_type) : core_type =
     | Ptyp_arrow (_, _, t2) -> get_ret_ty t2
     | _ -> failwith "Type expression not supported by get_ret_ty"
 
-(** Helper function: [get_constructor_args loc get_ty args] takes [args], 
+(** Helper function: [get_cstr_args loc get_ty args] takes [args], 
     a list containing the {i representation} of constructor arguments, 
     applies the function [get_ty] to each element of [args] and produces 
     a formatted tuple of constructor arguments (using the [ppat_tuple] smart 
     constructor for the [pattern] type).  
     - Note that [args] has type ['a list], i.e. the representation of 
     constructor arguments is polymorphic -- this function is instantiated 
-    with different types when called in [get_constructor_names] *)
-let get_constructor_args ~(loc : Location.t) (get_ty : 'a -> core_type)
+    with different types when called in [get_cstr_names] *)
+let get_cstr_args ~(loc : Location.t) (get_ty : 'a -> core_type)
   (args : 'a list) : pattern * inv_ctx =
   let arg_tys : core_type list = List.map ~f:get_ty args in
   let arg_names : pattern list = List.mapi ~f:(mk_fresh ~loc) arg_tys in
@@ -304,7 +304,7 @@ let find_exprs (gamma : inv_ctx) : string list =
 (** Takes a list of [constructor_declaration]'s and returns 
     a list consisting of (constructor name, constructor arguments, 
     typing context) constructor names (annotated with their locations) *)
-let get_constructor_names (cstrs : constructor_declaration list) :
+let get_cstr_metadata (cstrs : constructor_declaration list) :
   (Longident.t Location.loc * pattern option * inv_ctx) list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
     let cstr_name = with_loc (Longident.parse txt) ~loc in
@@ -314,11 +314,11 @@ let get_constructor_names (cstrs : constructor_declaration list) :
     (* N-ary constructors (where n > 0) *)
     | Pcstr_tuple arg_tys ->
       let (cstr_args, gamma) : pattern * inv_ctx =
-        get_constructor_args ~loc Fun.id arg_tys in
+        get_cstr_args ~loc Fun.id arg_tys in
       (cstr_name, Some cstr_args, gamma)
     | Pcstr_record arg_lbls ->
       let cstr_args, gamma =
-        get_constructor_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
+        get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
       in
       (cstr_name, Some cstr_args, gamma))
 
@@ -326,11 +326,11 @@ let get_constructor_names (cstrs : constructor_declaration list) :
     and returns a list of (constructor name, constructor arguments) 
     - Raises an exception if the [type_declaration] doesn't correspond to an 
       algebraic data type *)
-let get_constructors_of_ty_decl (ty_decl : type_declaration) :
+let get_cstrs_of_ty_decl (ty_decl : type_declaration) :
   (Longident.t Location.loc * pattern option) list =
   match ty_decl.ptype_kind with
   | Ptype_variant args ->
-    List.map ~f:triple_to_pair (get_constructor_names args)
+    List.map ~f:triple_to_pair (get_cstr_metadata args)
   | _ -> failwith "error: expected an algebraic data type definition"
 
 (** Converts a type expression [ty] to its camel-case string representation 
@@ -425,8 +425,8 @@ let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : location) :
     - The argument [expr_vars] is a list of variable names that 
     have type [expr]
     - The named argument [abs_ty_parameterized] represents whether the 
-    abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)    
-let get_match_arm ~(loc : location) (expr_vars : string list) 
+    abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
+let get_match_arm ~(loc : location) (expr_vars : string list)
   ~(abs_ty_parameterized : bool) : pattern =
   match expr_vars with
   | [] -> failwith "impossible"
