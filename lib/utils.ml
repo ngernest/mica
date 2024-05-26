@@ -358,12 +358,12 @@ let rec string_of_core_ty (ty : core_type) : string =
     an algebraic data type called [name] at location [loc] 
     with the specified [constructors] *)
 let mk_adt ~(loc : location) ~(name : string)
-  ~(constructors : constructor_declaration list) : type_declaration =
+  ~(cstrs : constructor_declaration list) : type_declaration =
   type_declaration ~loc
     ~name:{ txt = name; loc } (* Name of type *)
     ~cstrs:[] (* Type constraints, not needed here *)
     ~params:[] (* Type parameters *)
-    ~kind:(Ptype_variant constructors) ~private_:Public
+    ~kind:(Ptype_variant cstrs) ~private_:Public
     ~manifest:None (* RHS of [type t =...], doesn't apply here *)
 
 (** [mk_error ~local ~global msg] creates an error extension node, 

@@ -23,6 +23,12 @@ based on the unique return types of all [val] declarations within
 the module signature *)
 val mk_ty_cstrs : signature -> constructor_declaration list
 
+(** [mk_val_cstr ty] constructors the corresponding constructor declaration
+    for the [value] datatype, given some [core_type] [ty]
+    - e.g. if [ty = Int], [mk_val_cstr] returns the declaration for 
+      the [ValInt] constructor *)
+val mk_val_cstr : core_type -> constructor_declaration
+
 (** Constructs the definition of the [value] algebraic data type
     based on the inhabitants of the [ty] ADT *)
 val mk_val_cstrs : signature -> constructor_declaration list

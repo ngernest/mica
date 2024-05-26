@@ -59,13 +59,16 @@ let mk_ty_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:(fun ty ->
     mk_cstr ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
+(** [mk_val_cstr ty] constructors the corresponding constructor declaration
+    for the [value] datatype, given some [core_type] [ty]
+    - e.g. if [ty = Int], [mk_val_cstr] returns the declaration for 
+      the [ValInt] constructor *)
+let mk_val_cstr (ty : core_type) : constructor_declaration =
+  mk_cstr ~name:("Val" ^ string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[ ty ]
+
 (** Constructs the definition of the [value] algebraic data type
     based on the inhabitants of the [ty] ADT *)
-let mk_val_cstrs (sig_items : signature) =
-  mk_cstr_aux sig_items ~f:(fun ty ->
-    mk_cstr
-      ~name:("Val" ^ string_of_core_ty ty)
-      ~loc:ty.ptyp_loc ~arg_tys:[ ty ])
+let mk_val_cstrs (sig_items : signature) = mk_cstr_aux sig_items ~f:mk_val_cstr
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -82,9 +85,8 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         [ mk_error ~local:pmtd_loc ~global:loc "Module sig can't be empty" ]
       | _ ->
         let expr_td =
-          mk_adt ~loc ~name:"expr" ~constructors:(mk_expr_cstrs sig_items) in
-        let ty_td =
-          mk_adt ~loc ~name:"ty" ~constructors:(mk_ty_cstrs sig_items) in
+          mk_adt ~loc ~name:"expr" ~cstrs:(mk_expr_cstrs sig_items) in
+        let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:(mk_ty_cstrs sig_items) in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ]
         ])
@@ -223,7 +225,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
 
   (* Declaration for the [value] ADT *)
   let val_adt : type_declaration =
-    mk_adt ~loc ~name:"value" ~constructors:(mk_val_cstrs sig_items) in
+    mk_adt ~loc ~name:"value" ~cstrs:(mk_val_cstrs sig_items) in
   let val_adt_decl : structure_item = pstr_type ~loc Recursive [ val_adt ] in
 
   let abs_ty_parameterized : bool = is_abs_ty_parameterized sig_items in
