@@ -132,7 +132,7 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
      type of the function *)
   let ret_ty_cstr : constructor_declaration = mk_val_cstr ret_ty in
   match args with
-  (* Constructors with no arguments *)
+  (* Nullary constructors *)
   | None ->
     let cstr_name = get_cstr_name ret_ty_cstr in
     let cstr_arg = pexp_ident ~loc (add_lident_loc_prefix mod_name cstr) in
@@ -162,7 +162,8 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
                 [ (Nolabel, pexp_ident_of_string ~loc var) ])
             expr_vars in
         pexp_tuple ~loc app_exprs in
-    (* TODO: figure out how to generate the body of this case stmt *)
+    (* TODO: figure out how to generate the body of this case stmt using
+       [ret_ty_cstr] and by calling [pexp_construct] *)
     [%expr
       match [%e scrutinees] with
       | [%p match_arm] -> failwith "TODO: finish RHS"
@@ -174,7 +175,8 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
       pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
     let match_arm : pattern =
       get_match_arm ~loc [ x.txt ] ~abs_ty_parameterized in
-    (* TODO: figure out how to generate the body of this case stmt *)
+    (* TODO: figure out how to generate the body of this case stmt using
+       [ret_ty_cstr] and by calling [pexp_construct] *)
     [%expr
       match [%e scrutinee] with
       | [%p match_arm] -> failwith "TODO: finish RHS"
