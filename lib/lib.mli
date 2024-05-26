@@ -2,7 +2,7 @@ open Ppxlib
 
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)
-val mk_expr_constructors : signature -> constructor_declaration list
+val mk_expr_cstrs : signature -> constructor_declaration list
 
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)
@@ -13,7 +13,7 @@ val uniq_ret_tys : signature -> core_type list
     - The argument [sig_items] contains the contents of a module signature
     - [~f] is a function that specifies how to turn a [core_type] into a 
     [constructor_declaration] *)
-val mk_constructor_aux :
+val mk_cstr_aux :
   signature ->
   f:(core_type -> constructor_declaration) ->
   constructor_declaration list
@@ -21,11 +21,11 @@ val mk_constructor_aux :
 (** Constructs the definition of the [ty] algebraic data type
 based on the unique return types of all [val] declarations within 
 the module signature *)
-val mk_ty_constructors : signature -> constructor_declaration list
+val mk_ty_cstrs : signature -> constructor_declaration list
 
 (** Constructs the definition of the [value] algebraic data type
     based on the inhabitants of the [ty] ADT *)
-val mk_val_constructors : signature -> constructor_declaration list
+val mk_val_cstrs : signature -> constructor_declaration list
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -40,9 +40,9 @@ val type_generator :
   (structure_item list, module_type_declaration) Deriving.Generator.t
 
 (** Helper function: given [mod_ty], a module signature,
-    [get_expr_constructors] produces [expr] constructor names & arguments
+    [get_expr_cstrs] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
-val get_expr_constructors :
+val get_expr_cstrs :
   module_type ->
   (Longident.t Location.loc * pattern option * Utils.inv_ctx) list
 

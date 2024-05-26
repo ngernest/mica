@@ -197,43 +197,39 @@ let uniq_ret_ty_2_arg_funcs () =
     [ [%type: int]; [%type: string]; [%type: char] ]
 
 (*******************************************************************************)
-(** Testing [mk_ty_constructors] *)
+(** Testing [mk_ty_cstrs] *)
 
-let mk_ty_constructors_single_base_ty () =
+let mk_ty_cstrs_single_base_ty () =
   let sig_items = [%sig: val x : int] in
-  let expected = mk_constructor ~name:"Int" ~loc:Location.none ~arg_tys:[] in
-  check constr_decl_list_testable "mk_ty_constructors_singleton"
-    (mk_ty_constructors sig_items)
-    [ expected ]
+  let expected = mk_cstr ~name:"Int" ~loc:Location.none ~arg_tys:[] in
+  check constr_decl_list_testable "mk_ty_cstrs_singleton"
+    (mk_ty_cstrs sig_items) [ expected ]
 
-let mk_ty_constructors_single_mono_abs_ty () =
+let mk_ty_cstrs_single_mono_abs_ty () =
   let sig_items = [%sig: val x : t] in
-  let expected = mk_constructor ~name:"T" ~loc:Location.none ~arg_tys:[] in
-  check constr_decl_list_testable "mk_ty_constructors_single_mono_abs_ty"
-    (mk_ty_constructors sig_items)
-    [ expected ]
+  let expected = mk_cstr ~name:"T" ~loc:Location.none ~arg_tys:[] in
+  check constr_decl_list_testable "mk_ty_cstrs_single_mono_abs_ty"
+    (mk_ty_cstrs sig_items) [ expected ]
 
-let mk_ty_constructors_single_poly_abs_ty () =
+let mk_ty_cstrs_single_poly_abs_ty () =
   let sig_items = [%sig: val x : 'a t] in
-  let expected = mk_constructor ~name:"IntT" ~loc:Location.none ~arg_tys:[] in
-  check constr_decl_list_testable "mk_ty_constructors_single_poly_abs_ty"
-    (mk_ty_constructors sig_items)
-    [ expected ]
+  let expected = mk_cstr ~name:"IntT" ~loc:Location.none ~arg_tys:[] in
+  check constr_decl_list_testable "mk_ty_cstrs_single_poly_abs_ty"
+    (mk_ty_cstrs sig_items) [ expected ]
 
-let mk_ty_constructors_two_base () =
+let mk_ty_cstrs_two_base () =
   let sig_items =
     [%sig:
       val x : int
       val y : string] in
   let expected =
     List.map
-      ~f:(fun name -> mk_constructor ~name ~loc:Location.none ~arg_tys:[])
+      ~f:(fun name -> mk_cstr ~name ~loc:Location.none ~arg_tys:[])
       [ "Int"; "String" ] in
-  check constr_decl_list_testable "mk_ty_constructors_two"
-    (mk_ty_constructors sig_items)
+  check constr_decl_list_testable "mk_ty_cstrs_two" (mk_ty_cstrs sig_items)
     expected
 
-let mk_ty_constructors_no_dupes () =
+let mk_ty_cstrs_no_dupes () =
   let sig_items =
     [%sig:
       val x : int
@@ -241,10 +237,9 @@ let mk_ty_constructors_no_dupes () =
       val z : int] in
   let expected =
     List.map
-      ~f:(fun name -> mk_constructor ~name ~loc:Location.none ~arg_tys:[])
+      ~f:(fun name -> mk_cstr ~name ~loc:Location.none ~arg_tys:[])
       [ "Int"; "String" ] in
-  check constr_decl_list_testable "mk_ty_constructors_no_dupes"
-    (mk_ty_constructors sig_items)
+  check constr_decl_list_testable "mk_ty_cstrs_no_dupes" (mk_ty_cstrs sig_items)
     expected
 
 (*******************************************************************************)
@@ -271,7 +266,7 @@ let get_ret_ty_uncurried () =
     [%type: char]
 
 (*******************************************************************************)
-(* TODO: - add tests for [mk_expr_constructors] *)
+(* TODO: - add tests for [mk_expr_cstrs] *)
 
 (*******************************************************************************)
 
@@ -399,14 +394,12 @@ let () =
           test_case "1 arg function" `Quick uniq_ret_ty_1_arg_funcs;
           test_case "2 arg function" `Quick uniq_ret_ty_2_arg_funcs
         ] );
-      ( "Tests for [mk_ty_constructors]",
-        [ test_case "1 base type" `Quick mk_ty_constructors_single_base_ty;
-          test_case "1 mono abs type" `Quick
-            mk_ty_constructors_single_mono_abs_ty;
-          test_case "1 poly abs type" `Quick
-            mk_ty_constructors_single_mono_abs_ty;
-          test_case "two constructors" `Quick mk_ty_constructors_two_base;
-          test_case "no duplicates" `Quick mk_ty_constructors_two_base
+      ( "Tests for [mk_ty_cstrs]",
+        [ test_case "1 base type" `Quick mk_ty_cstrs_single_base_ty;
+          test_case "1 mono abs type" `Quick mk_ty_cstrs_single_mono_abs_ty;
+          test_case "1 poly abs type" `Quick mk_ty_cstrs_single_mono_abs_ty;
+          test_case "two constructors" `Quick mk_ty_cstrs_two_base;
+          test_case "no duplicates" `Quick mk_ty_cstrs_two_base
         ] );
       ( "Tests for [get_ret_ty]",
         [ test_case "1 arg function" `Quick get_ret_ty_1_arg_func;

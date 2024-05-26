@@ -139,11 +139,11 @@ let pexp_ident_of_string (x : string) ~(loc : location) : expression =
 let ppat_var_of_string (x : string) ~(loc : location) : pattern =
   ppat_var ~loc (with_loc x ~loc)
 
-(** [mk_constructor ~name ~loc arg_tys] creates a constructor with the [name] 
+(** [mk_cstr ~name ~loc arg_tys] creates a constructor with the [name] 
     for an algebraic data type at the location [loc] with 
     argument types [arg_tys] *)
-let mk_constructor ~(name : string) ~(loc : location)
-  ~(arg_tys : core_type list) : constructor_declaration =
+let mk_cstr ~(name : string) ~(loc : location) ~(arg_tys : core_type list) :
+  constructor_declaration =
   { (* Constructor name *)
     pcd_name = { txt = name; loc };
     (* Type variables *)
@@ -235,17 +235,16 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
     For the [Set] module signature example,
     - [val empty : 'a t] corresponds to the 0-arity [Empty] constructor
     - [val is_empty : 'a t -> bool] corresponds to [Is_empty of expr * bool] 
-    - Monormorphic primitive types are preserved. 
+    - Monomorphic primitive types are preserved. 
 
     The [is_arrow] optional 
     named argument specifies whether [ty] is an arrow type: if yes, then 
     references to abstract types should be replaced with [expr], otherwise
     an occurrence of an abstract type in an non-arrow type 
     (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
-    corresponds to the 0-arity constructor [Empty]).
+    corresponds to the nullary constructor [Empty]).
 *)
-let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type) :
-  core_type list =
+let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type) : core_type list =
   let loc = ty.ptyp_loc in
   match monomorphize ty with
   | ty' when List.mem ty' ~set:(base_types ~loc) -> [ ty' ]
@@ -255,8 +254,7 @@ let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type) :
       if is_arrow then [ [%type: expr] ] else []
     else [ ty' ]
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _ } ->
-    get_cstr_arg_tys ~is_arrow:true t1
-    @ get_cstr_arg_tys ~is_arrow:true t2
+    get_cstr_arg_tys ~is_arrow:true t1 @ get_cstr_arg_tys ~is_arrow:true t2
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
     List.concat_map ~f:(get_cstr_arg_tys ~is_arrow) tys
   | _ -> failwith "TODO: get_cstr_arg_tys"
@@ -318,8 +316,7 @@ let get_cstr_metadata (cstrs : constructor_declaration list) :
       (cstr_name, Some cstr_args, gamma)
     | Pcstr_record arg_lbls ->
       let cstr_args, gamma =
-        get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls
-      in
+        get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
       (cstr_name, Some cstr_args, gamma))
 
 (** Takes a [type_declaration] for an algebraic data type 
@@ -329,8 +326,7 @@ let get_cstr_metadata (cstrs : constructor_declaration list) :
 let get_cstrs_of_ty_decl (ty_decl : type_declaration) :
   (Longident.t Location.loc * pattern option) list =
   match ty_decl.ptype_kind with
-  | Ptype_variant args ->
-    List.map ~f:triple_to_pair (get_cstr_metadata args)
+  | Ptype_variant args -> List.map ~f:triple_to_pair (get_cstr_metadata args)
   | _ -> failwith "error: expected an algebraic data type definition"
 
 (** Converts a type expression [ty] to its camel-case string representation 

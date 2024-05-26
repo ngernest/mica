@@ -9,18 +9,19 @@ open Utils
 
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT *)
-let mk_expr_constructors (sig_items : signature) : constructor_declaration list
-    =
+let mk_expr_cstrs (sig_items : signature) : constructor_declaration list =
   List.rev
   @@ List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
        match psig_desc with
        | Psig_type (rec_flag, type_decls) -> []
        | Psig_value { pval_name; pval_type; pval_loc; _ } ->
          let name = String.capitalize_ascii pval_name.txt in
-         (* Exclude the return type of the function from the list of argument
-            types for the [expr] data constructor *)
+         (* Exclude the return type of the function from the list of arg types
+            for the [expr] constructor *)
          let arg_tys = remove_last (get_cstr_arg_tys pval_type) in
-         mk_constructor ~name ~loc:pval_loc ~arg_tys :: acc
+         (* Return type of the function *)
+         let ret_ty = get_ret_ty pval_type in
+         mk_cstr ~name ~loc:pval_loc ~arg_tys :: acc
        | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
        | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
        | _ ->
@@ -43,7 +44,7 @@ let uniq_ret_tys (sig_items : signature) : core_type list =
     - The argument [sig_items] contains the contents of a module signature
     - [~f] is a function that specifies how to turn a [core_type] into a 
     [constructor_declaration] *)
-let mk_constructor_aux (sig_items : signature)
+let mk_cstr_aux (sig_items : signature)
   ~(f : core_type -> constructor_declaration) : constructor_declaration list =
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
@@ -54,15 +55,15 @@ let mk_constructor_aux (sig_items : signature)
 (** Constructs the definition of the [ty] algebraic data type
     based on the unique return types of all [val] declarations within 
     the module signature *)
-let mk_ty_constructors (sig_items : signature) : constructor_declaration list =
-  mk_constructor_aux sig_items ~f:(fun ty ->
-    mk_constructor ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+let mk_ty_cstrs (sig_items : signature) : constructor_declaration list =
+  mk_cstr_aux sig_items ~f:(fun ty ->
+    mk_cstr ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
 (** Constructs the definition of the [value] algebraic data type
     based on the inhabitants of the [ty] ADT *)
-let mk_val_constructors (sig_items : signature) =
-  mk_constructor_aux sig_items ~f:(fun ty ->
-    mk_constructor
+let mk_val_cstrs (sig_items : signature) =
+  mk_cstr_aux sig_items ~f:(fun ty ->
+    mk_cstr
       ~name:("Val" ^ string_of_core_ty ty)
       ~loc:ty.ptyp_loc ~arg_tys:[ ty ])
 
@@ -81,11 +82,9 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         [ mk_error ~local:pmtd_loc ~global:loc "Module sig can't be empty" ]
       | _ ->
         let expr_td =
-          mk_adt ~loc ~name:"expr"
-            ~constructors:(mk_expr_constructors sig_items) in
+          mk_adt ~loc ~name:"expr" ~constructors:(mk_expr_cstrs sig_items) in
         let ty_td =
-          mk_adt ~loc ~name:"ty" ~constructors:(mk_ty_constructors sig_items)
-        in
+          mk_adt ~loc ~name:"ty" ~constructors:(mk_ty_cstrs sig_items) in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ]
         ])
@@ -105,14 +104,13 @@ let type_generator :
 (** {1 Generator for Functors} *)
 
 (** Helper function: given [mod_ty], a module signature,
-    [get_expr_constructors] produces [expr] constructor names & arguments
+    [get_expr_cstrs] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
-let get_expr_constructors (mod_ty : module_type) :
+let get_expr_cstrs (mod_ty : module_type) :
   (Longident.t Location.loc * pattern option * inv_ctx) list =
   match mod_ty.pmty_desc with
-  | Pmty_signature sig_items ->
-    get_cstr_metadata (mk_expr_constructors sig_items)
-  | _ -> failwith "TODO: get_expr_constructors"
+  | Pmty_signature sig_items -> get_cstr_metadata (mk_expr_cstrs sig_items)
+  | _ -> failwith "TODO: get_expr_cstrs"
 
 (** TODO: implement a version of [mk_valt_pat] that produces *)
 
@@ -225,8 +223,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
 
   (* Declaration for the [value] ADT *)
   let val_adt : type_declaration =
-    mk_adt ~loc ~name:"value" ~constructors:(mk_val_constructors sig_items)
-  in
+    mk_adt ~loc ~name:"value" ~constructors:(mk_val_cstrs sig_items) in
   let val_adt_decl : structure_item = pstr_type ~loc Recursive [ val_adt ] in
 
   let abs_ty_parameterized : bool = is_abs_ty_parameterized sig_items in
@@ -257,7 +254,7 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
       (* Obtain the constructors for the [expr] datatype based on the module
          type signature, then pass them onto [mk_functor] when building the body
          of the functor *)
-      let expr_cstrs = get_expr_constructors mod_type in
+      let expr_cstrs = get_expr_cstrs mod_type in
       let functor_expr =
         mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs in
       let mod_binding =
