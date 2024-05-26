@@ -21,7 +21,7 @@ let no_loc (a_loc : 'a Astlib.Location.loc) : 'a = a_loc.txt
 let map2 ~f (a1, a2) = (f a1, f a2)
 
 (** Converts a triple to a pair *)
-let triple_to_pair (a, b, _) = (a, b)
+let tuple4_to_pair (a, b, _, _) = (a, b)
 
 (** Checks if a list is empty
     - Backwards-compatible version of [List.is_empty], 
@@ -278,7 +278,7 @@ let rec get_ret_ty (ty : core_type) : core_type =
     constructor for the [pattern] type).  
     - Note that [args] has type ['a list], i.e. the representation of 
     constructor arguments is polymorphic -- this function is instantiated 
-    with different types when called in [get_cstr_names] *)
+    with different types when called in [get_cstr_metadata] *)
 let get_cstr_args ~(loc : Location.t) (get_ty : 'a -> core_type)
   (args : 'a list) : pattern * inv_ctx =
   let arg_tys : core_type list = List.map ~f:get_ty args in
@@ -300,24 +300,49 @@ let find_exprs (gamma : inv_ctx) : string list =
     ~init:[] gamma
 
 (** Takes a list of [constructor_declaration]'s and returns 
-    a list consisting of (constructor name, constructor arguments, 
-    typing context) constructor names (annotated with their locations) *)
-let get_cstr_metadata (cstrs : constructor_declaration list) :
-  (Longident.t Location.loc * pattern option * inv_ctx) list =
-  List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
+    a list consisting of 4-tuples of the form 
+    (constructor name, constructor arguments, typing context, return type) *)
+let get_cstr_metadata (cstrs : (constructor_declaration * core_type) list) :
+  (Longident.t Location.loc * pattern option * inv_ctx * core_type) list =
+  List.map cstrs ~f:(fun ({ pcd_name = { txt; loc }; pcd_args; _ }, ret_ty) ->
     let cstr_name = with_loc (Longident.parse txt) ~loc in
     match pcd_args with
     (* Constructors with no arguments *)
-    | Pcstr_tuple [] -> (cstr_name, None, empty_ctx)
+    | Pcstr_tuple [] -> (cstr_name, None, empty_ctx, ret_ty)
     (* N-ary constructors (where n > 0) *)
     | Pcstr_tuple arg_tys ->
       let (cstr_args, gamma) : pattern * inv_ctx =
         get_cstr_args ~loc Fun.id arg_tys in
-      (cstr_name, Some cstr_args, gamma)
+      (cstr_name, Some cstr_args, gamma, ret_ty)
     | Pcstr_record arg_lbls ->
       let cstr_args, gamma =
         get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
-      (cstr_name, Some cstr_args, gamma))
+      (cstr_name, Some cstr_args, gamma, ret_ty))
+
+(** Variant of [get_cstr_metadata] which returns 
+    only a list of pairs containing constructor names & constructor args *)
+let get_cstr_metadata_minimal (cstrs : constructor_declaration list) :
+  (Longident.t Location.loc * pattern option) list =
+  List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
+    let cstr_name = with_loc (Longident.parse txt) ~loc in
+    match pcd_args with
+    (* Constructors with no arguments *)
+    | Pcstr_tuple [] -> (cstr_name, None)
+    (* N-ary constructors (where n > 0) *)
+    | Pcstr_tuple arg_tys ->
+      let (cstr_args, gamma) : pattern * inv_ctx =
+        get_cstr_args ~loc Fun.id arg_tys in
+      (cstr_name, Some cstr_args)
+    | Pcstr_record arg_lbls ->
+      let cstr_args, gamma =
+        get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
+      (cstr_name, Some cstr_args))
+
+(** Extracts the constructor name (along with its location) from 
+    a constructor declaration *)
+let get_cstr_name (cstr : constructor_declaration) : Longident.t Location.loc =
+  let { txt; loc } = cstr.pcd_name in
+  with_loc ~loc (Longident.parse txt)
 
 (** Takes a [type_declaration] for an algebraic data type 
     and returns a list of (constructor name, constructor arguments) 
@@ -326,7 +351,7 @@ let get_cstr_metadata (cstrs : constructor_declaration list) :
 let get_cstrs_of_ty_decl (ty_decl : type_declaration) :
   (Longident.t Location.loc * pattern option) list =
   match ty_decl.ptype_kind with
-  | Ptype_variant args -> List.map ~f:triple_to_pair (get_cstr_metadata args)
+  | Ptype_variant args -> get_cstr_metadata_minimal args
   | _ -> failwith "error: expected an algebraic data type definition"
 
 (** Converts a type expression [ty] to its camel-case string representation 

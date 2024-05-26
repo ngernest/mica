@@ -8,20 +8,26 @@ open Utils
 (** {1 Generator for Auxiliary Datatypes} *)
 
 (** Walks over all the [val ...] declarations in a module signature
-    and creates the corresponding definition of the [expr] ADT *)
-let mk_expr_cstrs (sig_items : signature) : constructor_declaration list =
+    and creates the corresponding definition of the [expr] ADT 
+    - The return type is a list of pairs, where each pair 
+    consists of the declaration for the [expr] constructor, 
+    along with the return type of the function (expressed as 
+    a [core_type]) *)
+let mk_expr_cstrs (sig_items : signature) :
+  (constructor_declaration * core_type) list =
   List.rev
   @@ List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
        match psig_desc with
        | Psig_type (rec_flag, type_decls) -> []
        | Psig_value { pval_name; pval_type; pval_loc; _ } ->
-         let name = String.capitalize_ascii pval_name.txt in
+         let name : string = String.capitalize_ascii pval_name.txt in
          (* Exclude the return type of the function from the list of arg types
             for the [expr] constructor *)
-         let arg_tys = remove_last (get_cstr_arg_tys pval_type) in
+         let arg_tys : core_type list =
+           remove_last (get_cstr_arg_tys pval_type) in
          (* Return type of the function *)
          let ret_ty = get_ret_ty pval_type in
-         mk_cstr ~name ~loc:pval_loc ~arg_tys :: acc
+         (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
        | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
        | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
        | _ ->
@@ -85,7 +91,8 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         [ mk_error ~local:pmtd_loc ~global:loc "Module sig can't be empty" ]
       | _ ->
         let expr_td =
-          mk_adt ~loc ~name:"expr" ~cstrs:(mk_expr_cstrs sig_items) in
+          mk_adt ~loc ~name:"expr"
+            ~cstrs:(List.map ~f:fst (mk_expr_cstrs sig_items)) in
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:(mk_ty_cstrs sig_items) in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ]
@@ -109,24 +116,27 @@ let type_generator :
     [get_expr_cstrs] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
 let get_expr_cstrs (mod_ty : module_type) :
-  (Longident.t Location.loc * pattern option * inv_ctx) list =
+  (Longident.t Location.loc * pattern option * inv_ctx * core_type) list =
   match mod_ty.pmty_desc with
   | Pmty_signature sig_items -> get_cstr_metadata (mk_expr_cstrs sig_items)
   | _ -> failwith "TODO: get_expr_cstrs"
-
-(** TODO: implement a version of [mk_valt_pat] that produces *)
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
     to variable names *)
 let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   ?(abs_ty_parameterized = false) (cstr : Longident.t Location.loc)
-  (args : pattern option) ~(gamma : inv_ctx) : expression =
+  (args : pattern option) ~(gamma : inv_ctx) ~(ret_ty : core_type) : expression
+    =
+  (* The constructor of the [value] type for [ret_ty], the designated return
+     type of the function *)
+  let ret_ty_cstr : constructor_declaration = mk_val_cstr ret_ty in
   match args with
   (* Constructors with no arguments *)
   | None ->
-    (* TODO: need to produce an application of the [ValIntT] constructor *)
-    pexp_ident ~loc (add_lident_loc_prefix mod_name cstr)
+    let cstr_name = get_cstr_name ret_ty_cstr in
+    let cstr_arg = pexp_ident ~loc (add_lident_loc_prefix mod_name cstr) in
+    pexp_construct ~loc cstr_name (Some cstr_arg)
   (* Constructors with arity n, where n > 0 *)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
     let vars : string list = List.map ~f:get_varname xs in
@@ -187,7 +197,8 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     or not *)
 let mk_interp ~(loc : location) (mod_ty : module_type)
   ?(abs_ty_parameterized = false)
-  (expr_cstrs : (Longident.t Location.loc * pattern option * inv_ctx) list) :
+  (expr_cstrs :
+    (Longident.t Location.loc * pattern option * inv_ctx * core_type) list) :
   structure_item =
   (* [arg_str] denotes the argument to [interp] *)
   let arg_str = "e" in
@@ -197,11 +208,11 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   let func_arg : pattern = ppat_var ~loc { txt = arg_str; loc } in
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let cases : case list =
-    List.map expr_cstrs ~f:(fun (cstr, args, gamma) ->
+    List.map expr_cstrs ~f:(fun (cstr, args, gamma, ret_ty) ->
       let lhs : pattern = ppat_construct ~loc cstr args in
       let rhs : expression =
         mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized cstr
-          args in
+          args ~ret_ty in
       case ~lhs ~guard:None ~rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =
@@ -213,7 +224,8 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
 (** Creates the body of the [ExprToImpl] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (mod_ty : module_type) (sig_items : signature)
-  (expr_cstrs : (Longident.t Location.loc * pattern option * inv_ctx) list) :
+  (expr_cstrs :
+    (Longident.t Location.loc * pattern option * inv_ctx * core_type) list) :
   module_expr =
   (* [include M] declaration *)
   let m_ident : Longident.t Location.loc =

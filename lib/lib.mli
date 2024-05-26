@@ -1,8 +1,12 @@
 open Ppxlib
 
 (** Walks over all the [val ...] declarations in a module signature
-    and creates the corresponding definition of the [expr] ADT *)
-val mk_expr_cstrs : signature -> constructor_declaration list
+    and creates the corresponding definition of the [expr] ADT 
+    - The return type is a list of pairs, where each pair 
+    consists of the declaration for the [expr] constructor, 
+    along with the return type of the function (expressed as 
+    a [core_type]) *)
+val mk_expr_cstrs : signature -> (constructor_declaration * core_type) list
 
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)
@@ -50,7 +54,7 @@ val type_generator :
     that match the declarations in the module signature *)
 val get_expr_cstrs :
   module_type ->
-  (Longident.t Location.loc * pattern option * Utils.inv_ctx) list
+  (Longident.t Location.loc * pattern option * Utils.inv_ctx * core_type) list
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
@@ -62,6 +66,7 @@ val mk_interp_case_rhs :
   Longident.t Location.loc ->
   pattern option ->
   gamma:Utils.inv_ctx ->
+  ret_ty:core_type ->
   expression
 
 (** Creates the definition for the [interp] function 
@@ -72,7 +77,7 @@ val mk_interp :
   loc:location ->
   module_type ->
   ?abs_ty_parameterized:bool ->
-  (Longident.t Location.loc * pattern option * Utils.inv_ctx) list ->
+  (Longident.t Location.loc * pattern option * Utils.inv_ctx * core_type) list ->
   structure_item
 
 (** Creates the body of the [ExprToImpl] functor *)
@@ -81,7 +86,7 @@ val mk_functor :
   string option Location.loc ->
   module_type ->
   signature ->
-  (Longident.t Location.loc * pattern option * Utils.inv_ctx) list ->
+  (Longident.t Location.loc * pattern option * Utils.inv_ctx * core_type) list ->
   module_expr
 
 (** Generates the scaffolding for the [ExprToImpl] functor 
