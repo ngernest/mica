@@ -43,7 +43,7 @@ module ExprToImpl(M : SetInterface) = struct
      constructors with arguments *)
   let rec interp e =
     match e with
-    | Empty -> M.empty
+    | Empty -> ValIntT M.empty
     | Is_empty e1 ->
         (match interp e1 with
          | ValIntT e1' -> failwith "TODO: finish RHS"
