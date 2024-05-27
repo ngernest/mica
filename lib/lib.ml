@@ -154,13 +154,12 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     let expr_vars = find_exprs gamma in
     let match_arm = get_match_arm ~loc expr_vars ~abs_ty_parameterized in
     let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
-    let func_args = List.map ~f:(fun x -> pexp_ident_of_string x ~loc) vars in
-    (* TODO: figure out how to call [update_expr_arg_names] and
-       [get_unary_case_rhs] here *)
+    let func_args =
+      List.map
+        ~f:(fun x -> pexp_ident_of_string x ~loc)
+        (update_expr_arg_names (List.map ~f:add_prime expr_vars) vars) in
     let match_rhs =
-      match expr_vars with
-      | [] -> failwith "impossible: [expr_vars] can't be empty"
-      | _ -> [%expr failwith "TODO: RHS of case stmt"] in
+      get_nary_case_rhs ret_ty_cstr mod_name expr_cstr func_args ~loc in
     [%expr
       match [%e scrutinees] with
       | [%p match_arm] -> [%e match_rhs]

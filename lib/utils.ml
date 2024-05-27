@@ -479,8 +479,20 @@ let get_unary_case_rhs (ret_ty_cstr : constructor_declaration)
   let value_cstr = get_cstr_name ret_ty_cstr in
   pexp_construct ~loc value_cstr (Some mod_func_app)
 
-(** [update_expr_arg_names expr_args args] replaces each variable [x] in [expr_args] 
-    if [x'] (the variable with a prime added) is in [expr_args] *)
+(** Variant of [get_unary_case_rhs] which handles the situation 
+    when the RHS of the case statement is an n-ary function with 
+    arguments [xs] *)
+let get_nary_case_rhs (ret_ty_cstr : constructor_declaration)
+  (mod_name : string) (expr_cstr : Longident.t Location.loc)
+  (xs : expression list) ~loc : expression =
+  let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
+  let mod_func_app =
+    pexp_apply ~loc mod_func (List.map ~f:(fun x -> (Nolabel, x)) xs) in
+  let value_cstr = get_cstr_name ret_ty_cstr in
+  pexp_construct ~loc value_cstr (Some mod_func_app)
+
+(** [update_expr_arg_names expr_args args] replaces each variable [x] in 
+    [expr_args] if [x'] (the variable with a prime added) is in [expr_args] *)
 let update_expr_arg_names (expr_args : string list) (args : string list) :
   string list =
   List.map args ~f:(fun x ->

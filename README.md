@@ -46,15 +46,15 @@ module TestHarness(M : SetInterface) = struct
     | Empty -> ValIntT M.empty
     | Is_empty e1 ->
         (match interp e1 with
-         | ValIntT e1' -> failwith "TODO: finish RHS"
+         | ValIntT e1' -> ValBool (M.is_empty e1')
          | _ -> failwith "impossible")
     | Mem (x1, e2) ->
         (match interp e2 with
-         | ValIntT e2' -> failwith "TODO: finish RHS"
+         | ValIntT e2' -> ValBool (M.mem x1 e2')
          | _ -> failwith "impossible")
     | Union (e1, e2) ->
-        (match ((interp e1), (interp e2)) with
-         | (ValIntT e1', ValIntT e2') -> failwith "TODO: finish RHS"
+        (match (interp e1, interp e2) with
+         | (ValIntT e1', ValIntT e2') -> ValIntT (M.union e1' e2')
          | _ -> failwith "impossible")
     ...
 end 
