@@ -134,9 +134,9 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   match args with
   (* Nullary constructors *)
   | None ->
-    let cstr_name = get_cstr_name ret_ty_cstr in
-    let cstr_arg = pexp_ident ~loc (add_lident_loc_prefix mod_name cstr) in
-    pexp_construct ~loc cstr_name (Some cstr_arg)
+    let value_cstr = get_cstr_name ret_ty_cstr in
+    let mod_item = pexp_ident ~loc (add_lident_loc_prefix mod_name cstr) in
+    pexp_construct ~loc value_cstr (Some mod_item)
   (* Constructors with arity n, where n > 0 *)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
     let vars : string list = List.map ~f:get_varname xs in
@@ -170,16 +170,17 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
       | _ -> failwith "impossible"]
   (* Constructors with one single argument *)
   | Some { ppat_desc = Ppat_var x; _ } ->
-    let ident : expression = pexp_ident_of_string x.txt ~loc in
-    let scrutinee : expression =
-      pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ] in
-    let match_arm : pattern =
-      get_match_arm ~loc [ x.txt ] ~abs_ty_parameterized in
-    (* TODO: figure out how to generate the body of this case stmt using
-       [ret_ty_cstr] and by calling [pexp_construct] *)
+    let func_arg_ident = pexp_ident_of_string x.txt ~loc in
+    let scrutinee = [%expr interp [%e func_arg_ident]] in
+    let match_arm = get_match_arm ~loc [ x.txt ] ~abs_ty_parameterized in
+    let value_cstr = get_cstr_name ret_ty_cstr in
+    let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name cstr) in
+    let mod_func_arg = pexp_ident_of_string (add_prime x.txt) ~loc in
+    let mod_func_app = [%expr [%e mod_func] [%e mod_func_arg]] in
+    let match_rhs = pexp_construct ~loc value_cstr (Some mod_func_app) in
     [%expr
       match [%e scrutinee] with
-      | [%p match_arm] -> failwith "TODO: finish RHS"
+      | [%p match_arm] -> [%e match_rhs]
       | _ -> failwith "impossible"]
   | Some pat ->
     Stdio.printf "cstr = %s\n" (string_of_lident cstr.txt);
