@@ -24,6 +24,7 @@ depends: [
   "base_quickcheck" {>= "v0.15.0"}
   "pprint" {>= "20220103"}
   "core" {>= "v0.15.1"}
+  "core_unix" {>= "v0.15.0"}
   "core_bench" {>= "v0.15.0"}
 ]
 build: [

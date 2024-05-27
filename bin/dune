@@ -10,13 +10,13 @@
  (public_name mica_qc_bench)
  (name mica_qc_bench)
  (modules mica_qc_bench)
- (libraries lib core_bench))
+ (libraries lib core_bench core_unix.command_unix))
 
 (executable
  (public_name mica_bench)
  (name mica_bench)
  (modules mica_bench)
- (libraries lib core_bench))
+ (libraries lib core_bench core_unix.command_unix))
 
 (executable
  (public_name compare_impls)
