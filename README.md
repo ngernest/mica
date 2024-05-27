@@ -3,16 +3,14 @@
 [![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/ngernest/mica/main&logo=ocaml&style=for-the-badge&kill_cache=1)](https://ocaml.ci.dev/github/ngernest/mica) 
 [![view - Documentation](https://img.shields.io/badge/view-Documentation-blue?style=for-the-badge)](https://ngernest.github.io/mica/mica/index.html)
 
-1. [Overview](#overview)
-2. [Description of source files](#description-of-source-files)
-3. [Examples](#examples)
-4. [Building \& running](#building--running)       
-5. [Example (finite sets)](#example-finite-sets)          
-6. [Performance Benchmarks](#performance-benchmarks)          
-7. [Dependencies](#dependencies)          
-8. [Acknowledgements](#acknowledgements)
-9. [Origin of name](#origin-of-name)
-10. [References](#references)
+## Update (May 2024)
+We are currently working on re-implementing Mica as a PPX compiler extension, 
+and we aim to have the PPX implementation ready for the OCaml Workshop 2024. 
+
+This repo contains the artifact for a Mica prototype presented at the ICFP '23 SRC. 
+This repo will be updated with the PPX implementation when it is ready.
+
+***
 
 ## Overview 
 
@@ -20,7 +18,7 @@
 equivalent. Mica does this by parsing the signature & *automatically* generating 
 property-based testing (PBT) code specialised to the signature. 
 
-Presented at the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition).
+Received 2nd prize at the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition).
 
 ICFP SRC documents:              
 - [Extended Abstract](./talks/icfp_src_abstract.pdf) 
@@ -131,12 +129,12 @@ Benchmarks were conducted on an 2023 M2 Macbook Pro using Jane Street's [Core_be
 which estimates Mica's runtime over a large no. of runs (~1000) using linear regression ([link](https://blog.janestreet.com/core_bench-micro-benchmarking-for-ocaml/)). 
 
 | **Example Module Signature** | **Runtime of Mica Parser & Code Generator** | **Runtime of Auto-Generated PBT executable** |
-|:----------------------------:|:-------------------------------------------:|:--------------------------------------------:|
-|             Sets             |                   309.25 μs                  |                    2.55 ns                    |
-|            Stacks            |                   361.08 μs                  |                    2.54 ns                    |
-|          Polynomials         |                   302.82 μs                  |                    2.57 ns                    |
-|             Maps             |                   262.84 μs                  |                    2.56 ns                    |
-|            Regexes           |                   266.61 μs                  |                    2.57 ns                    |
+| :--------------------------: | :-----------------------------------------: | :------------------------------------------: |
+|             Sets             |                  309.25 μs                  |                   2.55 ns                    |
+|            Stacks            |                  361.08 μs                  |                   2.54 ns                    |
+|         Polynomials          |                  302.82 μs                  |                   2.57 ns                    |
+|             Maps             |                  262.84 μs                  |                   2.56 ns                    |
+|           Regexes            |                  266.61 μs                  |                   2.57 ns                    |
 
 
 
