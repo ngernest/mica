@@ -34,7 +34,7 @@ include struct
 
     type value = ValBool of bool | ValInt of int | ValIntT of int t
 
-    let rec interp e =
+    let interp e =
       match e with
       | Empty -> ValIntT M.empty
       | Is_empty e1 -> (

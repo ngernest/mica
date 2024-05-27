@@ -138,21 +138,6 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     let value_cstr = get_cstr_name ret_ty_cstr in
     let mod_item = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
     pexp_construct ~loc value_cstr (Some mod_item)
-  (* n-ary constructors (n > 1) *)
-  | Some { ppat_desc = Ppat_tuple xs; _ } ->
-    let vars = List.map ~f:get_varname xs in
-    let expr_vars = find_exprs gamma in
-    let match_arm = get_match_arm ~loc expr_vars ~abs_ty_parameterized in
-    let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
-    let func_args = List.map ~f:(fun x -> pexp_ident_of_string x ~loc) vars in
-    let match_rhs =
-      match expr_vars with
-      | [] -> failwith "impossible: [expr_vars] can't be empty"
-      | _ -> [%expr failwith "TODO: RHS of case stmt"] in
-    [%expr
-      match [%e scrutinees] with
-      | [%p match_arm] -> [%e match_rhs]
-      | _ -> failwith "impossible"]
   (* Unary constructors *)
   | Some { ppat_desc = Ppat_var { txt = x; loc }; _ } ->
     let func_arg_ident = pexp_ident_of_string x ~loc in
@@ -161,6 +146,23 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     let match_rhs = get_unary_case_rhs ret_ty_cstr mod_name expr_cstr x ~loc in
     [%expr
       match [%e scrutinee] with
+      | [%p match_arm] -> [%e match_rhs]
+      | _ -> failwith "impossible"]
+  (* n-ary constructors (n > 1) *)
+  | Some { ppat_desc = Ppat_tuple xs; _ } ->
+    let vars = List.map ~f:get_varname xs in
+    let expr_vars = find_exprs gamma in
+    let match_arm = get_match_arm ~loc expr_vars ~abs_ty_parameterized in
+    let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
+    let func_args = List.map ~f:(fun x -> pexp_ident_of_string x ~loc) vars in
+    (* TODO: figure out how to call [update_expr_arg_names] and
+       [get_unary_case_rhs] here *)
+    let match_rhs =
+      match expr_vars with
+      | [] -> failwith "impossible: [expr_vars] can't be empty"
+      | _ -> [%expr failwith "TODO: RHS of case stmt"] in
+    [%expr
+      match [%e scrutinees] with
       | [%p match_arm] -> [%e match_rhs]
       | _ -> failwith "impossible"]
   | Some pat ->
@@ -198,11 +200,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
           expr_cstr args ~ret_ty in
       case ~lhs ~guard:None ~rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
-  let func_binding : expression =
-    pexp_fun ~loc Nolabel None func_arg func_body in
-  let func_defn : value_binding =
-    value_binding ~loc ~pat:func_name_pat ~expr:func_binding in
-  pstr_value ~loc Recursive [ func_defn ]
+  [%stri let interp e = [%e func_body]]
 
 (** Creates the body of the [TestHarness] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)

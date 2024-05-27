@@ -486,8 +486,9 @@ let update_expr_arg_names (expr_args : string list) (args : string list) :
   List.map args ~f:(fun x ->
     if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
 
-(** Makes the scrutinees for the inner case-stmt in [interp] 
-    - [expr_vars] is a list of variables that have type [expr] 
+(** Makes the scrutinees for the inner case-stmt in [interp]. 
+    - [expr_vars] is a list of variables that have type [expr]. This list 
+    must be non-empty, otherwise [mk_scrutinees] throws an exception.
     - [post] is post-processing function to be applied when [expr_vars] 
     has length >= 2 after being transformed into an [expression list] *)
 let mk_scrutinees (expr_vars : string list)
