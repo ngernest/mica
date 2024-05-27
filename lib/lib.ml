@@ -124,7 +124,7 @@ let get_expr_cstrs (mod_ty : module_type) :
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
     to variable names
-  - [expr_cstr] is the constructor of the [expr] type that we're dealing with *)
+  - [expr_cstr] is the constructor of the [expr] type *)
 let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   ?(abs_ty_parameterized = false) (expr_cstr : Longident.t Location.loc)
   (args : pattern option) ~(gamma : inv_ctx) ~(ret_ty : core_type) : expression
