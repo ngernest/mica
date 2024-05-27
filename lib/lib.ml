@@ -123,9 +123,10 @@ let get_expr_cstrs (mod_ty : module_type) :
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
-    to variable names *)
+    to variable names
+  - [expr_cstr] is the constructor of the [expr] type that we're dealing with *)
 let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
-  ?(abs_ty_parameterized = false) (cstr : Longident.t Location.loc)
+  ?(abs_ty_parameterized = false) (expr_cstr : Longident.t Location.loc)
   (args : pattern option) ~(gamma : inv_ctx) ~(ret_ty : core_type) : expression
     =
   (* The constructor of the [value] type for [ret_ty], the designated return
@@ -135,55 +136,38 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   (* Nullary constructors *)
   | None ->
     let value_cstr = get_cstr_name ret_ty_cstr in
-    let mod_item = pexp_ident ~loc (add_lident_loc_prefix mod_name cstr) in
+    let mod_item = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
     pexp_construct ~loc value_cstr (Some mod_item)
-  (* Constructors with arity n, where n > 0 *)
+  (* n-ary constructors (n > 1) *)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
-    let vars : string list = List.map ~f:get_varname xs in
-    let expr_vars : string list = find_exprs gamma in
+    let vars = List.map ~f:get_varname xs in
+    let expr_vars = find_exprs gamma in
     let match_arm = get_match_arm ~loc expr_vars ~abs_ty_parameterized in
-    let scrutinees : expression =
+    let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
+    let func_args = List.map ~f:(fun x -> pexp_ident_of_string x ~loc) vars in
+    let match_rhs =
       match expr_vars with
-      | [] ->
-        failwith
-          {| impossible: 
-          can't call [mk_interp_case_rhs] with no arguments of type [expr] |}
-      | [ x ] ->
-        (* [match interp x with ...] *)
-        let ident = pexp_ident_of_string x ~loc in
-        [%expr interp [%e ident]]
-      | _ ->
-        (* [match (interp y1, interp y2, ...) with ...] *)
-        let app_exprs =
-          List.map
-            ~f:(fun var -> [%expr interp [%e pexp_ident_of_string ~loc var]])
-            expr_vars in
-        pexp_tuple ~loc app_exprs in
-    (* TODO: figure out how to generate the body of this case stmt using
-       [ret_ty_cstr] and by calling [pexp_construct] *)
+      | [] -> failwith "impossible: [expr_vars] can't be empty"
+      | _ -> [%expr failwith "TODO: RHS of case stmt"] in
     [%expr
       match [%e scrutinees] with
-      | [%p match_arm] -> failwith "TODO: finish RHS"
+      | [%p match_arm] -> [%e match_rhs]
       | _ -> failwith "impossible"]
-  (* Constructors with one single argument *)
-  | Some { ppat_desc = Ppat_var x; _ } ->
-    let func_arg_ident = pexp_ident_of_string x.txt ~loc in
+  (* Unary constructors *)
+  | Some { ppat_desc = Ppat_var { txt = x; loc }; _ } ->
+    let func_arg_ident = pexp_ident_of_string x ~loc in
     let scrutinee = [%expr interp [%e func_arg_ident]] in
-    let match_arm = get_match_arm ~loc [ x.txt ] ~abs_ty_parameterized in
-    let value_cstr = get_cstr_name ret_ty_cstr in
-    let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name cstr) in
-    let mod_func_arg = pexp_ident_of_string (add_prime x.txt) ~loc in
-    let mod_func_app = [%expr [%e mod_func] [%e mod_func_arg]] in
-    let match_rhs = pexp_construct ~loc value_cstr (Some mod_func_app) in
+    let match_arm = get_match_arm ~loc [ x ] ~abs_ty_parameterized in
+    let match_rhs = get_unary_case_rhs ret_ty_cstr mod_name expr_cstr x ~loc in
     [%expr
       match [%e scrutinee] with
       | [%p match_arm] -> [%e match_rhs]
       | _ -> failwith "impossible"]
   | Some pat ->
-    Stdio.printf "cstr = %s\n" (string_of_lident cstr.txt);
-    Stdio.printf "pat = ";
+    printf "cstr = %s\n" (string_of_lident expr_cstr.txt);
+    printf "pat = ";
     Pprintast.pattern Format.err_formatter pat;
-    Stdio.printf "\n";
+    printf "\n";
     failwith "TODO: catch all case of mk_interp_case_rhs"
 
 (** Creates the definition for the [interp] function 
@@ -202,17 +186,16 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   structure_item =
   (* [arg_str] denotes the argument to [interp] *)
   let arg_str = "e" in
-  let arg_ident : expression =
-    pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in
-  let func_name_pat : pattern = ppat_var ~loc { txt = "interp"; loc } in
-  let func_arg : pattern = ppat_var ~loc { txt = arg_str; loc } in
+  let arg_ident = pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in
+  let func_name_pat = ppat_var ~loc { txt = "interp"; loc } in
+  let func_arg = ppat_var ~loc { txt = arg_str; loc } in
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let cases : case list =
-    List.map expr_cstrs ~f:(fun (cstr, args, gamma, ret_ty) ->
-      let lhs : pattern = ppat_construct ~loc cstr args in
+    List.map expr_cstrs ~f:(fun (expr_cstr, args, gamma, ret_ty) ->
+      let lhs : pattern = ppat_construct ~loc expr_cstr args in
       let rhs : expression =
-        mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized cstr
-          args ~ret_ty in
+        mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized
+          expr_cstr args ~ret_ty in
       case ~lhs ~guard:None ~rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   let func_binding : expression =

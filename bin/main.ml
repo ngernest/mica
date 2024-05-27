@@ -43,15 +43,15 @@ include struct
         | _ -> failwith "impossible")
       | Mem (x1, e2) -> (
         match interp e2 with
-        | ValIntT e2' -> failwith "TODO: finish RHS"
+        | ValIntT e2' -> failwith "TODO: RHS of case stmt"
         | _ -> failwith "impossible")
       | Add (x1, e2) -> (
         match interp e2 with
-        | ValIntT e2' -> failwith "TODO: finish RHS"
+        | ValIntT e2' -> failwith "TODO: RHS of case stmt"
         | _ -> failwith "impossible")
       | Rem (x1, e2) -> (
         match interp e2 with
-        | ValIntT e2' -> failwith "TODO: finish RHS"
+        | ValIntT e2' -> failwith "TODO: RHS of case stmt"
         | _ -> failwith "impossible")
       | Size e1 -> (
         match interp e1 with
@@ -59,11 +59,11 @@ include struct
         | _ -> failwith "impossible")
       | Union (e1, e2) -> (
         match (interp e1, interp e2) with
-        | ValIntT e1', ValIntT e2' -> failwith "TODO: finish RHS"
+        | ValIntT e1', ValIntT e2' -> failwith "TODO: RHS of case stmt"
         | _ -> failwith "impossible")
       | Intersect (e1, e2) -> (
         match (interp e1, interp e2) with
-        | ValIntT e1', ValIntT e2' -> failwith "TODO: finish RHS"
+        | ValIntT e1', ValIntT e2' -> failwith "TODO: RHS of case stmt"
         | _ -> failwith "impossible")
       | Invariant e1 -> (
         match interp e1 with
