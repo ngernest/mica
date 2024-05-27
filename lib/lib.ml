@@ -189,7 +189,7 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
     failwith "TODO: catch all case of mk_interp_case_rhs"
 
 (** Creates the definition for the [interp] function 
-    (contained inside the body of the [ExprToImpl] functor) 
+    (contained inside the body of the [TestHarness] functor) 
     - The argument [expr_cstrs] is a list containing the 
     names & arg types of the constructors for the [expr] algebraic data type, 
     along with [inv_ctx], an "inverse typing context" that maps [core_type]'s 
@@ -223,7 +223,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
     value_binding ~loc ~pat:func_name_pat ~expr:func_binding in
   pstr_value ~loc Recursive [ func_defn ]
 
-(** Creates the body of the [ExprToImpl] functor *)
+(** Creates the body of the [TestHarness] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (mod_ty : module_type) (sig_items : signature)
   (expr_cstrs :
@@ -257,7 +257,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
     } in
   pmod_functor ~loc (Named (arg_name, mod_ty)) functor_expr
 
-(** Generates the scaffolding for the [ExprToImpl] functor 
+(** Generates the scaffolding for the [TestHarness] functor 
     (e.g. module type declarations) *)
 let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
@@ -275,7 +275,7 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
         mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs in
       let mod_binding =
         module_binding ~loc
-          ~name:{ txt = Some "ExprToImpl"; loc }
+          ~name:{ txt = Some "TestHarness"; loc }
           ~expr:functor_expr in
       [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
     | _ ->
@@ -290,7 +290,7 @@ let () =
   (* Generate auxiliary type declarations *)
   let datatype_deriver =
     Deriving.add "mica_types" ~str_module_type_decl:type_generator in
-  (* Generate the body of the [ExprToImpl] functor - Note that we must generate
+  (* Generate the body of the [TestHarness] functor - Note that we must generate
      the declarations of auxiliary datatypes before generating the functor *)
   let functor_generator =
     Deriving.Generator.V2.make_noarg ~deps:[ datatype_deriver ] generate_functor

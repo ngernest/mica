@@ -31,7 +31,7 @@ type expr =
 type ty = Int | Bool | IntT 
 
 (** Functor containing interpreter for symbolic expressions *)
-module ExprToImpl(M : SetInterface) = struct 
+module TestHarness(M : SetInterface) = struct 
   include M 
   
   type value = 
