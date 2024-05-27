@@ -200,7 +200,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
           expr_cstr args ~ret_ty in
       case ~lhs ~guard:None ~rhs) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
-  [%stri let interp e = [%e func_body]]
+  [%stri let rec interp e = [%e func_body]]
 
 (** Creates the body of the [TestHarness] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
