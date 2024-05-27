@@ -367,6 +367,34 @@ let is_abs_ty_parameterized_alpha_beta_t () =
     true
 
 (*******************************************************************************)
+(** Testing [update_expr_arg_names] *)
+
+let update_expr_arg_names_singleton () =
+  check (list string) "update_expr_arg_names_singleton"
+    (update_expr_arg_names [ "x'" ] [ "x" ])
+    [ "x'" ]
+
+let update_expr_arg_names_no_op () =
+  check (list string) "update_expr_arg_names_no_op"
+    (update_expr_arg_names [ "x'" ] [ "x1"; "x2"; "x3" ])
+    [ "x1"; "x2"; "x3" ]
+
+let update_expr_arg_names_update_one () =
+  check (list string) "update_expr_arg_names_update_one"
+    (update_expr_arg_names [ "x2'" ] [ "x1"; "x2"; "x3" ])
+    [ "x1"; "x2'"; "x3" ]
+
+let update_expr_arg_names_update_two () =
+  check (list string) "update_expr_arg_names_update_two"
+    (update_expr_arg_names [ "x2'"; "x4'" ] [ "x1"; "x2"; "x3"; "x4"; "x5" ])
+    [ "x1"; "x2'"; "x3"; "x4'"; "x5" ]
+
+let update_expr_arg_names_double_primes () =
+  check (list string) "update_expr_arg_names_double_primes"
+    (update_expr_arg_names [ "x''"; "y''" ] [ "w'"; "x'"; "y'"; "z'" ])
+    [ "w'"; "x''"; "y''"; "z'" ]
+
+(*******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
@@ -430,5 +458,12 @@ let () =
           test_case "t" `Quick is_abs_ty_parameterized_t;
           test_case "'a t" `Quick is_abs_ty_parameterized_alpha_t;
           test_case "('a, 'b) t" `Quick is_abs_ty_parameterized_alpha_beta_t
+        ] );
+      ( "Tests for [update_expr_arg_names]",
+        [ test_case "singleton" `Quick update_expr_arg_names_update_two;
+          test_case "no-op" `Quick update_expr_arg_names_no_op;
+          test_case "update one" `Quick update_expr_arg_names_update_one;
+          test_case "update two" `Quick update_expr_arg_names_update_two;
+          test_case "double primes" `Quick update_expr_arg_names_double_primes
         ] )
     ]

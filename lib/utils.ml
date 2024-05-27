@@ -479,6 +479,13 @@ let get_unary_case_rhs (ret_ty_cstr : constructor_declaration)
   let value_cstr = get_cstr_name ret_ty_cstr in
   pexp_construct ~loc value_cstr (Some mod_func_app)
 
+(** [update_expr_arg_names expr_args args] replaces each variable [x] in [expr_args] 
+    if [x'] (the variable with a prime added) is in [expr_args] *)
+let update_expr_arg_names (expr_args : string list) (args : string list) :
+  string list =
+  List.map args ~f:(fun x ->
+    if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
+
 (** Makes the scrutinees for the inner case-stmt in [interp] 
     - [expr_vars] is a list of variables that have type [expr] 
     - [post] is post-processing function to be applied when [expr_vars] 
