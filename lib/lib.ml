@@ -141,8 +141,7 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
     let vars : string list = List.map ~f:get_varname xs in
     let expr_vars : string list = find_exprs gamma in
-    let match_arm : pattern =
-      get_match_arm ~loc expr_vars ~abs_ty_parameterized in
+    let match_arm = get_match_arm ~loc expr_vars ~abs_ty_parameterized in
     let scrutinees : expression =
       match expr_vars with
       | [] ->
@@ -151,15 +150,13 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
           can't call [mk_interp_case_rhs] with no arguments of type [expr] |}
       | [ x ] ->
         (* [match interp x with ...] *)
-        let ident : expression = pexp_ident_of_string x ~loc in
-        pexp_apply ~loc [%expr interp] [ (Nolabel, ident) ]
+        let ident = pexp_ident_of_string x ~loc in
+        [%expr interp [%e ident]]
       | _ ->
         (* [match (interp y1, interp y2, ...) with ...] *)
-        let app_exprs : expression list =
+        let app_exprs =
           List.map
-            ~f:(fun var ->
-              pexp_apply ~loc [%expr interp]
-                [ (Nolabel, pexp_ident_of_string ~loc var) ])
+            ~f:(fun var -> [%expr interp [%e pexp_ident_of_string ~loc var]])
             expr_vars in
         pexp_tuple ~loc app_exprs in
     (* TODO: figure out how to generate the body of this case stmt using
