@@ -185,11 +185,6 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   (expr_cstrs :
     (Longident.t Location.loc * pattern option * inv_ctx * core_type) list) :
   structure_item =
-  (* [arg_str] denotes the argument to [interp] *)
-  let arg_str = "e" in
-  let arg_ident = pexp_ident ~loc (with_loc (Lident arg_str) ~loc) in
-  let func_name_pat = ppat_var ~loc { txt = "interp"; loc } in
-  let func_arg = ppat_var ~loc { txt = arg_str; loc } in
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let cases : case list =
     List.map expr_cstrs ~f:(fun (expr_cstr, args, gamma, ret_ty) ->
@@ -198,6 +193,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
         mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized
           expr_cstr args ~ret_ty in
       case ~lhs ~guard:None ~rhs) in
+  let arg_ident = pexp_ident ~loc (lident_loc_of_string "e" ~loc) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   [%stri let rec interp e = [%e func_body]]
 
@@ -222,11 +218,12 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
 
   let abs_ty_parameterized : bool = is_abs_ty_parameterized sig_items in
 
-  (* Assembling all the components of the functor *)
-  let functor_body : structure_item list =
-    [ include_decl;
-      val_adt_decl;
-      mk_interp ~loc mod_ty ~abs_ty_parameterized expr_cstrs
+  let interp_fun_defn = mk_interp ~loc mod_ty ~abs_ty_parameterized expr_cstrs in   
+  let functor_body : structure_item list = 
+    [%str 
+      [%%i include_decl]
+      [%%i val_adt_decl]
+      [%%i interp_fun_defn]
     ] in
   let functor_expr : module_expr =
     { pmod_desc = Pmod_structure functor_body;

@@ -85,6 +85,35 @@
  (action
   (run ./set_signature.exe)))
 
+; -------- Test: `stack_signature.ml` --------; The executable under test
+(executable
+ (name stack_signature)
+ (modules stack_signature)
+ (preprocess (pps ppx_mica)))
+
+; Run the PPX on the `.ml` file
+(rule
+ (targets stack_signature.actual)
+ (deps
+  (:pp pp.exe)
+  (:input stack_signature.ml))
+ (action
+  ; expect the process to succeed, captured in target
+  (run ./%{pp} -deriving-keep-w32 both --impl %{input} -o %{targets})))
+
+; Compare the post-processed output to the .expected file
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (diff stack_signature.expected stack_signature.actual)))
+; Ensure that the post-processed executable runs correctly
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (run ./stack_signature.exe)))
+
 ; -------- Test: `two_function_signature.ml` --------; The executable under test
 (executable
  (name two_function_signature)
