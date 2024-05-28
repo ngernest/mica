@@ -56,6 +56,35 @@
  (action
   (run ./one_function_signature.exe)))
 
+; -------- Test: `regex_signature.ml` --------; The executable under test
+(executable
+ (name regex_signature)
+ (modules regex_signature)
+ (preprocess (pps ppx_mica)))
+
+; Run the PPX on the `.ml` file
+(rule
+ (targets regex_signature.actual)
+ (deps
+  (:pp pp.exe)
+  (:input regex_signature.ml))
+ (action
+  ; expect the process to succeed, captured in target
+  (run ./%{pp} -deriving-keep-w32 both --impl %{input} -o %{targets})))
+
+; Compare the post-processed output to the .expected file
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (diff regex_signature.expected regex_signature.actual)))
+; Ensure that the post-processed executable runs correctly
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (run ./regex_signature.exe)))
+
 ; -------- Test: `set_signature.ml` --------; The executable under test
 (executable
  (name set_signature)
