@@ -18,8 +18,7 @@
  (modules pp)
  (libraries ppx_mica ppxlib))
 
-; TODO: uncomment to enable testing for errors
-; (include dune.inc)
+(include dune.inc)
 
 ; Generate the dune rules for the `errors` directory using `gen_dune_rules`
 
