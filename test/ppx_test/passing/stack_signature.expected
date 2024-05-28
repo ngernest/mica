@@ -8,7 +8,7 @@ module type StackInterface  =
     val clear : 'a t -> unit
     val is_empty : 'a t -> bool
     val length : 'a t -> int
-  end[@@deriving_inline (mica_types, mica)]
+  end[@@deriving (mica_types, mica)]
 include
   struct
     [@@@ocaml.warning "-60"]
@@ -65,5 +65,4 @@ include
                | ValIntT e1' -> ValInt (M.length e1')
                | _ -> failwith "impossible")
       end
-  end[@@ocaml.doc "@inline"]
-[@@@end ]
+  end[@@ocaml.doc "@inline"][@@merlin.hide ]
