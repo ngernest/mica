@@ -269,9 +269,10 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
     Location.raise_errorf ~loc
       "Can't derive for expressions that aren't module type declarations"
 
-(** Labelled arguments for the [mica] PPX deriver *)
+(** Labelled arguments for the [mica] PPX deriver 
+    TODO: handle the continuation in [generate_functor] *)
 let args () =
-  Deriving.Args.(empty +> arg "m1" (estring __) +> arg "m2" (estring __))
+  Deriving.Args.(empty +> arg "m1" (pexp_ident __) +> arg "m2" (pexp_ident __))
 
 let () =
   (* Generate auxiliary type declarations *)
