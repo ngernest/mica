@@ -142,13 +142,13 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   (* Unary constructors *)
   | Some { ppat_desc = Ppat_var { txt = x; loc }; _ } ->
     let expr_vars = find_exprs gamma in
+    let func_arg_ident = pexp_ident_of_string x ~loc in
     (* If [x] doesn't have type [expr]: regular function application *)
     if not (List.mem x ~set:expr_vars) then
-      let arg = pexp_ident_of_string x ~loc in
-      pexp_construct ~loc value_cstr (Some [%expr [%e mod_item] [%e arg]])
+      pexp_construct ~loc value_cstr
+        (Some [%expr [%e mod_item] [%e func_arg_ident]])
     else
       (* Otherwise, recursively call [interp] on the variable of type [expr] *)
-      let func_arg_ident = pexp_ident_of_string x ~loc in
       let scrutinee = [%expr interp [%e func_arg_ident]] in
       let match_arm = get_match_arm ~loc [ x ] ~abs_ty_parameterized in
       let match_rhs = get_unary_case_rhs value_cstr mod_name expr_cstr x ~loc in
