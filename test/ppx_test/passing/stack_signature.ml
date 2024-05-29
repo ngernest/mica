@@ -10,4 +10,3 @@ module type StackInterface = sig
   val length : 'a t -> int
 end
 [@@deriving mica_types, mica]
-

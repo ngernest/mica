@@ -124,34 +124,44 @@ let get_expr_cstrs (mod_ty : module_type) :
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
     to variable names
-  - [expr_cstr] is the constructor of the [expr] type *)
+  - [expr_cstr] is the constructor of the [expr] type 
+  - [ret_ty] is the designated return type of the expression being interpreted *)
 let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   ?(abs_ty_parameterized = false) (expr_cstr : Longident.t Location.loc)
   (args : pattern option) ~(gamma : inv_ctx) ~(ret_ty : core_type) : expression
     =
-  (* The constructor of the [value] type for [ret_ty], the designated return
-     type of the function *)
-  let ret_ty_cstr : constructor_declaration = mk_val_cstr ret_ty in
+  (* The constructor of the [value] type for [ret_ty] *)
+  let ret_ty_cstr = mk_val_cstr ret_ty in
+  (* The constructor name *)
+  let value_cstr = get_cstr_name ret_ty_cstr in
+  (* Append the module name to the expression we're interepreting *)
+  let mod_item = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
   match args with
   (* Nullary constructors *)
-  | None ->
-    let value_cstr = get_cstr_name ret_ty_cstr in
-    let mod_item = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
-    pexp_construct ~loc value_cstr (Some mod_item)
+  | None -> pexp_construct ~loc value_cstr (Some mod_item)
   (* Unary constructors *)
   | Some { ppat_desc = Ppat_var { txt = x; loc }; _ } ->
-    let func_arg_ident = pexp_ident_of_string x ~loc in
-    let scrutinee = [%expr interp [%e func_arg_ident]] in
-    let match_arm = get_match_arm ~loc [ x ] ~abs_ty_parameterized in
-    let match_rhs = get_unary_case_rhs ret_ty_cstr mod_name expr_cstr x ~loc in
-    [%expr
-      match [%e scrutinee] with
-      | [%p match_arm] -> [%e match_rhs]
-      | _ -> failwith "impossible"]
+    let expr_vars = find_exprs gamma in
+    (* If [x] doesn't have type [expr], just treat this as a normal function
+       application *)
+    if not (List.mem x ~set:expr_vars) then
+      let arg = pexp_ident_of_string x ~loc in
+      pexp_construct ~loc value_cstr (Some [%expr [%e mod_item] [%e arg]])
+    else
+      (* Otherwise, recursively call [interp] on the variable of type [expr] *)
+      let func_arg_ident = pexp_ident_of_string x ~loc in
+      let scrutinee = [%expr interp [%e func_arg_ident]] in
+      let match_arm = get_match_arm ~loc [ x ] ~abs_ty_parameterized in
+      let match_rhs = get_unary_case_rhs value_cstr mod_name expr_cstr x ~loc in
+      [%expr
+        match [%e scrutinee] with
+        | [%p match_arm] -> [%e match_rhs]
+        | _ -> failwith "impossible"]
   (* n-ary constructors (n > 1) *)
   | Some { ppat_desc = Ppat_tuple xs; _ } ->
     let vars = List.map ~f:get_varname xs in
     let expr_vars = find_exprs gamma in
+    (* TODO: handle cases when [expr_vars] is empty (i.e. no expr variables) *)
     let match_arm = get_match_arm ~loc expr_vars ~abs_ty_parameterized in
     let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
     let func_args =
@@ -218,13 +228,12 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
 
   let abs_ty_parameterized : bool = is_abs_ty_parameterized sig_items in
 
-  let interp_fun_defn = mk_interp ~loc mod_ty ~abs_ty_parameterized expr_cstrs in   
-  let functor_body : structure_item list = 
-    [%str 
+  let interp_fun_defn = mk_interp ~loc mod_ty ~abs_ty_parameterized expr_cstrs in
+  let functor_body : structure_item list =
+    [%str
       [%%i include_decl]
       [%%i val_adt_decl]
-      [%%i interp_fun_defn]
-    ] in
+      [%%i interp_fun_defn]] in
   let functor_expr : module_expr =
     { pmod_desc = Pmod_structure functor_body;
       pmod_loc = loc;
