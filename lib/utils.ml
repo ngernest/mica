@@ -470,9 +470,9 @@ let get_match_arm (expr_vars : string list) ~(abs_ty_parameterized : bool)
     - [expr_cstr] is the constructor for the [expr] type, which corresponds
     to a function inside the module with name [mod_name] 
     - [x] is the argument that will be applied to the module function *)
-let get_unary_case_rhs (value_cstr : Longident.t with_loc) (mod_name : string)
-  (expr_cstr : Longident.t Location.loc) (x : string) ~(loc : loc) : expression
-    =
+let get_unary_case_rhs (value_cstr : Longident.t Location.loc)
+  (mod_name : string) (expr_cstr : Longident.t Location.loc) (x : string)
+  ~(loc : loc) : expression =
   let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
   let mod_func_arg = pexp_ident_of_string (add_prime x) ~loc in
   let mod_func_app = [%expr [%e mod_func] [%e mod_func_arg]] in

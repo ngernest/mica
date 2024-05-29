@@ -121,8 +121,8 @@ let get_expr_cstrs (mod_ty : module_type) :
   | Pmty_signature sig_items -> get_cstr_metadata (mk_expr_cstrs sig_items)
   | _ -> failwith "TODO: get_expr_cstrs"
 
-(** Creates the body of the inner case-statement inside [interp]
-  - NB: [gamma] is the "inverse typing context" which maps types 
+(** Creates the body of the inner case-statement inside [interp].
+  - [gamma] is the "inverse typing context" which maps types 
     to variable names
   - [expr_cstr] is the constructor of the [expr] type 
   - [ret_ty] is the designated return type of the expression being interpreted *)
@@ -142,8 +142,7 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
   (* Unary constructors *)
   | Some { ppat_desc = Ppat_var { txt = x; loc }; _ } ->
     let expr_vars = find_exprs gamma in
-    (* If [x] doesn't have type [expr], just treat this as a normal function
-       application *)
+    (* If [x] doesn't have type [expr]: regular function application *)
     if not (List.mem x ~set:expr_vars) then
       let arg = pexp_ident_of_string x ~loc in
       pexp_construct ~loc value_cstr (Some [%expr [%e mod_item] [%e arg]])
