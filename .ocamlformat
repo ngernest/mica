@@ -1,5 +1,6 @@
 profile = default
-version = 0.26.2
+version = ignore
+version-check = false
 margin = 80
 break-cases = toplevel
 break-before-in = auto
