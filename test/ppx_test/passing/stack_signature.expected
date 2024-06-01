@@ -43,26 +43,26 @@ include
           | Push (x1, e2) ->
               (match interp e2 with
                | ValIntT e2' -> ValIntT (M.push x1 e2')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: n-ary constructor")
           | Pop e1 ->
               (match interp e1 with
                | ValIntT e1' -> ValIntTOption (M.pop e1')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: unary constructor")
           | Peek e1 ->
               (match interp e1 with
                | ValIntT e1' -> ValIntOption (M.peek e1')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: unary constructor")
           | Clear e1 ->
               (match interp e1 with
                | ValIntT e1' -> ValUnit (M.clear e1')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: unary constructor")
           | Is_empty e1 ->
               (match interp e1 with
                | ValIntT e1' -> ValBool (M.is_empty e1')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: unary constructor")
           | Length e1 ->
               (match interp e1 with
                | ValIntT e1' -> ValInt (M.length e1')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: unary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

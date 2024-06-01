@@ -1,0 +1,62 @@
+module type PolyInterface  =
+  sig
+    type t
+    val zero : t
+    val one : t
+    val power : int -> int -> int
+    val monomial : int -> int -> t
+    val add : t -> t -> t
+    val mult : t -> t -> t
+    val create : (int * int) list -> t
+    val eval : t -> int -> int
+    val equal : t -> t -> bool
+  end[@@deriving (mica_types, mica)]
+include
+  struct
+    [@@@ocaml.warning "-60"]
+    type expr =
+      | Zero 
+      | One 
+      | Power of int * int 
+      | Monomial of int * int 
+      | Add of expr * expr 
+      | Mult of expr * expr 
+      | Create of (int * int) list 
+      | Eval of expr * int 
+      | Equal of expr * expr 
+    type ty =
+      | Bool 
+      | Int 
+      | T 
+    module TestHarness(M:PolyInterface) =
+      struct
+        include M
+        type value =
+          | ValBool of bool 
+          | ValInt of int 
+          | ValT of t 
+        let rec interp e =
+          match e with
+          | Zero -> ValT M.zero
+          | One -> ValT M.one
+          | Power (x1, x2) -> ValInt (M.power x1 x2)
+          | Monomial (x1, x2) -> ValT (M.monomial x1 x2)
+          | Add (e1, e2) ->
+              (match ((interp e1), (interp e2)) with
+               | (ValT e1', ValT e2') -> ValT (M.add e1' e2')
+               | _ -> failwith "impossible: n-ary constructor")
+          | Mult (e1, e2) ->
+              (match ((interp e1), (interp e2)) with
+               | (ValT e1', ValT e2') -> ValT (M.mult e1' e2')
+               | _ -> failwith "impossible: n-ary constructor")
+          | Create lst1 -> ValT (M.create lst1)
+          | Eval (e1, x2) ->
+              (match interp e1 with
+               | ValT e1' -> ValInt (M.eval e1' x2)
+               | _ -> failwith "impossible: n-ary constructor")
+          | Equal (e1, e2) ->
+              (match ((interp e1), (interp e2)) with
+               | (ValT e1', ValT e2') -> ValBool (M.equal e1' e2')
+               | _ -> failwith "impossible: n-ary constructor")
+      end
+  end[@@ocaml.doc "@inline"][@@merlin.hide ]

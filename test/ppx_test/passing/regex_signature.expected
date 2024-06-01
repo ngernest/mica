@@ -39,22 +39,22 @@ include
           | Alt (e1, e2) ->
               (match ((interp e1), (interp e2)) with
                | (ValT e1', ValT e2') -> ValT (M.alt e1' e2')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: n-ary constructor")
           | Cat (e1, e2) ->
               (match ((interp e1), (interp e2)) with
                | (ValT e1', ValT e2') -> ValT (M.cat e1' e2')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: n-ary constructor")
           | Star e1 ->
               (match interp e1 with
                | ValT e1' -> ValT (M.star e1')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: unary constructor")
           | MatchString (e1, s2) ->
               (match interp e1 with
                | ValT e1' -> ValBool (M.matchString e1' s2)
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: n-ary constructor")
           | AcceptsEmpty e1 ->
               (match interp e1 with
                | ValT e1' -> ValBool (M.acceptsEmpty e1')
-               | _ -> failwith "impossible")
+               | _ -> failwith "impossible: unary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

@@ -56,6 +56,35 @@
  (action
   (run ./one_function_signature.exe)))
 
+; -------- Test: `polynomial.ml` --------; The executable under test
+(executable
+ (name polynomial)
+ (modules polynomial)
+ (preprocess (pps ppx_mica)))
+
+; Run the PPX on the `.ml` file
+(rule
+ (targets polynomial.actual)
+ (deps
+  (:pp pp.exe)
+  (:input polynomial.ml))
+ (action
+  ; expect the process to succeed, captured in target
+  (run ./%{pp} -deriving-keep-w32 both --impl %{input} -o %{targets})))
+
+; Compare the post-processed output to the .expected file
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (diff polynomial.expected polynomial.actual)))
+; Ensure that the post-processed executable runs correctly
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (run ./polynomial.exe)))
+
 ; -------- Test: `regex_signature.ml` --------; The executable under test
 (executable
  (name regex_signature)
