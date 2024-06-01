@@ -17,33 +17,33 @@ let mk_expr_cstrs (sig_items : signature) :
   (constructor_declaration * core_type) list =
   List.rev
   @@ List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
-         match psig_desc with
-         | Psig_type (rec_flag, type_decls) -> []
-         | Psig_value { pval_name; pval_type; pval_loc; _ } ->
-           let name : string = String.capitalize_ascii pval_name.txt in
-           (* Exclude the return type of the function from the list of arg types
-              for the [expr] constructor *)
-           let arg_tys : core_type list =
-             remove_last (get_cstr_arg_tys pval_type) in
-           (* Return type of the function *)
-           let ret_ty = get_ret_ty pval_type in
-           (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
-         | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
-         | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
-         | _ ->
-           failwith
-             "TODO: not sure how to handle other kinds of [signature_item_desc]")
+       match psig_desc with
+       | Psig_type (rec_flag, type_decls) -> []
+       | Psig_value { pval_name; pval_type; pval_loc; _ } ->
+         let name : string = String.capitalize_ascii pval_name.txt in
+         (* Exclude the return type of the function from the list of arg types
+            for the [expr] constructor *)
+         let arg_tys : core_type list =
+           remove_last (get_cstr_arg_tys pval_type) in
+         (* Return type of the function *)
+         let ret_ty = get_ret_ty pval_type in
+         (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
+       | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
+       | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
+       | _ ->
+         failwith
+           "TODO: not sure how to handle other kinds of [signature_item_desc]")
 
 (** Extracts the unique return types of all [val] declarations within a 
     module signature *)
 let uniq_ret_tys (sig_items : signature) : core_type list =
   List.rev
   @@ List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
-         match psig_desc with
-         | Psig_value { pval_type; _ } ->
-           let ty = get_ret_ty pval_type in
-           if List.mem ty ~set:acc then acc else ty :: acc
-         | _ -> acc)
+       match psig_desc with
+       | Psig_value { pval_type; _ } ->
+         let ty = get_ret_ty pval_type in
+         if List.mem ty ~set:acc then acc else ty :: acc
+       | _ -> acc)
 
 (** Helper function for creating the constructors of the [ty] and [value] 
     algebraic data types 
@@ -55,7 +55,7 @@ let mk_cstr_aux (sig_items : signature)
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
     List.sort_uniq ret_tys ~cmp:(fun t1 t2 ->
-        String.compare (string_of_core_ty t1) (string_of_core_ty t2)) in
+      String.compare (string_of_core_ty t1) (string_of_core_ty t2)) in
   List.map uniq_ret_tys ~f
 
 (** Constructs the definition of the [ty] algebraic data type
@@ -63,7 +63,7 @@ let mk_cstr_aux (sig_items : signature)
     the module signature *)
 let mk_ty_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:(fun ty ->
-      mk_cstr ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+    mk_cstr ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
 (** [mk_val_cstr ty] constructors the corresponding constructor declaration
     for the [value] datatype, given some [core_type] [ty]
@@ -155,24 +155,31 @@ let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
       [%expr
         match [%e scrutinee] with
         | [%p match_arm] -> [%e match_rhs]
-        | _ -> failwith "impossible"]
+        | _ -> failwith "impossible: unary constructor"]
   (* n-ary constructors (n > 1) *)
-  | Some { ppat_desc = Ppat_tuple xs; _ } ->
+  | Some { ppat_desc = Ppat_tuple xs; ppat_loc; _ } ->
     let vars = List.map ~f:get_varname xs in
     let expr_vars = find_exprs gamma in
-    (* TODO: handle cases when [expr_vars] is empty (i.e. no expr variables) *)
-    let match_arm = get_match_arm ~loc expr_vars ~abs_ty_parameterized in
-    let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
-    let func_args =
-      List.map
-        ~f:(fun x -> pexp_ident_of_string x ~loc)
-        (update_expr_arg_names (List.map ~f:add_prime expr_vars) vars) in
-    let match_rhs =
-      get_nary_case_rhs ret_ty_cstr mod_name expr_cstr func_args ~loc in
-    [%expr
-      match [%e scrutinees] with
-      | [%p match_arm] -> [%e match_rhs]
-      | _ -> failwith "impossible"]
+    (* If there are no args of type [expr]: regular function application *)
+    if list_is_empty expr_vars then
+      let func_args =
+        List.map ~f:(fun x -> (Nolabel, pexp_ident_of_string ~loc x)) vars in
+      pexp_construct ~loc value_cstr (Some (pexp_apply ~loc mod_item func_args))
+    else
+      (* Recursively call [interp] on all variables that have type [expr] *)
+      let match_arm =
+        get_match_arm ~loc:ppat_loc expr_vars ~abs_ty_parameterized in
+      let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
+      let func_args =
+        List.map
+          ~f:(fun x -> pexp_ident_of_string x ~loc)
+          (update_expr_arg_names (List.map ~f:add_prime expr_vars) vars) in
+      let match_rhs =
+        get_nary_case_rhs ret_ty_cstr mod_name expr_cstr func_args ~loc in
+      [%expr
+        match [%e scrutinees] with
+        | [%p match_arm] -> [%e match_rhs]
+        | _ -> failwith "impossible: n-ary constructor"]
   | Some pat ->
     printf "cstr = %s\n" (string_of_lident expr_cstr.txt);
     printf "pat = ";
@@ -197,11 +204,11 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let cases : case list =
     List.map expr_cstrs ~f:(fun (expr_cstr, args, gamma, ret_ty) ->
-        let lhs : pattern = ppat_construct ~loc expr_cstr args in
-        let rhs : expression =
-          mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized
-            expr_cstr args ~ret_ty in
-        case ~lhs ~guard:None ~rhs) in
+      let lhs : pattern = ppat_construct ~loc expr_cstr args in
+      let rhs : expression =
+        mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized
+          expr_cstr args ~ret_ty in
+      case ~lhs ~guard:None ~rhs) in
   let arg_ident = pexp_ident ~loc (lident_loc_of_string "e" ~loc) in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   [%stri let rec interp e = [%e func_body]]

@@ -216,6 +216,12 @@ let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
       match ptyp_desc with
       | Ptyp_tuple _ -> "p"
       | Ptyp_arrow _ -> "f"
+      | Ptyp_constr ({ txt; _ }, _) ->
+        let tyconstr = string_of_lident txt in
+        if String.equal tyconstr "list" then "lst"
+          (* For unrecognized type constructors, just extract the first char of
+             the type constructor's name *)
+        else String.sub tyconstr ~pos:0 ~len:1
       | _ ->
         pp_core_type ty;
         failwith "TODO: [mk_fresh] not supported for types of this shape") in
@@ -308,38 +314,38 @@ let find_exprs (gamma : inv_ctx) : string list =
 let get_cstr_metadata (cstrs : (constructor_declaration * core_type) list) :
   (Longident.t Location.loc * pattern option * inv_ctx * core_type) list =
   List.map cstrs ~f:(fun ({ pcd_name = { txt; loc }; pcd_args; _ }, ret_ty) ->
-      let cstr_name = with_loc (Longident.parse txt) ~loc in
-      match pcd_args with
-      (* Constructors with no arguments *)
-      | Pcstr_tuple [] -> (cstr_name, None, empty_ctx, ret_ty)
-      (* N-ary constructors (where n > 0) *)
-      | Pcstr_tuple arg_tys ->
-        let (cstr_args, gamma) : pattern * inv_ctx =
-          get_cstr_args ~loc Fun.id arg_tys in
-        (cstr_name, Some cstr_args, gamma, ret_ty)
-      | Pcstr_record arg_lbls ->
-        let cstr_args, gamma =
-          get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
-        (cstr_name, Some cstr_args, gamma, ret_ty))
+    let cstr_name = with_loc (Longident.parse txt) ~loc in
+    match pcd_args with
+    (* Constructors with no arguments *)
+    | Pcstr_tuple [] -> (cstr_name, None, empty_ctx, ret_ty)
+    (* N-ary constructors (where n > 0) *)
+    | Pcstr_tuple arg_tys ->
+      let (cstr_args, gamma) : pattern * inv_ctx =
+        get_cstr_args ~loc Fun.id arg_tys in
+      (cstr_name, Some cstr_args, gamma, ret_ty)
+    | Pcstr_record arg_lbls ->
+      let cstr_args, gamma =
+        get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
+      (cstr_name, Some cstr_args, gamma, ret_ty))
 
 (** Variant of [get_cstr_metadata] which returns 
     only a list of pairs containing constructor names & constructor args *)
 let get_cstr_metadata_minimal (cstrs : constructor_declaration list) :
   (Longident.t Location.loc * pattern option) list =
   List.map cstrs ~f:(fun { pcd_name = { txt; loc }; pcd_args; _ } ->
-      let cstr_name = with_loc (Longident.parse txt) ~loc in
-      match pcd_args with
-      (* Constructors with no arguments *)
-      | Pcstr_tuple [] -> (cstr_name, None)
-      (* N-ary constructors (where n > 0) *)
-      | Pcstr_tuple arg_tys ->
-        let (cstr_args, gamma) : pattern * inv_ctx =
-          get_cstr_args ~loc Fun.id arg_tys in
-        (cstr_name, Some cstr_args)
-      | Pcstr_record arg_lbls ->
-        let cstr_args, gamma =
-          get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
-        (cstr_name, Some cstr_args))
+    let cstr_name = with_loc (Longident.parse txt) ~loc in
+    match pcd_args with
+    (* Constructors with no arguments *)
+    | Pcstr_tuple [] -> (cstr_name, None)
+    (* N-ary constructors (where n > 0) *)
+    | Pcstr_tuple arg_tys ->
+      let (cstr_args, gamma) : pattern * inv_ctx =
+        get_cstr_args ~loc Fun.id arg_tys in
+      (cstr_name, Some cstr_args)
+    | Pcstr_record arg_lbls ->
+      let cstr_args, gamma =
+        get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
+      (cstr_name, Some cstr_args))
 
 (** Extracts the constructor name (along with its location) from 
     a constructor declaration *)
@@ -377,7 +383,7 @@ let rec string_of_core_ty (ty : core_type) : string =
   | Ptyp_tuple tys ->
     let ty_strs =
       List.map tys ~f:(fun ty ->
-          string_of_core_ty ty |> String.capitalize_ascii) in
+        string_of_core_ty ty |> String.capitalize_ascii) in
     String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
   | _ -> failwith "type expression not supported by string_of_core_type"
@@ -453,7 +459,7 @@ let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : loc) :
 let get_match_arm (expr_vars : string list) ~(abs_ty_parameterized : bool)
   ~(loc : loc) : pattern =
   match expr_vars with
-  | [] -> failwith "impossible"
+  | [] -> failwith "impossible: get_match_arm"
   | [ x ] -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x)
   | _ ->
     let val_exprs : pattern list =
@@ -495,7 +501,7 @@ let get_nary_case_rhs (ret_ty_cstr : constructor_declaration)
 let update_expr_arg_names (expr_args : string list) (args : string list) :
   string list =
   List.map args ~f:(fun x ->
-      if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
+    if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
 
 (** Makes the scrutinees for the inner case-stmt in [interp]. 
     - [expr_vars] is a list of variables that have type [expr]. This list 
@@ -505,9 +511,9 @@ let update_expr_arg_names (expr_args : string list) (args : string list) :
 let mk_scrutinees (expr_vars : string list)
   ~(post : expression list -> expression) ~(loc : loc) : expression =
   match expr_vars with
-  | [] -> failwith "impossible"
+  | [] -> failwith "impossible: mk_scrutinees"
   | _ ->
     let xs =
       List.map expr_vars ~f:(fun x ->
-          [%expr interp [%e pexp_ident_of_string x ~loc]]) in
+        [%expr interp [%e pexp_ident_of_string x ~loc]]) in
     if List.length xs = 1 then List.hd xs else post xs
