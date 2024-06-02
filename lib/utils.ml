@@ -443,6 +443,8 @@ let rec is_abs_ty_parameterized (sig_items : signature) : bool =
     abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
 let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : loc) :
   pattern =
+  (** TODO: generalize this so that we can handle > 1 type parameter in 
+      abstract types *)
   let val_cstr = if abs_ty_parameterized then "ValIntT" else "ValT" in
   let var_ident = ppat_var_of_string x ~loc in
   ppat_construct ~loc
