@@ -1,3 +1,32 @@
+; -------- Test: `bst.ml` --------; The executable under test
+(executable
+ (name bst)
+ (modules bst)
+ (preprocess (pps ppx_mica)))
+
+; Run the PPX on the `.ml` file
+(rule
+ (targets bst.actual)
+ (deps
+  (:pp pp.exe)
+  (:input bst.ml))
+ (action
+  ; expect the process to succeed, captured in target
+  (run ./%{pp} -deriving-keep-w32 both --impl %{input} -o %{targets})))
+
+; Compare the post-processed output to the .expected file
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (diff bst.expected bst.actual)))
+; Ensure that the post-processed executable runs correctly
+(rule
+ (alias runtest)
+ (package ppx_mica)
+ (action
+  (run ./bst.exe)))
+
 ; -------- Test: `func_with_two_args.ml` --------; The executable under test
 (executable
  (name func_with_two_args)

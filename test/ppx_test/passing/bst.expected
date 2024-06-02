@@ -1,0 +1,74 @@
+module type BST  =
+  sig
+    type ('k, 'v) t =
+      | Leaf 
+      | Branch of ('k, 'v) t * 'k * 'v * ('k, 'v) t 
+    val find : 'k -> ('k, 'v) t -> 'v option
+    val nil : ('k, 'v) t
+    val insert : 'k -> 'v -> ('k, 'v) t -> ('k, 'v) t
+    val delete : 'k -> ('k, 'v) t -> ('k, 'v) t
+    val union : ('k, 'v) t -> ('k, 'v) t -> ('k, 'v) t
+    val toList : ('k, 'v) t -> ('k * 'v) list
+    val keys : ('k, 'v) t -> 'k list
+    val size : ('k, 'v) t -> int
+  end[@@deriving (mica_types, mica)]
+include
+  struct
+    [@@@ocaml.warning "-60"]
+    type expr =
+      | Find of int * expr 
+      | Nil 
+      | Insert of int * int * expr 
+      | Delete of int * expr 
+      | Union of expr * expr 
+      | ToList of expr 
+      | Keys of expr 
+      | Size of expr 
+    type ty =
+      | Int 
+      | IntIntProductList 
+      | IntIntT 
+      | IntList 
+      | IntOption 
+    module TestHarness(M:BST) =
+      struct
+        include M
+        type value =
+          | ValInt of int 
+          | ValIntIntProductList of (int * int) list 
+          | ValIntIntT of (int, int) t 
+          | ValIntList of int list 
+          | ValIntOption of int option 
+        let rec interp e =
+          match e with
+          | Find (x1, e2) ->
+              (match interp e2 with
+               | ValIntT e2' -> ValIntOption (M.find x1 e2')
+               | _ -> failwith "impossible: n-ary constructor")
+          | Nil -> ValIntIntT M.nil
+          | Insert (x1, x2, e3) ->
+              (match interp e3 with
+               | ValIntT e3' -> ValIntIntT (M.insert x1 x2 e3')
+               | _ -> failwith "impossible: n-ary constructor")
+          | Delete (x1, e2) ->
+              (match interp e2 with
+               | ValIntT e2' -> ValIntIntT (M.delete x1 e2')
+               | _ -> failwith "impossible: n-ary constructor")
+          | Union (e1, e2) ->
+              (match ((interp e1), (interp e2)) with
+               | (ValIntT e1', ValIntT e2') -> ValIntIntT (M.union e1' e2')
+               | _ -> failwith "impossible: n-ary constructor")
+          | ToList e1 ->
+              (match interp e1 with
+               | ValIntT e1' -> ValIntIntProductList (M.toList e1')
+               | _ -> failwith "impossible: unary constructor")
+          | Keys e1 ->
+              (match interp e1 with
+               | ValIntT e1' -> ValIntList (M.keys e1')
+               | _ -> failwith "impossible: unary constructor")
+          | Size e1 ->
+              (match interp e1 with
+               | ValIntT e1' -> ValInt (M.size e1')
+               | _ -> failwith "impossible: unary constructor")
+      end
+  end[@@ocaml.doc "@inline"][@@merlin.hide ]
