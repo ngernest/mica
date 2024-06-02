@@ -395,6 +395,67 @@ let update_expr_arg_names_double_primes () =
     [ "w'"; "x''"; "y''"; "z'" ]
 
 (*******************************************************************************)
+(** Testing [get_ty_decls_from_sig] *)
+
+(** [testable] instance for the type [(string * core_type) list list] *)
+let string_core_ty_list_list = list (pair string (list core_ty_testable))
+
+let get_ty_decls_from_sig_t () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_t"
+    (get_ty_decls_from_sig [%sig: type t])
+    [ ("t", []) ]
+
+let get_ty_decls_from_sig_t_int () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_t_int"
+    (get_ty_decls_from_sig [%sig: type t = int])
+    [ ("t", []) ]
+
+let get_ty_decls_from_sig_alpha_t () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_alpha_t"
+    (get_ty_decls_from_sig [%sig: type 'a t])
+    [ ("t", [ [%type: 'a] ]) ]
+
+let get_ty_decls_from_sig_alpha_beta_t () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_alpha_beta_t"
+    (get_ty_decls_from_sig [%sig: type ('a, 'b) t])
+    [ ("t", [ [%type: 'a]; [%type: 'b] ]) ]
+
+let get_ty_decls_from_sig_alpha_beta_gamma_t () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_alpha_beta_gamma_t"
+    (get_ty_decls_from_sig [%sig: type ('a, 'b, 'c) t])
+    [ ("t", [ [%type: 'a]; [%type: 'b]; [%type: 'c] ]) ]
+
+let get_ty_decls_from_sig_ignore_vals_alpha_t () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_ignore_vals_alpha_t"
+    (get_ty_decls_from_sig
+       [%sig:
+         val f : 'a -> 'a
+         val g : int -> int
+
+         type 'a t])
+    [ ("t", [ [%type: 'a] ]) ]
+
+let get_ty_decls_from_sig_two_tys () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_two_tys"
+    (get_ty_decls_from_sig
+       [%sig:
+         type 'a t
+         type 'b u])
+    [ ("t", [ [%type: 'a] ]); ("u", [ [%type: 'b] ]) ]
+
+let get_ty_decls_from_sig_three_tys () =
+  check string_core_ty_list_list "get_ty_decls_from_sig_three_tys"
+    (get_ty_decls_from_sig
+       [%sig:
+         type 'a t
+         type 'b u
+         type ('c, 'd) v])
+    [ ("t", [ [%type: 'a] ]);
+      ("u", [ [%type: 'b] ]);
+      ("v", [ [%type: 'c]; [%type: 'd] ])
+    ]
+
+(*******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
@@ -422,36 +483,36 @@ let () =
           test_case "1 arg function" `Quick uniq_ret_ty_1_arg_funcs;
           test_case "2 arg function" `Quick uniq_ret_ty_2_arg_funcs
         ] );
-      ( "Tests for [mk_ty_cstrs]",
+      ( "[mk_ty_cstrs]",
         [ test_case "1 base type" `Quick mk_ty_cstrs_single_base_ty;
           test_case "1 mono abs type" `Quick mk_ty_cstrs_single_mono_abs_ty;
           test_case "1 poly abs type" `Quick mk_ty_cstrs_single_mono_abs_ty;
           test_case "two constructors" `Quick mk_ty_cstrs_two_base;
           test_case "no duplicates" `Quick mk_ty_cstrs_two_base
         ] );
-      ( "Tests for [get_ret_ty]",
+      ( "[get_ret_ty]",
         [ test_case "1 arg function" `Quick get_ret_ty_1_arg_func;
           test_case "2 arg function" `Quick get_ret_ty_2_arg_func;
           test_case "3 arg function" `Quick get_ret_ty_3_arg_func;
           test_case "uncurried function" `Quick get_ret_ty_uncurried
         ] );
-      ( "Tests for [string_of_lident]",
+      ( "[string_of_lident]",
         [ test_case "lident" `Quick string_of_lident_trivial;
           test_case "ldot" `Quick string_of_lident_ldot;
           test_case "nested ldots" `Quick string_of_lident_nested_lot
         ] );
-      ( "Tests for [uncapitalize_lident]",
+      ( "[uncapitalize_lident]",
         [ test_case "lident" `Quick uncapitalize_lident_trivial;
           test_case "ldot" `Quick uncapitalize_lident_ldot;
           test_case "nested ldots" `Quick uncapitalize_lident_ldot_nested;
           test_case "doubly-nested ldots" `Quick
             uncapitalize_lident_ldot_doubly_nested
         ] );
-      ( "Tests for [add_lident_prefix]",
+      ( "[add_lident_prefix]",
         [ test_case "lident" `Quick add_lident_prefix_mod_path;
           test_case "ldot" `Quick add_lident_prefix_ldot
         ] );
-      ( "Tests for [is_abs_ty_parameterized]",
+      ( "[is_abs_ty_parameterized]",
         [ test_case "empty signature" `Quick is_abs_ty_parameterized_empty_sig;
           test_case "no abstract types" `Quick
             is_abs_ty_parameterized_sig_no_abs_ty;
@@ -459,11 +520,24 @@ let () =
           test_case "'a t" `Quick is_abs_ty_parameterized_alpha_t;
           test_case "('a, 'b) t" `Quick is_abs_ty_parameterized_alpha_beta_t
         ] );
-      ( "Tests for [update_expr_arg_names]",
+      ( "[update_expr_arg_names]",
         [ test_case "singleton" `Quick update_expr_arg_names_update_two;
           test_case "no-op" `Quick update_expr_arg_names_no_op;
           test_case "update one" `Quick update_expr_arg_names_update_one;
           test_case "update two" `Quick update_expr_arg_names_update_two;
           test_case "double primes" `Quick update_expr_arg_names_double_primes
+        ] );
+      ( "[get_ty_decls_from_sig]",
+        [ test_case "t" `Quick get_ty_decls_from_sig_t;
+          test_case "t = int" `Quick get_ty_decls_from_sig_t_int;
+          test_case "'a t" `Quick get_ty_decls_from_sig_alpha_t;
+          test_case "('a, 'b) t" `Quick get_ty_decls_from_sig_alpha_beta_t;
+          test_case "('a, 'b, 'c) t" `Quick
+            get_ty_decls_from_sig_alpha_beta_gamma_t;
+          test_case "'a t, ignore vals" `Quick
+            get_ty_decls_from_sig_ignore_vals_alpha_t;
+          test_case "'a t; 'b u" `Quick get_ty_decls_from_sig_two_tys;
+          test_case "'a t; 'b u; ('c, 'd) v" `Quick
+            get_ty_decls_from_sig_three_tys
         ] )
     ]

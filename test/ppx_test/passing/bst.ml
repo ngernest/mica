@@ -10,4 +10,3 @@ module type BST = sig
   val keys : ('k, 'v) t -> 'k list
   val size : ('k, 'v) t -> int
 end
-[@@deriving mica_types, mica]
