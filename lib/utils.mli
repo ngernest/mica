@@ -1,80 +1,126 @@
-val with_loc : 'a -> loc:'b -> 'c
+open Ppxlib
 
-val no_loc : 'b -> 'a
+(******************************************************************************)
+(** {1 Longident utility functions} *)
 
-val map2 : f:('a -> 'b) -> 'a * 'a -> 'b * 'b
+val uncapitalize : string -> string
+val lident_loc_of_string : string -> loc:Location.t -> Longident.t Location.loc
+val uncapitalize_lident : Longident.t -> Longident.t
+val string_of_lident : Longident.t -> string
+val add_lident_prefix : string -> Longident.t -> Longident.t
 
-val tuple4_to_pair : 'a * 'b * 'c * 'd -> 'a * 'b
+val add_lident_loc_prefix :
+  string -> Longident.t Location.loc -> Longident.t Location.loc
 
-val list_is_empty : 'a list -> bool
+(******************************************************************************)
+(** {1 Pretty-printers} *)
 
-val list_or : bool list -> bool
+val pp_pattern : pattern -> unit
+val pp_core_type : core_type -> unit
+val pp_expression : expression -> unit
+val pp_structure_item : structure_item -> unit
+val string_of_core_ty : core_type -> string
 
-val remove_last : 'a list -> 'a list
+(******************************************************************************)
+(** {1 Utility functions for working with Ppxlib} *)
 
-val get_last : 'a list -> 'a
+val base_types : loc:Location.t -> core_type list
+val pexp_ident_of_string : string -> loc:Location.t -> expression
+val ppat_var_of_string : string -> loc:Location.t -> pattern
 
-val abstract_ty_name : string
+val mk_cstr :
+  name:string ->
+  loc:Location.t ->
+  arg_tys:core_type list ->
+  constructor_declaration
 
-val lident_loc_of_string : string -> loc:'a -> 'b
+val monomorphize : core_type -> core_type
+val get_type_params : type_declaration -> core_type list
 
-val string_of_lident : 'a -> string
-
-val add_lident_prefix : string -> 'a -> 'b
-
-val add_lident_loc_prefix : string -> 'a -> 'b
-
-val err_fmt : 'a
-
-val base_types : loc:'a -> 'b list
-
-val pexp_ident_of_string : string -> loc:'a -> 'b
-
-val ppat_var_of_string : string -> loc:'a -> 'b
-
-val mk_cstr : name:string -> loc:'a -> arg_tys:'b list -> 'c
-
-val get_type_params : 'a -> 'b list
-
-type inv_ctx = ('a * string) list
+type inv_ctx = (core_type * string) list
 
 val empty_ctx : inv_ctx
-
+val mk_fresh : loc:Location.t -> int -> core_type -> pattern
 val add_prime : string -> string
+val get_varname : pattern -> string
+val get_cstr_arg_tys : ?is_arrow:bool -> core_type -> core_type list
+val get_ret_ty : core_type -> core_type
 
-val get_varname : 'a -> 'b
-
-val get_cstr_args : loc:'b -> ('a -> 'c) -> 'a list -> 'd * inv_ctx
+val get_cstr_args :
+  loc:Location.t -> ('a -> core_type) -> 'a list -> pattern * inv_ctx
 
 val find_exprs : inv_ctx -> string list
 
-val get_cstr_metadata : ('a * 'b) list -> ('c * 'd option * inv_ctx * 'e) list
+val get_cstr_metadata :
+  (constructor_declaration * core_type) list ->
+  (Longident.t Location.loc * pattern option * inv_ctx * core_type) list
 
-val get_cstr_metadata_minimal : 'a list -> ('b * 'c option) list
+val get_cstr_metadata_minimal :
+  constructor_declaration list ->
+  (Longident.t Location.loc * pattern option) list
 
-val get_cstr_name : 'a -> 'b
+val get_cstr_name : constructor_declaration -> Longident.t Location.loc
 
-val get_cstrs_of_ty_decl : 'a -> ('b * 'c option) list
+val get_cstrs_of_ty_decl :
+  type_declaration -> (Longident.t Location.loc * pattern option) list
 
-val mk_adt : loc:'a -> name:string -> cstrs:'b list -> 'c
+val mk_adt :
+  loc:Location.t ->
+  name:string ->
+  cstrs:constructor_declaration list ->
+  type_declaration
 
-val mk_error : local:'a -> global:'b -> 'c -> 'd
+val mk_error :
+  local:Location.t ->
+  global:Location.t ->
+  (extension, Format.formatter, unit, extension) format4 ->
+  structure_item
 
-val attr : loc:'a -> name:string -> 'b
+val attr : loc:Location.t -> name:string -> attribute
+val is_abs_ty_parameterized : signature -> bool
 
-val mk_valt_pat : ?abs_ty_parameterized:bool -> string -> loc:'a -> 'b
+val mk_valt_pat :
+  ?abs_ty_parameterized:bool -> string -> loc:Location.t -> pattern
 
-val get_match_arm : string list -> abs_ty_parameterized:bool -> loc:'a -> 'b
+val get_match_arm :
+  string list -> abs_ty_parameterized:bool -> loc:Location.t -> pattern
 
-val get_unary_case_rhs : 'a -> string -> 'b -> string -> loc:'c -> 'd
+val get_unary_case_rhs :
+  Longident.t Location.loc ->
+  string ->
+  Longident.t Location.loc ->
+  string ->
+  loc:Location.t ->
+  expression
 
-val get_nary_case_rhs : 'a -> string -> 'b -> 'c list -> loc:'d -> 'e
+val get_nary_case_rhs :
+  constructor_declaration ->
+  string ->
+  Longident.t Location.loc ->
+  expression list ->
+  loc:Location.t ->
+  expression
 
 val update_expr_arg_names : string list -> string list -> string list
 
-val mk_scrutinees : string list -> post:('a list -> 'b) -> loc:'c -> 'b
+val mk_scrutinees :
+  string list ->
+  post:(expression list -> expression) ->
+  loc:Location.t ->
+  expression
 
-val get_ty_name_and_params : 'a -> 'b
+val get_ty_name_and_params : type_declaration -> string * core_type list
+val get_ty_decls_from_sig : signature -> (string * core_type list) list
 
-val get_ty_decls_from_sig : 'a -> (string * 'b list) list
+(*******************************************************************************)
+(** {1 Miscellany} *)
 
+val printf : ('a, Stdio.Out_channel.t, unit) format -> 'a
+val with_loc : 'a -> loc:Location.t -> 'a Location.loc
+val no_loc : 'a Location.loc -> 'a
+val map2 : f:('a -> 'b) -> 'a * 'a -> 'b * 'b
+val tuple4_to_pair : 'a * 'b * 'c * 'd -> 'a * 'b
+val list_is_empty : 'a list -> bool
+val list_or : bool list -> bool
+val remove_last : 'a list -> 'a list
+val get_last : 'a list -> 'a

@@ -12,7 +12,7 @@ open StdLabels
 let printf = Stdio.printf
 
 (** Constructs a [loc] given some payload [txt] and a location [loc] *)
-let with_loc (txt : 'a) ~(loc : loc) : 'a Location.loc = { txt; loc }
+let with_loc (txt : 'a) ~(loc : Location.t) : 'a Location.loc = { txt; loc }
 
 (** Strips the location info from a value of type ['a loc] *)
 let no_loc (a_loc : 'a Location.loc) : 'a = a_loc.txt
@@ -64,7 +64,8 @@ let abstract_ty_name : string = "t"
 (** Alias for [String.uncapitalize_ascii] *)
 let uncapitalize = String.uncapitalize_ascii
 
-let lident_loc_of_string (x : string) ~(loc : loc) : Longident.t Location.loc =
+let lident_loc_of_string (x : string) ~(loc : Location.t) :
+  Longident.t Location.loc =
   with_loc (Longident.parse x) ~loc
 
 (** Converts a [Longident] to a regular string, *)
@@ -120,7 +121,7 @@ let pp_structure_item : structure_item -> unit =
     - The named argument [loc] is necessary in order for 
     the [Ppxlib.Metaquot] quotations to expand to the appropriate 
     AST fragments representing the base types. *)
-let base_types ~(loc : loc) : core_type list =
+let base_types ~(loc : Location.t) : core_type list =
   [ [%type: int];
     [%type: int32];
     [%type: int64];
@@ -134,18 +135,18 @@ let base_types ~(loc : loc) : core_type list =
 
 (** [pexp_ident_of_string x ~loc] creates the expression [Pexp_ident x]
     at location [loc] *)
-let pexp_ident_of_string (x : string) ~(loc : loc) : expression =
+let pexp_ident_of_string (x : string) ~(loc : Location.t) : expression =
   pexp_ident ~loc (lident_loc_of_string x ~loc)
 
 (** [ppat_var_of_string x ~loc] creates the pattern [Ppat_var x] 
     at location [loc] *)
-let ppat_var_of_string (x : string) ~(loc : loc) : pattern =
+let ppat_var_of_string (x : string) ~(loc : Location.t) : pattern =
   ppat_var ~loc (with_loc x ~loc)
 
 (** [mk_cstr ~name ~loc arg_tys] creates a constructor with the [name] 
     for an algebraic data type at the location [loc] with 
     argument types [arg_tys] *)
-let mk_cstr ~(name : string) ~(loc : loc) ~(arg_tys : core_type list) :
+let mk_cstr ~(name : string) ~(loc : Location.t) ~(arg_tys : core_type list) :
   constructor_declaration =
   { (* Constructor name *)
     pcd_name = { txt = name; loc };
@@ -391,8 +392,8 @@ let rec string_of_core_ty (ty : core_type) : string =
 (** [mk_adt ~loc ~name constructors] creates the definition of 
     an algebraic data type called [name] at location [loc] 
     with the specified [constructors] *)
-let mk_adt ~(loc : loc) ~(name : string) ~(cstrs : constructor_declaration list)
-  : type_declaration =
+let mk_adt ~(loc : Location.t) ~(name : string)
+  ~(cstrs : constructor_declaration list) : type_declaration =
   type_declaration ~loc
     ~name:{ txt = name; loc } (* Name of type *)
     ~cstrs:[] (* Type constraints, not needed here *)
@@ -403,12 +404,12 @@ let mk_adt ~(loc : loc) ~(name : string) ~(cstrs : constructor_declaration list)
 (** [mk_error ~local ~global msg] creates an error extension node, 
     associated with an element in the AST at the location [local],
     and reports the error message [msg] at the location [global] *)
-let mk_error ~(local : loc) ~(global : loc) msg : structure_item =
+let mk_error ~(local : Location.t) ~(global : Location.t) msg : structure_item =
   let ext = Location.error_extensionf ~loc:local msg in
   pstr_extension ~loc:global ext []
 
 (** [attr loc name] creates an attribute called [name] at [loc] *)
-let attr ~(loc : loc) ~(name : string) : attribute =
+let attr ~(loc : Location.t) ~(name : string) : attribute =
   attribute ~loc ~name:{ txt = "deriving"; loc }
     ~payload:
       (PStr
@@ -441,10 +442,10 @@ let rec is_abs_ty_parameterized (sig_items : signature) : bool =
     consisting of the constructor [Valt] applied to the argument [x] 
     - The named argument [abs_ty_parameterized] represents whether the 
     abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
-let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : loc) :
-  pattern =
-  (** TODO: generalize this so that we can handle > 1 type parameter in 
-      abstract types *)
+let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : Location.t)
+  : pattern =
+  (* TODO: generalize this so that we can handle > 1 type parameter in abstract
+     types *)
   let val_cstr = if abs_ty_parameterized then "ValIntT" else "ValT" in
   let var_ident = ppat_var_of_string x ~loc in
   ppat_construct ~loc
@@ -459,7 +460,7 @@ let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : loc) :
     - The named argument [abs_ty_parameterized] represents whether the 
     abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
 let get_match_arm (expr_vars : string list) ~(abs_ty_parameterized : bool)
-  ~(loc : loc) : pattern =
+  ~(loc : Location.t) : pattern =
   match expr_vars with
   | [] -> failwith "impossible: get_match_arm"
   | [ x ] -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x)
@@ -480,7 +481,7 @@ let get_match_arm (expr_vars : string list) ~(abs_ty_parameterized : bool)
     - [x] is the argument that will be applied to the module function *)
 let get_unary_case_rhs (value_cstr : Longident.t Location.loc)
   (mod_name : string) (expr_cstr : Longident.t Location.loc) (x : string)
-  ~(loc : loc) : expression =
+  ~(loc : Location.t) : expression =
   let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
   let mod_func_arg = pexp_ident_of_string (add_prime x) ~loc in
   let mod_func_app = [%expr [%e mod_func] [%e mod_func_arg]] in
@@ -511,7 +512,7 @@ let update_expr_arg_names (expr_args : string list) (args : string list) :
     - [post] is post-processing function to be applied when [expr_vars] 
     has length >= 2 after being transformed into an [expression list] *)
 let mk_scrutinees (expr_vars : string list)
-  ~(post : expression list -> expression) ~(loc : loc) : expression =
+  ~(post : expression list -> expression) ~(loc : Location.t) : expression =
   match expr_vars with
   | [] -> failwith "impossible: mk_scrutinees"
   | _ ->
