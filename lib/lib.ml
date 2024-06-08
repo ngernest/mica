@@ -121,15 +121,24 @@ let get_expr_cstrs (mod_ty : module_type) :
   | Pmty_signature sig_items -> get_cstr_metadata (mk_expr_cstrs sig_items)
   | _ -> failwith "TODO: get_expr_cstrs"
 
+type interp_case_rhs_params =
+  { loc : Location.t;
+    mod_name : string;
+    abs_ty_parameterized : bool;
+    expr_cstr : Longident.t Location.loc;
+    args : pattern option;
+    gamma : inv_ctx;
+    ret_ty : core_type
+  }
+
 (** Creates the body of the inner case-statement inside [interp].
   - [gamma] is the "inverse typing context" which maps types 
     to variable names
   - [expr_cstr] is the constructor of the [expr] type 
   - [ret_ty] is the designated return type of the expression being interpreted *)
-let mk_interp_case_rhs ~(loc : location) ~(mod_name : string)
-  ?(abs_ty_parameterized = false) (expr_cstr : Longident.t Location.loc)
-  (args : pattern option) ~(gamma : inv_ctx) ~(ret_ty : core_type) : expression
-    =
+let mk_interp_case_rhs (params : interp_case_rhs_params) : expression =
+  let { loc; mod_name; abs_ty_parameterized; expr_cstr; args; gamma; ret_ty } =
+    params in
   (* The constructor of the [value] type for [ret_ty] *)
   let ret_ty_cstr = mk_val_cstr ret_ty in
   (* The constructor name *)
@@ -205,9 +214,16 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
   let cases : case list =
     List.map expr_cstrs ~f:(fun (expr_cstr, args, gamma, ret_ty) ->
       let lhs : pattern = ppat_construct ~loc expr_cstr args in
-      let rhs : expression =
-        mk_interp_case_rhs ~loc ~gamma ~mod_name:"M" ~abs_ty_parameterized
-          expr_cstr args ~ret_ty in
+      let params : interp_case_rhs_params =
+        { loc;
+          gamma;
+          mod_name = "M";
+          abs_ty_parameterized;
+          expr_cstr;
+          args;
+          ret_ty
+        } in
+      let rhs : expression = mk_interp_case_rhs params in
       case ~lhs ~guard:None ~rhs) in
   let arg_ident = pexp_ident ~loc (lident_loc_of_string "e" ~loc) in
   let func_body : expression = pexp_match ~loc arg_ident cases in

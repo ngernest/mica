@@ -1,4 +1,5 @@
 open Ppxlib
+open Utils
 
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT 
@@ -54,20 +55,23 @@ val type_generator :
     that match the declarations in the module signature *)
 val get_expr_cstrs :
   module_type ->
-  (Longident.t Location.loc * pattern option * Utils.inv_ctx * core_type) list
+  (Longident.t Location.loc * pattern option * inv_ctx * core_type) list
+
+
+type interp_case_rhs_params =
+  { loc : Location.t;
+    mod_name : string;
+    abs_ty_parameterized : bool;
+    expr_cstr : Longident.t Location.loc;
+    args : pattern option;
+    gamma : inv_ctx;
+    ret_ty : core_type
+  }
 
 (** Creates the body of the inner case-statement inside [interp]
   - NB: [gamma] is the "inverse typing context" which maps types 
     to variable names *)
-val mk_interp_case_rhs :
-  loc:location ->
-  mod_name:string ->
-  ?abs_ty_parameterized:bool ->
-  Longident.t Location.loc ->
-  pattern option ->
-  gamma:Utils.inv_ctx ->
-  ret_ty:core_type ->
-  expression
+val mk_interp_case_rhs : interp_case_rhs_params -> expression
 
 (** Creates the definition for the [interp] function 
     (contained inside the body of the [ExprToImpl] functor) 
@@ -77,7 +81,7 @@ val mk_interp :
   loc:location ->
   module_type ->
   ?abs_ty_parameterized:bool ->
-  (Longident.t Location.loc * pattern option * Utils.inv_ctx * core_type) list ->
+  (Longident.t Location.loc * pattern option * inv_ctx * core_type) list ->
   structure_item
 
 (** Creates the body of the [ExprToImpl] functor *)
@@ -86,7 +90,7 @@ val mk_functor :
   string option Location.loc ->
   module_type ->
   signature ->
-  (Longident.t Location.loc * pattern option * Utils.inv_ctx * core_type) list ->
+  (Longident.t Location.loc * pattern option * inv_ctx * core_type) list ->
   module_expr
 
 (** Generates the scaffolding for the [ExprToImpl] functor 

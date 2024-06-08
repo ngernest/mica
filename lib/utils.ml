@@ -3,9 +3,6 @@ open Ast_helper
 open Ast_builder.Default
 open StdLabels
 
-(* Suppress "unused value" compiler warnings *)
-[@@@ocaml.warning "-26-27-32-33-34"]
-
 (*******************************************************************************)
 (** {1 Miscellany} *)
 
