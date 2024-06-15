@@ -28,6 +28,7 @@ include
       | Bool 
       | Int 
       | T 
+    let rec gen_expr ty = failwith "TODO"
     module TestHarness(M:PolyInterface) =
       struct
         include M

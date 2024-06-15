@@ -8,4 +8,6 @@ end
 type expr = F of int * expr
 type ty = IntT
 
+let rec gen_expr ty = failwith "TODO"
+let _ = gen_expr
 [@@@end]

@@ -95,7 +95,8 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
             ~cstrs:(List.map ~f:fst (mk_expr_cstrs sig_items)) in
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:(mk_ty_cstrs sig_items) in
         [ pstr_type ~loc Recursive [ expr_td ];
-          pstr_type ~loc Recursive [ ty_td ]
+          pstr_type ~loc Recursive [ ty_td ];
+          [%stri let rec gen_expr ty = failwith "TODO"]
         ])
     | _ -> failwith "TODO: other case for mod_type")
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->

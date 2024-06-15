@@ -25,6 +25,7 @@ include
     type ty =
       | Bool 
       | T 
+    let rec gen_expr ty = failwith "TODO"
     module TestHarness(M:RegexMatcher) =
       struct
         include M

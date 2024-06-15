@@ -10,3 +10,5 @@ module type BST = sig
   val keys : ('k, 'v) t -> 'k list
   val size : ('k, 'v) t -> int
 end
+
+(* TODO: add the [[@deriving]] directive to this test case *)
