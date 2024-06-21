@@ -76,20 +76,11 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
     based on the inhabitants of the [ty] ADT *)
 let mk_val_cstrs (sig_items : signature) = mk_cstr_aux sig_items ~f:mk_val_cstr
 
-
-
-
-
 let derive_gen_expr ~(loc : Location.t) : expression =
-
-  (* Derive the [let open] expression for the Let_syntax *)
+  (* Derive the [let open] expression for the [Generator.Let_syntax] module *)
   let let_syntax_mod : module_expr =
-    pmod_ident ~loc
-      (with_loc ~loc (Longident.parse "Core.Quickcheck.Generator.Let_syntax"))
-  in
-  let let_syntax_open_infos : module_expr open_infos =
-    open_infos ~loc ~expr:let_syntax_mod ~override:Fresh in
-  pexp_open ~loc let_syntax_open_infos [%expr "TODO"]
+    module_expr_of_string ~loc "Core.Quickcheck.Generator.Let_syntax" in
+  let_open_module_expr ~loc let_syntax_mod [%expr "TODO"]
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -313,6 +304,7 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
 let args () =
   Deriving.Args.(empty +> arg "m1" (pexp_ident __) +> arg "m2" (pexp_ident __))
 
+(** TODO: reserve the [Mica] namespace *)
 let () =
   (* Generate auxiliary type declarations *)
   let datatype_deriver =

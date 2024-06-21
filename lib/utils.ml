@@ -92,10 +92,20 @@ let add_lident_loc_prefix (prefix : string)
   ({ txt; loc } : Longident.t Location.loc) : Longident.t Location.loc =
   with_loc ~loc @@ add_lident_prefix prefix txt
 
-(** Constructs a [module_expr] from a string containing the module name *)  
-let module_expr_of_string ~(loc : Location.t) (str : string) : module_expr = 
+(******************************************************************************)
+(** {1 Working with [module_expr]s} *)
+
+(** Constructs a [module_expr] from a string containing the module name *)
+let module_expr_of_string ~(loc : Location.t) (str : string) : module_expr =
   pmod_ident ~loc (with_loc ~loc (Longident.parse str))
 
+(** [let_open_module_expr ~loc M e] creates the expression 
+    [let open M in e], where [m] is some [module_expr] *)
+let let_open_module_expr ~(loc : Location.t) (m : module_expr) (e : expression)
+  : expression =
+  let mod_infos : module_expr open_infos =
+    open_infos ~loc ~expr:m ~override:Fresh in
+  pexp_open ~loc mod_infos e
 
 (******************************************************************************)
 (** {1 Pretty-printers} *)
