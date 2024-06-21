@@ -1,8 +1,10 @@
-module type S  = sig type 'a t val f : int -> 'a t -> 'a t end[@@deriving_inline
+module type S  = sig type 'a t val f : int -> 'a t -> 'a t end[@@deriving
                                                                 mica_types]
-type expr =
-  | F of int * expr 
-type ty =
-  | IntT 
-let rec gen_expr ty = failwith "TODO"
-[@@@end ]
+include
+  struct
+    type expr =
+      | F of int * expr 
+    type ty =
+      | IntT 
+    let gen_expr ty = let open Core.Quickcheck.Generator.Let_syntax in "TODO"
+  end[@@ocaml.doc "@inline"][@@merlin.hide ]
