@@ -8,13 +8,13 @@ module type SetInterface = sig
 
   val empty : 'a t
   val is_empty : 'a t -> bool
-  val mem : 'a -> 'a t -> bool
-  val add : 'a -> 'a t -> 'a t
-  val rem : 'a -> 'a t -> 'a t
+  val gen_mem : 'a -> 'a t -> bool
+  val gen_add : 'a -> 'a t -> 'a t
+  val gen_rem : 'a -> 'a t -> 'a t
   val size : 'a t -> int
   val union : 'a t -> 'a t -> 'a t
-  val intersect : 'a t -> 'a t -> 'a t
-  val invariant : 'a t -> bool
+  val gen_intersect : 'a t -> 'a t -> 'a t
+  val gen_invariant : 'a t -> bool
 end
 
 (* Suppress "unused value" compiler warnings *)
@@ -47,15 +47,15 @@ module ExprToImpl (M : SetInterface) = struct
       | _ -> failwith "impossible")
     | Mem (e1, e2) -> (
       match interp e2 with
-      | ValT e' -> ValBool (M.mem e1 e')
+      | ValT e' -> ValBool (M.gen_mem e1 e')
       | _ -> failwith "impossible")
     | Add (e1, e2) -> (
       match interp e2 with
-      | ValT e' -> ValT (M.add e1 e')
+      | ValT e' -> ValT (M.gen_add e1 e')
       | _ -> failwith "impossible")
     | Rem (e1, e2) -> (
       match interp e2 with
-      | ValT e' -> ValT (M.rem e1 e')
+      | ValT e' -> ValT (M.gen_rem e1 e')
       | _ -> failwith "impossible")
     | Size e -> (
       match interp e with
@@ -67,11 +67,11 @@ module ExprToImpl (M : SetInterface) = struct
       | _ -> failwith "impossible")
     | Intersect (e1, e2) -> (
       match (interp e1, interp e2) with
-      | ValT e1', ValT e2' -> ValT (M.intersect e1' e2')
+      | ValT e1', ValT e2' -> ValT (M.gen_intersect e1' e2')
       | _ -> failwith "impossible")
     | Invariant e -> (
       match interp e with
-      | ValT e' -> ValBool (M.invariant e')
+      | ValT e' -> ValBool (M.gen_invariant e')
       | _ -> failwith "impossible")
 end
 
@@ -82,28 +82,28 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   match (ty, k) with
   | T, 0 -> return Empty
   | Bool, _ ->
-    let is_empty =
+    let gen_is_empty =
       let g = with_size ~size:(k / 2) (gen_expr T) in
       g >>| fun e -> Is_empty e in
-    let mem =
+    let gen_mem =
       let g1 = int_inclusive (-10) 10 in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Mem (e1, e2) in
-    let invariant =
+    let gen_invariant =
       let g = with_size ~size:(k / 2) (gen_expr T) in
       g >>| fun e -> Invariant e in
-    union [ is_empty; mem; invariant ]
+    union [ gen_is_empty; gen_mem; gen_invariant ]
   | Int, _ ->
     let size =
       let g = with_size ~size:(k / 2) (gen_expr T) in
       g >>| fun e -> Size e in
     size
   | T, _ ->
-    let add =
+    let gen_add =
       let g1 = int_inclusive (-10) 10 in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Add (e1, e2) in
-    let rem =
+    let gen_rem =
       let g1 = int_inclusive (-10) 10 in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Rem (e1, e2) in
@@ -111,8 +111,8 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let g1 = with_size ~size:(k / 2) (gen_expr T) in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Union (e1, e2) in
-    let intersect =
+    let gen_intersect =
       let g1 = with_size ~size:(k / 2) (gen_expr T) in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Intersect (e1, e2) in
-    union [ add; rem; gen_union; intersect ]
+    union [ gen_add; gen_rem; gen_union; gen_intersect ]
