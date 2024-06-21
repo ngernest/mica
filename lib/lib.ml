@@ -82,7 +82,8 @@ let derive_gen_expr ~(loc : Location.t) : expression =
     module_expr_of_string ~loc "Core.Quickcheck.Generator" in 
   let let_syntax_mod : module_expr =
     module_expr_of_string ~loc "Let_syntax" in
-  let_open ~loc generator_mod (let_open ~loc let_syntax_mod [%expr "TODO"])
+  let_open ~loc generator_mod (let_open ~loc let_syntax_mod 
+  [%expr let%bind k = size in "TODO"])
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -306,8 +307,8 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
 let args () =
   Deriving.Args.(empty +> arg "m1" (pexp_ident __) +> arg "m2" (pexp_ident __))
 
-(** TODO: reserve the [Mica] namespace *)
 let () =
+  List.iter ~f:Reserved_namespaces.reserve ["mica_types"; "mica"];
   (* Generate auxiliary type declarations *)
   let datatype_deriver =
     Deriving.add "mica_types" ~str_module_type_decl:type_generator in
