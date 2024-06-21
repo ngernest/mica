@@ -12,6 +12,8 @@ val add_lident_prefix : string -> Longident.t -> Longident.t
 val add_lident_loc_prefix :
   string -> Longident.t Location.loc -> Longident.t Location.loc
 
+val module_expr_of_string : loc:Location.t -> string -> module_expr 
+  
 (******************************************************************************)
 (** {1 Pretty-printers} *)
 

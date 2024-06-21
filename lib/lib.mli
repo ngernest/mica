@@ -57,7 +57,6 @@ val get_expr_cstrs :
   module_type ->
   (Longident.t Location.loc * pattern option * inv_ctx * core_type) list
 
-
 type interp_case_rhs_params =
   { loc : Location.t;
     mod_name : string;

@@ -1,7 +1,7 @@
 (executable
  (public_name main)
  (name main)
- (libraries lib)
+ (libraries lib core)
  (preprocess
   (pps ppx_jane ppx_mica)))
 
