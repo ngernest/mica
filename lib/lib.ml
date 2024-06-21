@@ -76,6 +76,19 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
     based on the inhabitants of the [ty] ADT *)
 let mk_val_cstrs (sig_items : signature) = mk_cstr_aux sig_items ~f:mk_val_cstr
 
+(* TODO: 
+  - figure out how to do a pattern match on the [ty] constructors
+     inside the body of [gen_expr], while keeping track of the [size] 
+     QC parameter
+  - ^^ this will involve doing some analysis of the arities of the functions
+  in the signature 
+    - when [size = 0], the RHS of the case stmt should be an arity-0 constructor
+    that is [return]ed into the [Generator] monad
+  - May need to create some sort of [inv_ctx]-esque structure
+  to map [ty]s to [expr]s (based on the return type of the corresponding
+  function in the signature)
+*)
+
 (** Derives the [gen_expr] QuickCheck generator 
     - [ty_cstrs] is a list of constructors for the [ty] ADT *)
 let derive_gen_expr ~(loc : Location.t) (ty_cstrs : constructor_declaration list) : expression =

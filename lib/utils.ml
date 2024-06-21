@@ -270,8 +270,7 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
     references to abstract types should be replaced with [expr], otherwise
     an occurrence of an abstract type in an non-arrow type 
     (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
-    corresponds to the nullary constructor [Empty]).
-*)
+    corresponds to the nullary constructor [Empty]). *)
 let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type) : core_type list =
   let loc = ty.ptyp_loc in
   match monomorphize ty with
