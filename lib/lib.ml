@@ -78,9 +78,11 @@ let mk_val_cstrs (sig_items : signature) = mk_cstr_aux sig_items ~f:mk_val_cstr
 
 let derive_gen_expr ~(loc : Location.t) : expression =
   (* Derive the [let open] expression for the [Generator.Let_syntax] module *)
+  let generator_mod : module_expr = 
+    module_expr_of_string ~loc "Core.Quickcheck.Generator" in 
   let let_syntax_mod : module_expr =
-    module_expr_of_string ~loc "Core.Quickcheck.Generator.Let_syntax" in
-  let_open_module_expr ~loc let_syntax_mod [%expr "TODO"]
+    module_expr_of_string ~loc "Let_syntax" in
+  let_open ~loc generator_mod (let_open ~loc let_syntax_mod [%expr "TODO"])
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
