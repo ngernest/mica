@@ -45,17 +45,17 @@ module ExprToImpl (M : SetInterface) = struct
       match interp e with
       | ValT e' -> ValBool (M.is_empty e')
       | _ -> failwith "impossible")
-    | Mem (x1, e2) -> (
+    | Mem (e1, e2) -> (
       match interp e2 with
-      | ValT e' -> ValBool (M.mem x1 e')
+      | ValT e' -> ValBool (M.mem e1 e')
       | _ -> failwith "impossible")
-    | Add (x1, e2) -> (
+    | Add (e1, e2) -> (
       match interp e2 with
-      | ValT e' -> ValT (M.add x1 e')
+      | ValT e' -> ValT (M.add e1 e')
       | _ -> failwith "impossible")
-    | Rem (x1, e2) -> (
+    | Rem (e1, e2) -> (
       match interp e2 with
-      | ValT e' -> ValT (M.rem x1 e')
+      | ValT e' -> ValT (M.rem e1 e')
       | _ -> failwith "impossible")
     | Size e -> (
       match interp e with
@@ -88,7 +88,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
     let mem =
       let g1 = int_inclusive (-10) 10 in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
-      both g1 g2 >>| fun (x1, e2) -> Mem (x1, e2) in
+      both g1 g2 >>| fun (e1, e2) -> Mem (e1, e2) in
     let invariant =
       let g = with_size ~size:(k / 2) (gen_expr T) in
       g >>| fun e -> Invariant e in
@@ -102,11 +102,11 @@ let rec gen_expr (ty : ty) : expr Generator.t =
     let add =
       let g1 = int_inclusive (-10) 10 in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
-      both g1 g2 >>| fun (x1, e2) -> Add (x1, e2) in
+      both g1 g2 >>| fun (e1, e2) -> Add (e1, e2) in
     let rem =
       let g1 = int_inclusive (-10) 10 in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
-      both g1 g2 >>| fun (x1, e2) -> Rem (x1, e2) in
+      both g1 g2 >>| fun (e1, e2) -> Rem (e1, e2) in
     let gen_union =
       let g1 = with_size ~size:(k / 2) (gen_expr T) in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
