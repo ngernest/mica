@@ -30,3 +30,9 @@
  (package ppx_mica)
  (action
   (diff dune.inc dune.inc.gen)))
+
+; Suppress common compiler warnings (e.g. "unused import") for now 
+(env
+ (dev
+  (flags
+   (:standard -g -w "-26-27-32-33-34-39"))))
