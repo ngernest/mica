@@ -120,6 +120,14 @@ val mk_scrutinees :
 val get_ty_name_and_params : type_declaration -> string * core_type list
 val get_ty_decls_from_sig : signature -> (string * core_type list) list
 
+(* -------------------------------------------------------------------------- *)
+(*                      Helpers for deriving monadic code                     *)
+(* -------------------------------------------------------------------------- *)
+
+val monadic_bindop : loc:Location.t -> string -> expression -> binding_op
+val let_monadic_bind : loc:Location.t -> string -> expression -> expression -> expression 
+
+
 (*******************************************************************************)
 (** {1 Miscellany} *)
 

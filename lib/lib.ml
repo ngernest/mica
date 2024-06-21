@@ -82,8 +82,9 @@ let derive_gen_expr ~(loc : Location.t) : expression =
     module_expr_of_string ~loc "Core.Quickcheck.Generator" in 
   let let_syntax_mod : module_expr =
     module_expr_of_string ~loc "Let_syntax" in
-  let_open ~loc generator_mod (let_open ~loc let_syntax_mod 
-  [%expr let%bind k = size in "TODO"])
+  let body = 
+    let_monadic_bind ~loc "x" [%expr small_non_negative_int] [%expr return x] in 
+  let_open ~loc generator_mod (let_open ~loc let_syntax_mod body)
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 

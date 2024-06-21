@@ -13,6 +13,7 @@ module type SetInterface = sig
 end
 [@@deriving_inline mica_types, mica]
 
+
 include
   struct
     [@@@ocaml.warning "-60"]
@@ -31,7 +32,9 @@ include
       | Int
       | IntT
     let gen_expr ty =
-      let open Core.Quickcheck.Generator in let open Let_syntax in "TODO"
+      let open Core.Quickcheck.Generator in
+        let open Let_syntax in bind x = small_non_negative_int
+                                in return x
     let _ = gen_expr
     module TestHarness(M:SetInterface) =
       struct
@@ -78,5 +81,4 @@ include
         let _ = interp
       end
   end[@@ocaml.doc "@inline"]
-
 [@@@end]

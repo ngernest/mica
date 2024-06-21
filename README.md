@@ -84,5 +84,13 @@ and execute `dune runtest`. If the test output from Dune looks good,
 run `dune promote` to update the `.expected` file with the contents 
 of the `.actual` file (which contains what the PPX actually generated from that test run). 
 
-
-
+## Local Development
+- Have the following installed:
+  - `ppxlib`
+  - `ppx_jane`
+  - `core`
+  - `ppx_quick_test`
+  - `alcotest`
+  - `bisect_ppx`
+- I recommend setting up an Opam switch for OCaml 5.1.0 and developing using 
+  that compiler version (`ppx_quick_test` only works with OCaml 5.1 or newer). 
