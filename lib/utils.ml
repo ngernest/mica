@@ -103,8 +103,7 @@ let module_expr_of_string ~(loc : Location.t) (str : string) : module_expr =
     [let open M in e], where [m] is some [module_expr] *)
 let let_open ~(loc : Location.t) (m : module_expr) (e : expression) : expression
     =
-  let mod_infos : module_expr open_infos =
-    open_infos ~loc ~expr:m ~override:Fresh in
+  let mod_infos = open_infos ~loc ~expr:m ~override:Fresh in
   pexp_open ~loc mod_infos e
 
 (******************************************************************************)
@@ -553,7 +552,7 @@ let get_ty_decls_from_sig (sig_items : signature) :
   |> List.concat |> List.rev
 
 (* -------------------------------------------------------------------------- *)
-(*                      Helpers for deriving monadic code                     *)
+(*      Helpers for deriving monadic code (currently unused)                  *)
 (* -------------------------------------------------------------------------- *)
 
 let monadic_bindop ~(loc : Location.t) (x : string) (exp : expression) :
