@@ -13,7 +13,7 @@ module Test = struct
     | Passing ->
       Format.fprintf ppf
         "; The executable under test@,\
-         @[<v 1>(executable@ (name %s)@ (modules %s)@ (preprocess (pps %s)))@]"
+         @[<v 1>(executable@ (name %s)@ (modules %s)@ (libraries core)@ (preprocess (pps %s ppx_jane)))@]"
         name modules ppx_name
     | Errors ->
       (* If the PPX errors, then we don't declare the file as an executable
