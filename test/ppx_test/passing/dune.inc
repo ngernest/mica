@@ -2,7 +2,8 @@
 (executable
  (name bst)
  (modules bst)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule
@@ -31,7 +32,8 @@
 (executable
  (name func_with_two_args)
  (modules func_with_two_args)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule
@@ -60,7 +62,8 @@
 (executable
  (name one_function_signature)
  (modules one_function_signature)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule
@@ -89,7 +92,8 @@
 (executable
  (name polynomial)
  (modules polynomial)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule
@@ -118,7 +122,8 @@
 (executable
  (name regex)
  (modules regex)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule
@@ -147,7 +152,8 @@
 (executable
  (name sets)
  (modules sets)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule
@@ -176,7 +182,8 @@
 (executable
  (name stack)
  (modules stack)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule
@@ -205,7 +212,8 @@
 (executable
  (name two_function_signature)
  (modules two_function_signature)
- (preprocess (pps ppx_mica)))
+ (libraries core)
+ (preprocess (pps ppx_mica ppx_jane)))
 
 ; Run the PPX on the `.ml` file
 (rule

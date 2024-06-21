@@ -28,7 +28,8 @@ include
       | Bool 
       | Int 
       | IntT 
-    let rec gen_expr ty = failwith "TODO"
+    let rec gen_expr ty =
+      let open Core.Quickcheck.Generator.Let_syntax in "TODO"
     module TestHarness(M:SetInterface) =
       struct
         include M
