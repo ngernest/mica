@@ -38,6 +38,10 @@ val mk_val_cstr : core_type -> constructor_declaration
     based on the inhabitants of the [ty] ADT *)
 val mk_val_cstrs : signature -> constructor_declaration list
 
+(** Derives the [gen_expr] QuickCheck generator 
+    - [ty_cstrs] is a list of constructors for the [ty] ADT  *)
+val derive_gen_expr : loc:Location.t -> constructor_declaration list -> expression 
+
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
     the [expr] and [ty] algebraic data types *)

@@ -76,13 +76,14 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
     based on the inhabitants of the [ty] ADT *)
 let mk_val_cstrs (sig_items : signature) = mk_cstr_aux sig_items ~f:mk_val_cstr
 
-let derive_gen_expr ~(loc : Location.t) : expression =
-  (* Derive the [let open] expression for the [Generator.Let_syntax] module *)
-  let generator_mod : module_expr =
-    module_expr_of_string ~loc "Core.Quickcheck.Generator" in
-  let let_syntax_mod : module_expr = module_expr_of_string ~loc "Let_syntax" in
+(** Derives the [gen_expr] QuickCheck generator 
+    - [ty_cstrs] is a list of constructors for the [ty] ADT *)
+let derive_gen_expr ~(loc : Location.t) (ty_cstrs : constructor_declaration list) : expression =
+  (* Derive [let open] expressions for the [Generator.Let_syntax] module *)
+  let qc_gen_mod = module_expr_of_string ~loc "Core.Quickcheck.Generator" in
+  let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
   let body = [%expr size >>= fun x -> return x] in
-  let_open ~loc generator_mod (let_open ~loc let_syntax_mod body)
+  let_open_twice ~loc qc_gen_mod let_syntax_mod body
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -98,13 +99,15 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
       | [] ->
         [ mk_error ~local:pmtd_loc ~global:loc "Module sig can't be empty" ]
       | _ ->
+        (* Type declarations for the [expr] & [ty] ADTs *)
         let expr_td =
           mk_adt ~loc ~name:"expr"
             ~cstrs:(List.map ~f:fst (mk_expr_cstrs sig_items)) in
-        let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:(mk_ty_cstrs sig_items) in
+        let ty_cstrs = mk_ty_cstrs sig_items in 
+        let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:ty_cstrs in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ];
-          [%stri let gen_expr ty = [%e derive_gen_expr ~loc]]
+          [%stri let gen_expr ty = [%e derive_gen_expr ~loc ty_cstrs]]
         ])
     | _ -> failwith "TODO: other case for mod_type")
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
