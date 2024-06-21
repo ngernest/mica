@@ -78,13 +78,15 @@ let mk_val_cstrs (sig_items : signature) = mk_cstr_aux sig_items ~f:mk_val_cstr
 
 let derive_gen_expr ~(loc : Location.t) : expression =
   (* Derive the [let open] expression for the [Generator.Let_syntax] module *)
-  let generator_mod : module_expr = 
-    module_expr_of_string ~loc "Core.Quickcheck.Generator" in 
-  let let_syntax_mod : module_expr =
-    module_expr_of_string ~loc "Let_syntax" in
-  let body = 
-    let_monadic_bind ~loc "x" [%expr small_non_negative_int] [%expr return x] in 
-  let_open ~loc generator_mod (let_open ~loc let_syntax_mod body)
+  let generator_mod : module_expr =
+    module_expr_of_string ~loc "Core.Quickcheck.Generator" in
+  let let_syntax_mod : module_expr = module_expr_of_string ~loc "Let_syntax" in
+  (* let body = let_monadic_bind ~loc "x" [%expr small_non_negative_int] [%expr
+     return x] in *)
+  (* let body_alt = pexp_extension ~loc (with_loc ~loc "bind", PStr [ pstr_eval
+     ~loc [%expr let x = small_non_negative_int in return x] []]) in *)
+  let body'' = [%expr small_non_negative_int >>= fun x -> return x] in
+  let_open ~loc generator_mod (let_open ~loc let_syntax_mod body'')
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
@@ -309,7 +311,7 @@ let args () =
   Deriving.Args.(empty +> arg "m1" (pexp_ident __) +> arg "m2" (pexp_ident __))
 
 let () =
-  List.iter ~f:Reserved_namespaces.reserve ["mica_types"; "mica"];
+  List.iter ~f:Reserved_namespaces.reserve [ "mica_types"; "mica" ];
   (* Generate auxiliary type declarations *)
   let datatype_deriver =
     Deriving.add "mica_types" ~str_module_type_decl:type_generator in

@@ -101,8 +101,8 @@ let module_expr_of_string ~(loc : Location.t) (str : string) : module_expr =
 
 (** [let_open ~loc M e] creates the expression 
     [let open M in e], where [m] is some [module_expr] *)
-let let_open ~(loc : Location.t) (m : module_expr) (e : expression)
-  : expression =
+let let_open ~(loc : Location.t) (m : module_expr) (e : expression) : expression
+    =
   let mod_infos : module_expr open_infos =
     open_infos ~loc ~expr:m ~override:Fresh in
   pexp_open ~loc mod_infos e
@@ -556,11 +556,13 @@ let get_ty_decls_from_sig (sig_items : signature) :
 (*                      Helpers for deriving monadic code                     *)
 (* -------------------------------------------------------------------------- *)
 
-let monadic_bindop ~(loc : Location.t) (x : string) (exp : expression) : binding_op = 
+let monadic_bindop ~(loc : Location.t) (x : string) (exp : expression) :
+  binding_op =
   let op = with_loc ~loc "bind" in
-  let pat = ppat_var ~loc (with_loc ~loc x) in 
+  let pat = ppat_var ~loc (with_loc ~loc x) in
   binding_op ~loc ~op ~pat ~exp
 
-let let_monadic_bind ~(loc : Location.t) (x : string) (e1 : expression) (e2 : expression) : expression = 
-  let letop = letop ~let_:(monadic_bindop ~loc x e1) ~ands:[] ~body:e2 in 
-  pexp_letop ~loc letop 
+let let_monadic_bind ~(loc : Location.t) (x : string) (e1 : expression)
+  (e2 : expression) : expression =
+  let letop = letop ~let_:(monadic_bindop ~loc x e1) ~ands:[] ~body:e2 in
+  pexp_letop ~loc letop

@@ -16,9 +16,7 @@ val add_lident_loc_prefix :
 (** {1 Working with [module_expr]s} *)
 
 val module_expr_of_string : loc:Location.t -> string -> module_expr
-
-val let_open :
-  loc:Location.t -> module_expr -> expression -> expression
+val let_open : loc:Location.t -> module_expr -> expression -> expression
 
 (******************************************************************************)
 (** {1 Pretty-printers} *)
@@ -125,8 +123,9 @@ val get_ty_decls_from_sig : signature -> (string * core_type list) list
 (* -------------------------------------------------------------------------- *)
 
 val monadic_bindop : loc:Location.t -> string -> expression -> binding_op
-val let_monadic_bind : loc:Location.t -> string -> expression -> expression -> expression 
 
+val let_monadic_bind :
+  loc:Location.t -> string -> expression -> expression -> expression
 
 (*******************************************************************************)
 (** {1 Miscellany} *)
