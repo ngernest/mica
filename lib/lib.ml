@@ -81,12 +81,8 @@ let derive_gen_expr ~(loc : Location.t) : expression =
   let generator_mod : module_expr =
     module_expr_of_string ~loc "Core.Quickcheck.Generator" in
   let let_syntax_mod : module_expr = module_expr_of_string ~loc "Let_syntax" in
-  (* let body = let_monadic_bind ~loc "x" [%expr small_non_negative_int] [%expr
-     return x] in *)
-  (* let body_alt = pexp_extension ~loc (with_loc ~loc "bind", PStr [ pstr_eval
-     ~loc [%expr let x = small_non_negative_int in return x] []]) in *)
-  let body'' = [%expr small_non_negative_int >>= fun x -> return x] in
-  let_open ~loc generator_mod (let_open ~loc let_syntax_mod body'')
+  let body = [%expr size >>= fun x -> return x] in
+  let_open ~loc generator_mod (let_open ~loc let_syntax_mod body)
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 

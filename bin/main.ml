@@ -32,7 +32,7 @@ include struct
   let gen_expr ty =
     let open Core.Quickcheck.Generator in
     let open Let_syntax in
-    small_non_negative_int >>= fun x -> return x
+    size >>= fun x -> return x
 
   let _ = gen_expr
 
