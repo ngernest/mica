@@ -201,19 +201,19 @@ let uniq_ret_ty_2_arg_funcs () =
 
 let mk_ty_cstrs_single_base_ty () =
   let sig_items = [%sig: val x : int] in
-  let expected = mk_cstr ~name:"Int" ~loc:Location.none ~arg_tys:[] in
+  let expected = mk_cstr ~name:"Int" ~loc ~arg_tys:[] in
   check constr_decl_list_testable "mk_ty_cstrs_singleton"
     (mk_ty_cstrs sig_items) [ expected ]
 
 let mk_ty_cstrs_single_mono_abs_ty () =
   let sig_items = [%sig: val x : t] in
-  let expected = mk_cstr ~name:"T" ~loc:Location.none ~arg_tys:[] in
+  let expected = mk_cstr ~name:"T" ~loc ~arg_tys:[] in
   check constr_decl_list_testable "mk_ty_cstrs_single_mono_abs_ty"
     (mk_ty_cstrs sig_items) [ expected ]
 
 let mk_ty_cstrs_single_poly_abs_ty () =
   let sig_items = [%sig: val x : 'a t] in
-  let expected = mk_cstr ~name:"IntT" ~loc:Location.none ~arg_tys:[] in
+  let expected = mk_cstr ~name:"IntT" ~loc ~arg_tys:[] in
   check constr_decl_list_testable "mk_ty_cstrs_single_poly_abs_ty"
     (mk_ty_cstrs sig_items) [ expected ]
 
@@ -224,7 +224,7 @@ let mk_ty_cstrs_two_base () =
       val y : string] in
   let expected =
     List.map
-      ~f:(fun name -> mk_cstr ~name ~loc:Location.none ~arg_tys:[])
+      ~f:(fun name -> mk_cstr ~name ~loc ~arg_tys:[])
       [ "Int"; "String" ] in
   check constr_decl_list_testable "mk_ty_cstrs_two" (mk_ty_cstrs sig_items)
     expected
@@ -237,7 +237,7 @@ let mk_ty_cstrs_no_dupes () =
       val z : int] in
   let expected =
     List.map
-      ~f:(fun name -> mk_cstr ~name ~loc:Location.none ~arg_tys:[])
+      ~f:(fun name -> mk_cstr ~name ~loc ~arg_tys:[])
       [ "Int"; "String" ] in
   check constr_decl_list_testable "mk_ty_cstrs_no_dupes" (mk_ty_cstrs sig_items)
     expected
@@ -456,6 +456,47 @@ let get_ty_decls_from_sig_three_tys () =
     ]
 
 (*******************************************************************************)
+(* Tests for [equal_core_type_ty_cstr] *)
+
+(** Helper function: constructs an Alcotest test case which checks
+    whether [core_ty] & [cstr_name] are equal *)
+let check_for_equality (core_ty : core_type) (cstr_name : string) : unit =
+  let cstr = mk_cstr ~name:cstr_name ~loc ~arg_tys:[] in 
+  let core_ty_name = Ppxlib.string_of_core_type core_ty in 
+  let test_case_name = 
+    Format.sprintf "equal_core_ty_ty_cstr_%s_%s" core_ty_name cstr_name in 
+  check bool test_case_name
+    (equal_core_type_ty_cstr core_ty cstr) true  
+
+let equal_core_ty_ty_cstr_bool_Bool () = 
+  check_for_equality [%type: bool] "Bool"
+
+let equal_core_ty_ty_cstr_int_Int () = 
+  check_for_equality [%type: int] "Int"
+    
+let equal_core_ty_ty_cstr_t_T () = 
+  check_for_equality [%type: t] "T"
+
+let equal_core_ty_ty_cstr_alpha_Int () = 
+  check_for_equality [%type: 'a] "Int"   
+    
+let equal_core_ty_ty_cstr_alpha_t_IntT () = 
+  check_for_equality [%type: 'a t] "IntT"
+  
+let equal_core_ty_ty_cstr_alpha_int_list_IntList () = 
+  check_for_equality [%type: int list] "IntList" 
+  
+let equal_core_ty_ty_cstr_alpha_string_option_StringOption () = 
+  check_for_equality [%type: string option] "StringOption"     
+  
+let equal_core_ty_ty_cstr_product_type () = 
+  check_for_equality [%type: int * bool] "IntBoolProduct" 
+
+let equal_core_type_ty_cstr_function_type () = 
+  check_for_equality [%type: bool -> int] "BoolInt"  
+  
+
+(*******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
@@ -539,5 +580,20 @@ let () =
           test_case "'a t; 'b u" `Quick get_ty_decls_from_sig_two_tys;
           test_case "'a t; 'b u; ('c, 'd) v" `Quick
             get_ty_decls_from_sig_three_tys
+        ] );
+      ("[equal_core_type_ty_cstr]", 
+        [ test_case "bool = Bool" `Quick equal_core_ty_ty_cstr_bool_Bool;
+          test_case "int = Int" `Quick equal_core_ty_ty_cstr_int_Int;
+          test_case "t = T" `Quick equal_core_ty_ty_cstr_t_T;
+          test_case "'a = Int" `Quick equal_core_ty_ty_cstr_alpha_Int;
+          test_case "'a t = IntT" `Quick equal_core_ty_ty_cstr_alpha_t_IntT;
+          test_case "int t = IntList" 
+            `Quick equal_core_ty_ty_cstr_alpha_int_list_IntList;
+          test_case "string option = StringOption"
+            `Quick equal_core_ty_ty_cstr_alpha_string_option_StringOption;
+          test_case "int * bool = IntBoolProduct"
+            `Quick equal_core_ty_ty_cstr_product_type;
+          test_case "bool -> int = BoolInt" 
+            `Quick equal_core_type_ty_cstr_function_type
         ] )
     ]

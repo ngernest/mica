@@ -28,7 +28,10 @@ include
       | Bool 
       | Int 
       | T 
-    let gen_expr ty = let open Core.Quickcheck.Generator.Let_syntax in "TODO"
+    let gen_expr ty =
+      let open Core.Quickcheck.Generator in
+        let open Let_syntax in
+          [%bind let x = small_non_negative_int in return x]
     module TestHarness(M:PolyInterface) =
       struct
         include M

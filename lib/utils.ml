@@ -381,12 +381,15 @@ let get_cstrs_of_ty_decl (ty_decl : type_declaration) :
   | Ptype_variant args -> get_cstr_metadata_minimal args
   | _ -> failwith "error: expected an algebraic data type definition"
 
-(** Converts a type expression [ty] to its camel-case string representation 
-    (for use as a constructor in an algebraic data type) 
+(** Converts a type expression [ty] to its capitalized, camel-case 
+    string representation (for use as a constructor in an algebraic data type) 
     - The type expression is monomorphized prior to computing its string
     representation (i.e. ['a] is instantiated to [int]).
     - Note: polymoprhic variants, objects, extensions/attributes are 
-    not supported by this function.  *)
+    not supported by this function.  
+    - Note: this function is slightly different from [Ppxlib.string_of_core_type]
+    due to its capitalization, camel-case & monomorphization functionalities.
+*)
 let rec string_of_core_ty (ty : core_type) : string =
   let loc = ty.ptyp_loc in
   match ty.ptyp_desc with
@@ -405,6 +408,10 @@ let rec string_of_core_ty (ty : core_type) : string =
     String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
   | _ -> failwith "type expression not supported by string_of_core_type"
+
+let equal_core_type_ty_cstr 
+  (core_ty : core_type) (ty_cstr : constructor_declaration) : bool = 
+  String.equal (string_of_core_ty core_ty) ty_cstr.pcd_name.txt
 
 (** [mk_adt ~loc ~name constructors] creates the definition of 
     an algebraic data type called [name] at location [loc] 

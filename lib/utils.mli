@@ -29,6 +29,7 @@ val pp_core_type : core_type -> unit
 val pp_expression : expression -> unit
 val pp_structure_item : structure_item -> unit
 val string_of_core_ty : core_type -> string
+val equal_core_type_ty_cstr : core_type -> constructor_declaration -> bool 
 
 (******************************************************************************)
 (** {1 Utility functions for working with Ppxlib} *)
