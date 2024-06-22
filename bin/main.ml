@@ -32,7 +32,8 @@ include
       | IntT
     let gen_expr ty =
       let open Core.Quickcheck.Generator in
-        let open Let_syntax in size >>= (fun x -> return x)
+        let open Let_syntax in
+          [%bind let x = small_non_negative_int in return x]
     let _ = gen_expr
     module TestHarness(M:SetInterface) =
       struct

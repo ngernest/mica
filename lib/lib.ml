@@ -95,7 +95,8 @@ let derive_gen_expr ~(loc : Location.t) (ty_cstrs : constructor_declaration list
   (* Derive [let open] expressions for the [Generator.Let_syntax] module *)
   let qc_gen_mod = module_expr_of_string ~loc "Core.Quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
-  let body = [%expr size >>= fun x -> return x] in
+  (* let body = [%expr size >>= fun x -> return x] in *)
+  let body = [%expr let%bind x = small_non_negative_int in return x] in 
   let_open_twice ~loc qc_gen_mod let_syntax_mod body
 
 (** Walks over a module signature definition and extracts the 
