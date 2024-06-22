@@ -58,6 +58,15 @@ let rec get_last (lst : 'a list) : 'a =
 let invert_assoc_list (lst : ('a * 'b) list) : ('b * 'a) list = 
   List.map ~f:(fun (x, y) -> (y, x)) lst
 
+
+let f (xs : 'a list) (yzs : ('b * 'c) list) ~(eq : 'a -> 'c -> bool) : ('a * 'c) list = 
+  List.map yzs ~f:(fun (y, z) -> 
+    match List.find_opt ~f:(fun x -> eq x y) xs with 
+    | Some x' -> (x', z)
+    | None -> failwith "")
+
+
+
 (** Name of the abstract type in the module signature, 
     by default ["t"] *)
 let abstract_ty_name : string = "t"
