@@ -51,6 +51,13 @@ let rec get_last (lst : 'a list) : 'a =
   | [ x ] -> x
   | x :: xs -> get_last xs
 
+(** Swaps the keys & values of an association list.
+    - Note: bijectivity is not guaranteed since keys may appear more than once
+    in the input association list.
+    - Adapted from Jane street's [Base.List.Assoc.inverse] function *)  
+let invert_assoc_list (lst : ('a * 'b) list) : ('b * 'a) list = 
+  List.map ~f:(fun (x, y) -> (y, x)) lst
+
 (** Name of the abstract type in the module signature, 
     by default ["t"] *)
 let abstract_ty_name : string = "t"
@@ -409,6 +416,11 @@ let rec string_of_core_ty (ty : core_type) : string =
   | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
   | _ -> failwith "type expression not supported by string_of_core_type"
 
+(** Checks if a [core_type] and a [constructor_declaration] for the [ty] ADT
+    are equal with respect to their string representations 
+    using [string_of_core_ty].
+    - e.g. this function returns [true] when [core_ty = bool]
+    and [constructor_declaration = Bool]. *)  
 let equal_core_type_ty_cstr 
   (core_ty : core_type) (ty_cstr : constructor_declaration) : bool = 
   String.equal (string_of_core_ty core_ty) ty_cstr.pcd_name.txt

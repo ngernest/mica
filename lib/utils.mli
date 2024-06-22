@@ -143,3 +143,5 @@ val list_is_empty : 'a list -> bool
 val list_or : bool list -> bool
 val remove_last : 'a list -> 'a list
 val get_last : 'a list -> 'a
+val invert_assoc_list : ('a * 'b) list -> ('b * 'a) list
+val abstract_ty_name : string 
