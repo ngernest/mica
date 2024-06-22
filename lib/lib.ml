@@ -76,27 +76,26 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
     based on the inhabitants of the [ty] ADT *)
 let mk_val_cstrs (sig_items : signature) = mk_cstr_aux sig_items ~f:mk_val_cstr
 
-(* TODO: 
-  - figure out how to do a pattern match on the [ty] constructors
-     inside the body of [gen_expr], while keeping track of the [size] 
-     QC parameter
-  - ^^ this will involve doing some analysis of the arities of the functions
-  in the signature 
-    - when [size = 0], the RHS of the case stmt should be an arity-0 constructor
-    that is [return]ed into the [Generator] monad
-  - May need to create some sort of [inv_ctx]-esque structure
-  to map [ty]s to [expr]s (based on the return type of the corresponding
-  function in the signature)
-*)
+(* TODO: - figure out how to do a pattern match on the [ty] constructors inside
+   the body of [gen_expr], while keeping track of the [size] QC parameter - ^^
+   this will involve doing some analysis of the arities of the functions in the
+   signature - when [size = 0], the RHS of the case stmt should be an arity-0
+   constructor that is [return]ed into the [Generator] monad - May need to
+   create some sort of [inv_ctx]-esque structure to map [ty]s to [expr]s (based
+   on the return type of the corresponding function in the signature) *)
 
 (** Derives the [gen_expr] QuickCheck generator 
     - [ty_cstrs] is a list of constructors for the [ty] ADT *)
-let derive_gen_expr ~(loc : Location.t) (ty_cstrs : constructor_declaration list) : expression =
+let derive_gen_expr ~(loc : Location.t)
+  (ty_cstrs : constructor_declaration list) : expression =
   (* Derive [let open] expressions for the [Generator.Let_syntax] module *)
   let qc_gen_mod = module_expr_of_string ~loc "Core.Quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
   (* let body = [%expr size >>= fun x -> return x] in *)
-  let body = [%expr let%bind x = small_non_negative_int in return x] in 
+  let body =
+    [%expr
+      let%bind x = small_non_negative_int in
+      return x] in
   let_open_twice ~loc qc_gen_mod let_syntax_mod body
 
 (** Walks over a module signature definition and extracts the 
@@ -117,7 +116,7 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let expr_td =
           mk_adt ~loc ~name:"expr"
             ~cstrs:(List.map ~f:fst (mk_expr_cstrs sig_items)) in
-        let ty_cstrs = mk_ty_cstrs sig_items in 
+        let ty_cstrs = mk_ty_cstrs sig_items in
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:ty_cstrs in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ];
