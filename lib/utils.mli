@@ -33,13 +33,19 @@ val string_of_core_ty : core_type -> string
 (******************************************************************************)
 (** {1 Equality of [Parsetree] types)} *)
 
-val equal_ty_cstr_core_type : constructor_declaration -> core_type -> bool 
-val equal_longident : Longident.t -> Longident.t -> bool 
-val equal_core_type : core_type -> core_type -> bool 
-val equal_core_type_desc : core_type_desc -> core_type_desc -> bool 
-val equal_core_type_list : core_type list -> core_type list -> bool 
-val equal_constructor_declaration : 
-  constructor_declaration -> constructor_declaration -> bool 
+val equal_ty_cstr_core_type : constructor_declaration -> core_type -> bool
+val equal_longident : Longident.t -> Longident.t -> bool
+val equal_core_type : core_type -> core_type -> bool
+val equal_core_type_desc : core_type_desc -> core_type_desc -> bool
+val equal_core_type_list : core_type list -> core_type list -> bool
+val equal_mutable_flag : mutable_flag -> mutable_flag -> bool
+val equal_label_declaration : label_declaration -> label_declaration -> bool
+
+val equal_constructor_arguments :
+  constructor_arguments -> constructor_arguments -> bool
+
+val equal_constructor_declaration :
+  constructor_declaration -> constructor_declaration -> bool
 
 (******************************************************************************)
 (** {1 Utility functions for working with Ppxlib} *)
@@ -153,7 +159,9 @@ val list_is_empty : 'a list -> bool
 val list_or : bool list -> bool
 val remove_last : 'a list -> 'a list
 val get_last : 'a list -> 'a
-val merge_list_with_assoc_list : 
-  'a list -> ('b * 'c) list -> eq:('a -> 'b -> 'bool) -> ('a * 'c) list
+
+val merge_list_with_assoc_list :
+  'a list -> ('b * 'c) list -> eq:('a -> 'b -> bool) -> ('a * 'c) list
+
 val invert_assoc_list : ('a * 'b) list -> ('b * 'a) list
-val abstract_ty_name : string 
+val abstract_ty_name : string

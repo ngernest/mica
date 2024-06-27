@@ -74,36 +74,32 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
 
 (** Constructs the definition of the [value] algebraic data type
     based on the inhabitants of the [ty] ADT *)
-let mk_val_cstrs (sig_items : signature) : constructor_declaration list = 
+let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:mk_val_cstr
 
-(** Maps [ty]s to [expr]s (for use in [gen_expr]) *)  
-let destruct_gen_expr_tys (sig_items : signature) = 
-  let open Base.List.Assoc in 
-  (* TODO: figure out how to group keys in [expr_cstrs] so that 
-     we end up with a [(core_type * constructor_declaration list) list] insteda 
-     - Ideally, we would want to call [Base.List.Assoc.group], but
-     we want to minimize dependencies on external libraries *)
-  let expr_cstrs : (core_type * constructor_declaration) list = 
-    inverse (mk_expr_cstrs sig_items) in 
-  let ty_cstrs : constructor_declaration list = 
-    mk_ty_cstrs sig_items in 
-  (* TODO: figure out how to map [ty] constructors in [ty_cstrs]
-     to the keys in [expr_cstrs]  *)
-  merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_ty_cstr_core_type
+(** Maps [ty]s to [expr]s (for use in [gen_expr]) *)
+let destruct_gen_expr_tys (sig_items : signature) =
+  let open Base.List.Assoc in
+  (* TODO: figure out how to group keys in [expr_cstrs] so that we end up with a
+     [(core_type * constructor_declaration list) list] insteda - Ideally, we
+     would want to call [Base.List.Assoc.group], but we want to minimize
+     dependencies on external libraries *)
+  let expr_cstrs : (core_type * constructor_declaration) list =
+    inverse (mk_expr_cstrs sig_items) in
+  let ty_cstrs : constructor_declaration list = mk_ty_cstrs sig_items in
+  (* TODO: figure out how to map [ty] constructors in [ty_cstrs] to the keys in
+     [expr_cstrs] *)
+  (* merge_list_with_assoc_list ty_cstrs expr_cstrs
+     ~eq:equal_ty_cstr_core_type *)
+  failwith "TODO"
 
-(* TODO: 
-  - figure out how to do a pattern match on the [ty] constructors
-     inside the body of [gen_expr], while keeping track of the [size] 
-     QC parameter
-  - ^^ this will involve doing some analysis of the arities of the functions
-  in the signature 
-    - when [size = 0], the RHS of the case stmt should be an arity-0 constructor
-    that is [return]ed into the [Generator] monad
-  - May need to create some sort of [inv_ctx]-esque structure
-  to map [ty]s to [expr]s (based on the return type of the corresponding
-  function in the signature)
-*)
+(* TODO: - figure out how to do a pattern match on the [ty] constructors inside
+   the body of [gen_expr], while keeping track of the [size] QC parameter - ^^
+   this will involve doing some analysis of the arities of the functions in the
+   signature - when [size = 0], the RHS of the case stmt should be an arity-0
+   constructor that is [return]ed into the [Generator] monad - May need to
+   create some sort of [inv_ctx]-esque structure to map [ty]s to [expr]s (based
+   on the return type of the corresponding function in the signature) *)
 
 (** Derives the [gen_expr] QuickCheck generator 
     - [ty_cstrs] is a list of constructors for the [ty] ADT *)
