@@ -79,17 +79,18 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) *)  
 let destruct_gen_expr_tys (sig_items : signature) = 
+  let open Base.List.Assoc in 
   (* TODO: figure out how to group keys in [expr_cstrs] so that 
      we end up with a [(core_type * constructor_declaration list) list] insteda 
      - Ideally, we would want to call [Base.List.Assoc.group], but
      we want to minimize dependencies on external libraries *)
   let expr_cstrs : (core_type * constructor_declaration) list = 
-    invert_assoc_list (mk_expr_cstrs sig_items) in 
+    inverse (mk_expr_cstrs sig_items) in 
   let ty_cstrs : constructor_declaration list = 
     mk_ty_cstrs sig_items in 
   (* TODO: figure out how to map [ty] constructors in [ty_cstrs]
      to the keys in [expr_cstrs]  *)
-  failwith "TODO"
+  merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_ty_cstr_core_type
 
 (* TODO: 
   - figure out how to do a pattern match on the [ty] constructors
