@@ -94,3 +94,8 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `bisect_ppx`
 - I recommend setting up an Opam switch for OCaml 5.1.0 and developing using 
   that compiler version (`ppx_quick_test` only works with OCaml 5.1 or newer). 
+- Note: in this codebase, we typically rely on the OCaml standard library, 
+  but in a few (limited) instances, we use Jane Street's [Base] library. 
+  To avoid namespace clashes, whenever we use a function from [Base], 
+  we always do a local [let open] within the body of the caller function.
+
