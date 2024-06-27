@@ -77,21 +77,19 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
 let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:mk_val_cstr
 
-(** Maps [ty]s to [expr]s (for use in [gen_expr]) *)
-let destruct_gen_expr_tys (sig_items : signature) =
+(** Maps [ty]s to [expr]s (for use in [gen_expr]) 
+    - TODO: figure out how to use the result of [destruct_gen_expr_tys]
+      when deriving [gen_expr] *)
+let destruct_gen_expr_tys (sig_items : signature) : 
+  (constructor_declaration * constructor_declaration list) list =
   let open Base.List.Assoc in
-  (* TODO: figure out how to group keys in [expr_cstrs] so that we end up with a
-     [(core_type * constructor_declaration list) list] insteda - Ideally, we
-     would want to call [Base.List.Assoc.group], but we want to minimize
-     dependencies on external libraries *)
   let expr_cstrs : (core_type * constructor_declaration) list =
     inverse (mk_expr_cstrs sig_items) in
   let ty_cstrs : constructor_declaration list = mk_ty_cstrs sig_items in
-  (* TODO: figure out how to map [ty] constructors in [ty_cstrs] to the keys in
-     [expr_cstrs] *)
-  (* merge_list_with_assoc_list ty_cstrs expr_cstrs
-     ~eq:equal_ty_cstr_core_type *)
-  failwith "TODO"
+  (* Map [ty] constructors in [ty_cstrs] to the keys in [expr_cstrs], 
+     then group values with the same keys together *)
+  merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_ty_cstr_core_type
+    |> group ~equal:equal_constructor_declaration
 
 (* TODO: - figure out how to do a pattern match on the [ty] constructors inside
    the body of [gen_expr], while keeping track of the [size] QC parameter - ^^
