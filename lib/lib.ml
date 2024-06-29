@@ -10,6 +10,7 @@ open Printers
 open Getters
 open Builders
 open Inv_ctx
+open Let_open
 
 (******************************************************************************)
 (** {1 Generator for Auxiliary Datatypes} *)
