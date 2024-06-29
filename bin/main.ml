@@ -2,21 +2,13 @@ module type SetInterface = sig
   type 'a t
 
   val empty : 'a t
-
   val is_empty : 'a t -> bool
-
   val mem : 'a -> 'a t -> bool
-
   val add : 'a -> 'a t -> 'a t
-
   val rem : 'a -> 'a t -> 'a t
-
   val size : 'a t -> int
-
   val union : 'a t -> 'a t -> 'a t
-
   val intersect : 'a t -> 'a t -> 'a t
-
   val invariant : 'a t -> bool
 end
 [@@deriving_inline mica_types, mica]
@@ -53,56 +45,39 @@ include struct
 
     let rec interp e =
       match e with
-      | Empty ->
-          ValIntT M.empty
+      | Empty -> ValIntT M.empty
       | Is_empty e1 -> (
         match interp e1 with
-        | ValIntT e1' ->
-            ValBool (M.is_empty e1')
-        | _ ->
-            failwith "impossible: unary constructor" )
+        | ValIntT e1' -> ValBool (M.is_empty e1')
+        | _ -> failwith "impossible: unary constructor")
       | Mem (x1, e2) -> (
         match interp e2 with
-        | ValIntT e2' ->
-            ValBool (M.mem x1 e2')
-        | _ ->
-            failwith "impossible: n-ary constructor" )
+        | ValIntT e2' -> ValBool (M.mem x1 e2')
+        | _ -> failwith "impossible: n-ary constructor")
       | Add (x1, e2) -> (
         match interp e2 with
-        | ValIntT e2' ->
-            ValIntT (M.add x1 e2')
-        | _ ->
-            failwith "impossible: n-ary constructor" )
+        | ValIntT e2' -> ValIntT (M.add x1 e2')
+        | _ -> failwith "impossible: n-ary constructor")
       | Rem (x1, e2) -> (
         match interp e2 with
-        | ValIntT e2' ->
-            ValIntT (M.rem x1 e2')
-        | _ ->
-            failwith "impossible: n-ary constructor" )
+        | ValIntT e2' -> ValIntT (M.rem x1 e2')
+        | _ -> failwith "impossible: n-ary constructor")
       | Size e1 -> (
         match interp e1 with
-        | ValIntT e1' ->
-            ValInt (M.size e1')
-        | _ ->
-            failwith "impossible: unary constructor" )
+        | ValIntT e1' -> ValInt (M.size e1')
+        | _ -> failwith "impossible: unary constructor")
       | Union (e1, e2) -> (
         match (interp e1, interp e2) with
-        | ValIntT e1', ValIntT e2' ->
-            ValIntT (M.union e1' e2')
-        | _ ->
-            failwith "impossible: n-ary constructor" )
+        | ValIntT e1', ValIntT e2' -> ValIntT (M.union e1' e2')
+        | _ -> failwith "impossible: n-ary constructor")
       | Intersect (e1, e2) -> (
         match (interp e1, interp e2) with
-        | ValIntT e1', ValIntT e2' ->
-            ValIntT (M.intersect e1' e2')
-        | _ ->
-            failwith "impossible: n-ary constructor" )
+        | ValIntT e1', ValIntT e2' -> ValIntT (M.intersect e1' e2')
+        | _ -> failwith "impossible: n-ary constructor")
       | Invariant e1 -> (
         match interp e1 with
-        | ValIntT e1' ->
-            ValBool (M.invariant e1')
-        | _ ->
-            failwith "impossible: unary constructor" )
+        | ValIntT e1' -> ValBool (M.invariant e1')
+        | _ -> failwith "impossible: unary constructor")
 
     let _ = interp
   end

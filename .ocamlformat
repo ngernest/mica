@@ -1,13 +1,12 @@
-profile = ocamlformat
+profile = default
 version = ignore
 version-check = false
 margin = 80
-
-# break-cases = toplevel
-# break-before-in = auto
-# cases-exp-indent = 2
-# max-indent = 2
-# exp-grouping = parens
-# doc-comments = before
-# wrap-comments = true
-# dock-collection-brackets = false
+break-cases = toplevel
+max-indent = 2
+break-before-in = auto
+cases-exp-indent = 2
+exp-grouping = parens
+doc-comments = before
+wrap-comments = true
+dock-collection-brackets = false

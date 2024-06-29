@@ -7,7 +7,7 @@ open StdLabels
 let printf = Stdio.printf
 
 (** Constructs a [loc] given some payload [txt] and a location [loc] *)
-let with_loc (txt : 'a) ~(loc : Location.t) : 'a Location.loc = {txt; loc}
+let with_loc (txt : 'a) ~(loc : Location.t) : 'a Location.loc = { txt; loc }
 
 (** Strips the location info from a value of type ['a loc] *)
 let no_loc (a_loc : 'a Location.loc) : 'a = a_loc.txt
@@ -22,29 +22,32 @@ let tuple4_to_pair (a, b, _, _) = (a, b)
     - Backwards-compatible version of [List.is_empty], 
     which is only available in OCaml 5.1 and newer *)
 let list_is_empty (lst : 'a list) : bool =
-  match lst with [] -> true | _ -> false
+  match lst with
+  | [] -> true
+  | _ -> false
 
 (** Takes the disjunction of a Boolean list
     - The empty list corresponds to false
     - Reimplementation of the [or] function in 
       Haskell's [GHC.Prelude] *)
 let rec list_or (xs : bool list) : bool =
-  match xs with [] -> false | x :: xs -> x || list_or xs
+  match xs with
+  | [] -> false
+  | x :: xs -> x || list_or xs
 
 (** Retrieves all elements of a list except the last one *)
 let rec remove_last (lst : 'a list) : 'a list =
-  match lst with [] | [_] -> [] | x :: xs -> x :: remove_last xs
+  match lst with
+  | [] | [ _ ] -> []
+  | x :: xs -> x :: remove_last xs
 
 (** Returns the final element of a list (if one exists) 
     - Raises an exception if the list is empty *)
 let rec get_last (lst : 'a list) : 'a =
   match lst with
-  | [] ->
-      failwith "List is empty"
-  | [x] ->
-      x
-  | x :: xs ->
-      get_last xs
+  | [] -> failwith "List is empty"
+  | [ x ] -> x
+  | x :: xs -> get_last xs
 
 (** Swaps the keys & values of an association list.
     - Note: bijectivity is not guaranteed since keys may appear more than once
@@ -60,13 +63,12 @@ let invert_assoc_list (lst : ('a * 'b) list) : ('b * 'a) list =
     - Raises an exception if there does not exist any element in [xs]
       that [eq] deems to be equal to a key in [yzs] *)
 let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
-    ~(eq : 'a -> 'b -> bool) : ('a * 'c) list =
+  ~(eq : 'a -> 'b -> bool) : ('a * 'c) list =
   List.map yzs ~f:(fun (y, z) ->
       match List.find_opt ~f:(fun x -> eq x y) xs with
-      | Some x' ->
-          (x', z)
+      | Some x' -> (x', z)
       | None ->
-          failwith "failed to match an element of ['a] with an element of ['b]" )
+        failwith "failed to match an element of ['a] with an element of ['b]")
 
 (** Name of the abstract type in the module signature, 
     by default ["t"] *)
