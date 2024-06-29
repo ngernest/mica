@@ -1,8 +1,13 @@
 open Lib__Utils
+open Lib__Lident 
+open Lib__Equality
+open Lib__Miscellany
+open Lib__Printers
 open Lib
 open Ppxlib
 open StdLabels
 open Alcotest
+
 
 (*******************************************************************************)
 (* Boilerplate for making [core_type] a [testable] type in the Alcotest

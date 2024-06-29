@@ -1,18 +1,6 @@
 open Ppxlib
 
 (******************************************************************************)
-(** {1 Longident utility functions} *)
-
-val uncapitalize : string -> string
-val lident_loc_of_string : string -> loc:Location.t -> Longident.t Location.loc
-val uncapitalize_lident : Longident.t -> Longident.t
-val string_of_lident : Longident.t -> string
-val add_lident_prefix : string -> Longident.t -> Longident.t
-
-val add_lident_loc_prefix :
-  string -> Longident.t Location.loc -> Longident.t Location.loc
-
-(******************************************************************************)
 (** {1 Working with [module_expr]s} *)
 
 val module_expr_of_string : loc:Location.t -> string -> module_expr
@@ -22,18 +10,8 @@ val let_open_twice :
   loc:Location.t -> module_expr -> module_expr -> expression -> expression
 
 (******************************************************************************)
-(** {1 Pretty-printers} *)
-
-val pp_pattern : pattern -> unit
-val pp_core_type : core_type -> unit
-val pp_expression : expression -> unit
-val pp_structure_item : structure_item -> unit
-val string_of_core_ty : core_type -> string
-
-(******************************************************************************)
 (** {1 Utility functions for working with Ppxlib} *)
 
-val base_types : loc:Location.t -> core_type list
 val pexp_ident_of_string : string -> loc:Location.t -> expression
 val ppat_var_of_string : string -> loc:Location.t -> pattern
 
@@ -43,7 +21,6 @@ val mk_cstr :
   arg_tys:core_type list ->
   constructor_declaration
 
-val monomorphize : core_type -> core_type
 val get_type_params : type_declaration -> core_type list
 
 type inv_ctx = (core_type * string) list
@@ -129,22 +106,3 @@ val monadic_bindop : loc:Location.t -> string -> expression -> binding_op
 
 val let_monadic_bind :
   loc:Location.t -> string -> expression -> expression -> expression
-
-(*******************************************************************************)
-(** {1 Miscellany} *)
-
-val printf : ('a, Stdio.Out_channel.t, unit) format -> 'a
-val with_loc : 'a -> loc:Location.t -> 'a Location.loc
-val no_loc : 'a Location.loc -> 'a
-val map2 : f:('a -> 'b) -> 'a * 'a -> 'b * 'b
-val tuple4_to_pair : 'a * 'b * 'c * 'd -> 'a * 'b
-val list_is_empty : 'a list -> bool
-val list_or : bool list -> bool
-val remove_last : 'a list -> 'a list
-val get_last : 'a list -> 'a
-
-val merge_list_with_assoc_list :
-  'a list -> ('b * 'c) list -> eq:('a -> 'b -> bool) -> ('a * 'c) list
-
-val invert_assoc_list : ('a * 'b) list -> ('b * 'a) list
-val abstract_ty_name : string

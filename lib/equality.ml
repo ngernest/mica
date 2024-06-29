@@ -1,5 +1,7 @@
 open Ppxlib
-open Utils
+open StdLabels
+open Printers
+open Miscellany
 
 (** {1 Equality of [Parsetree] types} *)
 

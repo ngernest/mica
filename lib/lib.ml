@@ -3,6 +3,10 @@ open Ast_helper
 open Ast_builder.Default
 open StdLabels
 open Utils
+open Equality 
+open Lident
+open Miscellany
+open Printers 
 
 (******************************************************************************)
 (** {1 Generator for Auxiliary Datatypes} *)

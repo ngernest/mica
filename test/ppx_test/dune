@@ -4,3 +4,8 @@
  (libraries core core_unix.sys_unix core_unix.command_unix)
  (preprocess
   (pps ppx_jane)))
+
+(env
+ (dev
+  (flags
+   (:standard -g -w "-26-27-32-33-34-37-39"))))

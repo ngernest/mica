@@ -2,116 +2,10 @@ open Ppxlib
 open Ast_helper
 open Ast_builder.Default
 open StdLabels
-
-(*******************************************************************************)
-(** {1 Miscellany} *)
-
-let printf = Stdio.printf
-
-(** Constructs a [loc] given some payload [txt] and a location [loc] *)
-let with_loc (txt : 'a) ~(loc : Location.t) : 'a Location.loc = { txt; loc }
-
-(** Strips the location info from a value of type ['a loc] *)
-let no_loc (a_loc : 'a Location.loc) : 'a = a_loc.txt
-
-(** Maps a function component-wise over a pair *)
-let map2 ~f (a1, a2) = (f a1, f a2)
-
-(** Converts a triple to a pair *)
-let tuple4_to_pair (a, b, _, _) = (a, b)
-
-(** Checks if a list is empty
-    - Backwards-compatible version of [List.is_empty], 
-    which is only available in OCaml 5.1 and newer *)
-let list_is_empty (lst : 'a list) : bool =
-  match lst with
-  | [] -> true
-  | _ -> false
-
-(** Takes the disjunction of a Boolean list
-    - The empty list corresponds to false
-    - Reimplementation of the [or] function in 
-      Haskell's [GHC.Prelude] *)
-let rec list_or (xs : bool list) : bool =
-  match xs with
-  | [] -> false
-  | x :: xs -> x || list_or xs
-
-(** Retrieves all elements of a list except the last one *)
-let rec remove_last (lst : 'a list) : 'a list =
-  match lst with
-  | [] | [ _ ] -> []
-  | x :: xs -> x :: remove_last xs
-
-(** Returns the final element of a list (if one exists) 
-    - Raises an exception if the list is empty *)
-let rec get_last (lst : 'a list) : 'a =
-  match lst with
-  | [] -> failwith "List is empty"
-  | [ x ] -> x
-  | x :: xs -> get_last xs
-
-(** Swaps the keys & values of an association list.
-    - Note: bijectivity is not guaranteed since keys may appear more than once
-    in the input association list.
-    - Adapted from Jane street's [Base.List.Assoc.inverse] function *)
-let invert_assoc_list (lst : ('a * 'b) list) : ('b * 'a) list =
-  List.map ~f:(fun (x, y) -> (y, x)) lst
-
-(** [merge_list_with_assoc_list xs yzs ~eq] takes [xs : 'a list] 
-    and an association list [yzs : ('b * 'c) list], and creates a 
-    new association list of type [('a * 'c) list], using the function [eq] 
-    to equate values of type ['a] and ['b] together
-    - Raises an exception if there does not exist any element in [xs]
-      that [eq] deems to be equal to a key in [yzs] *)
-let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
-  ~(eq : 'a -> 'b -> bool) : ('a * 'c) list =
-  List.map yzs ~f:(fun (y, z) ->
-      match List.find_opt ~f:(fun x -> eq x y) xs with
-      | Some x' -> (x', z)
-      | None ->
-        failwith "failed to match an element of ['a] with an element of ['b]")
-
-(** Name of the abstract type in the module signature, 
-    by default ["t"] *)
-let abstract_ty_name : string = "t"
-
-(*******************************************************************************)
-(** {1 Longident utility functions} *)
-
-(** Alias for [String.uncapitalize_ascii] *)
-let uncapitalize = String.uncapitalize_ascii
-
-let lident_loc_of_string (x : string) ~(loc : Location.t) :
-  Longident.t Location.loc =
-  with_loc (Longident.parse x) ~loc
-
-(** Converts a [Longident] to a regular string, *)
-let string_of_lident (lident : Longident.t) : string =
-  let xs = Astlib.Longident.flatten lident in
-  match xs with
-  | [] -> ""
-  | [ x ] -> x
-  | _ -> String.concat ~sep:"." xs
-
-(** Only uncapitalizes the final [Lident] in a [Longident.t] 
-    (prefixes in [Ldot]'s are left unchanged) *)
-let rec uncapitalize_lident (lident : Longident.t) : Longident.t =
-  match lident with
-  | Lident s -> Lident (uncapitalize s)
-  | Ldot (prefix, s) -> Ldot (prefix, uncapitalize s)
-  | Lapply (l1, l2) -> Lapply (uncapitalize_lident l1, uncapitalize_lident l2)
-
-(** [add_lident_prefix p l] adds the prefix [p] to the identifier [l] 
-    using dot notation, returning a new identifier [p.l] *)
-let add_lident_prefix (prefix : string) (lident : Longident.t) : Longident.t =
-  Ldot (Lident prefix, string_of_lident (uncapitalize_lident lident))
-
-(** [add_lident_loc_prefix] is like [add_lident_prefix], 
-    but attaches location information to the resultant identifier *)
-let add_lident_loc_prefix (prefix : string)
-  ({ txt; loc } : Longident.t Location.loc) : Longident.t Location.loc =
-  with_loc ~loc @@ add_lident_prefix prefix txt
+open Equality 
+open Lident 
+open Miscellany
+open Printers
 
 (******************************************************************************)
 (** {1 Working with [module_expr]s} *)
@@ -135,42 +29,7 @@ let let_open_twice ~(loc : Location.t) (m1 : module_expr) (m2 : module_expr)
   let_open ~loc m1 (let_open ~loc m2 e)
 
 (******************************************************************************)
-(** {1 Pretty-printers} *)
-
-(** Alias for [Format.err_formatter] *)
-let err_fmt : Format.formatter = Format.err_formatter
-
-(** Pretty-printer for [pattern]'s *)
-let pp_pattern : pattern -> unit = Astlib.Pprintast.pattern err_fmt
-
-(** Pretty-printer for [core_type]'s *)
-let pp_core_type : core_type -> unit = Astlib.Pprintast.core_type err_fmt
-
-(** Pretty-printer for [expression]'s *)
-let pp_expression : expression -> unit = Astlib.Pprintast.expression err_fmt
-
-(** Pretty-printer for [structure_item]'s *)
-let pp_structure_item : structure_item -> unit =
-  Astlib.Pprintast.structure_item err_fmt
-
-(******************************************************************************)
 (** {1 Utility functions for working with Ppxlib} *)
-
-(** List of OCaml base types 
-    - The named argument [loc] is necessary in order for 
-    the [Ppxlib.Metaquot] quotations to expand to the appropriate 
-    AST fragments representing the base types. *)
-let base_types ~(loc : Location.t) : core_type list =
-  [ [%type: int];
-    [%type: int32];
-    [%type: int64];
-    [%type: nativeint];
-    [%type: char];
-    [%type: bool];
-    [%type: unit];
-    [%type: float];
-    [%type: string]
-  ]
 
 (** [pexp_ident_of_string x ~loc] creates the expression [Pexp_ident x]
     at location [loc] *)
@@ -200,31 +59,6 @@ let mk_cstr ~(name : string) ~(loc : Location.t) ~(arg_tys : core_type list) :
     (* Any PPXes attached to the type *)
     pcd_attributes = []
   }
-
-(** Instantiates all type variables ['a] inside a type expression with [int] 
-    by recursing over the structure of the type expression. 
-    Base types are left unchanged. 
-    Note: this function only recurses over type expressions when 
-    they consist of:
-    - Type constructor applications ([Ptyp_constr])
-    - Tuples ([Ptyp_tuple])
-    - Arrow/function types ([Ptyp_arrow]). *)
-let rec monomorphize (ty : core_type) : core_type =
-  let loc = ty.ptyp_loc in
-  match ty.ptyp_desc with
-  | ty_desc when List.mem ty ~set:(base_types ~loc) -> ty
-  | Ptyp_var _ -> [%type: int]
-  | Ptyp_arrow (arg_lbl, t1, t2) ->
-    { ty with
-      ptyp_desc = Ptyp_arrow (arg_lbl, monomorphize t1, monomorphize t2)
-    }
-  | Ptyp_tuple tys ->
-    { ty with ptyp_desc = Ptyp_tuple (List.map ~f:monomorphize tys) }
-  | Ptyp_constr (ident, ty_params) ->
-    { ty with
-      ptyp_desc = Ptyp_constr (ident, List.map ~f:monomorphize ty_params)
-    }
-  | _ -> ty
 
 (** [get_type_varams td] extracts the type parameters 
     from the type declaration [td]
@@ -401,34 +235,6 @@ let get_cstrs_of_ty_decl (ty_decl : type_declaration) :
   match ty_decl.ptype_kind with
   | Ptype_variant args -> get_cstr_metadata_minimal args
   | _ -> failwith "error: expected an algebraic data type definition"
-
-(** Converts a type expression [ty] to its capitalized, camel-case 
-    string representation (for use as a constructor in an algebraic data type) 
-    - The type expression is monomorphized prior to computing its string
-    representation (i.e. ['a] is instantiated to [int]).
-    - Note: polymoprhic variants, objects, extensions/attributes are 
-    not supported by this function.  
-    - Note: this function is slightly different from [Ppxlib.string_of_core_type]
-    due to its capitalization, camel-case & monomorphization functionalities.
-*)
-let rec string_of_core_ty (ty : core_type) : string =
-  let loc = ty.ptyp_loc in
-  match ty.ptyp_desc with
-  | Ptyp_var _ | Ptyp_any -> string_of_core_ty (monomorphize ty)
-  | Ptyp_constr ({ txt = ident; _ }, ty_params) ->
-    let ty_constr_str =
-      Astlib.Longident.flatten ident
-      |> String.concat ~sep:"" |> String.capitalize_ascii in
-    let params_str =
-      String.concat ~sep:"" (List.map ~f:string_of_core_ty ty_params) in
-    params_str ^ ty_constr_str
-  | Ptyp_tuple tys ->
-    let ty_strs =
-      List.map tys ~f:(fun ty ->
-          string_of_core_ty ty |> String.capitalize_ascii) in
-    String.concat ~sep:"" ty_strs ^ "Product"
-  | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
-  | _ -> failwith "type expression not supported by string_of_core_type"
 
 (******************************************************************************)
 

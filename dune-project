@@ -1,11 +1,11 @@
-(lang dune 2.9)
+(lang dune 3.7)
 (name ppx_mica)
 
 (generate_opam_files true)
 (source (github ngernest/ppx_mica))
 
-(authors "Ernest Ng <ngernest@alumni.upenn.edu>")
-(maintainers "Ernest Ng <ngernest@alumni.upenn.edu>")
+(authors "Ernest Ng <eyn5@cornell.edu>")
+(maintainers "Ernest Ng <eyn5@cornell.edu>")
 (license ISC)
 
 (package
