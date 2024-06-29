@@ -13,7 +13,5 @@ let empty_ctx : inv_ctx = []
 let find_exprs (gamma : inv_ctx) : string list =
   List.fold_left
     ~f:(fun acc (ty, var) ->
-      match ty with
-      | [%type: expr] -> var :: acc
-      | _ -> acc)
+      match ty with [%type: expr] -> var :: acc | _ -> acc )
     ~init:[] gamma
