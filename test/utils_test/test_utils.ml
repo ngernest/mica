@@ -1,5 +1,6 @@
-open Ppx_mica__Lib
 open Ppx_mica__Utils
+open Ppx_mica__Type_deriver
+open Ppx_mica__Functor_deriver
 open Ppxlib
 open StdLabels
 open Alcotest

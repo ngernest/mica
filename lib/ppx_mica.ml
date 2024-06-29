@@ -1,11 +1,10 @@
 open Ppxlib
 open StdLabels
-open Lib
 
 (** Instantiates the PPX deriver for [expr]s *)
 let type_generator :
   (structure_item list, module_type_declaration) Deriving.Generator.t =
-  Deriving.Generator.V2.make_noarg generate_types_from_sig
+  Deriving.Generator.V2.make_noarg Type_deriver.generate_types_from_sig
 
 (** Labelled arguments for the [mica] PPX deriver 
     TODO: handle the continuation in [generate_functor] *)
@@ -21,6 +20,6 @@ let () =
   (* Generate the body of the [TestHarness] functor - Note that we must generate
      the declarations of auxiliary datatypes before generating the functor *)
   let functor_generator =
-    Deriving.Generator.V2.make_noarg ~deps:[ datatype_deriver ] generate_functor
-  in
+    Deriving.Generator.V2.make_noarg ~deps:[ datatype_deriver ]
+      Functor_deriver.generate_functor in
   Deriving.add "mica" ~str_module_type_decl:functor_generator |> Deriving.ignore
