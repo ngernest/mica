@@ -117,25 +117,6 @@ let update_expr_arg_names (expr_args : string list) (args : string list) :
   List.map args ~f:(fun x ->
       if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
 
-(** Takes a [type_declaration] and returns a pair of the form 
-    [(<type_name, list_of_type_parameters)] *)
-let get_ty_name_and_params ({ ptype_name; ptype_params; _ } : type_declaration)
-  : string * core_type list =
-  let ty_params = List.map ~f:fst ptype_params in
-  (ptype_name.txt, ty_params)
-
-(** Takes a module signature and returns a list containing pairs of the form
-    [(<type_name>, <list_of_type_parameters>)]. The list is ordered based on
-    the order of appearance of the type declarations in the signature.  *)
-let get_ty_decls_from_sig (sig_items : signature) :
-  (string * core_type list) list =
-  List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; _ } ->
-      match psig_desc with
-      | Psig_type (_, ty_decls) ->
-        List.map ~f:get_ty_name_and_params ty_decls :: acc
-      | _ -> acc)
-  |> List.concat |> List.rev
-
 (* -------------------------------------------------------------------------- *)
 (*      Helpers for deriving monadic code (currently unused)                  *)
 (* -------------------------------------------------------------------------- *)

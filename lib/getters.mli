@@ -1,11 +1,11 @@
 open Ppxlib
 open Inv_ctx
 
-val get_type_params : type_declaration -> core_type list
-val get_varname : pattern -> string
-val get_ret_ty : core_type -> core_type
-val get_cstr_arg_tys : ?is_arrow:bool -> core_type -> core_type list
+(******************************************************************************)
+(** {1 Working with constructors for algebraic data types} *)
 
+val get_varname : pattern -> string
+val get_cstr_arg_tys : ?is_arrow:bool -> core_type -> core_type list
 val get_cstr_args :
   loc:Location.t -> ('a -> core_type) -> 'a list -> pattern * inv_ctx
 
@@ -21,3 +21,11 @@ val get_cstr_name : constructor_declaration -> Longident.t Location.loc
 
 val get_cstrs_of_ty_decl :
   type_declaration -> (Longident.t Location.loc * pattern option) list
+
+(******************************************************************************)
+(** {1 Working with type parameters & type declarations} *)
+  
+val get_type_params : type_declaration -> core_type list  
+val get_ret_ty : core_type -> core_type  
+val get_ty_name_and_params : type_declaration -> string * core_type list
+val get_ty_decls_from_sig : signature -> (string * core_type list) list

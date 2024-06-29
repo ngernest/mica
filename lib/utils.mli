@@ -35,8 +35,6 @@ val get_nary_case_rhs :
   expression
 
 val update_expr_arg_names : string list -> string list -> string list
-val get_ty_name_and_params : type_declaration -> string * core_type list
-val get_ty_decls_from_sig : signature -> (string * core_type list) list
 
 (* -------------------------------------------------------------------------- *)
 (*                      Helpers for deriving monadic code                     *)
