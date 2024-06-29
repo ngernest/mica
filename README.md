@@ -64,8 +64,9 @@ which is executed first, and the functor definition is produced by
 the main `mica` deriver which runs afterwards. 
 
 ## Directory overview
-- [ppx_mica.ml](./lib/ppx_mica.ml): Driver declaration for the PPX deriver
-- [lib.ml](./lib/lib.ml): Entrypoint for the PPX deriver (contains the "business logic")
+- [ppx_mica.ml](./lib/ppx_mica.ml): Declares the PPX deriver
+- [type_deriver.ml](./lib/type_deriver.ml): Derives type definitions + the `gen_expr` Quickcheck generator
+- [functor_deriver.ml](./lib/functor_deriver.ml): Derives the `TestHarness` functor (including the `interp` function)
 - [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
   - [builders.ml](./lib/builders.ml): Functions for creating AST nodes
     - Most functions in this file begin with the prefix `mk_` 
