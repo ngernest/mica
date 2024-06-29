@@ -1,6 +1,6 @@
 (test
  (name test_utils)
- (libraries lib alcotest ppxlib)
+ (libraries ppx_mica alcotest ppxlib)
  (preprocess
   (pps ppxlib.metaquot)))
 

@@ -143,11 +143,6 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         "Can't derive for expressions that aren't module type declarations"
     ]
 
-(** Instantiates the PPX deriver for [expr]s *)
-let type_generator :
-  (structure_item list, module_type_declaration) Deriving.Generator.t =
-  Deriving.Generator.V2.make_noarg generate_types_from_sig
-
 (******************************************************************************)
 
 (** {1 Generator for Functors} *)
@@ -328,20 +323,3 @@ let generate_functor ~ctxt (mt : module_type_declaration) : structure =
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
     Location.raise_errorf ~loc
       "Can't derive for expressions that aren't module type declarations"
-
-(** Labelled arguments for the [mica] PPX deriver 
-    TODO: handle the continuation in [generate_functor] *)
-let args () =
-  Deriving.Args.(empty +> arg "m1" (pexp_ident __) +> arg "m2" (pexp_ident __))
-
-let () =
-  List.iter ~f:Reserved_namespaces.reserve [ "mica_types"; "mica" ];
-  (* Generate auxiliary type declarations *)
-  let datatype_deriver =
-    Deriving.add "mica_types" ~str_module_type_decl:type_generator in
-  (* Generate the body of the [TestHarness] functor - Note that we must generate
-     the declarations of auxiliary datatypes before generating the functor *)
-  let functor_generator =
-    Deriving.Generator.V2.make_noarg ~deps:[ datatype_deriver ] generate_functor
-  in
-  Deriving.add "mica" ~str_module_type_decl:functor_generator |> Deriving.ignore

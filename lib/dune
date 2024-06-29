@@ -1,5 +1,5 @@
 (library
- (name lib)
+ (name ppx_mica)
  (public_name ppx_mica)
  (kind ppx_deriver)
  (libraries base core ppxlib)

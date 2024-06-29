@@ -1,5 +1,5 @@
-open Lib__Utils
-open Lib
+open Ppx_mica__Lib
+open Ppx_mica__Utils
 open Ppxlib
 open StdLabels
 open Alcotest

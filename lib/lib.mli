@@ -52,10 +52,6 @@ val generate_types_from_sig :
   module_type_declaration ->
   structure_item list
 
-(** Instantiates the PPX deriver for [expr]s *)
-val type_generator :
-  (structure_item list, module_type_declaration) Deriving.Generator.t
-
 (** Helper function: given [mod_ty], a module signature,
     [get_expr_cstrs] produces [expr] constructor names & arguments
     that match the declarations in the module signature *)
