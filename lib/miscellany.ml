@@ -76,3 +76,12 @@ let abstract_ty_name : string = "t"
 
 (** Turns a variable name [x] into [x'] *)
 let rec add_prime (x : string) : string = x ^ "\'"
+
+(** [update_expr_arg_names expr_args args] replaces each variable [x] in 
+    [expr_args] if [x'] (the variable with a prime added) is in [expr_args] *)
+let update_expr_arg_names (expr_args : string list) (args : string list) :
+  string list =
+  List.map args ~f:(fun x ->
+      if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
+
+        

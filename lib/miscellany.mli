@@ -18,3 +18,4 @@ val merge_list_with_assoc_list :
 val invert_assoc_list : ('a * 'b) list -> ('b * 'a) list
 val abstract_ty_name : string
 val add_prime : string -> string
+val update_expr_arg_names : string list -> string list -> string list
