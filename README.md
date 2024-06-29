@@ -63,7 +63,7 @@ The datatype definitions are produced by the `mica_types` PPX deriver
 which is executed first, and the functor definition is produced by 
 the main `mica` deriver which runs afterwards. 
 
-## Directory overview
+## Directory overview
 - [ppx_mica.ml](./lib/ppx_mica.ml): Driver declaration for the PPX deriver
 - [lib.ml](./lib/lib.ml): Entrypoint for the PPX deriver (contains the "business logic")
 - [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
