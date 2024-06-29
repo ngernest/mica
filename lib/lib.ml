@@ -3,10 +3,13 @@ open Ast_helper
 open Ast_builder.Default
 open StdLabels
 open Utils
-open Equality 
+open Equality
 open Lident
 open Miscellany
-open Printers 
+open Printers
+open Getters
+open Builders
+open Inv_ctx
 
 (******************************************************************************)
 (** {1 Generator for Auxiliary Datatypes} *)
@@ -84,16 +87,16 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) 
     - TODO: figure out how to use the result of [destruct_gen_expr_tys]
       when deriving [gen_expr] *)
-let destruct_gen_expr_tys (sig_items : signature) : 
+let destruct_gen_expr_tys (sig_items : signature) :
   (constructor_declaration * constructor_declaration list) list =
   let open Base.List.Assoc in
   let expr_cstrs : (core_type * constructor_declaration) list =
     inverse (mk_expr_cstrs sig_items) in
   let ty_cstrs : constructor_declaration list = mk_ty_cstrs sig_items in
-  (* Map [ty] constructors in [ty_cstrs] to the keys in [expr_cstrs], 
-     then group values with the same keys together *)
+  (* Map [ty] constructors in [ty_cstrs] to the keys in [expr_cstrs], then group
+     values with the same keys together *)
   merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_ty_cstr_core_type
-    |> group ~equal:equal_constructor_declaration
+  |> group ~equal:equal_constructor_declaration
 
 (* TODO: - figure out how to do a pattern match on the [ty] constructors inside
    the body of [gen_expr], while keeping track of the [size] QC parameter - ^^

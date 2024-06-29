@@ -1,4 +1,4 @@
-open Ppxlib 
+open Ppxlib
 open StdLabels
 open Astlib.Pprintast
 open Miscellany
@@ -19,7 +19,7 @@ let base_types ~(loc : Location.t) : core_type list =
     [%type: unit];
     [%type: float];
     [%type: string]
-  ]    
+  ]
 
 (** Alias for [Format.err_formatter] *)
 let err_fmt : Format.formatter = Format.err_formatter
@@ -35,7 +35,6 @@ let pp_expression : expression -> unit = expression err_fmt
 
 (** Pretty-printer for [structure_item]'s *)
 let pp_structure_item : structure_item -> unit = structure_item err_fmt
-
 
 (** Instantiates all type variables ['a] inside a type expression with [int] 
   by recursing over the structure of the type expression. 
@@ -60,7 +59,7 @@ let rec monomorphize (ty : core_type) : core_type =
     { ty with
       ptyp_desc = Ptyp_constr (ident, List.map ~f:monomorphize ty_params)
     }
-  | _ -> ty  
+  | _ -> ty
 
 (** Converts a type expression [ty] to its capitalized, camel-case 
     string representation (for use as a constructor in an algebraic data type) 
@@ -88,4 +87,4 @@ let rec string_of_core_ty (ty : core_type) : string =
           string_of_core_ty ty |> String.capitalize_ascii) in
     String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
-  | _ -> failwith "type expression not supported by string_of_core_type"  
+  | _ -> failwith "type expression not supported by string_of_core_type"

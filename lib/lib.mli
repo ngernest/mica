@@ -1,5 +1,6 @@
 open Ppxlib
 open Utils
+open Inv_ctx
 
 (** Walks over all the [val ...] declarations in a module signature
     and creates the corresponding definition of the [expr] ADT 

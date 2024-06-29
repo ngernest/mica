@@ -1,5 +1,5 @@
-open Ppxlib 
-open StdLabels 
+open Ppxlib
+open StdLabels
 
 (** {1 Miscellany} *)
 
