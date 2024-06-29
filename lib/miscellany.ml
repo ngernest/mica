@@ -73,3 +73,6 @@ let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
 (** Name of the abstract type in the module signature, 
     by default ["t"] *)
 let abstract_ty_name : string = "t"
+
+(** Turns a variable name [x] into [x'] *)
+let rec add_prime (x : string) : string = x ^ "\'"

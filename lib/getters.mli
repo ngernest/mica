@@ -6,6 +6,7 @@ open Inv_ctx
 
 val get_varname : pattern -> string
 val get_cstr_arg_tys : ?is_arrow:bool -> core_type -> core_type list
+
 val get_cstr_args :
   loc:Location.t -> ('a -> core_type) -> 'a list -> pattern * inv_ctx
 
@@ -24,8 +25,30 @@ val get_cstrs_of_ty_decl :
 
 (******************************************************************************)
 (** {1 Working with type parameters & type declarations} *)
-  
-val get_type_params : type_declaration -> core_type list  
-val get_ret_ty : core_type -> core_type  
+
+val get_type_params : type_declaration -> core_type list
+val get_ret_ty : core_type -> core_type
 val get_ty_name_and_params : type_declaration -> string * core_type list
 val get_ty_decls_from_sig : signature -> (string * core_type list) list
+
+(******************************************************************************)
+(** {1 Working with pattern matches} *)
+
+val get_match_arm :
+  string list -> abs_ty_parameterized:bool -> loc:Location.t -> pattern
+
+val get_unary_case_rhs :
+  Longident.t Location.loc ->
+  string ->
+  Longident.t Location.loc ->
+  string ->
+  loc:Location.t ->
+  expression
+
+val get_nary_case_rhs :
+  constructor_declaration ->
+  string ->
+  Longident.t Location.loc ->
+  expression list ->
+  loc:Location.t ->
+  expression

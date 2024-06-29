@@ -12,28 +12,7 @@ val let_open_twice :
 (******************************************************************************)
 (** {1 Utility functions for working with Ppxlib} *)
 
-val add_prime : string -> string
 val is_abs_ty_parameterized : signature -> bool
-
-val get_match_arm :
-  string list -> abs_ty_parameterized:bool -> loc:Location.t -> pattern
-
-val get_unary_case_rhs :
-  Longident.t Location.loc ->
-  string ->
-  Longident.t Location.loc ->
-  string ->
-  loc:Location.t ->
-  expression
-
-val get_nary_case_rhs :
-  constructor_declaration ->
-  string ->
-  Longident.t Location.loc ->
-  expression list ->
-  loc:Location.t ->
-  expression
-
 val update_expr_arg_names : string list -> string list -> string list
 
 (* -------------------------------------------------------------------------- *)

@@ -33,15 +33,6 @@ let let_open_twice ~(loc : Location.t) (m1 : module_expr) (m2 : module_expr)
 (******************************************************************************)
 (** {1 Utility functions for working with Ppxlib} *)
 
-(** [get_type_varams td] extracts the type parameters 
-    from the type declaration [td]
-    - Type variables (e.g. ['a]) are instantiated with [int] *)
-let get_type_params (td : type_declaration) : core_type list =
-  List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
-
-(** Turns a variable name [x] into [x'] *)
-let rec add_prime (x : string) : string = x ^ "\'"
-
 (******************************************************************************)
 
 (** Returns true the abstract type declaration in a [signature] 
@@ -62,53 +53,6 @@ let rec is_abs_ty_parameterized (sig_items : signature) : bool =
                ty_decls)
       | _ -> acc)
     ~init:false sig_items
-
-(** [get_match_arm ~loc expr_vars ~abs_ty_parameterized] returns the 
-    match arms of the inner pattern match in [interp], e.g. 
-    an expression of the form [ValIntT e]
-    - The argument [expr_vars] is a list of variable names that 
-    have type [expr]
-    - The named argument [abs_ty_parameterized] represents whether the 
-    abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
-let get_match_arm (expr_vars : string list) ~(abs_ty_parameterized : bool)
-  ~(loc : Location.t) : pattern =
-  match expr_vars with
-  | [] -> failwith "impossible: get_match_arm"
-  | [ x ] -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x)
-  | _ ->
-    let val_exprs : pattern list =
-      List.map
-        ~f:(fun x -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x))
-        expr_vars in
-    ppat_tuple ~loc val_exprs
-
-(** Creates the RHS of the inner case-stmt in [interp], for the special 
-    case where we are dealing with a unary [value] constructor
-    and a unary module function, e.g. [match e with ValInt x -> M.f x] 
-    (In this example, [get_unary_case_rhs] produces the expression [M.f x])
-    - [value_cstr] is the name of the constructor for the [value] type 
-    - [expr_cstr] is the constructor for the [expr] type, which corresponds
-    to a function inside the module with name [mod_name] 
-    - [x] is the argument that will be applied to the module function *)
-let get_unary_case_rhs (value_cstr : Longident.t Location.loc)
-  (mod_name : string) (expr_cstr : Longident.t Location.loc) (x : string)
-  ~(loc : Location.t) : expression =
-  let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
-  let mod_func_arg = pexp_ident_of_string (add_prime x) ~loc in
-  let mod_func_app = [%expr [%e mod_func] [%e mod_func_arg]] in
-  pexp_construct ~loc value_cstr (Some mod_func_app)
-
-(** Variant of [get_unary_case_rhs] which handles the situation 
-    when the RHS of the case statement is an n-ary function with 
-    arguments [xs] *)
-let get_nary_case_rhs (ret_ty_cstr : constructor_declaration)
-  (mod_name : string) (expr_cstr : Longident.t Location.loc)
-  (xs : expression list) ~loc : expression =
-  let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
-  let mod_func_app =
-    pexp_apply ~loc mod_func (List.map ~f:(fun x -> (Nolabel, x)) xs) in
-  let value_cstr = get_cstr_name ret_ty_cstr in
-  pexp_construct ~loc value_cstr (Some mod_func_app)
 
 (** [update_expr_arg_names expr_args args] replaces each variable [x] in 
     [expr_args] if [x'] (the variable with a prime added) is in [expr_args] *)

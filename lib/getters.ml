@@ -160,3 +160,53 @@ let get_ty_decls_from_sig (sig_items : signature) :
         List.map ~f:get_ty_name_and_params ty_decls :: acc
       | _ -> acc)
   |> List.concat |> List.rev
+
+(******************************************************************************)
+(** {1 Working with pattern matches} *)
+
+(** [get_match_arm ~loc expr_vars ~abs_ty_parameterized] returns the 
+    match arms of the inner pattern match in [interp], e.g. 
+    an expression of the form [ValIntT e]
+    - The argument [expr_vars] is a list of variable names that 
+    have type [expr]
+    - The named argument [abs_ty_parameterized] represents whether the 
+    abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
+let get_match_arm (expr_vars : string list) ~(abs_ty_parameterized : bool)
+  ~(loc : Location.t) : pattern =
+  match expr_vars with
+  | [] -> failwith "impossible: get_match_arm"
+  | [ x ] -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x)
+  | _ ->
+    let val_exprs : pattern list =
+      List.map
+        ~f:(fun x -> mk_valt_pat ~loc ~abs_ty_parameterized (add_prime x))
+        expr_vars in
+    ppat_tuple ~loc val_exprs
+
+(** Creates the RHS of the inner pattern-match in [interp], for the special 
+      case where we are dealing with a unary [value] constructor
+      and a unary module function, e.g. [match e with ValInt x -> M.f x] 
+      (In this example, [get_unary_case_rhs] produces the expression [M.f x])
+      - [value_cstr] is the name of the constructor for the [value] type 
+      - [expr_cstr] is the constructor for the [expr] type, which corresponds
+      to a function inside the module with name [mod_name] 
+      - [x] is the argument that will be applied to the module function *)
+let get_unary_case_rhs (value_cstr : Longident.t Location.loc)
+  (mod_name : string) (expr_cstr : Longident.t Location.loc) (x : string)
+  ~(loc : Location.t) : expression =
+  let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
+  let mod_func_arg = pexp_ident_of_string (add_prime x) ~loc in
+  let mod_func_app = [%expr [%e mod_func] [%e mod_func_arg]] in
+  pexp_construct ~loc value_cstr (Some mod_func_app)
+
+(** Variant of [get_unary_case_rhs] which handles the situation 
+      when the RHS of the case statement is an n-ary function with 
+      arguments [xs] *)
+let get_nary_case_rhs (ret_ty_cstr : constructor_declaration)
+  (mod_name : string) (expr_cstr : Longident.t Location.loc)
+  (xs : expression list) ~loc : expression =
+  let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
+  let mod_func_app =
+    pexp_apply ~loc mod_func (List.map ~f:(fun x -> (Nolabel, x)) xs) in
+  let value_cstr = get_cstr_name ret_ty_cstr in
+  pexp_construct ~loc value_cstr (Some mod_func_app)
