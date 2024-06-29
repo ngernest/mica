@@ -19,3 +19,4 @@ val invert_assoc_list : ('a * 'b) list -> ('b * 'a) list
 val abstract_ty_name : string
 val add_prime : string -> string
 val update_expr_arg_names : string list -> string list -> string list
+val is_abs_ty_parameterized : signature -> bool
