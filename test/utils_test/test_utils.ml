@@ -1,10 +1,4 @@
 open Lib__Utils
-open Lib__Lident
-open Lib__Equality
-open Lib__Miscellany
-open Lib__Printers
-open Lib__Getters
-open Lib__Builders
 open Lib
 open Ppxlib
 open StdLabels

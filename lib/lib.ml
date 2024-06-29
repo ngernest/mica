@@ -3,14 +3,6 @@ open Ast_helper
 open Ast_builder.Default
 open StdLabels
 open Utils
-open Equality
-open Lident
-open Miscellany
-open Printers
-open Getters
-open Builders
-open Inv_ctx
-open Let_open
 
 (******************************************************************************)
 (** {1 Generator for Auxiliary Datatypes} *)
