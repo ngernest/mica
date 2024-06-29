@@ -12,7 +12,7 @@ let type_generator :
 let args () =
   Deriving.Args.(empty +> arg "m1" (pexp_ident __) +> arg "m2" (pexp_ident __))
 
-(** Registers the main [mica_types] and [mica] PPX derivers *)  
+(** Registers the main [mica_types] and [mica] PPX derivers *)
 let () =
   List.iter ~f:Reserved_namespaces.reserve [ "mica_types"; "mica" ];
   (* Generate auxiliary type declarations *)

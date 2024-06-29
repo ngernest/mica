@@ -63,7 +63,22 @@ The datatype definitions are produced by the `mica_types` PPX deriver
 which is executed first, and the functor definition is produced by 
 the main `mica` deriver which runs afterwards. 
 
-See `lib/lib.ml` for implementation details. 
+## Directory overview
+- [ppx_mica.ml](./lib/ppx_mica.ml): Driver declaration for the PPX deriver
+- [lib.ml](./lib/lib.ml): Entrypoint for the PPX deriver (contains the "business logic")
+- [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
+  - [builders.ml](./lib/builders.ml): Functions for creating AST nodes
+    - Most functions in this file begin with the prefix `mk_` 
+  - [getters.ml](./lib/getters.ml): Functions for inspecting AST nodes
+    - Most functions in this file begin with the prefix `get_`
+  - [equality.ml](./lib/equality.ml): Equality functions for [Parsetree] types 
+  - [lident.ml](./lib/lident.ml): Utilities for working with the [Longident] type
+  - [printers.ml](./lib/printers.ml): Pretty-printers for AST types
+  - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types to expressions
+  - [let_open.ml](./lib/let_open.ml): Helpers for producing [let open...] expressions
+  - [bindop.ml](./lib/bindop.ml): Helpers for producing monadic bind expressions
+  - [miscellany.ml](./lib/miscellany.ml): Misc. helpers for working with lists & strings
+
 
 ## Testing 
 1. `test/utils_test` contains `Alcotest` unit tests which test various helper functions
@@ -99,4 +114,3 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   To avoid namespace clashes, whenever we use a function from `Base`, 
   we always do a local `let open` within the body of the caller function.
 
-**TODO**: split `utils.ml` and `utils.mli` up into smaller files
