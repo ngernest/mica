@@ -564,9 +564,9 @@ let equal_core_type_alpha_beta_t_neq () =
 
 let () =
   run "Utils test suite"
-    [ ( "[monomorphize] preserves base types",
+    [ ( "monomorphize (base types)",
         [ mono_int (); mono_string (); mono_bool () ] );
-      ( "[monomorphize] instantiates type variables with [int]",
+      ( "monomorphize (instantiate type variables)",
         [ mono_list ();
           mono_option ();
           mono_double_list ();
@@ -577,54 +577,54 @@ let () =
           mono_poly_abs_type ();
           mono_qualified_poly_abs_type ()
         ] );
-      ( "no duplicate types in result of [uniq_ret_tys]",
+      ( "uniq_ret_tys",
         [ uniq_ret_tys_singleton ();
           uniq_ret_tys_no_dupes ();
           uniq_ret_tys_three_tys ();
           uniq_ret_ty_1_arg_funcs ();
           uniq_ret_ty_2_arg_funcs ()
         ] );
-      ( "[mk_ty_cstrs]",
+      ( "mk_ty_cstrs",
         [ mk_ty_cstrs_single_base_ty ();
           mk_ty_cstrs_single_mono_abs_ty ();
           mk_ty_cstrs_single_poly_abs_ty ();
           mk_ty_cstrs_two_base ();
           mk_ty_cstrs_no_dupes ()
         ] );
-      ( "[get_ret_ty]",
+      ( "get_ret_ty",
         [ get_ret_ty_1_arg_func ();
           get_ret_ty_2_arg_func ();
           get_ret_ty_3_arg_func ();
           get_ret_ty_uncurried ()
         ] );
-      ( "[string_of_lident]",
+      ( "string_of_lident",
         [ string_of_lident_trivial ();
           string_of_lident_ldot ();
           string_of_lident_nested_lot ()
         ] );
-      ( "[uncapitalize_lident]",
+      ( "uncapitalize_lident",
         [ uncapitalize_lident_trivial ();
           uncapitalize_lident_ldot ();
           uncapitalize_lident_ldot_nested ();
           uncapitalize_lident_ldot_doubly_nested ()
         ] );
-      ( "[add_lident_prefix]",
+      ( "add_lident_prefix",
         [ add_lident_prefix_mod_path (); add_lident_prefix_ldot () ] );
-      ( "[is_abs_ty_parameterized]",
+      ( "is_abs_ty_parameterized",
         [ is_abs_ty_parameterized_empty_sig ();
           is_abs_ty_parameterized_sig_no_abs_ty ();
           is_abs_ty_parameterized_t ();
           is_abs_ty_parameterized_alpha_t ();
           is_abs_ty_parameterized_alpha_beta_t ()
         ] );
-      ( "[update_expr_arg_names]",
+      ( "update_expr_arg_names",
         [ update_expr_arg_names_singleton ();
           update_expr_arg_names_no_op ();
           update_expr_arg_names_update_one ();
           update_expr_arg_names_update_two ();
           update_expr_arg_names_double_primes ()
         ] );
-      ( "[get_ty_decls_from_sig]",
+      ( "get_ty_decls_from_sig",
         [ get_ty_decls_from_sig_t ();
           get_ty_decls_from_sig_t_int ();
           get_ty_decls_from_sig_alpha_t ();
@@ -634,7 +634,7 @@ let () =
           get_ty_decls_from_sig_two_tys ();
           get_ty_decls_from_sig_three_tys ()
         ] );
-      ( "[equal_core_type_ty_cstr]",
+      ( "equal_core_type_ty_cstr",
         [ equal_core_ty_ty_cstr_bool_Bool ();
           equal_core_ty_ty_cstr_int_Int ();
           equal_core_ty_ty_cstr_t_T ();
@@ -645,7 +645,7 @@ let () =
           equal_core_ty_ty_cstr_product_type ();
           equal_core_type_ty_cstr_function_type ()
         ] );
-      ( "[equal_core_type]",
+      ( "equal_core_type",
         [ equal_core_type_any_refl ();
           equal_core_type_int_refl ();
           equal_core_type_int_bool_neq ();

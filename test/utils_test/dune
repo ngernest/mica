@@ -9,4 +9,4 @@
 (env
  (dev
   (flags
-   (:standard -g -w "-26-27-32-33-34-37-39"))))
+   (:standard -g -w "-32"))))
