@@ -1,6 +1,5 @@
 open Ppx_mica__Utils
 open Ppx_mica__Type_deriver
-open Ppx_mica__Functor_deriver
 open Ppxlib
 open StdLabels
 open Alcotest
@@ -459,32 +458,97 @@ let get_ty_decls_from_sig_three_tys () =
 
 (** Helper function: constructs an Alcotest test case which checks
     whether [core_ty] & [cstr_name] are equal *)
-let check_for_equality (core_ty : core_type) (cstr_name : string) : unit =
+let equal_core_type_cstr_name (core_ty : core_type) (cstr_name : string) : unit
+    =
   let cstr = mk_cstr ~name:cstr_name ~loc ~arg_tys:[] in
   let core_ty_name = Ppxlib.string_of_core_type core_ty in
   let test_case_name =
     Format.sprintf "equal_core_ty_ty_cstr_%s_%s" core_ty_name cstr_name in
   check bool test_case_name (equal_ty_cstr_core_type cstr core_ty) true
 
-let equal_core_ty_ty_cstr_bool_Bool () = check_for_equality [%type: bool] "Bool"
-let equal_core_ty_ty_cstr_int_Int () = check_for_equality [%type: int] "Int"
-let equal_core_ty_ty_cstr_t_T () = check_for_equality [%type: t] "T"
-let equal_core_ty_ty_cstr_alpha_Int () = check_for_equality [%type: 'a] "Int"
+let equal_core_ty_ty_cstr_bool_Bool () =
+  equal_core_type_cstr_name [%type: bool] "Bool"
+
+let equal_core_ty_ty_cstr_int_Int () =
+  equal_core_type_cstr_name [%type: int] "Int"
+
+let equal_core_ty_ty_cstr_t_T () = equal_core_type_cstr_name [%type: t] "T"
+
+let equal_core_ty_ty_cstr_alpha_Int () =
+  equal_core_type_cstr_name [%type: 'a] "Int"
 
 let equal_core_ty_ty_cstr_alpha_t_IntT () =
-  check_for_equality [%type: 'a t] "IntT"
+  equal_core_type_cstr_name [%type: 'a t] "IntT"
 
 let equal_core_ty_ty_cstr_alpha_int_list_IntList () =
-  check_for_equality [%type: int list] "IntList"
+  equal_core_type_cstr_name [%type: int list] "IntList"
 
 let equal_core_ty_ty_cstr_alpha_string_option_StringOption () =
-  check_for_equality [%type: string option] "StringOption"
+  equal_core_type_cstr_name [%type: string option] "StringOption"
 
 let equal_core_ty_ty_cstr_product_type () =
-  check_for_equality [%type: int * bool] "IntBoolProduct"
+  equal_core_type_cstr_name [%type: int * bool] "IntBoolProduct"
 
 let equal_core_type_ty_cstr_function_type () =
-  check_for_equality [%type: bool -> int] "BoolInt"
+  equal_core_type_cstr_name [%type: bool -> int] "BoolInt"
+
+(*******************************************************************************)
+(* Test equality functions *)
+
+let equal_core_type_any_refl () =
+  check bool "_ = _" (equal_core_type [%type: _] [%type: _]) true
+
+let equal_core_type_int_refl () =
+  check bool "int = int" (equal_core_type [%type: int] [%type: int]) true
+
+let equal_core_type_int_bool_neq () =
+  check bool "int != bool" (equal_core_type [%type: int] [%type: bool]) false
+
+let equal_core_type_int_string_product_refl () =
+  check bool "int * string = int * string"
+    (equal_core_type [%type: int * string] [%type: int * string])
+    true
+
+let equal_core_type_int_string_product_permute () =
+  check bool "int * string != string * int"
+    (equal_core_type [%type: int * string] [%type: string * int])
+    false
+
+let equal_core_type_string_list_refl () =
+  check bool "string list = string list"
+    (equal_core_type [%type: string list] [%type: string list])
+    true
+
+let equal_core_type_different_list_types () =
+  check bool "string list != bool list"
+    (equal_core_type [%type: string list] [%type: bool list])
+    false
+
+let equal_core_type_nested_option_list_refl () =
+  check bool "int option list = int option list"
+    (equal_core_type [%type: int option list] [%type: int option list])
+    true
+
+let equal_core_type_function_types_refl () =
+  check bool "char -> bool = char -> bool"
+    (equal_core_type [%type: char -> bool] [%type: char -> bool])
+    true
+
+let equal_core_type_alpha_t_refl () =
+  check bool "'a t = 'a t" (equal_core_type [%type: 'a t] [%type: 'a t]) true
+
+let equal_core_type_alpha_beta_t_neq () =
+  check bool "'a t != 'b t" (equal_core_type [%type: 'a t] [%type: 'b t]) false
+
+(*******************************************************************************)
+(* Alcotest helpers *)
+
+(** Creates an Alcotest test case that compares the [expected] and [actual] 
+    values, using the provided [testable] & test case name [str] *)
+let mk_test (testable : 'a testable) (str : string) (expected : 'a)
+  (actual : 'a) : return test_case =
+  let test_to_run () = check testable str expected actual in
+  test_case str `Quick test_to_run
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)
@@ -515,11 +579,11 @@ let () =
           test_case "2 arg function" `Quick uniq_ret_ty_2_arg_funcs
         ] );
       ( "[mk_ty_cstrs]",
-        [ test_case "1 base type" `Quick mk_ty_cstrs_single_base_ty;
+        [ test_case "1 base type (int)" `Quick mk_ty_cstrs_single_base_ty;
           test_case "1 mono abs type" `Quick mk_ty_cstrs_single_mono_abs_ty;
-          test_case "1 poly abs type" `Quick mk_ty_cstrs_single_mono_abs_ty;
+          test_case "1 poly abs type" `Quick mk_ty_cstrs_single_poly_abs_ty;
           test_case "two constructors" `Quick mk_ty_cstrs_two_base;
-          test_case "no duplicates" `Quick mk_ty_cstrs_two_base
+          test_case "no duplicates" `Quick mk_ty_cstrs_no_dupes
         ] );
       ( "[get_ret_ty]",
         [ test_case "1 arg function" `Quick get_ret_ty_1_arg_func;
@@ -552,7 +616,7 @@ let () =
           test_case "('a, 'b) t" `Quick is_abs_ty_parameterized_alpha_beta_t
         ] );
       ( "[update_expr_arg_names]",
-        [ test_case "singleton" `Quick update_expr_arg_names_update_two;
+        [ test_case "singleton" `Quick update_expr_arg_names_singleton;
           test_case "no-op" `Quick update_expr_arg_names_no_op;
           test_case "update one" `Quick update_expr_arg_names_update_one;
           test_case "update two" `Quick update_expr_arg_names_update_two;
@@ -585,5 +649,38 @@ let () =
             equal_core_ty_ty_cstr_product_type;
           test_case "bool -> int = BoolInt" `Quick
             equal_core_type_ty_cstr_function_type
+        ] );
+      ( "[equal_core_type]",
+        [ mk_test bool "_ = _" (equal_core_type [%type: _] [%type: _]) true;
+          mk_test bool "int = int"
+            (equal_core_type [%type: int] [%type: int])
+            true;
+          mk_test bool "int != bool"
+            (equal_core_type [%type: int] [%type: bool])
+            false;
+          mk_test bool "int * string = int * string"
+            (equal_core_type [%type: int * string] [%type: int * string])
+            true;
+          mk_test bool "int * string != string * int"
+            (equal_core_type [%type: int * string] [%type: string * int])
+            false;
+          mk_test bool "string list = string list"
+            (equal_core_type [%type: string list] [%type: string list])
+            true;
+          mk_test bool "string list != bool list"
+            (equal_core_type [%type: string list] [%type: bool list])
+            false;
+          mk_test bool "int option list = int option list"
+            (equal_core_type [%type: int option list] [%type: int option list])
+            true;
+          mk_test bool "char -> bool = char -> bool"
+            (equal_core_type [%type: char -> bool] [%type: char -> bool])
+            true;
+          mk_test bool "'a t = 'a t"
+            (equal_core_type [%type: 'a t] [%type: 'a t])
+            true;
+          mk_test bool "'a t != 'b t"
+            (equal_core_type [%type: 'a t] [%type: 'b t])
+            false
         ] )
     ]

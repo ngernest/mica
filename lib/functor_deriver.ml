@@ -150,7 +150,8 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
 
 (** Generates the scaffolding for the [TestHarness] functor 
     (e.g. module type declarations) *)
-let generate_functor ~ctxt (mt : module_type_declaration) : structure =
+let generate_functor ~(ctxt : Expansion_context.Deriver.t)
+  (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   match mt with
   | { pmtd_type = Some mod_type; pmtd_name; pmtd_loc; _ } -> (
