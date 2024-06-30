@@ -106,62 +106,62 @@ let lident_testable : Longident.t testable = testable pp_lident lident_eq
 let loc = Location.none
 
 let mono_int () =
-  mk_test core_ty_testable "mono_int" (monomorphize [%type: int]) [%type: int]
+  mk_test core_ty_testable "int" (monomorphize [%type: int]) [%type: int]
 
 let mono_string () =
-  mk_test core_ty_testable "mono_bool"
+  mk_test core_ty_testable "string"
     (monomorphize [%type: string])
     [%type: string]
 
 let mono_bool () =
-  mk_test core_ty_testable "mono_bool"
+  mk_test core_ty_testable "bool"
     (monomorphize [%type: bool])
     [%type: bool]
 
 (*******************************************************************************)
 (* Monomorphization instantiates type variables with [int] *)
 let mono_list () =
-  mk_test core_ty_testable "mono_list"
+  mk_test core_ty_testable "'a list"
     (monomorphize [%type: 'a list])
     [%type: int list]
 
 let mono_option () =
-  mk_test core_ty_testable "mono_option"
+  mk_test core_ty_testable "'a option"
     (monomorphize [%type: 'a option])
     [%type: int option]
 
 let mono_double_list () =
-  mk_test core_ty_testable "mono_double_list"
+  mk_test core_ty_testable "'a list list"
     (monomorphize [%type: 'a list list])
     [%type: int list list]
 
 let mono_pair () =
-  mk_test core_ty_testable "mono_pair"
+  mk_test core_ty_testable "'a * 'b"
     (monomorphize [%type: 'a * 'b])
     [%type: int * int]
 
 let mono_pair_list () =
-  mk_test core_ty_testable "mono_pair_list"
+  mk_test core_ty_testable "('a * 'b) list"
     (monomorphize [%type: ('a * 'b) list])
     [%type: (int * int) list]
 
 let mono_func_1_arg () =
-  mk_test core_ty_testable "mono_func_1_arg"
+  mk_test core_ty_testable "'a -> 'b"
     (monomorphize [%type: 'a -> 'b])
     [%type: int -> int]
 
 let mono_func_2_args () =
-  mk_test core_ty_testable "mono_func_2_args"
+  mk_test core_ty_testable "'a -> 'b -> 'a"
     (monomorphize [%type: 'a -> 'b -> 'a])
     [%type: int -> int -> int]
 
 let mono_poly_abs_type () =
-  mk_test core_ty_testable "mono_poly_abs_type"
+  mk_test core_ty_testable "'a t"
     (monomorphize [%type: 'a t])
     [%type: int t]
 
 let mono_qualified_poly_abs_type () =
-  mk_test core_ty_testable "mono_qualified_poly_abs_type"
+  mk_test core_ty_testable "'a M.t"
     (monomorphize [%type: 'a M.t])
     [%type: int M.t]
 
@@ -173,7 +173,7 @@ let uniq_ret_tys_no_dupes () =
       val x : int
       val y : string
       val z : int] in
-  mk_test core_ty_list_testable "uniq_ret_tys_no_dupes" (uniq_ret_tys sig_items)
+  mk_test core_ty_list_testable "1 unique type" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
 
 let uniq_ret_tys_singleton () =
@@ -182,7 +182,7 @@ let uniq_ret_tys_singleton () =
       val x : int
       val y : int
       val z : int] in
-  mk_test core_ty_list_testable "uniq_ret_tys_singleton"
+  mk_test core_ty_list_testable "2 unique types"
     (uniq_ret_tys sig_items)
     [ [%type: int] ]
 
@@ -192,7 +192,7 @@ let uniq_ret_tys_three_tys () =
       val x : int
       val y : string
       val z : bool] in
-  mk_test core_ty_list_testable "uniq_ret_tys_three_tys"
+  mk_test core_ty_list_testable "3 unique types"
     (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: bool] ]
 
@@ -202,7 +202,7 @@ let uniq_ret_ty_1_arg_funcs () =
       val f : 'a -> int
       val g : int -> string
       val h : int -> 'a] in
-  mk_test core_ty_list_testable "uniq_ret_ty_1_arg_funcs"
+  mk_test core_ty_list_testable "unary function"
     (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
 
@@ -212,7 +212,7 @@ let uniq_ret_ty_2_arg_funcs () =
       val f : 'a -> int -> 'a
       val g : int -> bool -> string
       val h : bool -> char -> char] in
-  mk_test core_ty_list_testable "uniq_ret_ty_2_arg_funcs"
+  mk_test core_ty_list_testable "binary function"
     (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: char] ]
 
@@ -222,19 +222,19 @@ let uniq_ret_ty_2_arg_funcs () =
 let mk_ty_cstrs_single_base_ty () =
   let sig_items = [%sig: val x : int] in
   let expected = mk_cstr ~name:"Int" ~loc ~arg_tys:[] in
-  mk_test constr_decl_list_testable "mk_ty_cstrs_singleton"
+  mk_test constr_decl_list_testable "1 base type (int)"
     (mk_ty_cstrs sig_items) [ expected ]
 
 let mk_ty_cstrs_single_mono_abs_ty () =
   let sig_items = [%sig: val x : t] in
   let expected = mk_cstr ~name:"T" ~loc ~arg_tys:[] in
-  mk_test constr_decl_list_testable "mk_ty_cstrs_single_mono_abs_ty"
+  mk_test constr_decl_list_testable "1 mono abs type"
     (mk_ty_cstrs sig_items) [ expected ]
 
 let mk_ty_cstrs_single_poly_abs_ty () =
   let sig_items = [%sig: val x : 'a t] in
   let expected = mk_cstr ~name:"IntT" ~loc ~arg_tys:[] in
-  mk_test constr_decl_list_testable "mk_ty_cstrs_single_poly_abs_ty"
+  mk_test constr_decl_list_testable "1 poly abs type"
     (mk_ty_cstrs sig_items) [ expected ]
 
 let mk_ty_cstrs_two_base () =
@@ -245,7 +245,7 @@ let mk_ty_cstrs_two_base () =
   let expected =
     List.map ~f:(fun name -> mk_cstr ~name ~loc ~arg_tys:[]) [ "Int"; "String" ]
   in
-  mk_test constr_decl_list_testable "mk_ty_cstrs_two" (mk_ty_cstrs sig_items)
+  mk_test constr_decl_list_testable "2 constructors" (mk_ty_cstrs sig_items)
     expected
 
 let mk_ty_cstrs_no_dupes () =
@@ -257,24 +257,24 @@ let mk_ty_cstrs_no_dupes () =
   let expected =
     List.map ~f:(fun name -> mk_cstr ~name ~loc ~arg_tys:[]) [ "Int"; "String" ]
   in
-  mk_test constr_decl_list_testable "mk_ty_cstrs_no_dupes"
+  mk_test constr_decl_list_testable "no duplicates"
     (mk_ty_cstrs sig_items) expected
 
 (*******************************************************************************)
 (** Testing [get_ret_ty] *)
 
 let get_ret_ty_1_arg_func () =
-  mk_test core_ty_testable "get_ret_ty_1_arg_func"
+  mk_test core_ty_testable "unary function"
     (get_ret_ty [%type: string -> int])
     [%type: int]
 
 let get_ret_ty_2_arg_func () =
-  mk_test core_ty_testable "get_ret_ty_1_arg_func"
+  mk_test core_ty_testable "binary function"
     (get_ret_ty [%type: string -> int -> bool])
     [%type: bool]
 
 let get_ret_ty_3_arg_func () =
-  mk_test core_ty_testable "get_ret_ty_1_arg_func"
+  mk_test core_ty_testable "ternary function"
     (get_ret_ty [%type: string -> int -> bool -> char])
     [%type: char]
 
@@ -290,15 +290,15 @@ let get_ret_ty_uncurried () =
 
 (** Testing [string_of_lident] *)
 let string_of_lident_trivial () =
-  mk_test string "string_of_lident_trivial" (string_of_lident (Lident "M")) "M"
+  mk_test string "lident" (string_of_lident (Lident "M")) "M"
 
 let string_of_lident_ldot () =
-  mk_test string "string_of_lident_ldot"
+  mk_test string "ldot"
     (string_of_lident (Ldot (Lident "M", "empty")))
     "M.empty"
 
 let string_of_lident_nested_lot () =
-  mk_test string "string_of_lident_nested_lot"
+  mk_test string "nested ldots"
     (string_of_lident (Longident.parse "M1.M2.empty"))
     "M1.M2.empty"
 
@@ -306,35 +306,35 @@ let string_of_lident_nested_lot () =
 (** Testing [uncapitalize_lident] *)
 
 let uncapitalize_lident_trivial () =
-  mk_test lident_testable "uncapitalize_lident_trivial"
+  mk_test lident_testable "lident"
     (uncapitalize_lident (Lident "Module"))
     (Lident "module")
 
 let uncapitalize_lident_ldot () =
   let actual = uncapitalize_lident (Longident.parse "M.Empty") in
   let expected = Longident.parse "M.empty" in
-  mk_test lident_testable "uncapitalize_lident_ldot" expected actual
+  mk_test lident_testable "ldot" expected actual
 
 let uncapitalize_lident_ldot_nested () =
   let actual = uncapitalize_lident (Longident.parse "M1.M2.Empty") in
   let expected = Longident.parse "M1.M2.empty" in
-  mk_test lident_testable "uncapitalize_lident_ldot_nested" expected actual
+  mk_test lident_testable "nested ldots" expected actual
 
 let uncapitalize_lident_ldot_doubly_nested () =
   let actual = uncapitalize_lident (Longident.parse "M1.M2.M3.Empty") in
   let expected = Longident.parse "M1.M2.M3.empty" in
-  mk_test lident_testable "uncapitalize_lident_ldot_nested" expected actual
+  mk_test lident_testable "doubly-nested ldots" expected actual
 
 (*******************************************************************************)
 
 (** Testing [add_lident_prefix] *)
 let add_lident_prefix_mod_path () =
-  mk_test lident_testable "add_lident_prefix_mod_path"
+  mk_test lident_testable "lident"
     (add_lident_prefix "M" (Lident "empty"))
     (Longident.parse "M.empty")
 
 let add_lident_prefix_ldot () =
-  mk_test lident_testable "add_lident_prefix_ldot"
+  mk_test lident_testable "ldot"
     (add_lident_prefix "M1" @@ Ldot (Lident "M2", "empty"))
     (Ldot (Lident "M1", "M2.empty"))
 
@@ -342,12 +342,12 @@ let add_lident_prefix_ldot () =
 (** Testing [is_abs_ty_parameterized] *)
 
 let is_abs_ty_parameterized_empty_sig () =
-  mk_test bool "is_abs_ty_parameterized_empty_sig"
+  mk_test bool "empty signature"
     (is_abs_ty_parameterized [%sig:])
     false
 
 let is_abs_ty_parameterized_sig_no_abs_ty () =
-  mk_test bool "is_abs_ty_parameterized_sig_no_abs_ty"
+  mk_test bool "no abstract types"
     (is_abs_ty_parameterized
        [%sig:
          val f : int -> int
@@ -355,7 +355,7 @@ let is_abs_ty_parameterized_sig_no_abs_ty () =
     false
 
 let is_abs_ty_parameterized_t () =
-  mk_test bool "is_abs_ty_parameterized_t"
+  mk_test bool "t"
     (is_abs_ty_parameterized
        [%sig:
          type t
@@ -365,7 +365,7 @@ let is_abs_ty_parameterized_t () =
     false
 
 let is_abs_ty_parameterized_alpha_t () =
-  mk_test bool "is_abs_ty_parameterized_alpha_t"
+  mk_test bool "'a t"
     (is_abs_ty_parameterized
        [%sig:
          type 'a t
@@ -375,7 +375,7 @@ let is_abs_ty_parameterized_alpha_t () =
     true
 
 let is_abs_ty_parameterized_alpha_beta_t () =
-  mk_test bool "is_abs_ty_parameterized_alpha_t"
+  mk_test bool "('a, 'b) t"
     (is_abs_ty_parameterized
        [%sig:
          type ('a, 'b) t
@@ -388,27 +388,27 @@ let is_abs_ty_parameterized_alpha_beta_t () =
 (** Testing [update_expr_arg_names] *)
 
 let update_expr_arg_names_singleton () =
-  mk_test (list string) "update_expr_arg_names_singleton"
+  mk_test (list string) "singleton"
     (update_expr_arg_names [ "x'" ] [ "x" ])
     [ "x'" ]
 
 let update_expr_arg_names_no_op () =
-  mk_test (list string) "update_expr_arg_names_no_op"
+  mk_test (list string) "no-op"
     (update_expr_arg_names [ "x'" ] [ "x1"; "x2"; "x3" ])
     [ "x1"; "x2"; "x3" ]
 
 let update_expr_arg_names_update_one () =
-  mk_test (list string) "update_expr_arg_names_update_one"
+  mk_test (list string) "update 1"
     (update_expr_arg_names [ "x2'" ] [ "x1"; "x2"; "x3" ])
     [ "x1"; "x2'"; "x3" ]
 
 let update_expr_arg_names_update_two () =
-  mk_test (list string) "update_expr_arg_names_update_two"
+  mk_test (list string) "update 2"
     (update_expr_arg_names [ "x2'"; "x4'" ] [ "x1"; "x2"; "x3"; "x4"; "x5" ])
     [ "x1"; "x2'"; "x3"; "x4'"; "x5" ]
 
 let update_expr_arg_names_double_primes () =
-  mk_test (list string) "update_expr_arg_names_double_primes"
+  mk_test (list string) "double primes"
     (update_expr_arg_names [ "x''"; "y''" ] [ "w'"; "x'"; "y'"; "z'" ])
     [ "w'"; "x''"; "y''"; "z'" ]
 
@@ -419,32 +419,32 @@ let update_expr_arg_names_double_primes () =
 let string_core_ty_list_list = list (pair string (list core_ty_testable))
 
 let get_ty_decls_from_sig_t () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_t"
+  mk_test string_core_ty_list_list "t"
     (get_ty_decls_from_sig [%sig: type t])
     [ ("t", []) ]
 
 let get_ty_decls_from_sig_t_int () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_t_int"
+  mk_test string_core_ty_list_list "t = int"
     (get_ty_decls_from_sig [%sig: type t = int])
     [ ("t", []) ]
 
 let get_ty_decls_from_sig_alpha_t () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_alpha_t"
+  mk_test string_core_ty_list_list "'a t"
     (get_ty_decls_from_sig [%sig: type 'a t])
     [ ("t", [ [%type: 'a] ]) ]
 
 let get_ty_decls_from_sig_alpha_beta_t () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_alpha_beta_t"
+  mk_test string_core_ty_list_list "('a, 'b) t"
     (get_ty_decls_from_sig [%sig: type ('a, 'b) t])
     [ ("t", [ [%type: 'a]; [%type: 'b] ]) ]
 
 let get_ty_decls_from_sig_alpha_beta_gamma_t () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_alpha_beta_gamma_t"
+  mk_test string_core_ty_list_list "('a, 'b, 'c) t"
     (get_ty_decls_from_sig [%sig: type ('a, 'b, 'c) t])
     [ ("t", [ [%type: 'a]; [%type: 'b]; [%type: 'c] ]) ]
 
 let get_ty_decls_from_sig_ignore_vals_alpha_t () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_ignore_vals_alpha_t"
+  mk_test string_core_ty_list_list "'a t, ignore vals'"
     (get_ty_decls_from_sig
        [%sig:
          val f : 'a -> 'a
@@ -454,7 +454,7 @@ let get_ty_decls_from_sig_ignore_vals_alpha_t () =
     [ ("t", [ [%type: 'a] ]) ]
 
 let get_ty_decls_from_sig_two_tys () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_two_tys"
+  mk_test string_core_ty_list_list "'a t; 'b u"
     (get_ty_decls_from_sig
        [%sig:
          type 'a t
@@ -462,7 +462,7 @@ let get_ty_decls_from_sig_two_tys () =
     [ ("t", [ [%type: 'a] ]); ("u", [ [%type: 'b] ]) ]
 
 let get_ty_decls_from_sig_three_tys () =
-  mk_test string_core_ty_list_list "get_ty_decls_from_sig_three_tys"
+  mk_test string_core_ty_list_list "'a t; 'b u; ('c, 'c) v"
     (get_ty_decls_from_sig
        [%sig:
          type 'a t
@@ -482,7 +482,7 @@ let equal_core_type_cstr_name (core_ty : core_type) (cstr_name : string) =
   let cstr = mk_cstr ~name:cstr_name ~loc ~arg_tys:[] in
   let core_ty_name = Ppxlib.string_of_core_type core_ty in
   let test_case_name =
-    Format.sprintf "equal_core_ty_ty_cstr_%s_%s" core_ty_name cstr_name in
+    Format.sprintf "%s = %s" core_ty_name cstr_name in
   mk_test bool test_case_name (equal_ty_cstr_core_type cstr core_ty) true
 
 let equal_core_ty_ty_cstr_bool_Bool () =
