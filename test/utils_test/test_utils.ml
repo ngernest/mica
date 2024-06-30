@@ -34,6 +34,7 @@ let core_ty_list_testable : core_type list testable = list core_ty_testable
 (*******************************************************************************)
 (* Boilerplate for [type_declaration testable] (currently unused) *)
 
+(*
 let pp_ty_decl = Ppxlib.Pprintast.type_declaration
 
 (** Equality of [type_declaration]'s is based on their string representations *)
@@ -47,6 +48,7 @@ let ty_decl_eq
 
 let ty_decl_testable : type_declaration testable =
   testable pp_ty_decl ty_decl_eq
+*)
 
 (*******************************************************************************)
 (* Boilerplate for [constructor_declaration testable] *)
@@ -510,7 +512,7 @@ let equal_core_type_ty_cstr_function_type () =
   equal_core_type_cstr_name [%type: bool -> int] "BoolInt"
 
 (*******************************************************************************)
-(* Test equality functions *)
+(* Tests for [equal_core_type] *)
 
 let equal_core_type_any_refl () =
   mk_test bool "_ = _" (equal_core_type [%type: _] [%type: _]) true
@@ -558,6 +560,53 @@ let equal_core_type_alpha_beta_t_neq () =
   mk_test bool "'a t != 'b t"
     (equal_core_type [%type: 'a t] [%type: 'b t])
     false
+
+(*******************************************************************************)
+(* Tests for [equal_constructor_declaration] *)    
+
+let equal_constructor_declaration_enum_refl () = 
+  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[] in 
+  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[] in 
+  mk_test bool "C = C" (equal_constructor_declaration c1 c2) true
+
+let equal_constructor_declaration_unary_refl () = 
+  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: int]] in 
+  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: int]] in 
+  mk_test bool "C of int = C of int" (equal_constructor_declaration c1 c2) true  
+
+let equal_constructor_declaration_unary_diff_names () = 
+  let c1 = mk_cstr ~name:"C1" ~loc ~arg_tys:[[%type: int]] in 
+  let c2 = mk_cstr ~name:"C2" ~loc ~arg_tys:[[%type: int]] in 
+  mk_test bool "C1 of int != C2 of int" 
+    (equal_constructor_declaration c1 c2) false
+
+let equal_constructor_declaration_unary_same_name_diff_arg_types () = 
+  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: int]] in 
+  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: string]] in 
+  mk_test bool "C of int != C of string" 
+    (equal_constructor_declaration c1 c2) false 
+    
+let equal_constructor_declaration_binary_refl () = 
+  let name = "C" in 
+  let arg_tys = [[%type: int]; [%type: string]] in 
+  let c1 = mk_cstr ~name ~loc ~arg_tys in 
+  let c2 = mk_cstr ~name ~loc ~arg_tys in 
+  mk_test bool "C of int * string = C of int * string" 
+    (equal_constructor_declaration c1 c2) true
+    
+let equal_constructor_declaration_binary_diff_names () = 
+  let arg_tys = [[%type: int]; [%type: string]] in 
+  let c1 = mk_cstr ~name:"C1" ~loc ~arg_tys in 
+  let c2 = mk_cstr ~name:"C2" ~loc ~arg_tys in 
+  mk_test bool "C1 of int * string != C2 of int * string" 
+    (equal_constructor_declaration c1 c2) false     
+
+let equal_constructor_declaration_binary_permute_args () = 
+  let name = "C" in 
+  let c1 = mk_cstr ~name ~loc ~arg_tys:[[%type: int]; [%type: string]]  in 
+  let c2 = mk_cstr ~name ~loc ~arg_tys:[[%type: string]; [%type: int]] in 
+  mk_test bool "C of int * string != C of string * int" 
+    (equal_constructor_declaration c1 c2) false        
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)
@@ -657,5 +706,14 @@ let () =
           equal_core_type_function_types_refl ();
           equal_core_type_alpha_t_refl ();
           equal_core_type_alpha_beta_t_neq ()
-        ] )
+        ] );
+      ("equal_constructor_declaration", 
+        [ equal_constructor_declaration_enum_refl ();
+          equal_constructor_declaration_unary_refl ();
+          equal_constructor_declaration_unary_diff_names ();
+          equal_constructor_declaration_unary_same_name_diff_arg_types ();
+          equal_constructor_declaration_binary_refl ();
+          equal_constructor_declaration_binary_diff_names ();
+          equal_constructor_declaration_binary_permute_args ();
+        ])
     ]

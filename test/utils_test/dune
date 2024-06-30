@@ -6,7 +6,7 @@
 
 ;; TODO: uncomment
 
-(env
- (dev
-  (flags
-   (:standard -g -w "-32"))))
+; (env
+;  (dev
+;   (flags
+;    (:standard -g -w "-32"))))
