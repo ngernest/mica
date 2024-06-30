@@ -72,19 +72,19 @@ the main `mica` deriver which runs afterwards.
     - Most functions in this file begin with the prefix `mk_` 
   - [getters.ml](./lib/getters.ml): Functions for inspecting AST nodes
     - Most functions in this file begin with the prefix `get_`
-  - [equality.ml](./lib/equality.ml): Equality functions for [Parsetree] types 
-  - [lident.ml](./lib/lident.ml): Utilities for working with the [Longident] type
+  - [equality.ml](./lib/equality.ml): Equality functions for `Parsetree` types 
+  - [lident.ml](./lib/lident.ml): Utilities for working with the `Longident` type
   - [printers.ml](./lib/printers.ml): Pretty-printers for AST types
   - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types to expressions
-  - [let_open.ml](./lib/let_open.ml): Helpers for producing [let open...] expressions
+  - [let_open.ml](./lib/let_open.ml): Helpers for producing `let open` expressions
   - [bindop.ml](./lib/bindop.ml): Helpers for producing monadic bind expressions
   - [miscellany.ml](./lib/miscellany.ml): Misc. helpers for working with lists & strings
 
 
 ## Testing 
-1. `test/utils_test` contains `Alcotest` unit tests which test various helper functions
-2. `bisect_ppx` is used to compute test coverage
-- Run `make coverage` to generate test coverage report.       
+1. `test/utils_test` contains `Alcotest` unit tests which test various helper functions.
+2. `bisect_ppx` is used to compute test coverage.
+- Run `make coverage` to generate a test coverage report.       
 (Note: before doing so, make sure `test/ppx_test/errors/dune.inc` is blank.)
 3. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
 - To add a new test file to the corpus of test files, in either `ppx_test/passing` 

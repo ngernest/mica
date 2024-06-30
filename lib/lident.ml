@@ -7,11 +7,12 @@ open Miscellany
 (** Alias for [String.uncapitalize_ascii] *)
 let uncapitalize = String.uncapitalize_ascii
 
+(** Converts a string [x] at location [loc] to a [Longident] *)
 let lident_loc_of_string (x : string) ~(loc : Location.t) :
   Longident.t Location.loc =
   with_loc (Longident.parse x) ~loc
 
-(** Converts a [Longident] to a regular string, *)
+(** Converts a [Longident] to a regular string *)
 let string_of_lident (lident : Longident.t) : string =
   let xs = Astlib.Longident.flatten lident in
   match xs with
