@@ -8,13 +8,13 @@ open Alcotest
 (* Alcotest helpers *)
 
 (** Creates an Alcotest test case that compares the [expected] and [actual] 
-    values, using the provided [testable] & test case name [str] 
+    values, using the provided [testable] & [name]
     - This helper function removes the need to separately define assertions & 
       test cases using [check] & [test_case] respectively *)
-let mk_test (testable : 'a testable) (str : string) (expected : 'a)
+let mk_test (testable : 'a testable) (name : string) (expected : 'a)
   (actual : 'a) : return test_case =
-  let test_to_run () = check testable str expected actual in
-  test_case str `Quick test_to_run
+  let test_to_run () = check testable name expected actual in
+  test_case name `Quick test_to_run
 
 (*******************************************************************************)
 (* Boilerplate for making [core_type] a [testable] type in the Alcotest
