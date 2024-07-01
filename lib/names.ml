@@ -21,7 +21,9 @@ let ppat_var_of_string (x : string) ~(loc : Location.t) : pattern =
 let add_prime : string -> string = fun x -> x ^ "\'"
 
 (** A more elaborate version of [add_prime] which does the same thing,
-    but uses [Ppxlib]'s in-built [quoter] *)
+    but uses [Ppxlib]'s in-built [quoter]
+    - Note: this function is currently unused
+    - TODO: the quoter ought to be created by the caller, methinks *)
 let quote_name (name : string) : string =
   let open Expansion_helpers.Quoter in
   let quoter = create () in
