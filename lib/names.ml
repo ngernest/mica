@@ -7,7 +7,6 @@ open Miscellany
 
 (* TODO: module that contain functions for generating fresh names *)
 
-
 (** [pexp_ident_of_string x ~loc] creates the expression [Pexp_ident x]
     at location [loc] *)
 let pexp_ident_of_string (x : string) ~(loc : Location.t) : expression =
@@ -18,17 +17,17 @@ let pexp_ident_of_string (x : string) ~(loc : Location.t) : expression =
 let ppat_var_of_string (x : string) ~(loc : Location.t) : pattern =
   ppat_var ~loc (with_loc x ~loc)
 
-(** Turns the variable [x] into [x'] *)  
+(** Turns the variable [x] into [x'] *)
 let add_prime : string -> string = fun x -> x ^ "\'"
 
 (** A more elaborate version of [add_prime] which does the same thing,
     but uses [Ppxlib]'s in-built [quoter] *)
-let quote_name (name : string) : string = 
-  let open Expansion_helpers.Quoter in 
-  let quoter = create () in 
-  let new_name = quote quoter (evar ~loc:Location.none name) in 
-  match new_name.pexp_desc with 
-  | Pexp_ident { txt = quoted_name; _}  -> string_of_lident quoted_name 
+let quote_name (name : string) : string =
+  let open Expansion_helpers.Quoter in
+  let quoter = create () in
+  let new_name = quote quoter (evar ~loc:Location.none name) in
+  match new_name.pexp_desc with
+  | Pexp_ident { txt = quoted_name; _ } -> string_of_lident quoted_name
   | _ -> failwith "impossible"
 
 (** Produces a fresh variable at location [loc], with the type [ty]
@@ -81,6 +80,8 @@ let varnames_of_cstr_args ~(loc : Location.t) (arg : constructor_arguments) :
     List.map lbl_decls ~f:(fun { pld_name; pld_type; pld_loc; _ } ->
         gen_symbol ~prefix:pld_name.txt () |> ppat_var_of_string ~loc:pld_loc)
 
+(** TODO: figure out how to finish this function 
+    and use it in [type_deriver.ml] *)        
 let ppat_construct_of_cstr_decl ~(loc : Location.t)
   (cstr_decl : constructor_declaration) =
   let cstr_name : Longident.t loc =
@@ -91,7 +92,7 @@ let ppat_construct_of_cstr_decl ~(loc : Location.t)
 
 (** [update_expr_arg_names expr_args args] replaces each variable [x] in 
     [expr_args] if [x'] (the variable with a prime added) is in [expr_args] *)
-  let update_expr_arg_names (expr_args : string list) (args : string list) :
-    string list =
-    List.map args ~f:(fun x ->
-        if List.mem (add_prime x) ~set:expr_args then add_prime x else x)  
+let update_expr_arg_names (expr_args : string list) (args : string list) :
+  string list =
+  List.map args ~f:(fun x ->
+      if List.mem (add_prime x) ~set:expr_args then add_prime x else x)

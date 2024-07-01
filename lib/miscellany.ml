@@ -76,7 +76,6 @@ let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
       | None ->
         failwith "failed to match an element of ['a] with an element of ['b]")
 
-
 (** Returns true the abstract type declaration in a [signature] 
     is parameterized (e.g. ['a t]), else returns [false] *)
 let rec is_abs_ty_parameterized (sig_items : signature) : bool =
