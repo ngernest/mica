@@ -80,7 +80,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   let open Let_syntax in
   size >>= fun k ->
   match (ty, k) with
-  | T, 0 -> return Empty
+  | T, 0 -> of_list [ Empty ]
   | Bool, _ ->
     let gen_is_empty =
       let g = with_size ~size:(k / 2) (gen_expr T) in

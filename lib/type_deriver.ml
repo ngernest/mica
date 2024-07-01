@@ -79,7 +79,7 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) 
       - TODO: figure out how to use the result of [destruct_gen_expr_tys]
         when deriving [gen_expr] *)
-let destruct_gen_expr_tys (sig_items : signature) :
+let gen_expr_cases (sig_items : signature) :
   (constructor_declaration * constructor_declaration list) list =
   let open Base.List.Assoc in
   let expr_cstrs : (core_type * constructor_declaration) list =

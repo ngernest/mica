@@ -5,7 +5,11 @@ open Miscellany
 (** {1 Longident utility functions} *)
 
 (** Alias for [String.uncapitalize_ascii] *)
-let uncapitalize = String.uncapitalize_ascii
+let uncapitalize : string -> string = String.uncapitalize_ascii
+
+(** Converts a [string] to a [Longident] 
+    - Alias for [Longident.parse] *)
+let lident_of_string : string -> Longident.t = Longident.parse
 
 (** Converts a string [x] at location [loc] to a [Longident] *)
 let lident_loc_of_string (x : string) ~(loc : Location.t) :
@@ -38,3 +42,9 @@ let add_lident_prefix (prefix : string) (lident : Longident.t) : Longident.t =
 let add_lident_loc_prefix (prefix : string)
   ({ txt; loc } : Longident.t Location.loc) : Longident.t Location.loc =
   with_loc ~loc @@ add_lident_prefix prefix txt
+
+(** Maps a function [f] over a value of type ['a loc], 
+    returning a value of type o[b loc] *)  
+let map_with_loc ~(f : 'a -> 'b) 
+  ({txt = a; _} as a_loc: 'a Location.loc) : 'b Location.loc = 
+  { a_loc with txt = f a }

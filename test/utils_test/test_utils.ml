@@ -34,21 +34,17 @@ let core_ty_list_testable : core_type list testable = list core_ty_testable
 (*******************************************************************************)
 (* Boilerplate for [type_declaration testable] (currently unused) *)
 
-(*
-let pp_ty_decl = Ppxlib.Pprintast.type_declaration
+(* let pp_ty_decl = Ppxlib.Pprintast.type_declaration
 
-(** Equality of [type_declaration]'s is based on their string representations *)
-let ty_decl_eq
-  ({ ptype_name = ty1; ptype_params = ty_params1; _ } : type_declaration)
-  ({ ptype_name = ty2; ptype_params = ty_params2; _ } : type_declaration) : bool
-    =
-  let ty_args1, ty_args2 = map2 ~f:(List.map ~f:fst) (ty_params1, ty_params2) in
-  String.equal (no_loc ty1) (no_loc ty2)
-  && List.equal ~eq:core_type_eq ty_args1 ty_args2
+   (** Equality of [type_declaration]'s is based on their string representations
+   *) let ty_decl_eq ({ ptype_name = ty1; ptype_params = ty_params1; _ } :
+   type_declaration) ({ ptype_name = ty2; ptype_params = ty_params2; _ } :
+   type_declaration) : bool = let ty_args1, ty_args2 = map2 ~f:(List.map ~f:fst)
+   (ty_params1, ty_params2) in String.equal (no_loc ty1) (no_loc ty2) &&
+   List.equal ~eq:core_type_eq ty_args1 ty_args2
 
-let ty_decl_testable : type_declaration testable =
-  testable pp_ty_decl ty_decl_eq
-*)
+   let ty_decl_testable : type_declaration testable = testable pp_ty_decl
+   ty_decl_eq *)
 
 (*******************************************************************************)
 (* Boilerplate for [constructor_declaration testable] *)
@@ -114,9 +110,7 @@ let mono_string () =
     [%type: string]
 
 let mono_bool () =
-  mk_test core_ty_testable "bool"
-    (monomorphize [%type: bool])
-    [%type: bool]
+  mk_test core_ty_testable "bool" (monomorphize [%type: bool]) [%type: bool]
 
 (*******************************************************************************)
 (* Monomorphization instantiates type variables with [int] *)
@@ -156,9 +150,7 @@ let mono_func_2_args () =
     [%type: int -> int -> int]
 
 let mono_poly_abs_type () =
-  mk_test core_ty_testable "'a t"
-    (monomorphize [%type: 'a t])
-    [%type: int t]
+  mk_test core_ty_testable "'a t" (monomorphize [%type: 'a t]) [%type: int t]
 
 let mono_qualified_poly_abs_type () =
   mk_test core_ty_testable "'a M.t"
@@ -182,8 +174,7 @@ let uniq_ret_tys_singleton () =
       val x : int
       val y : int
       val z : int] in
-  mk_test core_ty_list_testable "2 unique types"
-    (uniq_ret_tys sig_items)
+  mk_test core_ty_list_testable "2 unique types" (uniq_ret_tys sig_items)
     [ [%type: int] ]
 
 let uniq_ret_tys_three_tys () =
@@ -192,8 +183,7 @@ let uniq_ret_tys_three_tys () =
       val x : int
       val y : string
       val z : bool] in
-  mk_test core_ty_list_testable "3 unique types"
-    (uniq_ret_tys sig_items)
+  mk_test core_ty_list_testable "3 unique types" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: bool] ]
 
 let uniq_ret_ty_1_arg_funcs () =
@@ -202,8 +192,7 @@ let uniq_ret_ty_1_arg_funcs () =
       val f : 'a -> int
       val g : int -> string
       val h : int -> 'a] in
-  mk_test core_ty_list_testable "unary function"
-    (uniq_ret_tys sig_items)
+  mk_test core_ty_list_testable "unary function" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string] ]
 
 let uniq_ret_ty_2_arg_funcs () =
@@ -212,8 +201,7 @@ let uniq_ret_ty_2_arg_funcs () =
       val f : 'a -> int -> 'a
       val g : int -> bool -> string
       val h : bool -> char -> char] in
-  mk_test core_ty_list_testable "binary function"
-    (uniq_ret_tys sig_items)
+  mk_test core_ty_list_testable "binary function" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: char] ]
 
 (*******************************************************************************)
@@ -222,20 +210,20 @@ let uniq_ret_ty_2_arg_funcs () =
 let mk_ty_cstrs_single_base_ty () =
   let sig_items = [%sig: val x : int] in
   let expected = mk_cstr ~name:"Int" ~loc ~arg_tys:[] in
-  mk_test constr_decl_list_testable "1 base type (int)"
-    (mk_ty_cstrs sig_items) [ expected ]
+  mk_test constr_decl_list_testable "1 base type (int)" (mk_ty_cstrs sig_items)
+    [ expected ]
 
 let mk_ty_cstrs_single_mono_abs_ty () =
   let sig_items = [%sig: val x : t] in
   let expected = mk_cstr ~name:"T" ~loc ~arg_tys:[] in
-  mk_test constr_decl_list_testable "1 mono abs type"
-    (mk_ty_cstrs sig_items) [ expected ]
+  mk_test constr_decl_list_testable "1 mono abs type" (mk_ty_cstrs sig_items)
+    [ expected ]
 
 let mk_ty_cstrs_single_poly_abs_ty () =
   let sig_items = [%sig: val x : 'a t] in
   let expected = mk_cstr ~name:"IntT" ~loc ~arg_tys:[] in
-  mk_test constr_decl_list_testable "1 poly abs type"
-    (mk_ty_cstrs sig_items) [ expected ]
+  mk_test constr_decl_list_testable "1 poly abs type" (mk_ty_cstrs sig_items)
+    [ expected ]
 
 let mk_ty_cstrs_two_base () =
   let sig_items =
@@ -257,8 +245,8 @@ let mk_ty_cstrs_no_dupes () =
   let expected =
     List.map ~f:(fun name -> mk_cstr ~name ~loc ~arg_tys:[]) [ "Int"; "String" ]
   in
-  mk_test constr_decl_list_testable "no duplicates"
-    (mk_ty_cstrs sig_items) expected
+  mk_test constr_decl_list_testable "no duplicates" (mk_ty_cstrs sig_items)
+    expected
 
 (*******************************************************************************)
 (** Testing [get_ret_ty] *)
@@ -342,9 +330,7 @@ let add_lident_prefix_ldot () =
 (** Testing [is_abs_ty_parameterized] *)
 
 let is_abs_ty_parameterized_empty_sig () =
-  mk_test bool "empty signature"
-    (is_abs_ty_parameterized [%sig:])
-    false
+  mk_test bool "empty signature" (is_abs_ty_parameterized [%sig:]) false
 
 let is_abs_ty_parameterized_sig_no_abs_ty () =
   mk_test bool "no abstract types"
@@ -481,8 +467,7 @@ let get_ty_decls_from_sig_three_tys () =
 let equal_core_type_cstr_name (core_ty : core_type) (cstr_name : string) =
   let cstr = mk_cstr ~name:cstr_name ~loc ~arg_tys:[] in
   let core_ty_name = Ppxlib.string_of_core_type core_ty in
-  let test_case_name =
-    Format.sprintf "%s = %s" core_ty_name cstr_name in
+  let test_case_name = Format.sprintf "%s = %s" core_ty_name cstr_name in
   mk_test bool test_case_name (equal_ty_cstr_core_type cstr core_ty) true
 
 let equal_core_ty_ty_cstr_bool_Bool () =
@@ -562,51 +547,56 @@ let equal_core_type_alpha_beta_t_neq () =
     false
 
 (*******************************************************************************)
-(* Tests for [equal_constructor_declaration] *)    
+(* Tests for [equal_constructor_declaration] *)
 
-let equal_constructor_declaration_enum_refl () = 
-  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[] in 
-  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[] in 
+let equal_constructor_declaration_enum_refl () =
+  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[] in
+  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[] in
   mk_test bool "C = C" (equal_constructor_declaration c1 c2) true
 
-let equal_constructor_declaration_unary_refl () = 
-  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: int]] in 
-  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: int]] in 
-  mk_test bool "C of int = C of int" (equal_constructor_declaration c1 c2) true  
+let equal_constructor_declaration_unary_refl () =
+  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[ [%type: int] ] in
+  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[ [%type: int] ] in
+  mk_test bool "C of int = C of int" (equal_constructor_declaration c1 c2) true
 
-let equal_constructor_declaration_unary_diff_names () = 
-  let c1 = mk_cstr ~name:"C1" ~loc ~arg_tys:[[%type: int]] in 
-  let c2 = mk_cstr ~name:"C2" ~loc ~arg_tys:[[%type: int]] in 
-  mk_test bool "C1 of int != C2 of int" 
-    (equal_constructor_declaration c1 c2) false
+let equal_constructor_declaration_unary_diff_names () =
+  let c1 = mk_cstr ~name:"C1" ~loc ~arg_tys:[ [%type: int] ] in
+  let c2 = mk_cstr ~name:"C2" ~loc ~arg_tys:[ [%type: int] ] in
+  mk_test bool "C1 of int != C2 of int"
+    (equal_constructor_declaration c1 c2)
+    false
 
-let equal_constructor_declaration_unary_same_name_diff_arg_types () = 
-  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: int]] in 
-  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[[%type: string]] in 
-  mk_test bool "C of int != C of string" 
-    (equal_constructor_declaration c1 c2) false 
-    
-let equal_constructor_declaration_binary_refl () = 
-  let name = "C" in 
-  let arg_tys = [[%type: int]; [%type: string]] in 
-  let c1 = mk_cstr ~name ~loc ~arg_tys in 
-  let c2 = mk_cstr ~name ~loc ~arg_tys in 
-  mk_test bool "C of int * string = C of int * string" 
-    (equal_constructor_declaration c1 c2) true
-    
-let equal_constructor_declaration_binary_diff_names () = 
-  let arg_tys = [[%type: int]; [%type: string]] in 
-  let c1 = mk_cstr ~name:"C1" ~loc ~arg_tys in 
-  let c2 = mk_cstr ~name:"C2" ~loc ~arg_tys in 
-  mk_test bool "C1 of int * string != C2 of int * string" 
-    (equal_constructor_declaration c1 c2) false     
+let equal_constructor_declaration_unary_same_name_diff_arg_types () =
+  let c1 = mk_cstr ~name:"C" ~loc ~arg_tys:[ [%type: int] ] in
+  let c2 = mk_cstr ~name:"C" ~loc ~arg_tys:[ [%type: string] ] in
+  mk_test bool "C of int != C of string"
+    (equal_constructor_declaration c1 c2)
+    false
 
-let equal_constructor_declaration_binary_permute_args () = 
-  let name = "C" in 
-  let c1 = mk_cstr ~name ~loc ~arg_tys:[[%type: int]; [%type: string]]  in 
-  let c2 = mk_cstr ~name ~loc ~arg_tys:[[%type: string]; [%type: int]] in 
-  mk_test bool "C of int * string != C of string * int" 
-    (equal_constructor_declaration c1 c2) false        
+let equal_constructor_declaration_binary_refl () =
+  let name = "C" in
+  let arg_tys = [ [%type: int]; [%type: string] ] in
+  let c1 = mk_cstr ~name ~loc ~arg_tys in
+  let c2 = mk_cstr ~name ~loc ~arg_tys in
+  mk_test bool "C of int * string = C of int * string"
+    (equal_constructor_declaration c1 c2)
+    true
+
+let equal_constructor_declaration_binary_diff_names () =
+  let arg_tys = [ [%type: int]; [%type: string] ] in
+  let c1 = mk_cstr ~name:"C1" ~loc ~arg_tys in
+  let c2 = mk_cstr ~name:"C2" ~loc ~arg_tys in
+  mk_test bool "C1 of int * string != C2 of int * string"
+    (equal_constructor_declaration c1 c2)
+    false
+
+let equal_constructor_declaration_binary_permute_args () =
+  let name = "C" in
+  let c1 = mk_cstr ~name ~loc ~arg_tys:[ [%type: int]; [%type: string] ] in
+  let c2 = mk_cstr ~name ~loc ~arg_tys:[ [%type: string]; [%type: int] ] in
+  mk_test bool "C of int * string != C of string * int"
+    (equal_constructor_declaration c1 c2)
+    false
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)
@@ -707,13 +697,13 @@ let () =
           equal_core_type_alpha_t_refl ();
           equal_core_type_alpha_beta_t_neq ()
         ] );
-      ("equal_constructor_declaration", 
+      ( "equal_constructor_declaration",
         [ equal_constructor_declaration_enum_refl ();
           equal_constructor_declaration_unary_refl ();
           equal_constructor_declaration_unary_diff_names ();
           equal_constructor_declaration_unary_same_name_diff_arg_types ();
           equal_constructor_declaration_binary_refl ();
           equal_constructor_declaration_binary_diff_names ();
-          equal_constructor_declaration_binary_permute_args ();
-        ])
+          equal_constructor_declaration_binary_permute_args ()
+        ] )
     ]
