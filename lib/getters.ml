@@ -22,6 +22,9 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
 (** Takes [ty], the type of a [val] declaration in a signature,
     and returns the type of the arguments of the corresponding 
     constructor for the [expr] datatype. 
+    - The [abs_tys] argument is a list of abstract types
+      that are defined in the module signature (to determine
+      when arguments should be instantiated with the [expr] type)
 
     For the [Set] module signature example,
     - [val empty : 'a t] corresponds to the 0-arity [Empty] constructor
@@ -34,19 +37,23 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
     an occurrence of an abstract type in an non-arrow type 
     (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
     corresponds to the nullary constructor [Empty]). *)
-let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type) : core_type list =
+let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type)
+  (abs_ty_names : string list) : core_type list =
   let loc = ty.ptyp_loc in
   match monomorphize ty with
   | ty' when List.mem ty' ~set:(base_types ~loc) -> [ ty' ]
   | { ptyp_desc = Ptyp_constr ({ txt = lident; _ }, _); _ } as ty' ->
     let tyconstr = string_of_lident lident in
-    if String.equal tyconstr abstract_ty_name then
+    if List.mem tyconstr ~set:abs_ty_names then
       if is_arrow then [ [%type: expr] ] else []
     else [ ty' ]
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _ } ->
-    get_cstr_arg_tys ~is_arrow:true t1 @ get_cstr_arg_tys ~is_arrow:true t2
+    get_cstr_arg_tys ~is_arrow:true t1 abs_ty_names
+    @ get_cstr_arg_tys ~is_arrow:true t2 abs_ty_names
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
-    List.concat_map ~f:(get_cstr_arg_tys ~is_arrow) tys
+    List.concat_map
+      ~f:(fun ty -> get_cstr_arg_tys ~is_arrow ty abs_ty_names)
+      tys
   | _ -> failwith "TODO: get_cstr_arg_tys"
 
 (** Helper function: [get_cstr_args loc get_ty args] takes [args], 
@@ -161,6 +168,16 @@ let get_ty_decls_from_sig (sig_items : signature) :
         List.map ~f:get_ty_name_and_params ty_decls :: acc
       | _ -> acc)
   |> List.concat |> List.rev
+
+(** Retrieves all the abstract types from a signature as a list of 
+    [type_declaration]s *)
+let get_abs_tys_from_sig (sig_items : signature) : type_declaration list =
+  List.fold_left
+    ~f:(fun acc { psig_desc; _ } ->
+      match psig_desc with
+      | Psig_type (_, ty_decls) -> acc @ ty_decls
+      | _ -> acc)
+    ~init:[] sig_items
 
 (******************************************************************************)
 (** {1 Working with pattern matches} *)

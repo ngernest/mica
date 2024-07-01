@@ -14,20 +14,22 @@ open Utils
     a [core_type]) *)
 let mk_expr_cstrs (sig_items : signature) :
   (constructor_declaration * core_type) list =
+  let abs_tys = get_abs_tys_from_sig sig_items in
+  let abs_ty_names =
+    List.map ~f:(fun abs_ty -> no_loc abs_ty.ptype_name) abs_tys in
   List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
       match psig_desc with
-      | Psig_type (rec_flag, type_decls) -> []
+      | Psig_type (_, _) -> []
       | Psig_value { pval_name; pval_type; pval_loc; _ } ->
         let name : string = String.capitalize_ascii pval_name.txt in
         (* Exclude the return type of the function from the list of arg types
            for the [expr] constructor *)
-        let arg_tys : core_type list =
-          remove_last (get_cstr_arg_tys pval_type) in
+        let arg_tys = remove_last (get_cstr_arg_tys pval_type abs_ty_names) in
         (* Return type of the function *)
         let ret_ty = get_ret_ty pval_type in
         (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
-      | Psig_attribute attr -> failwith "TODO: handle attribute [@@@id]"
-      | Psig_extension (ext, attrs) -> failwith "TODO: handle extensions"
+      | Psig_attribute _ -> failwith "TODO: handle attribute [@@@id]"
+      | Psig_extension (_, _) -> failwith "TODO: handle extensions"
       | _ ->
         failwith
           "TODO: not sure how to handle other kinds of [signature_item_desc]")

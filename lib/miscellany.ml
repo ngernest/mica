@@ -80,8 +80,9 @@ let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
     by default ["t"] *)
 let abstract_ty_name : string = "t"
 
-(** Turns a variable name [x] into [x'] *)
-let rec add_prime (x : string) : string = x ^ "\'"
+(** Turns a variable name [x] into [x'] 
+    - TODO: replace [add_prime] with quotation *)
+let add_prime (x : string) : string = x ^ "\'"
 
 (** [update_expr_arg_names expr_args args] replaces each variable [x] in 
     [expr_args] if [x'] (the variable with a prime added) is in [expr_args] *)

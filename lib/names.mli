@@ -8,7 +8,4 @@ val varnames_of_cstr_args :
   loc:Location.t -> constructor_arguments -> pattern list
 
 val ppat_construct_of_cstr_decl :
-  loc:Location.t ->
-  constructor_declaration ->
-  pattern option ->
-  pattern
+  loc:Location.t -> constructor_declaration -> pattern option -> pattern

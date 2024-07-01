@@ -5,7 +5,9 @@ open Inv_ctx
 (** {1 Working with constructors for algebraic data types} *)
 
 val get_varname : pattern -> string
-val get_cstr_arg_tys : ?is_arrow:bool -> core_type -> core_type list
+
+val get_cstr_arg_tys :
+  ?is_arrow:bool -> core_type -> string list -> core_type list
 
 val get_cstr_args :
   loc:Location.t -> ('a -> core_type) -> 'a list -> pattern * inv_ctx
@@ -30,6 +32,7 @@ val get_type_params : type_declaration -> core_type list
 val get_ret_ty : core_type -> core_type
 val get_ty_name_and_params : type_declaration -> string * core_type list
 val get_ty_decls_from_sig : signature -> (string * core_type list) list
+val get_abs_tys_from_sig : signature -> type_declaration list
 
 (******************************************************************************)
 (** {1 Working with pattern matches} *)
