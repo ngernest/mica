@@ -17,6 +17,4 @@ val merge_list_with_assoc_list :
   'a list -> ('b * 'c) list -> eq:('a -> 'b -> bool) -> ('a * 'c) list
 
 val invert_assoc_list : ('a * 'b) list -> ('b * 'a) list
-val add_prime : string -> string
-val update_expr_arg_names : string list -> string list -> string list
 val is_abs_ty_parameterized : signature -> bool
