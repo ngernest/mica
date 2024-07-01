@@ -121,8 +121,8 @@ let mk_scrutinees (expr_vars : string list)
           [%expr interp [%e pexp_ident_of_string x ~loc]]) in
     if List.length xs = 1 then List.hd xs else post xs
 
-let ppat_construct_of_cstr_decl ~(loc : Location.t) 
-  (cstr_decl : constructor_declaration) = 
+let ppat_construct_of_cstr_decl ~(loc : Location.t)
+  (cstr_decl : constructor_declaration) =
   let cstr_name = map_with_loc ~f:Longident.parse cstr_decl.pcd_name in
   (* TODO: figure out how to get the arguments to the constructor! *)
-  ppat_construct ~loc cstr_name     
+  ppat_construct ~loc cstr_name

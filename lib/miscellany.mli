@@ -5,6 +5,7 @@ open Ppxlib
 val printf : ('a, Stdio.Out_channel.t, unit) format -> 'a
 val with_loc : 'a -> loc:Location.t -> 'a Location.loc
 val no_loc : 'a Location.loc -> 'a
+val map_with_loc : f:('a -> 'b) -> 'a Location.loc -> 'b Location.loc
 val map2 : f:('a -> 'b) -> 'a * 'a -> 'b * 'b
 val tuple4_to_pair : 'a * 'b * 'c * 'd -> 'a * 'b
 val list_is_empty : 'a list -> bool

@@ -25,7 +25,7 @@ let string_of_lident (lident : Longident.t) : string =
   | _ -> String.concat ~sep:"." xs
 
 (** Only uncapitalizes the final [Lident] in a [Longident.t] 
-    (prefixes in [Ldot]'s are left unchanged) *)
+    (prefixes in [Ldot]s are left unchanged) *)
 let rec uncapitalize_lident (lident : Longident.t) : Longident.t =
   match lident with
   | Lident s -> Lident (uncapitalize s)
@@ -42,9 +42,3 @@ let add_lident_prefix (prefix : string) (lident : Longident.t) : Longident.t =
 let add_lident_loc_prefix (prefix : string)
   ({ txt; loc } : Longident.t Location.loc) : Longident.t Location.loc =
   with_loc ~loc @@ add_lident_prefix prefix txt
-
-(** Maps a function [f] over a value of type ['a loc], 
-    returning a value of type o[b loc] *)  
-let map_with_loc ~(f : 'a -> 'b) 
-  ({txt = a; _} as a_loc: 'a Location.loc) : 'b Location.loc = 
-  { a_loc with txt = f a }
