@@ -26,12 +26,14 @@ let mk_fresh_ppat_var ~(loc : Location.t) (ty : core_type) : pattern =
   gen_symbol ~prefix () |> ppat_var_of_string ~loc
 
 (** [mk_fresh_legacy ~loc i ty] generates a fresh variable at location [loc] 
-        that corresponds to the type [ty], with the (integer) index [i + 1] 
-        used as a varname suffix 
-        - We add 1 to [i] so that variable names are 1-indexed 
-        - Note: this function has now been deprecated in favor of [mk_fresh_ppat_var],
-          which uses [Ppxlib]'s official [gen_symbol] function for producing
-          fresh variable names *)
+    that corresponds to the type [ty], with the (integer) index [i + 1] 
+    used as a varname suffix 
+    - We add 1 to [i] so that variable names are 1-indexed 
+    - Note: this function has now been deprecated in favor of [mk_fresh_ppat_var],
+      which uses [Ppxlib]'s official [gen_symbol] function for producing
+      fresh variable names
+    - Note: this function is not exposed in [names.mli] to avoid 
+      clients of this module from using this function *)
 let rec mk_fresh_legacy ~(loc : Location.t) (i : int) (ty : core_type) : pattern
     =
   let varname =
