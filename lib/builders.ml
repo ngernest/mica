@@ -1,19 +1,10 @@
 open Ppxlib
 open Ast_builder.Default
-open Lident
 open StdLabels
+open Lident
+open Names
 open Printers
 open Miscellany
-
-(** [pexp_ident_of_string x ~loc] creates the expression [Pexp_ident x]
-    at location [loc] *)
-let pexp_ident_of_string (x : string) ~(loc : Location.t) : expression =
-  pexp_ident ~loc (lident_loc_of_string x ~loc)
-
-(** [ppat_var_of_string x ~loc] creates the pattern [Ppat_var x] 
-        at location [loc] *)
-let ppat_var_of_string (x : string) ~(loc : Location.t) : pattern =
-  ppat_var ~loc (with_loc x ~loc)
 
 (** [mk_adt ~loc ~name constructors] creates the definition of 
     an algebraic data type called [name] at location [loc] 
@@ -45,34 +36,6 @@ let mk_cstr ~(name : string) ~(loc : Location.t) ~(arg_tys : core_type list) :
     (* Any PPXes attached to the type *)
     pcd_attributes = []
   }
-
-(** [mk_fresh ~loc i ty] generates a fresh variable at location [loc] 
-    that corresponds to the type [ty], with the (integer) index [i + 1] 
-    used as a varname suffix 
-    - We add 1 to [i] so that variable names are 1-indexed *)
-let rec mk_fresh ~(loc : Location.t) (i : int) (ty : core_type) : pattern =
-  let varname =
-    match ty with
-    | [%type: bool] -> "b"
-    | [%type: char] -> "c"
-    | [%type: string] -> "s"
-    | [%type: unit] -> "u"
-    | [%type: int] | [%type: 'a] -> "x"
-    | [%type: expr] | [%type: t] | [%type: 'a t] -> "e"
-    | { ptyp_desc; _ } -> (
-      match ptyp_desc with
-      | Ptyp_tuple _ -> "p"
-      | Ptyp_arrow _ -> "f"
-      | Ptyp_constr ({ txt; _ }, _) ->
-        let tyconstr = string_of_lident txt in
-        if String.equal tyconstr "list" then "lst"
-          (* For unrecognized type constructors, just extract the first char of
-             the type constructor's name *)
-        else String.sub tyconstr ~pos:0 ~len:1
-      | _ ->
-        pp_core_type ty;
-        failwith "TODO: [mk_fresh] not supported for types of this shape") in
-  ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string (i + 1)))
 
 (** [mk_error ~local ~global msg] creates an error extension node, 
     associated with an element in the AST at the location [local],
@@ -120,9 +83,3 @@ let mk_scrutinees (expr_vars : string list)
       List.map expr_vars ~f:(fun x ->
           [%expr interp [%e pexp_ident_of_string x ~loc]]) in
     if List.length xs = 1 then List.hd xs else post xs
-
-let ppat_construct_of_cstr_decl ~(loc : Location.t)
-  (cstr_decl : constructor_declaration) =
-  let cstr_name = map_with_loc ~f:Longident.parse cstr_decl.pcd_name in
-  (* TODO: figure out how to get the arguments to the constructor! *)
-  ppat_construct ~loc cstr_name

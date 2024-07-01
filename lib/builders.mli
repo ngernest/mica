@@ -1,15 +1,10 @@
 open Ppxlib
 
-val pexp_ident_of_string : string -> loc:Location.t -> expression
-val ppat_var_of_string : string -> loc:Location.t -> pattern
-
 val mk_cstr :
   name:string ->
   loc:Location.t ->
   arg_tys:core_type list ->
   constructor_declaration
-
-val mk_fresh : loc:Location.t -> int -> core_type -> pattern
 
 val mk_adt :
   loc:Location.t ->

@@ -74,6 +74,7 @@ the main `mica` deriver which runs afterwards.
     - Most functions in this file begin with the prefix `get_`
   - [equality.ml](./lib/equality.ml): Equality functions for `Parsetree` types 
   - [lident.ml](./lib/lident.ml): Utilities for working with the `Longident` type
+  - [names.ml](./lib/names.ml): Functions for generating fresh variable names & quoting expressions
   - [printers.ml](./lib/printers.ml): Pretty-printers for AST types
   - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types to expressions
   - [let_open.ml](./lib/let_open.ml): Helpers for producing `let open` expressions

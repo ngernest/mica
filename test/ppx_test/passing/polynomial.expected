@@ -43,24 +43,30 @@ include
           match e with
           | Zero -> ValT M.zero
           | One -> ValT M.one
-          | Power (x1, x2) -> ValInt (M.power x1 x2)
-          | Monomial (x1, x2) -> ValT (M.monomial x1 x2)
-          | Add (e1, e2) ->
-              (match ((interp e1), (interp e2)) with
-               | (ValT e1', ValT e2') -> ValT (M.add e1' e2')
+          | Power (int__001_, int__002_) ->
+              ValInt (M.power int__001_ int__002_)
+          | Monomial (int__003_, int__004_) ->
+              ValT (M.monomial int__003_ int__004_)
+          | Add (expr__005_, expr__006_) ->
+              (match ((interp expr__005_), (interp expr__006_)) with
+               | (ValT expr__005_', ValT expr__006_') ->
+                   ValT (M.add expr__005_' expr__006_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Mult (e1, e2) ->
-              (match ((interp e1), (interp e2)) with
-               | (ValT e1', ValT e2') -> ValT (M.mult e1' e2')
+          | Mult (expr__007_, expr__008_) ->
+              (match ((interp expr__007_), (interp expr__008_)) with
+               | (ValT expr__007_', ValT expr__008_') ->
+                   ValT (M.mult expr__007_' expr__008_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Create lst1 -> ValT (M.create lst1)
-          | Eval (e1, x2) ->
-              (match interp e1 with
-               | ValT e1' -> ValInt (M.eval e1' x2)
+          | Create intIntProductList__009_ ->
+              ValT (M.create intIntProductList__009_)
+          | Eval (expr__010_, int__011_) ->
+              (match interp expr__010_ with
+               | ValT expr__010_' -> ValInt (M.eval expr__010_' int__011_)
                | _ -> failwith "impossible: n-ary constructor")
-          | Equal (e1, e2) ->
-              (match ((interp e1), (interp e2)) with
-               | (ValT e1', ValT e2') -> ValBool (M.equal e1' e2')
+          | Equal (expr__012_, expr__013_) ->
+              (match ((interp expr__012_), (interp expr__013_)) with
+               | (ValT expr__012_', ValT expr__013_') ->
+                   ValBool (M.equal expr__012_' expr__013_')
                | _ -> failwith "impossible: n-ary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

@@ -39,26 +39,29 @@ include
           match e with
           | Void -> ValT M.void
           | Empty -> ValT M.empty
-          | Lit c1 -> ValT (M.lit c1)
-          | Alt (e1, e2) ->
-              (match ((interp e1), (interp e2)) with
-               | (ValT e1', ValT e2') -> ValT (M.alt e1' e2')
+          | Lit char__001_ -> ValT (M.lit char__001_)
+          | Alt (expr__002_, expr__003_) ->
+              (match ((interp expr__002_), (interp expr__003_)) with
+               | (ValT expr__002_', ValT expr__003_') ->
+                   ValT (M.alt expr__002_' expr__003_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Cat (e1, e2) ->
-              (match ((interp e1), (interp e2)) with
-               | (ValT e1', ValT e2') -> ValT (M.cat e1' e2')
+          | Cat (expr__004_, expr__005_) ->
+              (match ((interp expr__004_), (interp expr__005_)) with
+               | (ValT expr__004_', ValT expr__005_') ->
+                   ValT (M.cat expr__004_' expr__005_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Star e1 ->
-              (match interp e1 with
-               | ValT e1' -> ValT (M.star e1')
+          | Star expr__006_ ->
+              (match interp expr__006_ with
+               | ValT expr__006_' -> ValT (M.star expr__006_')
                | _ -> failwith "impossible: unary constructor")
-          | MatchString (e1, s2) ->
-              (match interp e1 with
-               | ValT e1' -> ValBool (M.matchString e1' s2)
+          | MatchString (expr__007_, string__008_) ->
+              (match interp expr__007_ with
+               | ValT expr__007_' ->
+                   ValBool (M.matchString expr__007_' string__008_)
                | _ -> failwith "impossible: n-ary constructor")
-          | AcceptsEmpty e1 ->
-              (match interp e1 with
-               | ValT e1' -> ValBool (M.acceptsEmpty e1')
+          | AcceptsEmpty expr__009_ ->
+              (match interp expr__009_ with
+               | ValT expr__009_' -> ValBool (M.acceptsEmpty expr__009_')
                | _ -> failwith "impossible: unary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

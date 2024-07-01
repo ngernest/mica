@@ -9,3 +9,4 @@ include Let_open
 include Lident
 include Miscellany
 include Printers
+include Names

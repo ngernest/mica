@@ -14,8 +14,8 @@ let no_loc (a_loc : 'a Location.loc) : 'a = a_loc.txt
 
 (** Maps a function [f] over a value of type ['a loc], 
     returning a value of type o[b loc] *)
-let map_with_loc ~(f : 'a -> 'b) ({ txt = a; _ } as a_loc : 'a Location.loc) :
-  'b Location.loc =
+let map_with_loc ~(f : 'a -> 'b) (a_loc : 'a Location.loc) : 'b Location.loc =
+  let a = a_loc.txt in
   { a_loc with txt = f a }
 
 (** Maps a function component-wise over a pair *)

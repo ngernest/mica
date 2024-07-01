@@ -44,29 +44,30 @@ include
         let rec interp e =
           match e with
           | Empty -> ValIntT M.empty
-          | Push (x1, e2) ->
-              (match interp e2 with
-               | ValIntT e2' -> ValIntT (M.push x1 e2')
+          | Push (int__001_, expr__002_) ->
+              (match interp expr__002_ with
+               | ValIntT expr__002_' ->
+                   ValIntT (M.push int__001_ expr__002_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Pop e1 ->
-              (match interp e1 with
-               | ValIntT e1' -> ValIntTOption (M.pop e1')
+          | Pop expr__003_ ->
+              (match interp expr__003_ with
+               | ValIntT expr__003_' -> ValIntTOption (M.pop expr__003_')
                | _ -> failwith "impossible: unary constructor")
-          | Peek e1 ->
-              (match interp e1 with
-               | ValIntT e1' -> ValIntOption (M.peek e1')
+          | Peek expr__004_ ->
+              (match interp expr__004_ with
+               | ValIntT expr__004_' -> ValIntOption (M.peek expr__004_')
                | _ -> failwith "impossible: unary constructor")
-          | Clear e1 ->
-              (match interp e1 with
-               | ValIntT e1' -> ValUnit (M.clear e1')
+          | Clear expr__005_ ->
+              (match interp expr__005_ with
+               | ValIntT expr__005_' -> ValUnit (M.clear expr__005_')
                | _ -> failwith "impossible: unary constructor")
-          | Is_empty e1 ->
-              (match interp e1 with
-               | ValIntT e1' -> ValBool (M.is_empty e1')
+          | Is_empty expr__006_ ->
+              (match interp expr__006_ with
+               | ValIntT expr__006_' -> ValBool (M.is_empty expr__006_')
                | _ -> failwith "impossible: unary constructor")
-          | Length e1 ->
-              (match interp e1 with
-               | ValIntT e1' -> ValInt (M.length e1')
+          | Length expr__007_ ->
+              (match interp expr__007_ with
+               | ValIntT expr__007_' -> ValInt (M.length expr__007_')
                | _ -> failwith "impossible: unary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]
