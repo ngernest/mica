@@ -76,10 +76,6 @@ let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
       | None ->
         failwith "failed to match an element of ['a] with an element of ['b]")
 
-(** Name of the abstract type in the module signature, 
-    by default ["t"] *)
-let abstract_ty_name : string = "t"
-
 (** Turns a variable name [x] into [x'] 
     - TODO: replace [add_prime] with quotation *)
 let add_prime (x : string) : string = x ^ "\'"
