@@ -82,15 +82,17 @@ let varnames_of_cstr_args ~(loc : Location.t) (arg : constructor_arguments) :
     List.map lbl_decls ~f:(fun { pld_name; pld_type; pld_loc; _ } ->
         gen_symbol ~prefix:pld_name.txt () |> ppat_var_of_string ~loc:pld_loc)
 
-(** TODO: figure out how to finish this function 
-    and use it in [type_deriver.ml] *)        
+(** Takes a [constructor_declaration] and produces the pattern 
+    [Ppat_construct] *)
 let ppat_construct_of_cstr_decl ~(loc : Location.t)
-  (cstr_decl : constructor_declaration) =
+  (cstr_decl : constructor_declaration) : pattern =
   let cstr_name : Longident.t loc =
     map_with_loc ~f:Longident.parse cstr_decl.pcd_name in
-  let arg_names = varnames_of_cstr_args cstr_decl.pcd_args in
-  (* TODO: figure out what we want to do here *)
-  ppat_construct ~loc cstr_name
+  (* Generate fresh names for the construct arguments, then convert them to the
+     [Ppat_tuple] pattern *)
+  let arg_names : pattern list = varnames_of_cstr_args ~loc cstr_decl.pcd_args in
+  let cstr_args : pattern option = ppat_tuple_opt ~loc arg_names in
+  ppat_construct ~loc cstr_name cstr_args
 
 (** [update_expr_arg_names expr_args args] replaces each variable [x] in 
     [expr_args] if [x'] (the variable with a prime added) is in [expr_args] *)
