@@ -64,7 +64,7 @@ let mk_valt_pat ?(abs_ty_parameterized = false) (x : string) ~(loc : Location.t)
   (* TODO: generalize this so that we can handle > 1 type parameter in abstract
      types *)
   let val_cstr = if abs_ty_parameterized then "ValIntT" else "ValT" in
-  let var_ident = ppat_var_of_string x ~loc in
+  let var_ident = pvar x ~loc in
   ppat_construct ~loc
     (with_loc ~loc (Longident.parse val_cstr))
     (Some var_ident)

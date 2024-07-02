@@ -1,6 +1,5 @@
 open Ppxlib
 
-val ppat_var_of_string : string -> loc:Location.t -> pattern
 val add_prime : string -> string
 val quote_name : string -> string
 val mk_fresh_ppat_var : loc:Location.t -> core_type -> pattern

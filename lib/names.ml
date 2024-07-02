@@ -5,13 +5,6 @@ open Printers
 open StdLabels
 open Miscellany
 
-(* TODO: module that contain functions for generating fresh names *)
-
-(** [ppat_var_of_string x ~loc] creates the pattern [Ppat_var x] 
-            at location [loc] *)
-let ppat_var_of_string (x : string) ~(loc : Location.t) : pattern =
-  ppat_var ~loc (with_loc x ~loc)
-
 (** Turns the variable [x] into [x'] *)
 let add_prime : string -> string = fun x -> x ^ "\'"
 
@@ -31,7 +24,7 @@ let quote_name (name : string) : string =
     of the variable serialized & prefixed to the resultant variable name *)
 let mk_fresh_ppat_var ~(loc : Location.t) (ty : core_type) : pattern =
   let prefix = uncapitalize (string_of_core_ty ty) in
-  gen_symbol ~prefix () |> ppat_var_of_string ~loc
+  gen_symbol ~prefix () |> pvar ~loc
 
 (** [mk_fresh_legacy ~loc i ty] generates a fresh variable at location [loc] 
     that corresponds to the type [ty], with the (integer) index [i + 1] 
@@ -75,7 +68,7 @@ let varnames_of_cstr_args ~(loc : Location.t) (arg : constructor_arguments) :
   | Pcstr_tuple tys -> List.map ~f:(mk_fresh_ppat_var ~loc) tys
   | Pcstr_record lbl_decls ->
     List.map lbl_decls ~f:(fun { pld_name; pld_type; pld_loc; _ } ->
-        gen_symbol ~prefix:pld_name.txt () |> ppat_var_of_string ~loc:pld_loc)
+        gen_symbol ~prefix:pld_name.txt () |> pvar ~loc:pld_loc)
 
 (** Takes a [constructor_declaration] and produces the pattern 
     [Ppat_construct] *)
