@@ -7,11 +7,6 @@ open Miscellany
 
 (* TODO: module that contain functions for generating fresh names *)
 
-(** [pexp_ident_of_string x ~loc] creates the expression [Pexp_ident x]
-    at location [loc] *)
-let pexp_ident_of_string (x : string) ~(loc : Location.t) : expression =
-  pexp_ident ~loc (lident_loc_of_string x ~loc)
-
 (** [ppat_var_of_string x ~loc] creates the pattern [Ppat_var x] 
             at location [loc] *)
 let ppat_var_of_string (x : string) ~(loc : Location.t) : pattern =

@@ -213,7 +213,7 @@ let get_unary_case_rhs (value_cstr : Longident.t Location.loc)
   (mod_name : string) (expr_cstr : Longident.t Location.loc) (x : string)
   ~(loc : Location.t) : expression =
   let mod_func = pexp_ident ~loc (add_lident_loc_prefix mod_name expr_cstr) in
-  let mod_func_arg = pexp_ident_of_string (add_prime x) ~loc in
+  let mod_func_arg = evar (add_prime x) ~loc in
   let mod_func_app = [%expr [%e mod_func] [%e mod_func_arg]] in
   pexp_construct ~loc value_cstr (Some mod_func_app)
 

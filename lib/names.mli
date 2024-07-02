@@ -1,6 +1,5 @@
 open Ppxlib
 
-val pexp_ident_of_string : string -> loc:Location.t -> expression
 val ppat_var_of_string : string -> loc:Location.t -> pattern
 val add_prime : string -> string
 val quote_name : string -> string

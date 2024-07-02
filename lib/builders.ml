@@ -79,7 +79,5 @@ let mk_scrutinees (expr_vars : string list)
   match expr_vars with
   | [] -> failwith "impossible: mk_scrutinees"
   | _ ->
-    let xs =
-      List.map expr_vars ~f:(fun x ->
-          [%expr interp [%e pexp_ident_of_string x ~loc]]) in
+    let xs = List.map expr_vars ~f:(fun x -> [%expr interp [%e evar x ~loc]]) in
     if List.length xs = 1 then List.hd xs else post xs

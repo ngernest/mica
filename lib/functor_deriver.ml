@@ -39,7 +39,7 @@ let mk_interp_case_rhs (params : interp_case_rhs_params) : expression =
   (* Unary constructors *)
   | Some { ppat_desc = Ppat_var { txt = x; loc }; _ } ->
     let expr_vars = find_exprs gamma in
-    let func_arg_ident = pexp_ident_of_string x ~loc in
+    let func_arg_ident = evar x ~loc in
     (* If [x] doesn't have type [expr]: regular function application *)
     if not (List.mem x ~set:expr_vars) then
       pexp_construct ~loc value_cstr
@@ -59,8 +59,7 @@ let mk_interp_case_rhs (params : interp_case_rhs_params) : expression =
     let expr_vars = find_exprs gamma in
     (* If there are no args of type [expr]: regular function application *)
     if list_is_empty expr_vars then
-      let func_args =
-        List.map ~f:(fun x -> (Nolabel, pexp_ident_of_string ~loc x)) vars in
+      let func_args = List.map ~f:(fun x -> (Nolabel, evar ~loc x)) vars in
       pexp_construct ~loc value_cstr (Some (pexp_apply ~loc mod_item func_args))
     else
       (* Recursively call [interp] on all variables that have type [expr] *)
@@ -69,7 +68,7 @@ let mk_interp_case_rhs (params : interp_case_rhs_params) : expression =
       let scrutinees = mk_scrutinees expr_vars ~post:(pexp_tuple ~loc) ~loc in
       let func_args =
         List.map
-          ~f:(fun x -> pexp_ident_of_string x ~loc)
+          ~f:(fun x -> evar x ~loc)
           (update_expr_arg_names (List.map ~f:add_prime expr_vars) vars) in
       let match_rhs =
         get_nary_case_rhs ret_ty_cstr mod_name expr_cstr func_args ~loc in
