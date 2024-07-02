@@ -14,9 +14,21 @@ let no_loc (a_loc : 'a Location.loc) : 'a = a_loc.txt
 
 (** Maps a function [f] over a value of type ['a loc], 
     returning a value of type o[b loc] *)
-let map_with_loc ~(f : 'a -> 'b) (a_loc : 'a Location.loc) : 'b Location.loc =
-  let a = a_loc.txt in
-  { a_loc with txt = f a }
+let map_with_loc ~(f : 'a -> 'b) (alpha : 'a Location.loc) : 'b Location.loc =
+  let a = alpha.txt in
+  { alpha with txt = f a }
+
+(** Takes the maximum of two [Location.t] values using Ppxlib's in-built 
+    [Location.compare] function *)  
+let max_loc (l1 : Location.t) (l2 : Location.t) : Location.t = 
+  if Location.compare l1 l2 >= 0 then l1 else l2
+
+(** Lifts a binary function over two polymorphic [loc] values *)  
+let liftF2 ~(f : 'a -> 'b -> 'c) 
+  (alpha : 'a Location.loc) (beta : 'b Location.loc) : 'c Location.loc = 
+  let new_loc = max_loc alpha.loc beta.loc in 
+  let (a, b) = (alpha.txt, beta.txt) in 
+  { txt = f a b; loc = alpha.loc }
 
 (** Maps a function component-wise over a pair *)
 let map2 ~f (a1, a2) = (f a1, f a2)

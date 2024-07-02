@@ -40,13 +40,15 @@ val mk_val_cstrs : signature -> constructor_declaration list
 
 (** Maps [ty]s to [expr]s, constructing the main case statement 
     in [gen_expr] *)
-val gen_expr_cases :
-  signature -> (constructor_declaration * constructor_declaration list) list
+val gen_expr_case_skeleton :
+  signature -> (Longident.t Location.loc * Longident.t Location.loc list) list
+
+val gen_expr_cases : signature -> case list   
 
 (** Derives the [gen_expr] QuickCheck generator 
         - [ty_cstrs] is a list of constructors for the [ty] ADT  *)
 val derive_gen_expr :
-  loc:Location.t -> constructor_declaration list -> expression
+  loc:Location.t -> constructor_declaration list -> signature -> expression
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 

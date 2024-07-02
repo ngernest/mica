@@ -4,6 +4,7 @@ open Ppxlib
 
 val equal_ty_cstr_core_type : constructor_declaration -> core_type -> bool
 val equal_longident : Longident.t -> Longident.t -> bool
+val equal_longident_loc : Longident.t Location.loc -> Longident.t Location.loc -> bool 
 val equal_core_type : core_type -> core_type -> bool
 val equal_core_type_desc : core_type_desc -> core_type_desc -> bool
 val equal_core_type_list : core_type list -> core_type list -> bool
