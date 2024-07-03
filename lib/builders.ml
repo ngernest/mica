@@ -88,6 +88,6 @@ let pexp_list ~(loc : Location.t) (xs : expression list) =
   | [] -> nil
   | _ -> 
     List.fold_right ~f:(fun acc ({pexp_loc; _} as x) -> 
-      pexp_construct ~loc:(ghostify pexp_loc) (lident_loc_of_string ~loc:(ghostify pexp_loc) "::") 
+      pexp_construct ~loc:pexp_loc (lident_loc_of_string ~loc:pexp_loc "::") 
       (pexp_tuple_opt ~loc:pexp_loc [acc;x])) ~init:nil xs
 
