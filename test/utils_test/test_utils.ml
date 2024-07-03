@@ -599,6 +599,37 @@ let equal_constructor_declaration_binary_permute_args () =
     false
 
 (*******************************************************************************)
+(* Tests for [get_abs_ty_names] *)
+
+let get_abs_ty_names_empty () =
+  mk_test (list string) "empty sig" (get_abs_ty_names [%sig:]) []
+
+let get_abs_ty_names_t () =
+  mk_test (list string) "t" (get_abs_ty_names [%sig: type t]) [ "t" ]
+
+let get_abs_ty_names_alpha_t () =
+  mk_test (list string) "'a t" (get_abs_ty_names [%sig: type 'a t]) [ "t" ]
+
+let get_abs_ty_names_two_types () =
+  mk_test (list string) "type alpha; type beta"
+    (get_abs_ty_names
+       [%sig:
+         type alpha
+         type beta])
+    [ "alpha"; "beta" ]
+
+let get_abs_ty_names_three_types () =
+  mk_test (list string) "type alpha; type beta"
+    (get_abs_ty_names
+        [%sig:
+          type t
+          val f : int -> int
+          type u
+          val g : bool -> int
+          type v])
+    [ "t"; "u"; "v" ]    
+
+(*******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
@@ -705,5 +736,12 @@ let () =
           equal_constructor_declaration_binary_refl ();
           equal_constructor_declaration_binary_diff_names ();
           equal_constructor_declaration_binary_permute_args ()
-        ] )
+        ] );
+      ("get_abs_ty_names", 
+       [ get_abs_ty_names_empty ();
+         get_abs_ty_names_t ();
+         get_abs_ty_names_alpha_t ();
+         get_abs_ty_names_two_types ();
+         get_abs_ty_names_three_types ();
+       ])
     ]

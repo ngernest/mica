@@ -5,7 +5,6 @@ open Miscellany
 
 (** {1 Equality of [Parsetree] types} *)
 
-
 (** Checks if a [constructor_declaration] for the [ty] ADT and 
     (its corresponding) [core_type] are equal with respect to their string 
     representations using [string_of_core_ty].
@@ -20,10 +19,10 @@ let equal_longident (l1 : Longident.t) (l2 : Longident.t) : bool =
   Longident.compare l1 l2 = 0
 
 (** Checks two [Longident.t Location.loc] values for equality, 
-    ignoring their location *)  
-let equal_longident_loc (l1 : Longident.t Location.loc) 
-  (l2 : Longident.t Location.loc) : bool = 
-  equal_longident (no_loc l1) (no_loc l2)  
+    ignoring their location *)
+let equal_longident_loc (l1 : Longident.t Location.loc)
+  (l2 : Longident.t Location.loc) : bool =
+  equal_longident (no_loc l1) (no_loc l2)
 
 (** Checks two [core_type]s for equality, ignoring location *)
 let rec equal_core_type (t1 : core_type) (t2 : core_type) : bool =

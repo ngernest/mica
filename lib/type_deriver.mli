@@ -43,7 +43,7 @@ val mk_val_cstrs : signature -> constructor_declaration list
 val gen_expr_case_skeleton :
   signature -> (Longident.t Location.loc * Longident.t Location.loc list) list
 
-val gen_expr_cases : signature -> case list   
+val gen_expr_cases : signature -> case list
 
 (** Derives the [gen_expr] QuickCheck generator 
         - [ty_cstrs] is a list of constructors for the [ty] ADT  *)
