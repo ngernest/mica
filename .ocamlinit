@@ -29,7 +29,32 @@ let ubox () =
 #mod_use "builders.ml";;
 #mod_use "getters.ml";;
 #mod_use "utils.ml";;
+#mod_use "type_deriver.ml";;
+#mod_use "functor_deriver.ml";;
 
+open Ppxlib
 open Astlib.Pprintast
 
 open Utils
+open Type_deriver
+
+let loc = Location.none;;
+
+(* 
+[{
+
+[
+  (IntT, [Empty]);
+  (Bool, [Is_empty, Mem]);
+  (IntT, [Add, Rem]);
+  (Int, [Size]);
+  (IntT, [Union, Intersect]);
+  (Bool, [Invariant])
+
+]
+
+}]
+
+
+
+*)
