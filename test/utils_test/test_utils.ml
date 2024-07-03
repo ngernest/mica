@@ -264,7 +264,7 @@ let get_cstr_arity_binary () =
 
 let get_cstr_arity_ternary () =
   let cstr =
-    mk_cstr ~name:"C2" ~loc
+    mk_cstr ~name:"C3" ~loc
       ~arg_tys:[ [%type: int]; [%type: bool]; [%type: char] ] in
   mk_test int "ternary" (get_cstr_arity cstr) 3
 

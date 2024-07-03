@@ -83,6 +83,10 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 let gen_expr_case_skeleton (sig_items : signature) :
   (Longident.t Location.loc * Longident.t Location.loc list) list =
   let open Base.List.Assoc in
+  (* TODOs:
+     - use Metaquot instead? 
+     - write tests for [gen_expr_case_skeleton] to inspect the AssocList
+     - find some way of using [get_cstr_arity] *)
   let expr_cstrs =
     inverse (mk_expr_cstrs sig_items)
     |> List.map ~f:(fun (ty, cstr_decl) ->
