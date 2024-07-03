@@ -4,6 +4,12 @@ open Miscellany
 
 (** {1 Longident utility functions} *)
 
+(** Takes a [Location.t] value and marks it as a ghost location
+    - This is useful for new AST nodes (to indicate that the node
+      did not exist in the source file) *)
+let ghostify (loc : Location.t) : Location.t = 
+  { loc with loc_ghost = true }
+
 (** Alias for [String.uncapitalize_ascii] *)
 let uncapitalize : string -> string = String.uncapitalize_ascii
 

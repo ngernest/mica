@@ -3,6 +3,8 @@ open Ppxlib
 (******************************************************************************)
 (** {1 Longident utility functions} *)
 
+val ghostify : Location.t -> Location.t
+
 val uncapitalize : string -> string
 val lident_of_string : string -> Longident.t
 val lident_loc_of_string : string -> loc:Location.t -> Longident.t Location.loc
