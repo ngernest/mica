@@ -205,7 +205,7 @@ let uniq_ret_ty_2_arg_funcs () =
     [ [%type: int]; [%type: string]; [%type: char] ]
 
 (*******************************************************************************)
-(** Testing [mk_ty_cstrs] *)
+(** Tests for [mk_ty_cstrs] *)
 
 let mk_ty_cstrs_single_base_ty () =
   let sig_items = [%sig: val x : int] in
@@ -247,6 +247,26 @@ let mk_ty_cstrs_no_dupes () =
   in
   mk_test constr_decl_list_testable "no duplicates" (mk_ty_cstrs sig_items)
     expected
+
+(*******************************************************************************)
+(* Tests for [get_cstr_arity] *)
+let get_cstr_arity_nullary () =
+  let cstr = mk_cstr ~name:"C" ~loc ~arg_tys:[] in
+  mk_test int "nullary" (get_cstr_arity cstr) 0
+
+let get_cstr_arity_unary () =
+  let cstr = mk_cstr ~name:"C1" ~loc ~arg_tys:[ [%type: int] ] in
+  mk_test int "unary" (get_cstr_arity cstr) 1
+
+let get_cstr_arity_binary () =
+  let cstr = mk_cstr ~name:"C2" ~loc ~arg_tys:[ [%type: int]; [%type: bool] ] in
+  mk_test int "binary" (get_cstr_arity cstr) 2
+
+let get_cstr_arity_ternary () =
+  let cstr =
+    mk_cstr ~name:"C2" ~loc
+      ~arg_tys:[ [%type: int]; [%type: bool]; [%type: char] ] in
+  mk_test int "ternary" (get_cstr_arity cstr) 3
 
 (*******************************************************************************)
 (** Testing [get_ret_ty] *)
@@ -621,13 +641,17 @@ let get_abs_ty_names_two_types () =
 let get_abs_ty_names_three_types () =
   mk_test (list string) "type alpha; type beta"
     (get_abs_ty_names
-        [%sig:
-          type t
-          val f : int -> int
-          type u
-          val g : bool -> int
-          type v])
-    [ "t"; "u"; "v" ]    
+       [%sig:
+         type t
+
+         val f : int -> int
+
+         type u
+
+         val g : bool -> int
+
+         type v])
+    [ "t"; "u"; "v" ]
 
 (*******************************************************************************)
 (* Overall Alcotest Test Suite *)
@@ -737,11 +761,17 @@ let () =
           equal_constructor_declaration_binary_diff_names ();
           equal_constructor_declaration_binary_permute_args ()
         ] );
-      ("get_abs_ty_names", 
-       [ get_abs_ty_names_empty ();
-         get_abs_ty_names_t ();
-         get_abs_ty_names_alpha_t ();
-         get_abs_ty_names_two_types ();
-         get_abs_ty_names_three_types ();
-       ])
+      ( "get_abs_ty_names",
+        [ get_abs_ty_names_empty ();
+          get_abs_ty_names_t ();
+          get_abs_ty_names_alpha_t ();
+          get_abs_ty_names_two_types ();
+          get_abs_ty_names_three_types ()
+        ] );
+      ( "get_cstr_arity",
+        [ get_cstr_arity_nullary ();
+          get_cstr_arity_unary ();
+          get_cstr_arity_binary ();
+          get_cstr_arity_ternary ()
+        ] )
     ]

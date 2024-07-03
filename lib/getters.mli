@@ -25,6 +25,8 @@ val get_cstr_name : constructor_declaration -> Longident.t Location.loc
 val get_cstrs_of_ty_decl :
   type_declaration -> (Longident.t Location.loc * pattern option) list
 
+val get_cstr_arity : constructor_declaration -> int
+
 (******************************************************************************)
 (** {1 Working with type parameters & type declarations} *)
 

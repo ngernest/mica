@@ -129,6 +129,12 @@ let get_cstrs_of_ty_decl (ty_decl : type_declaration) :
   | Ptype_variant args -> get_cstr_metadata_minimal args
   | _ -> failwith "error: expected an algebraic data type definition"
 
+(** Computes the arity of a constructor for an algebraic data type *)
+let get_cstr_arity (cstr : constructor_declaration) : int =
+  match cstr.pcd_args with
+  | Pcstr_tuple xs -> List.length xs
+  | Pcstr_record lbls -> List.length lbls
+
 (******************************************************************************)
 (** {1 Working with type parameters & type declarations} *)
 
