@@ -91,7 +91,8 @@ let gen_expr_case_skeleton (sig_items : signature) :
     inverse (mk_expr_cstrs sig_items)
     |> List.map ~f:(fun (ty, cstr_decl) ->
            ( lident_loc_of_string ~loc:ty.ptyp_loc (string_of_core_ty ty),
-             get_cstr_name cstr_decl )) in
+             get_cstr_name cstr_decl ))
+    |> List.sort ~cmp:(fun (t1, _) (t2, _) -> Longident.compare t1.txt t2.txt) in
   let ty_cstrs : Longident.t Location.loc list =
     List.map ~f:get_cstr_name (mk_ty_cstrs sig_items) in
   (* Map [ty] constructors in [ty_cstrs] to the keys in [expr_cstrs], then group
