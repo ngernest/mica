@@ -28,5 +28,3 @@ val mk_scrutinees :
   post:(expression list -> expression) ->
   loc:Location.t ->
   expression
-
-val pexp_list : loc:Location.t -> expression list -> expression

@@ -40,17 +40,3 @@ open Type_deriver
 
 let loc = Location.none;;
 
-(* 
-[{
-
-[
-  (Bool, [Is_empty; Mem; Invariant]);
-  (Int, [Size]);
-  (IntT, [Empty; Add; Rem; Union; Intersect])
-]
-
-}]
-
-
-
-*)

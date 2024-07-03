@@ -83,8 +83,6 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 let gen_expr_case_skeleton (sig_items : signature) :
   (Longident.t Location.loc * Longident.t Location.loc list) list =
   let open Base.List.Assoc in
-  (* TODOs: - use Metaquot instead? - write tests for [gen_expr_case_skeleton]
-     to inspect the AssocList - find some way of using [get_cstr_arity] *)
   let expr_cstrs =
     inverse (mk_expr_cstrs sig_items)
     |> List.map ~f:(fun (ty, cstr_decl) ->
@@ -95,7 +93,8 @@ let gen_expr_case_skeleton (sig_items : signature) :
   let ty_cstrs : Longident.t Location.loc list =
     List.map ~f:get_cstr_name (mk_ty_cstrs sig_items) in
   (* Map [ty] constructors in [ty_cstrs] to the keys in [expr_cstrs], then group
-     values with the same keys together *)
+     values with the same keys together - TODO: figure out how to generate fresh
+     arguments for the constructors in the RHS list *)
   merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_longident_loc
   |> group ~equal:equal_longident_loc
 
@@ -107,7 +106,7 @@ let gen_expr_cases (sig_items : signature) : case list =
       let rhs_head = List.hd rhs_cases in
       let rhs_loc = rhs_head.loc in
       let rhs_args =
-        pexp_list ~loc:rhs_loc
+        elist ~loc:rhs_loc
           (List.map
              ~f:(fun rhs_elt -> pexp_ident ~loc:rhs_elt.loc rhs_elt)
              rhs_cases) in
