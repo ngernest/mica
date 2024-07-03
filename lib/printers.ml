@@ -71,7 +71,6 @@ let rec monomorphize (ty : core_type) : core_type =
     due to its capitalization, camel-case & monomorphization functionalities.
 *)
 let rec string_of_core_ty (ty : core_type) : string =
-  let loc = ty.ptyp_loc in
   match ty.ptyp_desc with
   | Ptyp_var _ | Ptyp_any -> string_of_core_ty (monomorphize ty)
   | Ptyp_constr ({ txt = ident; _ }, ty_params) ->

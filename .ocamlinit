@@ -7,7 +7,7 @@ UTop.set_show_box false
 
 (* Entering [ubox();;] toggles auto-complete suggestions on and off *)
 let ubox () =
-  if UTop.get_show_box()
+  if UTop.get_show_box ()
   then UTop.set_show_box false
   else UTop.set_show_box true;;
 
@@ -18,10 +18,18 @@ let ubox () =
 
 (* Ensure that files in [lib] are visible to Utop *)
 #directory "./lib";;
+#mod_use "inv_ctx.ml";;
+#mod_use "miscellany.ml";;
+#mod_use "let_open.ml";;
+#mod_use "bindop.ml";;
+#mod_use "printers.ml";;
+#mod_use "equality.ml";;
+#mod_use "lident.ml";;
+#mod_use "names.ml";;
+#mod_use "builders.ml";;
+#mod_use "getters.ml";;
 #mod_use "utils.ml";;
-#mod_use "lib.ml";;
 
 open Astlib.Pprintast
 
 open Utils
-open Lib
