@@ -100,19 +100,28 @@ let gen_expr_case_skeleton (sig_items : signature) :
   merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_longident_loc
   |> group ~equal:equal_longident_loc
 
-let gen_expr_cases (sig_items : signature) =
+let gen_expr_cases (sig_items : signature) : case list =
   let skeleton = gen_expr_case_skeleton sig_items in
   let guard = None in
   List.map skeleton ~f:(fun (lhs_cstr, rhs_cases) ->
       let lhs = ppat_construct ~loc:lhs_cstr.loc lhs_cstr None in
+      let rhs_head = List.hd rhs_cases in 
+      let rhs_loc = rhs_head.loc in 
+      let rhs_args = pexp_list ~loc:rhs_loc (List.map 
+        ~f:(fun rhs_elt -> pexp_ident ~loc:rhs_elt.loc rhs_elt) rhs_cases) in 
+      let loc = rhs_args.pexp_loc in 
+      let rhs = [%expr of_list [%e rhs_args]] in 
+      case ~lhs ~guard ~rhs)
+      
+      
       (* TODO: figure out how to genreate arguments for the RHS constructors -
          rewrite! *)
-      let rhs =
+      (* let rhs =
         pexp_tuple ~loc:Location.none
           (List.map
              ~f:(fun rhs -> pexp_construct ~loc:rhs.loc rhs None)
              rhs_cases) in
-      case ~lhs ~guard ~rhs)
+      case ~lhs ~guard ~rhs) *)
 
 (* TODO: - figure out how to do a pattern match on the [ty] constructors inside
    the body of [gen_expr], while keeping track of the [size] QC parameter - ^^
@@ -130,9 +139,9 @@ let derive_gen_expr ~(loc : Location.t)
   (* Derive [let open] expressions for the [Generator.Let_syntax] module *)
   let qc_gen_mod = module_expr_of_string ~loc "Core.Quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
-  let body = [%expr size >>= fun x -> return x] in
-  (* TODO: rewrite, use [pexp_match] instead of [pexp_function] *)
-  (* let body = pexp_function ~loc (gen_expr_cases sig_items) in  *)
+  (* let body = [%expr size >>= fun x -> return x] in *)
+  let match_exp = pexp_match ~loc [%expr ty] (gen_expr_cases sig_items) in 
+  let body = [%expr size >>= fun x -> [%e match_exp]] in 
   let_open_twice ~loc qc_gen_mod let_syntax_mod body
 
 (** Walks over a module signature definition and extracts the 

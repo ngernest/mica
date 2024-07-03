@@ -44,13 +44,9 @@ let loc = Location.none;;
 [{
 
 [
-  (IntT, [Empty]);
-  (Bool, [Is_empty, Mem]);
-  (IntT, [Add, Rem]);
+  (Bool, [Is_empty; Mem; Invariant]);
   (Int, [Size]);
-  (IntT, [Union, Intersect]);
-  (Bool, [Invariant])
-
+  (IntT, [Empty; Add; Rem; Union; Intersect])
 ]
 
 }]

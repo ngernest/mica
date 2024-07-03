@@ -81,3 +81,13 @@ let mk_scrutinees (expr_vars : string list)
   | _ ->
     let xs = List.map expr_vars ~f:(fun x -> [%expr interp [%e evar x ~loc]]) in
     if List.length xs = 1 then List.hd xs else post xs
+
+let pexp_list ~(loc : Location.t) (xs : expression list) =
+  let nil = pexp_construct ~loc (lident_loc_of_string ~loc "[]") None in 
+  match xs with 
+  | [] -> nil
+  | _ -> 
+    List.fold_right ~f:(fun acc ({pexp_loc; _} as x) -> 
+      pexp_construct ~loc:(ghostify pexp_loc) (lident_loc_of_string ~loc:(ghostify pexp_loc) "::") 
+      (pexp_tuple_opt ~loc:pexp_loc [acc;x])) ~init:nil xs
+
