@@ -33,6 +33,7 @@ val get_ret_ty : core_type -> core_type
 val get_ty_name_and_params : type_declaration -> string * core_type list
 val get_ty_decls_from_sig : signature -> (string * core_type list) list
 val get_abs_tys_from_sig : signature -> type_declaration list
+val get_abs_ty_names : signature -> string list
 
 (******************************************************************************)
 (** {1 Working with pattern matches} *)

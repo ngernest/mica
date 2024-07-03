@@ -32,14 +32,7 @@ include
       | IntT
     let gen_expr ty =
       let open Core.Quickcheck.Generator in
-        let open Let_syntax in
-          function
-          | IntT -> Empty
-          | Bool -> (Is_empty, Mem)
-          | IntT -> (Add, Rem)
-          | Int -> Size
-          | IntT -> (Union, Intersect)
-          | Bool -> Invariant
+        let open Let_syntax in size >>= (fun x -> return x)
     let _ = gen_expr
     module TestHarness(M:SetInterface) =
       struct

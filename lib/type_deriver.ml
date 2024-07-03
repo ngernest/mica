@@ -14,9 +14,7 @@ open Utils
     a [core_type]) *)
 let mk_expr_cstrs (sig_items : signature) :
   (constructor_declaration * core_type) list =
-  let abs_tys = get_abs_tys_from_sig sig_items in
-  let abs_ty_names =
-    List.map ~f:(fun abs_ty -> no_loc abs_ty.ptype_name) abs_tys in
+  let abs_ty_names = get_abs_ty_names sig_items in
   List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
       match psig_desc with
       | Psig_type (_, _) -> []
@@ -122,9 +120,9 @@ let derive_gen_expr ~(loc : Location.t)
   (* Derive [let open] expressions for the [Generator.Let_syntax] module *)
   let qc_gen_mod = module_expr_of_string ~loc "Core.Quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
-  (* let body = [%expr size >>= fun x -> return x] in *)
+  let body = [%expr size >>= fun x -> return x] in
   (** TODO: rewrite, use [pexp_match] instead of [pexp_function]*)
-  let body = pexp_function ~loc (gen_expr_cases sig_items) in 
+  (* let body = pexp_function ~loc (gen_expr_cases sig_items) in  *)
   let_open_twice ~loc qc_gen_mod let_syntax_mod body
 
 (** Walks over a module signature definition and extracts the 

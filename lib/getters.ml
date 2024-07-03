@@ -179,6 +179,11 @@ let get_abs_tys_from_sig (sig_items : signature) : type_declaration list =
       | _ -> acc)
     ~init:[] sig_items
 
+(** Retrieves the names of all the abstract types in a signature *)    
+let get_abs_ty_names (sig_items : signature) : string list = 
+  let abs_tys = get_abs_tys_from_sig sig_items in 
+  List.map ~f:(fun abs_ty -> no_loc abs_ty.ptype_name) abs_tys
+
 (******************************************************************************)
 (** {1 Working with pattern matches} *)
 
