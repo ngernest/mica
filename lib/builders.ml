@@ -89,13 +89,16 @@ let mk_scrutinees (expr_vars : string list)
     However, the list is pretty-printed as the list literal [[x1; x2; ...]]. 
     - Note: this function isn't available in [Ppxlib.Ast_builder] and there 
     is no [pexp_list] expression type in [Parsetree], so we have to 
-    implement this function ourselves. *)    
+    implement this function ourselves. *)
 let pexp_list ~(loc : Location.t) (xs : expression list) : expression =
-  let nil = pexp_construct ~loc (lident_loc_of_string ~loc "[]") None in 
-  match xs with 
+  let nil = pexp_construct ~loc (lident_loc_of_string ~loc "[]") None in
+  match xs with
   | [] -> nil
-  | _ -> 
-    List.fold_right ~f:(fun acc ({pexp_loc; _} as x) -> 
-      pexp_construct ~loc:pexp_loc (lident_loc_of_string ~loc:pexp_loc "::") 
-      (pexp_tuple_opt ~loc:pexp_loc [acc;x])) ~init:nil xs
-
+  | _ ->
+    (* Build the list by cons-ing elements in a right-associative manner *)
+    List.fold_right
+      ~f:(fun acc ({ pexp_loc; _ } as x) ->
+        pexp_construct ~loc:pexp_loc
+          (lident_loc_of_string ~loc:pexp_loc "::")
+          (pexp_tuple_opt ~loc:pexp_loc [ acc; x ]))
+      ~init:nil xs

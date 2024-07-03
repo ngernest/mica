@@ -24,11 +24,9 @@ let max_loc (l1 : Location.t) (l2 : Location.t) : Location.t =
   if Location.compare l1 l2 >= 0 then l1 else l2
 
 (** Lifts a binary function over two polymorphic [loc] values *)
-(* let liftF2 ~(f : 'a -> 'b -> 'c) (alpha : 'a Location.loc)
-  (beta : 'b Location.loc) : 'c Location.loc =
-  let new_loc = max_loc alpha.loc beta.loc in
-  let a, b = (alpha.txt, beta.txt) in
-  { txt = f a b; loc = alpha.loc } *)
+(* let liftF2 ~(f : 'a -> 'b -> 'c) (alpha : 'a Location.loc) (beta : 'b
+   Location.loc) : 'c Location.loc = let new_loc = max_loc alpha.loc beta.loc in
+   let a, b = (alpha.txt, beta.txt) in { txt = f a b; loc = alpha.loc } *)
 
 (** Maps a function component-wise over a pair *)
 let map2 ~f (a1, a2) = (f a1, f a2)

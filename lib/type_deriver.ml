@@ -83,16 +83,15 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 let gen_expr_case_skeleton (sig_items : signature) :
   (Longident.t Location.loc * Longident.t Location.loc list) list =
   let open Base.List.Assoc in
-  (* TODOs:
-     - use Metaquot instead? 
-     - write tests for [gen_expr_case_skeleton] to inspect the AssocList
-     - find some way of using [get_cstr_arity] *)
+  (* TODOs: - use Metaquot instead? - write tests for [gen_expr_case_skeleton]
+     to inspect the AssocList - find some way of using [get_cstr_arity] *)
   let expr_cstrs =
     inverse (mk_expr_cstrs sig_items)
     |> List.map ~f:(fun (ty, cstr_decl) ->
            ( lident_loc_of_string ~loc:ty.ptyp_loc (string_of_core_ty ty),
              get_cstr_name cstr_decl ))
-    |> List.sort ~cmp:(fun (t1, _) (t2, _) -> Longident.compare t1.txt t2.txt) in
+    |> List.sort ~cmp:(fun (t1, _) (t2, _) -> Longident.compare t1.txt t2.txt)
+  in
   let ty_cstrs : Longident.t Location.loc list =
     List.map ~f:get_cstr_name (mk_ty_cstrs sig_items) in
   (* Map [ty] constructors in [ty_cstrs] to the keys in [expr_cstrs], then group
@@ -105,23 +104,21 @@ let gen_expr_cases (sig_items : signature) : case list =
   let guard = None in
   List.map skeleton ~f:(fun (lhs_cstr, rhs_cases) ->
       let lhs = ppat_construct ~loc:lhs_cstr.loc lhs_cstr None in
-      let rhs_head = List.hd rhs_cases in 
-      let rhs_loc = rhs_head.loc in 
-      let rhs_args = pexp_list ~loc:rhs_loc (List.map 
-        ~f:(fun rhs_elt -> pexp_ident ~loc:rhs_elt.loc rhs_elt) rhs_cases) in 
-      let loc = rhs_args.pexp_loc in 
-      let rhs = [%expr of_list [%e rhs_args]] in 
-      case ~lhs ~guard ~rhs)
-      
-      
-      (* TODO: figure out how to genreate arguments for the RHS constructors -
-         rewrite! *)
-      (* let rhs =
-        pexp_tuple ~loc:Location.none
+      let rhs_head = List.hd rhs_cases in
+      let rhs_loc = rhs_head.loc in
+      let rhs_args =
+        pexp_list ~loc:rhs_loc
           (List.map
-             ~f:(fun rhs -> pexp_construct ~loc:rhs.loc rhs None)
+             ~f:(fun rhs_elt -> pexp_ident ~loc:rhs_elt.loc rhs_elt)
              rhs_cases) in
-      case ~lhs ~guard ~rhs) *)
+      let loc = rhs_args.pexp_loc in
+      let rhs = [%expr of_list [%e rhs_args]] in
+      case ~lhs ~guard ~rhs)
+
+(* TODO: figure out how to genreate arguments for the RHS constructors -
+   rewrite! *)
+(* let rhs = pexp_tuple ~loc:Location.none (List.map ~f:(fun rhs ->
+   pexp_construct ~loc:rhs.loc rhs None) rhs_cases) in case ~lhs ~guard ~rhs) *)
 
 (* TODO: - figure out how to do a pattern match on the [ty] constructors inside
    the body of [gen_expr], while keeping track of the [size] QC parameter - ^^
@@ -140,8 +137,8 @@ let derive_gen_expr ~(loc : Location.t)
   let qc_gen_mod = module_expr_of_string ~loc "Core.Quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
   (* let body = [%expr size >>= fun x -> return x] in *)
-  let match_exp = pexp_match ~loc [%expr ty] (gen_expr_cases sig_items) in 
-  let body = [%expr size >>= fun x -> [%e match_exp]] in 
+  let match_exp = pexp_match ~loc [%expr ty] (gen_expr_cases sig_items) in
+  let body = [%expr size >>= fun x -> [%e match_exp]] in
   let_open_twice ~loc qc_gen_mod let_syntax_mod body
 
 (** Walks over a module signature definition and extracts the 
