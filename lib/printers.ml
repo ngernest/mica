@@ -24,16 +24,16 @@ let base_types ~(loc : Location.t) : core_type list =
 (** Alias for [Format.err_formatter] *)
 let err_fmt : Format.formatter = Format.err_formatter
 
-(** Pretty-printer for [pattern]'s *)
+(** Pretty-printer for [pattern]s *)
 let pp_pattern : pattern -> unit = pattern err_fmt
 
-(** Pretty-printer for [core_type]'s *)
+(** Pretty-printer for [core_type]s *)
 let pp_core_type : core_type -> unit = core_type err_fmt
 
-(** Pretty-printer for [expression]'s *)
+(** Pretty-printer for [expression]s *)
 let pp_expression : expression -> unit = expression err_fmt
 
-(** Pretty-printer for [structure_item]'s *)
+(** Pretty-printer for [structure_item]s *)
 let pp_structure_item : structure_item -> unit = structure_item err_fmt
 
 (** Instantiates all type variables ['a] inside a type expression with [int] 
@@ -68,8 +68,7 @@ let rec monomorphize (ty : core_type) : core_type =
     - Note: polymoprhic variants, objects, extensions/attributes are 
     not supported by this function.  
     - Note: this function is slightly different from [Ppxlib.string_of_core_type]
-    due to its capitalization, camel-case & monomorphization functionalities.
-*)
+    due to its capitalization, camel-case & monomorphization functionalities. *)
 let rec string_of_core_ty (ty : core_type) : string =
   match ty.ptyp_desc with
   | Ptyp_var _ | Ptyp_any -> string_of_core_ty (monomorphize ty)

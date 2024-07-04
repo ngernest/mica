@@ -11,18 +11,6 @@ open Miscellany
 (** Turns the variable [x] into [x'] *)
 let add_prime : string -> string = fun x -> x ^ "\'"
 
-(** A more elaborate version of [add_prime] which does the same thing,
-    but uses [Ppxlib]'s in-built [quoter]
-    - Note: this function is currently unused
-    - TODO: the quoter ought to be created by the caller, methinks *)
-let quote_name (name : string) : string =
-  let open Expansion_helpers.Quoter in
-  let quoter = create () in
-  let new_name = quote quoter (evar ~loc:Location.none name) in
-  match new_name.pexp_desc with
-  | Pexp_ident { txt = quoted_name; _ } -> string_of_lident quoted_name
-  | _ -> failwith "impossible"
-
 (** [update_expr_arg_names expr_args args] replaces each variable [x] in 
     [expr_args] if [x'] (the variable with a prime added) is in [expr_args] *)
 let update_expr_arg_names (expr_args : string list) (args : string list) :

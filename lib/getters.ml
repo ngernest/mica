@@ -145,7 +145,7 @@ let get_type_params (td : type_declaration) : core_type list =
   List.map td.ptype_params ~f:(fun (core_ty, _) -> monomorphize core_ty)
 
 (** Extracts the (monomorphized) return type of a type expression 
-        (i.e. the rightmost type in an arrow type) *)
+    (i.e. the rightmost type in an arrow type) *)
 let rec get_ret_ty (ty : core_type) : core_type =
   let loc = ty.ptyp_loc in
   let ty_mono = monomorphize ty in
@@ -164,8 +164,8 @@ let get_ty_name_and_params ({ ptype_name; ptype_params; _ } : type_declaration)
   (ptype_name.txt, ty_params)
 
 (** Takes a module signature and returns a list containing pairs of the form
-      [(<type_name>, <list_of_type_parameters>)]. The list is ordered based on
-      the order of appearance of the type declarations in the signature.  *)
+    [(<type_name>, <list_of_type_parameters>)]. The list is ordered based on
+    the order of appearance of the type declarations in the signature.  *)
 let get_ty_decls_from_sig (sig_items : signature) :
   (string * core_type list) list =
   List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; _ } ->
@@ -213,13 +213,13 @@ let get_match_arm (expr_vars : string list) ~(abs_ty_parameterized : bool)
     ppat_tuple ~loc val_exprs
 
 (** Creates the RHS of the inner pattern-match in [interp], for the special 
-      case where we are dealing with a unary [value] constructor
-      and a unary module function, e.g. [match e with ValInt x -> M.f x] 
-      (In this example, [get_unary_case_rhs] produces the expression [M.f x])
-      - [value_cstr] is the name of the constructor for the [value] type 
-      - [expr_cstr] is the constructor for the [expr] type, which corresponds
-      to a function inside the module with name [mod_name] 
-      - [x] is the argument that will be applied to the module function *)
+    case where we are dealing with a unary [value] constructor
+    and a unary module function, e.g. [match e with ValInt x -> M.f x] 
+    (In this example, [get_unary_case_rhs] produces the expression [M.f x])
+    - [value_cstr] is the name of the constructor for the [value] type 
+    - [expr_cstr] is the constructor for the [expr] type, which corresponds
+    to a function inside the module with name [mod_name] 
+    - [x] is the argument that will be applied to the module function *)
 let get_unary_case_rhs (value_cstr : Longident.t Location.loc)
   (mod_name : string) (expr_cstr : Longident.t Location.loc) (x : string)
   ~(loc : Location.t) : expression =
@@ -229,8 +229,8 @@ let get_unary_case_rhs (value_cstr : Longident.t Location.loc)
   pexp_construct ~loc value_cstr (Some mod_func_app)
 
 (** Variant of [get_unary_case_rhs] which handles the situation 
-      when the RHS of the case statement is an n-ary function with 
-      arguments [xs] *)
+    when the RHS of the case statement is an n-ary function with 
+    arguments [xs] *)
 let get_nary_case_rhs (ret_ty_cstr : constructor_declaration)
   (mod_name : string) (expr_cstr : Longident.t Location.loc)
   (xs : expression list) ~loc : expression =
