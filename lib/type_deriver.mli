@@ -38,10 +38,15 @@ val mk_val_cstr : core_type -> constructor_declaration
     based on the inhabitants of the [ty] ADT *)
 val mk_val_cstrs : signature -> constructor_declaration list
 
+type spine = {
+  cstr : constructor_declaration;
+  args : expression list 
+}
+
 (** Maps [ty]s to [expr]s, constructing the main case statement 
     in [gen_expr] *)
 val gen_expr_case_skeleton :
-  signature -> (Longident.t Location.loc * Longident.t Location.loc list) list
+  signature -> (Longident.t Location.loc * spine list) list
 
 val gen_expr_cases : signature -> case list
 

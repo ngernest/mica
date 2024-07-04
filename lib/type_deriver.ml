@@ -76,56 +76,47 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
 let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:mk_val_cstr
 
+type spine = {
+  cstr : constructor_declaration;
+  args : expression list 
+}  
+
+let mk_spine cstr args = { cstr; args }
+
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) 
-      - TODO: figure out how to use the result of [gen_expr_case_skeleton]
-        when deriving [gen_expr]
-      - TODO: figure out how to create values of type [case] *)
-let gen_expr_case_skeleton (sig_items : signature) :
-  (Longident.t Location.loc * Longident.t Location.loc list) list =
+      - TODO: figure out recursive cases -- need to invoke atomic generators
+        for the construct arguments *)
+let gen_expr_case_skeleton (sig_items : signature) : (Longident.t Location.loc * spine list) list =
   let open Base.List.Assoc in
   let expr_cstrs =
     inverse (mk_expr_cstrs sig_items)
-    |> List.map ~f:(fun (ty, cstr_decl) ->
+    |> List.map ~f:(fun (ty, ({pcd_loc; pcd_args; _} as cstr_decl)) ->
            ( lident_loc_of_string ~loc:ty.ptyp_loc (string_of_core_ty ty),
-             get_cstr_name cstr_decl ))
+              mk_spine cstr_decl (evars_of_cstr_args ~loc:pcd_loc pcd_args)))
     |> List.sort ~cmp:(fun (t1, _) (t2, _) -> Longident.compare t1.txt t2.txt)
   in
   let ty_cstrs : Longident.t Location.loc list =
     List.map ~f:get_cstr_name (mk_ty_cstrs sig_items) in
-  (* Map [ty] constructors in [ty_cstrs] to the keys in [expr_cstrs], then group
-     values with the same keys together - TODO: figure out how to generate fresh
-     arguments for the constructors in the RHS list *)
   merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_longident_loc
   |> group ~equal:equal_longident_loc
 
 let gen_expr_cases (sig_items : signature) : case list =
   let skeleton = gen_expr_case_skeleton sig_items in
   let guard = None in
-  List.map skeleton ~f:(fun (lhs_cstr, rhs_cases) ->
+  List.map skeleton ~f:(fun (lhs_cstr, rhs_elts) ->
       let lhs = ppat_construct ~loc:lhs_cstr.loc lhs_cstr None in
-      let rhs_head = List.hd rhs_cases in
-      let rhs_loc = rhs_head.loc in
-      let rhs_args =
-        elist ~loc:rhs_loc
+
+      let rhs_exprs =
+        elist ~loc:lhs.ppat_loc
           (List.map
-             ~f:(fun rhs_elt -> pexp_ident ~loc:rhs_elt.loc rhs_elt)
-             rhs_cases) in
-      let loc = rhs_args.pexp_loc in
-      let rhs = [%expr of_list [%e rhs_args]] in
+             ~f:(fun {cstr; args} -> 
+              let cstr_ident = evar ~loc:cstr.pcd_loc cstr.pcd_name.txt in 
+              let cstr_args = pexp_tuple ~loc:cstr.pcd_loc args in 
+              eapply ~loc:cstr.pcd_loc cstr_ident [cstr_args])
+             rhs_elts) in
+      let loc = rhs_exprs.pexp_loc in
+      let rhs = [%expr of_list [%e rhs_exprs]] in
       case ~lhs ~guard ~rhs)
-
-(* TODO: figure out how to genreate arguments for the RHS constructors -
-   rewrite! *)
-(* let rhs = pexp_tuple ~loc:Location.none (List.map ~f:(fun rhs ->
-   pexp_construct ~loc:rhs.loc rhs None) rhs_cases) in case ~lhs ~guard ~rhs) *)
-
-(* TODO: - figure out how to do a pattern match on the [ty] constructors inside
-   the body of [gen_expr], while keeping track of the [size] QC parameter - ^^
-   this will involve doing some analysis of the arities of the functions in the
-   signature - when [size = 0], the RHS of the case stmt should be an arity-0
-   constructor that is [return]ed into the [Generator] monad - May need to
-   create some sort of [inv_ctx]-esque structure to map [ty]s to [expr]s (based
-   on the return type of the corresponding function in the signature) *)
 
 (** Derives the [gen_expr] QuickCheck generator 
       - [ty_cstrs] is a list of constructors for the [ty] ADT *)

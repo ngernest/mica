@@ -22,53 +22,36 @@ let quote_name (name : string) : string =
 
 (** Produces a fresh variable at location [loc], with the type [ty]
     of the variable serialized & prefixed to the resultant variable name *)
-let mk_fresh_ppat_var ~(loc : Location.t) (ty : core_type) : pattern =
+(* let mk_fresh_ppat_var ~(loc : Location.t) (ty : core_type) : pattern =
   let prefix = uncapitalize (string_of_core_ty ty) in
-  gen_symbol ~prefix () |> pvar ~loc
+  gen_symbol ~prefix () |> pvar ~loc *)
 
-(** [mk_fresh_legacy ~loc i ty] generates a fresh variable at location [loc] 
-    that corresponds to the type [ty], with the (integer) index [i + 1] 
-    used as a varname suffix 
-    - We add 1 to [i] so that variable names are 1-indexed 
-    - Note: this function has now been deprecated in favor of [mk_fresh_ppat_var],
-      which uses [Ppxlib]'s official [gen_symbol] function for producing
-      fresh variable names
-    - Note: this function is not exposed in [names.mli] to avoid 
-      clients of this module from using this function *)
-let rec mk_fresh_legacy ~(loc : Location.t) (i : int) (ty : core_type) : pattern
-    =
-  let varname =
-    match ty with
-    | [%type: bool] -> "b"
-    | [%type: char] -> "c"
-    | [%type: string] -> "s"
-    | [%type: unit] -> "u"
-    | [%type: int] | [%type: 'a] -> "x"
-    | [%type: expr] | [%type: t] | [%type: 'a t] -> "e"
-    | { ptyp_desc; _ } -> (
-      match ptyp_desc with
-      | Ptyp_tuple _ -> "p"
-      | Ptyp_arrow _ -> "f"
-      | Ptyp_constr ({ txt; _ }, _) ->
-        let tyconstr = string_of_lident txt in
-        if String.equal tyconstr "list" then "lst"
-          (* For unrecognized type constructors, just extract the first char of
-             the type constructor's name *)
-        else String.sub tyconstr ~pos:0 ~len:1
-      | _ ->
-        pp_core_type ty;
-        failwith "TODO: [mk_fresh] not supported for types of this shape") in
-  ppat_var ~loc (with_loc ~loc (varname ^ Int.to_string (i + 1)))
+let mk_fresh ~(loc : Location.t) ~(f : loc:Location.t -> string -> 'a) (ty : core_type) : 'a = 
+  let prefix = uncapitalize (string_of_core_ty ty) in
+  f ~loc (gen_symbol ~prefix ())
+
+let mk_fresh_pvar ~(loc : Location.t) (ty : core_type) : pattern = 
+  mk_fresh ~loc ty ~f:pvar
+  
+let mk_fresh_evar ~(loc : Location.t) (ty : core_type) : expression = 
+  mk_fresh ~loc ty ~f:evar 
 
 (** Produces fresh variable names corresponding to a value [arg] of type 
     [constructor_arguments] at location [loc] *)
-let varnames_of_cstr_args ~(loc : Location.t) (arg : constructor_arguments) :
-  pattern list =
-  match arg with
-  | Pcstr_tuple tys -> List.map ~f:(mk_fresh_ppat_var ~loc) tys
+let varnames_of_cstr_args ~(loc : Location.t) (args : constructor_arguments) 
+  ~(f : loc:Location.t -> string -> 'a) : 'a list =
+  match args with
+  | Pcstr_tuple tys -> List.map ~f:(fun ty -> mk_fresh ~loc ~f ty) tys
   | Pcstr_record lbl_decls ->
     List.map lbl_decls ~f:(fun { pld_name; pld_type; pld_loc; _ } ->
-        gen_symbol ~prefix:pld_name.txt () |> pvar ~loc:pld_loc)
+        gen_symbol ~prefix:pld_name.txt () |> f ~loc:pld_loc)
+
+let pvars_of_cstr_args ~(loc : Location.t) (args : constructor_arguments) : pattern list = 
+  varnames_of_cstr_args ~loc args ~f:pvar 
+
+let evars_of_cstr_args ~(loc : Location.t) (args : constructor_arguments) : expression list = 
+  varnames_of_cstr_args ~loc args ~f:evar
+
 
 (** Takes a [constructor_declaration] and produces the pattern 
     [Ppat_construct] *)
@@ -78,7 +61,7 @@ let ppat_construct_of_cstr_decl ~(loc : Location.t)
     map_with_loc ~f:Longident.parse cstr_decl.pcd_name in
   (* Generate fresh names for the construct arguments, then convert them to the
      [Ppat_tuple] pattern *)
-  let arg_names : pattern list = varnames_of_cstr_args ~loc cstr_decl.pcd_args in
+  let arg_names : pattern list = pvars_of_cstr_args ~loc cstr_decl.pcd_args in
   let cstr_args : pattern option = ppat_tuple_opt ~loc arg_names in
   ppat_construct ~loc cstr_name cstr_args
 

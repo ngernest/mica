@@ -67,7 +67,7 @@ let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type)
 let get_cstr_args ~(loc : Location.t) (get_ty : 'a -> core_type)
   (args : 'a list) : pattern * inv_ctx =
   let arg_tys : core_type list = List.map ~f:get_ty args in
-  let arg_names : pattern list = List.map ~f:(mk_fresh_ppat_var ~loc) arg_tys in
+  let arg_names : pattern list = List.map ~f:(mk_fresh_pvar ~loc) arg_tys in
   let gamma : inv_ctx =
     List.fold_left2
       ~f:(fun acc var_pat ty -> (ty, get_varname var_pat) :: acc)
