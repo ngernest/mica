@@ -72,7 +72,7 @@ the main `mica` deriver which runs afterwards.
     - Most functions in this file begin with the prefix `mk_` 
   - [getters.ml](./lib/getters.ml): Functions for inspecting AST nodes
     - Most functions in this file begin with the prefix `get_`
-  - [equality.ml](./lib/equality.ml): Equality functions for `Parsetree` types 
+  - [equality.ml](./lib/equality.ml): Location-agnostic equality functions for `Parsetree` types 
   - [lident.ml](./lib/lident.ml): Utilities for working with the `Longident` type
   - [names.ml](./lib/names.ml): Functions for generating fresh variable names & quoting expressions
   - [printers.ml](./lib/printers.ml): Pretty-printers for AST types

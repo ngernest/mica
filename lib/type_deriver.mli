@@ -45,6 +45,7 @@ type spine = { cstr : constructor_declaration; args : expression list }
 val gen_expr_case_skeleton :
   signature -> (Longident.t Location.loc * spine list) list
 
+(** Creates the main case statement in [gen_expr] *)  
 val gen_expr_cases : signature -> case list
 
 (** Derives the [gen_expr] QuickCheck generator 

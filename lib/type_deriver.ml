@@ -58,16 +58,16 @@ let mk_cstr_aux (sig_items : signature)
   List.map uniq_ret_tys ~f
 
 (** Constructs the definition of the [ty] algebraic data type
-      based on the unique return types of all [val] declarations within 
-      the module signature *)
+    based on the unique return types of all [val] declarations within 
+    the module signature *)
 let mk_ty_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:(fun ty ->
       mk_cstr ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
 (** [mk_val_cstr ty] constructors the corresponding constructor declaration
-      for the [value] datatype, given some [core_type] [ty]
-      - e.g. if [ty = Int], [mk_val_cstr] returns the declaration for 
-        the [ValInt] constructor *)
+    for the [value] datatype, given some [core_type] [ty]
+    - e.g. if [ty = Int], [mk_val_cstr] returns the declaration for 
+      the [ValInt] constructor *)
 let mk_val_cstr (ty : core_type) : constructor_declaration =
   mk_cstr ~name:("Val" ^ string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[ ty ]
 
@@ -81,9 +81,9 @@ type spine = { cstr : constructor_declaration; args : expression list }
 let mk_spine cstr args = { cstr; args }
 
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) 
-      - TODO: figure out recursive cases -- need to invoke atomic generators
-        for the construct arguments (in particular we need to use infix >>=
-        syntax to bind the recursively-generated arguments) *)
+  - TODO: figure out recursive cases -- need to invoke atomic generators
+    for the construct arguments (in particular we need to use infix >>=
+    syntax to bind the recursively-generated arguments) *)
 let gen_expr_case_skeleton (sig_items : signature) :
   (Longident.t Location.loc * spine list) list =
   let open Base.List.Assoc in
@@ -99,6 +99,7 @@ let gen_expr_case_skeleton (sig_items : signature) :
   merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_longident_loc
   |> group ~equal:equal_longident_loc
 
+(** Creates the main case statement in [gen_expr] *)  
 let gen_expr_cases (sig_items : signature) : case list =
   let skeleton = gen_expr_case_skeleton sig_items in
   let guard = None in
@@ -118,7 +119,7 @@ let gen_expr_cases (sig_items : signature) : case list =
       case ~lhs ~guard ~rhs)
 
 (** Derives the [gen_expr] QuickCheck generator 
-      - [ty_cstrs] is a list of constructors for the [ty] ADT *)
+    - [ty_cstrs] is a list of constructors for the [ty] ADT *)
 let derive_gen_expr ~(loc : Location.t)
   (ty_cstrs : constructor_declaration list) (sig_items : signature) : expression
     =
