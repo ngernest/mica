@@ -76,23 +76,22 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
 let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:mk_val_cstr
 
-type spine = {
-  cstr : constructor_declaration;
-  args : expression list 
-}  
+type spine = { cstr : constructor_declaration; args : expression list }
 
 let mk_spine cstr args = { cstr; args }
 
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) 
       - TODO: figure out recursive cases -- need to invoke atomic generators
-        for the construct arguments *)
-let gen_expr_case_skeleton (sig_items : signature) : (Longident.t Location.loc * spine list) list =
+        for the construct arguments (in particular we need to use infix >>=
+        syntax to bind the recursively-generated arguments) *)
+let gen_expr_case_skeleton (sig_items : signature) :
+  (Longident.t Location.loc * spine list) list =
   let open Base.List.Assoc in
   let expr_cstrs =
     inverse (mk_expr_cstrs sig_items)
-    |> List.map ~f:(fun (ty, ({pcd_loc; pcd_args; _} as cstr_decl)) ->
+    |> List.map ~f:(fun (ty, ({ pcd_loc; pcd_args; _ } as cstr_decl)) ->
            ( lident_loc_of_string ~loc:ty.ptyp_loc (string_of_core_ty ty),
-              mk_spine cstr_decl (evars_of_cstr_args ~loc:pcd_loc pcd_args)))
+             mk_spine cstr_decl (evars_of_cstr_args ~loc:pcd_loc pcd_args) ))
     |> List.sort ~cmp:(fun (t1, _) (t2, _) -> Longident.compare t1.txt t2.txt)
   in
   let ty_cstrs : Longident.t Location.loc list =
@@ -109,10 +108,10 @@ let gen_expr_cases (sig_items : signature) : case list =
       let rhs_exprs =
         elist ~loc:lhs.ppat_loc
           (List.map
-             ~f:(fun {cstr; args} -> 
-              let cstr_ident = evar ~loc:cstr.pcd_loc cstr.pcd_name.txt in 
-              let cstr_args = pexp_tuple ~loc:cstr.pcd_loc args in 
-              eapply ~loc:cstr.pcd_loc cstr_ident [cstr_args])
+             ~f:(fun { cstr; args } ->
+               let cstr_ident = evar ~loc:cstr.pcd_loc cstr.pcd_name.txt in
+               let cstr_args = pexp_tuple ~loc:cstr.pcd_loc args in
+               eapply ~loc:cstr.pcd_loc cstr_ident [ cstr_args ])
              rhs_elts) in
       let loc = rhs_exprs.pexp_loc in
       let rhs = [%expr of_list [%e rhs_exprs]] in
