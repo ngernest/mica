@@ -96,7 +96,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
   (* For parameterized types, recursively derive generators for their type
      parameters *)
   | Ptyp_constr (ty_name, ty_params) ->
-    let args = List.map ~f:(gen_atom ~loc) ty_params in
+    let args = List.map ~f:(fun ty -> gen_atom ~loc:ty.ptyp_loc ty) ty_params in
     type_constr_conv ~loc ty_name ~f:mk_generator_name args
   | Ptyp_any ->
     mk_error_expr ~loc:ty.ptyp_loc
@@ -137,11 +137,12 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
          "Unable to derive QuickCheck generator for type %s"
          (Ppxlib.string_of_core_type ty)
 
-(* TODO: figure out how to invoke [gen_atom] defined above 
-   - we want both the LHS & RHS to be [core_type]s
-   - we also need to recursively produce monadic bind expressions using >>= *)         
-let gen_expr_skeleton_alt (sig_items : signature) = let tys = uniq_ret_tys
-   sig_items in failwith "TODO"
+(* TODO: figure out how to invoke [gen_atom] defined above - we want both the
+   LHS & RHS to be [core_type]s - we also need to recursively produce monadic
+   bind expressions using >>= *)
+let gen_expr_skeleton_alt (sig_items : signature) =
+  let tys = uniq_ret_tys sig_items in
+  failwith "TODO"
 
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) *)
 let gen_expr_case_skeleton (sig_items : signature) :
