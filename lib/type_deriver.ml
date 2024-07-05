@@ -81,6 +81,7 @@ type spine = { cstr : constructor_declaration; args : expression list }
 let mk_spine (cstr : constructor_declaration) (args : expression list) = 
   { cstr; args }
 
+
 (** Takes the name of a type and produces the name of its 
     corresponding QuickCheck generator *)
 let mk_generator_name (s : string) : string = 
