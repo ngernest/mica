@@ -112,7 +112,7 @@ let mk_interp ~(loc : location) (mod_ty : module_type)
           } in
         let rhs : expression = mk_interp_case_rhs params in
         case ~lhs ~guard:None ~rhs) in
-  let arg_ident = pexp_ident ~loc (lident_loc_of_string "e" ~loc) in
+  let arg_ident = evar "e" ~loc in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   [%stri let rec interp e = [%e func_body]]
 
