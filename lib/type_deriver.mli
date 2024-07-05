@@ -49,7 +49,7 @@ val gen_expr_case_skeleton :
 val gen_expr_cases : signature -> case list
 
 (** Derives the [gen_expr] QuickCheck generator 
-        - [ty_cstrs] is a list of constructors for the [ty] ADT  *)
+    - [ty_cstrs] is a list of constructors for the [ty] ADT  *)
 val derive_gen_expr :
   loc:Location.t -> constructor_declaration list -> signature -> expression
 

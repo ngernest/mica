@@ -2,7 +2,7 @@
  (name ppx_mica)
  (public_name ppx_mica)
  (kind ppx_deriver)
- (libraries base core ppxlib)
+ (libraries base base_quickcheck core ppxlib)
  (preprocess
   (pps ppx_jane ppxlib.metaquot bisect_ppx --conditional)))
 

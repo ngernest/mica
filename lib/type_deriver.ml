@@ -78,7 +78,23 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 
 type spine = { cstr : constructor_declaration; args : expression list }
 
-let mk_spine cstr args = { cstr; args }
+let mk_spine (cstr : constructor_declaration) (args : expression list) = 
+  { cstr; args }
+
+
+let gen_atom ~(loc : Location.t) (ty: core_type) : expression = 
+  match ty with 
+  | [%type: int] -> [%expr small_positive_int]
+  | [%type: char] -> [%expr char_alpha]
+  | [%type: string] -> [%expr [%quickcheck.generator: string]]
+  | [%type: unit] -> [%expr unit]
+  (* TODO: handle type constructors -- use [type_constr_conv] somehow *)
+  | _ -> failwith "TODO"
+
+(* let gen_expr_skeleton_alt (sig_items : signature) = 
+  let tys = uniq_ret_tys sig_items in 
+  failwith "TODO" *)
+
 
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) 
   - TODO: figure out recursive cases -- need to invoke atomic generators
@@ -124,7 +140,7 @@ let derive_gen_expr ~(loc : Location.t)
   (ty_cstrs : constructor_declaration list) (sig_items : signature) : expression
     =
   (* Derive [let open] expressions for the [Generator.Let_syntax] module *)
-  let qc_gen_mod = module_expr_of_string ~loc "Core.Quickcheck.Generator" in
+  let qc_gen_mod = module_expr_of_string ~loc "Base_quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
   (* let body = [%expr size >>= fun x -> return x] in *)
   let match_exp = pexp_match ~loc [%expr ty] (gen_expr_cases sig_items) in
@@ -132,8 +148,8 @@ let derive_gen_expr ~(loc : Location.t)
   let_open_twice ~loc qc_gen_mod let_syntax_mod body
 
 (** Walks over a module signature definition and extracts the 
-      abstract type declaration, producing the definition 
-      the [expr] and [ty] algebraic data types *)
+    abstract type declaration, producing the definition 
+    the [expr] and [ty] algebraic data types *)
 let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
   (mt : module_type_declaration) : structure_item list =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
