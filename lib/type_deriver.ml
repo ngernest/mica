@@ -89,8 +89,8 @@ let mk_generator_name (s : string) : string =
 (** Produces an atomic QuickCheck generator for the given [core_type] *)
 let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
   match ty.ptyp_desc with
-  (* Assume that [quickcheck_generator_ty] exists for any non-parameterized type
-     [ty] *)
+  (* Base case: assume that [quickcheck_generator_ty] exists for any
+     non-parameterized type [ty] *)
   | Ptyp_constr (ty_name, []) ->
     unapplied_type_constr_conv ~loc ty_name ~f:mk_generator_name
   (* For parameterized types, recursively derive generators for their type
@@ -105,7 +105,44 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
     pexp_extension ~loc:ty.ptyp_loc
     @@ Location.error_extensionf ~loc:ty.ptyp_loc
          "Unable to derive QuickCheck generator for type %s" tyvar
-  | _ -> failwith "TODO"
+  | Ptyp_tuple tys ->
+    (* Core.Quickcheck.Generator only supports tuples of length 2 - 6 *)
+    let n = List.length tys in
+    if n >= 2 && n <= 6 then
+      let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
+      let args = List.map ~f:(fun ty -> gen_atom ~loc:ty.ptyp_loc ty) tys in
+      eapply ~loc tuple_gen args
+    else
+      pexp_extension ~loc
+      @@ Location.error_extensionf ~loc
+           "Unable to derive QuickCheck generator for product type %s \
+            containing %d types"
+           (Ppxlib.string_of_core_type ty)
+           n
+  (* TODO: derive QC generator for unary functions *)
+  | Ptyp_arrow (Nolabel, arg_ty, ret_ty) ->
+    pexp_extension ~loc
+    @@ Location.error_extensionf ~loc
+         "Function types not supported yet (to be implemented)"
+  | Ptyp_arrow (Labelled lbl, _, _) ->
+    pexp_extension ~loc
+    @@ Location.error_extensionf ~loc
+         "Unable to derive QuickCheck generator for function type %s with \
+          labelled argument %s"
+         (Ppxlib.string_of_core_type ty)
+         lbl
+  | Ptyp_arrow (Optional opt_arg, _, _) ->
+    pexp_extension ~loc
+    @@ Location.error_extensionf ~loc
+         "Unable to derive QuickCheck generator for function type %s with \
+          optional argument %s"
+         (Ppxlib.string_of_core_type ty)
+         opt_arg
+  | _ ->
+    pexp_extension ~loc
+    @@ Location.error_extensionf ~loc
+         "Unable to derive QuickCheck generator for type %s"
+         (Ppxlib.string_of_core_type ty)
 
 (* let gen_expr_skeleton_alt (sig_items : signature) = let tys = uniq_ret_tys
    sig_items in failwith "TODO" *)
@@ -153,13 +190,14 @@ let gen_expr_cases (sig_items : signature) : case list =
 let derive_gen_expr ~(loc : Location.t)
   (ty_cstrs : constructor_declaration list) (sig_items : signature) : expression
     =
-  (* Derive [let open] expressions for the [Generator.Let_syntax] module *)
-  let qc_gen_mod = module_expr_of_string ~loc "Base_quickcheck.Generator" in
+  (* Derive [let open] expressions for the necessary modules *)
+  let core_mod = module_expr_of_string ~loc "Core" in
+  let qc_gen_mod = module_expr_of_string ~loc "Quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
   (* let body = [%expr size >>= fun x -> return x] in *)
   let match_exp = pexp_match ~loc [%expr ty] (gen_expr_cases sig_items) in
   let body = [%expr size >>= fun x -> [%e match_exp]] in
-  let_open_twice ~loc qc_gen_mod let_syntax_mod body
+  let_open ~loc core_mod (let_open_twice ~loc qc_gen_mod let_syntax_mod body)
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 

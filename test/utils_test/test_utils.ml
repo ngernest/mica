@@ -672,20 +672,69 @@ let gen_atom_string () =
   mk_test string "string" expected actual
 
 let gen_atom_int_list () =
-  let expected = "quickcheck_generator_list quickcheck_generator_int" in
+  let expected =
+    [%expr quickcheck_generator_list quickcheck_generator_int]
+    |> string_of_expression in
   let actual = gen_atom ~loc [%type: int list] |> string_of_expression in
   mk_test string "int list" expected actual
 
 let gen_atom_char_option () =
-  let expected = "quickcheck_generator_option quickcheck_generator_char" in
+  let expected =
+    [%expr quickcheck_generator_option quickcheck_generator_char]
+    |> string_of_expression in
   let actual = gen_atom ~loc [%type: char option] |> string_of_expression in
   mk_test string "char option" expected actual
+
+let gen_atom_tuple2 () =
+  let expected =
+    [%expr tuple2 quickcheck_generator_int quickcheck_generator_char]
+    |> string_of_expression in
+  let actual = gen_atom ~loc [%type: int * char] |> string_of_expression in
+  mk_test string "int * char" expected actual
+
+let gen_atom_tuple3 () =
+  let expected =
+    [%expr
+      tuple3 quickcheck_generator_int quickcheck_generator_char
+        quickcheck_generator_string]
+    |> string_of_expression in
+  let actual =
+    gen_atom ~loc [%type: int * char * string] |> string_of_expression in
+  mk_test string "int * char" expected actual
+
+let gen_atom_option_list_pair () =
+  let expected =
+    [%expr
+      tuple2
+        (quickcheck_generator_list quickcheck_generator_int)
+        (quickcheck_generator_option quickcheck_generator_char)]
+    |> string_of_expression in
+  let actual =
+    gen_atom ~loc [%type: int list * char option] |> string_of_expression in
+  mk_test string "(int list) * (char option)" expected actual
+
+let gen_atom_nested_list () =
+  let expected =
+    [%expr
+      quickcheck_generator_list
+        (quickcheck_generator_list quickcheck_generator_int)]
+    |> string_of_expression in
+  let actual = gen_atom ~loc [%type: char list list] |> string_of_expression in
+  mk_test string "(int list) list" expected actual
 
 (******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
+(** Array containing command-line arguments to [Alcotest]. 
+    From the Alcotest docs:
+    {e this array must have at least one element, and the first element will be 
+      treated as if it was the command name and thus ignored for the 
+      purposes of option processing.}
+*)
+let argv = [| "ignored"; "--compact" |]
+
 let () =
-  run "Utils test suite"
+  run "Utils test suite" ~argv
     [ ( "monomorphize (base types)",
         [ mono_int (); mono_string (); mono_bool () ] );
       ( "monomorphize (instantiate type variables)",
@@ -807,6 +856,10 @@ let () =
           gen_atom_char ();
           gen_atom_string ();
           gen_atom_int_list ();
-          gen_atom_char_option ()
+          gen_atom_char_option ();
+          gen_atom_tuple2 ();
+          gen_atom_tuple3 ();
+          gen_atom_option_list_pair ();
+          gen_atom_nested_list ()
         ] )
     ]
