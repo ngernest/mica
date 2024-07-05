@@ -78,34 +78,34 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 
 type spine = { cstr : constructor_declaration; args : expression list }
 
-let mk_spine (cstr : constructor_declaration) (args : expression list) = 
+let mk_spine (cstr : constructor_declaration) (args : expression list) =
   { cstr; args }
-
 
 (** Takes the name of a type and produces the name of its 
     corresponding QuickCheck generator *)
-let mk_generator_name (s : string) : string = 
+let mk_generator_name (s : string) : string =
   Printf.sprintf "quickcheck_generator_%s" s
 
-(** Produces an atomic QuickCheck generator for the given [core_type] *)  
-let rec gen_atom ~(loc : Location.t) (ty: core_type) : expression = 
-  match ty.ptyp_desc with 
-  (* Assume that [quickcheck_generator_ty] exists for any 
-     non-parameterized type [ty] *)
-  | Ptyp_constr (ty_name, []) -> 
-    unapplied_type_constr_conv ~loc ty_name 
-      ~f:mk_generator_name
-  (* For parameterized types, recursively derive generators for their 
-     type parameters *)
-  | Ptyp_constr (ty_name, ty_params) -> 
-    let args = List.map ~f:(gen_atom ~loc) ty_params in 
+(** Produces an atomic QuickCheck generator for the given [core_type] *)
+let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
+  match ty.ptyp_desc with
+  (* Assume that [quickcheck_generator_ty] exists for any non-parameterized type
+     [ty] *)
+  | Ptyp_constr (ty_name, []) ->
+    unapplied_type_constr_conv ~loc ty_name ~f:mk_generator_name
+  (* For parameterized types, recursively derive generators for their type
+     parameters *)
+  | Ptyp_constr (ty_name, ty_params) ->
+    let args = List.map ~f:(gen_atom ~loc) ty_params in
     type_constr_conv ~loc ty_name ~f:mk_generator_name args
+  | Ptyp_any | Ptyp_var _ ->
+    pexp_extension ~loc
+    @@ Location.error_extensionf ~loc
+         "types must be instantiated in order to derive a QuickCheck generator"
   | _ -> failwith "TODO"
 
-(* let gen_expr_skeleton_alt (sig_items : signature) = 
-  let tys = uniq_ret_tys sig_items in 
-  failwith "TODO" *)
-
+(* let gen_expr_skeleton_alt (sig_items : signature) = let tys = uniq_ret_tys
+   sig_items in failwith "TODO" *)
 
 (** Maps [ty]s to [expr]s (for use in [gen_expr]) 
   - TODO: figure out recursive cases -- need to invoke atomic generators
@@ -126,7 +126,7 @@ let gen_expr_case_skeleton (sig_items : signature) :
   merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_longident_loc
   |> group ~equal:equal_longident_loc
 
-(** Creates the main case statement in [gen_expr] *)  
+(** Creates the main case statement in [gen_expr] *)
 let gen_expr_cases (sig_items : signature) : case list =
   let skeleton = gen_expr_case_skeleton sig_items in
   let guard = None in
@@ -170,7 +170,8 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
     | { pmty_desc = Pmty_signature sig_items; pmty_loc; _ } -> (
       match sig_items with
       | [] ->
-        [ mk_error ~local:pmtd_loc ~global:loc "Module sig can't be empty" ]
+        [ mk_error_pstr ~local:pmtd_loc ~global:loc "Module sig can't be empty"
+        ]
       | _ ->
         (* Type declarations for the [expr] & [ty] ADTs *)
         let expr_td =
@@ -184,7 +185,7 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         ])
     | _ -> failwith "TODO: other case for mod_type")
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
-    [ mk_error ~local:pmtd_loc ~global:loc
+    [ mk_error_pstr ~local:pmtd_loc ~global:loc
         "Can't derive for expressions that aren't module type declarations"
     ]
 

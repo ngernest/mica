@@ -30,7 +30,6 @@ val pp_structure_item : structure_item -> unit
   - Arrow/function types ([Ptyp_arrow]). *)
 val monomorphize : core_type -> core_type
 
-
 (** Converts a type expression [ty] to its capitalized, camel-case 
     string representation (for use as a constructor in an algebraic data type) 
     - The type expression is monomorphized prior to computing its string

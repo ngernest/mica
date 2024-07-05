@@ -10,3 +10,4 @@ include Lident
 include Miscellany
 include Printers
 include Names
+include Errors

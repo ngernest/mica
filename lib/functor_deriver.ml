@@ -170,7 +170,7 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
           ~expr:functor_expr in
       [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
     | _ ->
-      [ mk_error ~local:mod_type.pmty_loc ~global:loc
+      [ mk_error_pstr ~local:mod_type.pmty_loc ~global:loc
           "Expected a module type expression that was a signature"
       ])
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->

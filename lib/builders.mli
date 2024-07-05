@@ -18,25 +18,12 @@ val mk_adt :
   cstrs:constructor_declaration list ->
   type_declaration
 
-(** [mk_error ~local ~global msg] creates an error extension node, 
-    associated with an element in the AST at the location [local],
-    and reports the error message [msg] at the location [global] *)
-val mk_error :
-  local:Location.t ->
-  global:Location.t ->
-  (extension, Format.formatter, unit, extension) format4 ->
-  structure_item
-
-(** [attr loc name] creates an attribute called [name] at [loc] *)
-val attr : loc:Location.t -> name:string -> attribute
-
 (** [mk_valt_pat "x" ~loc] creates the pattern [ValT x], 
     consisting of the constructor [Valt] applied to the argument [x] 
     - The named argument [abs_ty_parameterized] represents whether the 
     abstract type [t] in the module signature is parameterized (e.g. ['a t]) *)
 val mk_valt_pat :
   ?abs_ty_parameterized:bool -> string -> loc:Location.t -> pattern
-
 
 (** Makes the scrutinees for the inner case-stmt in [interp]. 
     - [expr_vars] is a list of variables that have type [expr]. This list 

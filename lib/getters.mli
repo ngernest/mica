@@ -8,7 +8,7 @@ open Inv_ctx
   - Raises [Not_found] if the input pattern is not of the form [Ppat_var] *)
 val get_varname : pattern -> string
 
-  (** Takes [ty], the type of a [val] declaration in a signature,
+(** Takes [ty], the type of a [val] declaration in a signature,
     and returns the type of the arguments of the corresponding 
     constructor for the [expr] datatype. 
     - The [abs_tys] argument is a list of abstract types
@@ -42,13 +42,13 @@ val get_cstr_args :
 
 (** Takes a list of [constructor_declaration]'s and returns 
     a list consisting of 4-tuples of the form 
-    (constructor name, constructor arguments, typing context, return type) *)  
+    (constructor name, constructor arguments, typing context, return type) *)
 val get_cstr_metadata :
   (constructor_declaration * core_type) list ->
   (Longident.t Location.loc * pattern option * inv_ctx * core_type) list
 
 (** Variant of [get_cstr_metadata] which returns 
-      only a list of pairs containing constructor names & constructor args *)  
+      only a list of pairs containing constructor names & constructor args *)
 val get_cstr_metadata_minimal :
   constructor_declaration list ->
   (Longident.t Location.loc * pattern option) list
@@ -64,7 +64,7 @@ val get_cstr_name : constructor_declaration -> Longident.t Location.loc
 val get_cstrs_of_ty_decl :
   type_declaration -> (Longident.t Location.loc * pattern option) list
 
-(** Computes the arity of a constructor for an algebraic data type *)  
+(** Computes the arity of a constructor for an algebraic data type *)
 val get_cstr_arity : constructor_declaration -> int
 
 (******************************************************************************)
@@ -115,7 +115,7 @@ val get_match_arm :
     - [value_cstr] is the name of the constructor for the [value] type 
     - [expr_cstr] is the constructor for the [expr] type, which corresponds
     to a function inside the module with name [mod_name] 
-    - [x] is the argument that will be applied to the module function *)  
+    - [x] is the argument that will be applied to the module function *)
 val get_unary_case_rhs :
   Longident.t Location.loc ->
   string ->

@@ -41,7 +41,7 @@ val varnames_of_cstr_args :
 
 (** Takes [constructor_arguments] and produces a list of fresh identifiers 
     which each have type [pattern] 
-    - This function is [varnames_of_cstr_args], specialized to [pattern]s *)  
+    - This function is [varnames_of_cstr_args], specialized to [pattern]s *)
 val pvars_of_cstr_args : loc:Location.t -> constructor_arguments -> pattern list
 
 (** Takes [constructor_arguments] and produces a list of fresh identifiers 

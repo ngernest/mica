@@ -76,10 +76,11 @@ the main `mica` deriver which runs afterwards.
   - [lident.ml](./lib/lident.ml): Utilities for working with the `Longident` type
   - [names.ml](./lib/names.ml): Functions for generating fresh variable names & quoting expressions
   - [printers.ml](./lib/printers.ml): Pretty-printers for AST types
-  - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types to expressions
+  - [errors.ml](./lib/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
+  - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
   - [let_open.ml](./lib/let_open.ml): Helpers for producing `let open` expressions
   - [bindop.ml](./lib/bindop.ml): Helpers for producing monadic bind expressions
-  - [miscellany.ml](./lib/miscellany.ml): Misc. helpers for working with lists & strings
+  - [miscellany.ml](./lib/miscellany.ml): Miscellaneous helpers for working with lists & strings
 
 
 ## Testing 

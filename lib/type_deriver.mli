@@ -42,17 +42,17 @@ type spine = { cstr : constructor_declaration; args : expression list }
 
 (** Takes the name of a type and produces the name of its 
     corresponding QuickCheck generator *)
-val mk_generator_name : string -> string 
+val mk_generator_name : string -> string
 
 (** Produces an atomic QuickCheck generator for the given [core_type] *)
-val gen_atom: loc:Location.t -> core_type -> expression 
+val gen_atom : loc:Location.t -> core_type -> expression
 
 (** Maps [ty]s to [expr]s, constructing the main case statement 
     in [gen_expr] *)
 val gen_expr_case_skeleton :
   signature -> (Longident.t Location.loc * spine list) list
 
-(** Creates the main case statement in [gen_expr] *)  
+(** Creates the main case statement in [gen_expr] *)
 val gen_expr_cases : signature -> case list
 
 (** Derives the [gen_expr] QuickCheck generator 

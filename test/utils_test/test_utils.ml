@@ -656,30 +656,30 @@ let get_abs_ty_names_three_types () =
 
 (******************************************************************************)
 (* Tests for [gen_atom] *)
-let gen_atom_int () = 
-  let expected = "quickcheck_generator_int" in 
+let gen_atom_int () =
+  let expected = "quickcheck_generator_int" in
   let actual = gen_atom ~loc [%type: int] |> string_of_expression in
-  mk_test string "int" expected actual 
+  mk_test string "int" expected actual
 
-let gen_atom_char () = 
-  let expected = "quickcheck_generator_char" in 
+let gen_atom_char () =
+  let expected = "quickcheck_generator_char" in
   let actual = gen_atom ~loc [%type: char] |> string_of_expression in
-  mk_test string "char" expected actual   
+  mk_test string "char" expected actual
 
-let gen_atom_string () = 
-  let expected = "quickcheck_generator_string" in 
+let gen_atom_string () =
+  let expected = "quickcheck_generator_string" in
   let actual = gen_atom ~loc [%type: string] |> string_of_expression in
-  mk_test string "string" expected actual 
+  mk_test string "string" expected actual
 
-let gen_atom_int_list () = 
-  let expected = "quickcheck_generator_list quickcheck_generator_int" in 
-  let actual = gen_atom ~loc [%type: int list] |> string_of_expression in 
+let gen_atom_int_list () =
+  let expected = "quickcheck_generator_list quickcheck_generator_int" in
+  let actual = gen_atom ~loc [%type: int list] |> string_of_expression in
   mk_test string "int list" expected actual
 
-let gen_atom_char_option () = 
-  let expected = "quickcheck_generator_option quickcheck_generator_char" in 
-  let actual = gen_atom ~loc [%type: char option] |> string_of_expression in 
-  mk_test string "char option" expected actual  
+let gen_atom_char_option () =
+  let expected = "quickcheck_generator_option quickcheck_generator_char" in
+  let actual = gen_atom ~loc [%type: char option] |> string_of_expression in
+  mk_test string "char option" expected actual
 
 (******************************************************************************)
 (* Overall Alcotest Test Suite *)
@@ -802,11 +802,11 @@ let () =
           get_cstr_arity_binary ();
           get_cstr_arity_ternary ()
         ] );
-      ( "gen_atom", 
+      ( "gen_atom",
         [ gen_atom_int ();
           gen_atom_char ();
           gen_atom_string ();
           gen_atom_int_list ();
-          gen_atom_char_option ();
-        ])
+          gen_atom_char_option ()
+        ] )
     ]
