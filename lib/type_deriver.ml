@@ -98,10 +98,13 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
   | Ptyp_constr (ty_name, ty_params) ->
     let args = List.map ~f:(gen_atom ~loc) ty_params in
     type_constr_conv ~loc ty_name ~f:mk_generator_name args
-  | Ptyp_any | Ptyp_var _ ->
-    pexp_extension ~loc
-    @@ Location.error_extensionf ~loc
-         "types must be instantiated in order to derive a QuickCheck generator"
+  | Ptyp_any ->
+    mk_error_expr ~loc:ty.ptyp_loc
+      "types must be instantiated in order to derive a QuickCheck generator"
+  | Ptyp_var tyvar ->
+    pexp_extension ~loc:ty.ptyp_loc
+    @@ Location.error_extensionf ~loc:ty.ptyp_loc
+         "Unable to derive QuickCheck generator for type %s" tyvar
   | _ -> failwith "TODO"
 
 (* let gen_expr_skeleton_alt (sig_items : signature) = let tys = uniq_ret_tys

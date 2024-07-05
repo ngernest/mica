@@ -8,14 +8,13 @@ open StdLabels
     - [f] is some functino that takes a [Location.t], an [extension]
     and produces the appropriate AST node [e.g. [pexp_extension]]
     - [msg] is the desired error message *)
-let mk_error ~(loc : Location.t) ~(f : loc:Location.t -> extension -> 'a)
-  (msg : (extension, Format.formatter, unit, extension) format4) : 'a =
+let mk_error ~(loc : Location.t) ~(f : loc:Location.t -> extension -> 'a) msg :
+  'a =
   f ~loc (Location.error_extensionf ~loc msg)
 
 (** [mk_error_expr] is [mk_error] instantiated with the [expression] type, 
     i.e. the extension nodes produced are [expression]s *)
-let mk_error_expr ~(loc : Location.t)
-  (msg : (extension, Format.formatter, unit, extension) format4) : expression =
+let mk_error_expr ~(loc : Location.t) msg : expression =
   mk_error ~loc ~f:pexp_extension msg
 
 (** [mk_error_pstr ~local ~global msg] creates an error extension node, 
