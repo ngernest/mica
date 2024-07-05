@@ -719,7 +719,7 @@ let gen_atom_nested_list () =
       quickcheck_generator_list
         (quickcheck_generator_list quickcheck_generator_int)]
     |> string_of_expression in
-  let actual = gen_atom ~loc [%type: char list list] |> string_of_expression in
+  let actual = gen_atom ~loc [%type: int list list] |> string_of_expression in
   mk_test string "(int list) list" expected actual
 
 (******************************************************************************)
