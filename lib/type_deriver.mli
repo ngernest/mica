@@ -40,6 +40,13 @@ val mk_val_cstrs : signature -> constructor_declaration list
 
 type spine = { cstr : constructor_declaration; args : expression list }
 
+(** Takes the name of a type and produces the name of its 
+    corresponding QuickCheck generator *)
+val mk_generator_name : string -> string 
+
+(** Produces an atomic QuickCheck generator for the given [core_type] *)
+val gen_atom: loc:Location.t -> core_type -> expression 
+
 (** Maps [ty]s to [expr]s, constructing the main case statement 
     in [gen_expr] *)
 val gen_expr_case_skeleton :

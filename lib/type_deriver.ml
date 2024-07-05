@@ -81,14 +81,24 @@ type spine = { cstr : constructor_declaration; args : expression list }
 let mk_spine (cstr : constructor_declaration) (args : expression list) = 
   { cstr; args }
 
+(** Takes the name of a type and produces the name of its 
+    corresponding QuickCheck generator *)
+let mk_generator_name (s : string) : string = 
+  Printf.sprintf "quickcheck_generator_%s" s
 
-let gen_atom ~(loc : Location.t) (ty: core_type) : expression = 
-  match ty with 
-  | [%type: int] -> [%expr small_positive_int]
-  | [%type: char] -> [%expr char_alpha]
-  | [%type: string] -> [%expr [%quickcheck.generator: string]]
-  | [%type: unit] -> [%expr unit]
-  (* TODO: handle type constructors -- use [type_constr_conv] somehow *)
+(** Produces an atomic QuickCheck generator for the given [core_type] *)  
+let rec gen_atom ~(loc : Location.t) (ty: core_type) : expression = 
+  match ty.ptyp_desc with 
+  (* Assume that [quickcheck_generator_ty] exists for any 
+     non-parameterized type [ty] *)
+  | Ptyp_constr (ty_name, []) -> 
+    unapplied_type_constr_conv ~loc ty_name 
+      ~f:mk_generator_name
+  (* For parameterized types, recursively derive generators for their 
+     type parameters *)
+  | Ptyp_constr (ty_name, ty_params) -> 
+    let args = List.map ~f:(gen_atom ~loc) ty_params in 
+    type_constr_conv ~loc ty_name ~f:mk_generator_name args
   | _ -> failwith "TODO"
 
 (* let gen_expr_skeleton_alt (sig_items : signature) = 

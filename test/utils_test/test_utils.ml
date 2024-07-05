@@ -1,10 +1,11 @@
 open Ppx_mica__Utils
 open Ppx_mica__Type_deriver
 open Ppxlib
+open Astlib.Pprintast
 open StdLabels
 open Alcotest
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Alcotest helpers *)
 
 (** Creates an Alcotest test case that compares the [expected] and [actual] 
@@ -16,7 +17,7 @@ let mk_test (testable : 'a testable) (name : string) (expected : 'a)
   let test_to_run () = check testable name expected actual in
   test_case name `Quick test_to_run
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Boilerplate for making [core_type] a [testable] type in the Alcotest
    harness *)
 
@@ -31,7 +32,7 @@ let core_ty_list_eq (tys : core_type list) (tys' : core_type list) : bool =
 let core_ty_testable : core_type testable = testable pp_core_type core_type_eq
 let core_ty_list_testable : core_type list testable = list core_ty_testable
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Boilerplate for [type_declaration testable] (currently unused) *)
 
 (* let pp_ty_decl = Ppxlib.Pprintast.type_declaration
@@ -46,7 +47,7 @@ let core_ty_list_testable : core_type list testable = list core_ty_testable
    let ty_decl_testable : type_declaration testable = testable pp_ty_decl
    ty_decl_eq *)
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Boilerplate for [constructor_declaration testable] *)
 
 (** Pretty printer for the [constructor_declaration] type *)
@@ -75,7 +76,7 @@ let constr_decl_testable : constructor_declaration testable =
 let constr_decl_list_testable : constructor_declaration list testable =
   list constr_decl_testable
 
-(*******************************************************************************)
+(******************************************************************************)
 (** Boilerplate for [Longident.t testable] *)
 
 (** Pretty-printer for [Longident.t] *)
@@ -94,7 +95,7 @@ let rec lident_eq (l1 : Longident.t) (l2 : Longident.t) : bool =
 
 let lident_testable : Longident.t testable = testable pp_lident lident_eq
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Testing that monomorphization preserves core types *)
 
 (* Strip [core_types] of location info and expose the [loc] parameter (needed
@@ -112,7 +113,7 @@ let mono_string () =
 let mono_bool () =
   mk_test core_ty_testable "bool" (monomorphize [%type: bool]) [%type: bool]
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Monomorphization instantiates type variables with [int] *)
 let mono_list () =
   mk_test core_ty_testable "'a list"
@@ -157,7 +158,7 @@ let mono_qualified_poly_abs_type () =
     (monomorphize [%type: 'a M.t])
     [%type: int M.t]
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Testing [uniq_ret_tys] *)
 let uniq_ret_tys_no_dupes () =
   let sig_items =
@@ -204,7 +205,7 @@ let uniq_ret_ty_2_arg_funcs () =
   mk_test core_ty_list_testable "binary function" (uniq_ret_tys sig_items)
     [ [%type: int]; [%type: string]; [%type: char] ]
 
-(*******************************************************************************)
+(******************************************************************************)
 (** Tests for [mk_ty_cstrs] *)
 
 let mk_ty_cstrs_single_base_ty () =
@@ -248,7 +249,7 @@ let mk_ty_cstrs_no_dupes () =
   mk_test constr_decl_list_testable "no duplicates" (mk_ty_cstrs sig_items)
     expected
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Tests for [get_cstr_arity] *)
 let get_cstr_arity_nullary () =
   let cstr = mk_cstr ~name:"C" ~loc ~arg_tys:[] in
@@ -268,7 +269,7 @@ let get_cstr_arity_ternary () =
       ~arg_tys:[ [%type: int]; [%type: bool]; [%type: char] ] in
   mk_test int "ternary" (get_cstr_arity cstr) 3
 
-(*******************************************************************************)
+(******************************************************************************)
 (** Testing [get_ret_ty] *)
 
 let get_ret_ty_1_arg_func () =
@@ -291,10 +292,10 @@ let get_ret_ty_uncurried () =
     (get_ret_ty [%type: string * int * bool -> char])
     [%type: char]
 
-(*******************************************************************************)
+(******************************************************************************)
 (* TODO: - add tests for [mk_expr_cstrs] *)
 
-(*******************************************************************************)
+(******************************************************************************)
 
 (** Testing [string_of_lident] *)
 let string_of_lident_trivial () =
@@ -310,7 +311,7 @@ let string_of_lident_nested_lot () =
     (string_of_lident (Longident.parse "M1.M2.empty"))
     "M1.M2.empty"
 
-(*******************************************************************************)
+(******************************************************************************)
 (** Testing [uncapitalize_lident] *)
 
 let uncapitalize_lident_trivial () =
@@ -333,7 +334,7 @@ let uncapitalize_lident_ldot_doubly_nested () =
   let expected = Longident.parse "M1.M2.M3.empty" in
   mk_test lident_testable "doubly-nested ldots" expected actual
 
-(*******************************************************************************)
+(******************************************************************************)
 
 (** Testing [add_lident_prefix] *)
 let add_lident_prefix_mod_path () =
@@ -346,7 +347,7 @@ let add_lident_prefix_ldot () =
     (add_lident_prefix "M1" @@ Ldot (Lident "M2", "empty"))
     (Ldot (Lident "M1", "M2.empty"))
 
-(*******************************************************************************)
+(******************************************************************************)
 (** Testing [is_abs_ty_parameterized] *)
 
 let is_abs_ty_parameterized_empty_sig () =
@@ -390,7 +391,7 @@ let is_abs_ty_parameterized_alpha_beta_t () =
          val g : ('a, 'b) t -> 'b])
     true
 
-(*******************************************************************************)
+(******************************************************************************)
 (** Testing [update_expr_arg_names] *)
 
 let update_expr_arg_names_singleton () =
@@ -418,7 +419,7 @@ let update_expr_arg_names_double_primes () =
     (update_expr_arg_names [ "x''"; "y''" ] [ "w'"; "x'"; "y'"; "z'" ])
     [ "w'"; "x''"; "y''"; "z'" ]
 
-(*******************************************************************************)
+(******************************************************************************)
 (** Testing [get_ty_decls_from_sig] *)
 
 (** [testable] instance for the type [(string * core_type) list list] *)
@@ -479,7 +480,7 @@ let get_ty_decls_from_sig_three_tys () =
       ("v", [ [%type: 'c]; [%type: 'd] ])
     ]
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Tests for [equal_core_type_ty_cstr] *)
 
 (** Helper function: constructs an Alcotest test case which checks
@@ -516,7 +517,7 @@ let equal_core_ty_ty_cstr_product_type () =
 let equal_core_type_ty_cstr_function_type () =
   equal_core_type_cstr_name [%type: bool -> int] "BoolInt"
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Tests for [equal_core_type] *)
 
 let equal_core_type_any_refl () =
@@ -566,7 +567,7 @@ let equal_core_type_alpha_beta_t_neq () =
     (equal_core_type [%type: 'a t] [%type: 'b t])
     false
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Tests for [equal_constructor_declaration] *)
 
 let equal_constructor_declaration_enum_refl () =
@@ -618,7 +619,7 @@ let equal_constructor_declaration_binary_permute_args () =
     (equal_constructor_declaration c1 c2)
     false
 
-(*******************************************************************************)
+(******************************************************************************)
 (* Tests for [get_abs_ty_names] *)
 
 let get_abs_ty_names_empty () =
@@ -653,7 +654,34 @@ let get_abs_ty_names_three_types () =
          type v])
     [ "t"; "u"; "v" ]
 
-(*******************************************************************************)
+(******************************************************************************)
+(* Tests for [gen_atom] *)
+let gen_atom_int () = 
+  let expected = "quickcheck_generator_int" in 
+  let actual = gen_atom ~loc [%type: int] |> string_of_expression in
+  mk_test string "int" expected actual 
+
+let gen_atom_char () = 
+  let expected = "quickcheck_generator_char" in 
+  let actual = gen_atom ~loc [%type: char] |> string_of_expression in
+  mk_test string "char" expected actual   
+
+let gen_atom_string () = 
+  let expected = "quickcheck_generator_string" in 
+  let actual = gen_atom ~loc [%type: string] |> string_of_expression in
+  mk_test string "string" expected actual 
+
+let gen_atom_int_list () = 
+  let expected = "quickcheck_generator_list quickcheck_generator_int" in 
+  let actual = gen_atom ~loc [%type: int list] |> string_of_expression in 
+  mk_test string "int list" expected actual
+
+let gen_atom_char_option () = 
+  let expected = "quickcheck_generator_option quickcheck_generator_char" in 
+  let actual = gen_atom ~loc [%type: char option] |> string_of_expression in 
+  mk_test string "char option" expected actual  
+
+(******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
 let () =
@@ -773,5 +801,12 @@ let () =
           get_cstr_arity_unary ();
           get_cstr_arity_binary ();
           get_cstr_arity_ternary ()
-        ] )
+        ] );
+      ( "gen_atom", 
+        [ gen_atom_int ();
+          gen_atom_char ();
+          gen_atom_string ();
+          gen_atom_int_list ();
+          gen_atom_char_option ();
+        ])
     ]
