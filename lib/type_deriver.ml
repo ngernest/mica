@@ -137,13 +137,13 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
          "Unable to derive QuickCheck generator for type %s"
          (Ppxlib.string_of_core_type ty)
 
-(* let gen_expr_skeleton_alt (sig_items : signature) = let tys = uniq_ret_tys
-   sig_items in failwith "TODO" *)
+(* TODO: figure out how to invoke [gen_atom] defined above 
+   - we want both the LHS & RHS to be [core_type]s
+   - we also need to recursively produce monadic bind expressions using >>= *)         
+let gen_expr_skeleton_alt (sig_items : signature) = let tys = uniq_ret_tys
+   sig_items in failwith "TODO"
 
-(** Maps [ty]s to [expr]s (for use in [gen_expr]) 
-  - TODO: figure out recursive cases -- need to invoke atomic generators
-    for the construct arguments (in particular we need to use infix >>=
-    syntax to bind the recursively-generated arguments) *)
+(** Maps [ty]s to [expr]s (for use in [gen_expr]) *)
 let gen_expr_case_skeleton (sig_items : signature) :
   (Longident.t Location.loc * spine list) list =
   let open Base.List.Assoc in
