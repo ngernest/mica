@@ -124,20 +124,13 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
     pexp_extension ~loc
     @@ Location.error_extensionf ~loc
          "Function types not supported yet (to be implemented)"
-  | Ptyp_arrow (Labelled lbl, _, _) ->
+  | Ptyp_arrow (Labelled lbl, _, _) | Ptyp_arrow (Optional lbl, _, _) ->
     pexp_extension ~loc
     @@ Location.error_extensionf ~loc
          "Unable to derive QuickCheck generator for function type %s with \
-          labelled argument %s"
+          labelled/optional argument %s"
          (Ppxlib.string_of_core_type ty)
          lbl
-  | Ptyp_arrow (Optional opt_arg, _, _) ->
-    pexp_extension ~loc
-    @@ Location.error_extensionf ~loc
-         "Unable to derive QuickCheck generator for function type %s with \
-          optional argument %s"
-         (Ppxlib.string_of_core_type ty)
-         opt_arg
   | _ ->
     pexp_extension ~loc
     @@ Location.error_extensionf ~loc
