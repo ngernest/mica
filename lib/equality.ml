@@ -29,8 +29,8 @@ let rec equal_core_type (t1 : core_type) (t2 : core_type) : bool =
   equal_core_type_desc t1.ptyp_desc t2.ptyp_desc
 
 (** Checks two [core_type_desc]s for equality, ignoring location.
-      - Does not support objects, classes, polymorphic variants, 
-        universally quantified types, packages or extension nodes *)
+    - Does not support objects, classes, polymorphic variants, 
+      universally quantified types, packages or extension nodes *)
 and equal_core_type_desc (t1 : core_type_desc) (t2 : core_type_desc) : bool =
   match (t1, t2) with
   | Ptyp_any, Ptyp_any -> true
