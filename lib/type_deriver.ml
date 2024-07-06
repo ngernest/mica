@@ -145,11 +145,16 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
          (Ppxlib.string_of_core_type ty)
 
 let rhs ~(loc : Location.t) ty { cstr; args } =
+  let open Expansion_helpers in 
   let cstr_name = cstr.pcd_name.txt in
-  let gen_name = Expansion_helpers.mangle (Prefix "gen_") cstr_name in
-  let gen_decl = [%expr [%e evar ~loc gen_name]] in
-  let atom_gen = gen_atom ~loc ty in 
-  failwith "TODO"
+  let gen_cstr_name = Expansion_helpers.mangle (Prefix "gen_") cstr_name in
+  let gen_cstr_decl = [%expr [%e evar ~loc gen_cstr_name]] in
+  let cstr_arg_tys = get_cstr_arg_tys cstr in 
+  let quoter = Quoter.create () in 
+  let atomic_generators = 
+    List.map ~f:(fun ty -> Quoter.quote quoter (gen_atom ~loc ty)) 
+      cstr_arg_tys in 
+  Quoter.sanitize quoter (elist ~loc atomic_generators)
 
 (* TODO: figure out how to invoke [gen_atom] defined above - we want both the
    LHS & RHS to be [core_type]s - we also need to recursively produce monadic
@@ -167,14 +172,14 @@ let gen_expr_cases (sig_items : signature) : case list =
   List.map skeleton ~f:(fun (ty, rhs_elts) ->
       let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
       let rhs_exprs =
-        elist ~loc:lhs.ppat_loc
-          (List.map
+        elist ~loc:lhs.ppat_loc (List.map ~f:(fun cstr -> rhs ~loc:Location.none ty cstr) rhs_elts) in 
+          (* (List.map
              ~f:(fun { cstr; args } ->
                let cstr_name = cstr.pcd_name.txt in
                let cstr_ident = evar ~loc:cstr.pcd_loc cstr_name in
                let cstr_args = pexp_tuple ~loc:cstr.pcd_loc args in
                eapply ~loc:cstr.pcd_loc cstr_ident [ cstr_args ])
-             rhs_elts) in
+             rhs_elts) in *)
       let loc = rhs_exprs.pexp_loc in
       let rhs = [%expr of_list [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
@@ -216,7 +221,7 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:ty_cstrs in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ];
-          [%stri let gen_expr ty = [%e derive_gen_expr ~loc ty_cstrs sig_items]]
+          [%stri let rec gen_expr ty = [%e derive_gen_expr ~loc ty_cstrs sig_items]]
         ])
     | _ -> failwith "TODO: other case for mod_type")
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
