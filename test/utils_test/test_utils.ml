@@ -724,6 +724,12 @@ let gen_atom_nested_list () =
   let actual = gen_atom ~loc [%type: int list list] |> string_of_expression in
   mk_test string "(int list) list" expected actual
 
+let gen_atom_expr_recursive_call () =
+  let expected =
+    [%expr with_size ~size:(k / 2) (gen_expr T)] |> string_of_expression in
+  let actual = gen_atom ~loc [%type: expr] |> string_of_expression in
+  mk_test string "expr" expected actual
+
 (******************************************************************************)
 (* Overall Alcotest Test Suite *)
 
@@ -862,6 +868,7 @@ let () =
           gen_atom_tuple2 ();
           gen_atom_tuple3 ();
           gen_atom_option_list_pair ();
-          gen_atom_nested_list ()
+          gen_atom_nested_list ();
+          gen_atom_expr_recursive_call ()
         ] )
     ]

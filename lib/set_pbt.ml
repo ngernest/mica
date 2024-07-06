@@ -86,7 +86,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
       let g = with_size ~size:(k / 2) (gen_expr T) in
       g >>| fun e -> Is_empty e in
     let gen_mem =
-      let g1 = int_inclusive (-10) 10 in
+      let g1 = quickcheck_generator_int in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Mem (e1, e2) in
     let gen_invariant =
@@ -100,11 +100,11 @@ let rec gen_expr (ty : ty) : expr Generator.t =
     size
   | T, _ ->
     let gen_add =
-      let g1 = int_inclusive (-10) 10 in
+      let g1 = quickcheck_generator_int in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Add (e1, e2) in
     let gen_rem =
-      let g1 = int_inclusive (-10) 10 in
+      let g1 = quickcheck_generator_int in
       let g2 = with_size ~size:(k / 2) (gen_expr T) in
       both g1 g2 >>| fun (e1, e2) -> Rem (e1, e2) in
     let gen_union =

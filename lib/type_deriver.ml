@@ -92,11 +92,14 @@ let mk_generator_name (s : string) : string =
 
 (** Produces an atomic QuickCheck generator for the given [core_type] *)
 let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
+  (* TODO: handle recursive case with [expr] *)
   match ty.ptyp_desc with
   (* Base case: assume that [quickcheck_generator_ty] exists for any
      non-parameterized type [ty] *)
   | Ptyp_constr (ty_name, []) ->
-    unapplied_type_constr_conv ~loc ty_name ~f:mk_generator_name
+    if equal_longident ty_name.txt (Longident.parse "expr") then
+      [%expr with_size ~size:(k / 2) (gen_expr T)]
+    else unapplied_type_constr_conv ~loc ty_name ~f:mk_generator_name
   (* For parameterized types, recursively derive generators for their type
      parameters *)
   | Ptyp_constr (ty_name, ty_params) ->
@@ -194,7 +197,7 @@ let derive_gen_expr ~(loc : Location.t)
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
   (* let body = [%expr size >>= fun x -> return x] in *)
   let match_exp = pexp_match ~loc [%expr ty] (gen_expr_cases sig_items) in
-  let body = [%expr size >>= fun x -> [%e match_exp]] in
+  let body = [%expr size >>= fun k -> [%e match_exp]] in
   let_open ~loc core_mod (let_open_twice ~loc qc_gen_mod let_syntax_mod body)
 
 (** Walks over a module signature definition and extracts the 

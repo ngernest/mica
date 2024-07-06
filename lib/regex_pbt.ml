@@ -72,7 +72,7 @@ let rec gen_expr (ty : ty) : expr Generator.t =
   | Bool, _ ->
     let gen_matchString =
       let g1 = with_size ~size:(k / 2) (gen_expr T) in
-      let g2 = string_non_empty in
+      let g2 = quickcheck_generator_string in
       both g1 g2 >>| fun (e1, e2) -> MatchString (e1, e2) in
     let gen_acceptsEmpty =
       let g = with_size ~size:(k / 2) (gen_expr T) in

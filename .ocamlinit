@@ -28,6 +28,7 @@ let ubox () =
 #mod_use "names.ml";;
 #mod_use "builders.ml";;
 #mod_use "getters.ml";;
+#mod_use "errors.ml";;
 #mod_use "utils.ml";;
 #mod_use "type_deriver.ml";;
 #mod_use "functor_deriver.ml";;
