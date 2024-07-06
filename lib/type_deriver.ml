@@ -96,21 +96,20 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
   (* For parameterized types, recursively derive generators for their type
      parameters *)
   | Ptyp_constr (ty_name, ty_params) ->
-    let args = List.map ~f:(fun ty -> gen_atom ~loc:ty.ptyp_loc ty) ty_params in
+    let args = List.map ~f:(gen_atom ~loc) ty_params in
     type_constr_conv ~loc ty_name ~f:mk_generator_name args
   | Ptyp_any ->
     mk_error_expr ~loc:ty.ptyp_loc
       "types must be instantiated in order to derive a QuickCheck generator"
   | Ptyp_var tyvar ->
-    pexp_extension ~loc:ty.ptyp_loc
-    @@ Location.error_extensionf ~loc:ty.ptyp_loc
-         "Unable to derive QuickCheck generator for type %s" tyvar
+    (* Instantiate type variables with [int] *)
+    [%expr quickcheck_generator_int]
   | Ptyp_tuple tys ->
     (* Core.Quickcheck.Generator only supports tuples of length 2 - 6 *)
     let n = List.length tys in
     if n >= 2 && n <= 6 then
       let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
-      let args = List.map ~f:(fun ty -> gen_atom ~loc:ty.ptyp_loc ty) tys in
+      let args = List.map ~f:(gen_atom ~loc) tys in
       eapply ~loc tuple_gen args
     else
       pexp_extension ~loc
