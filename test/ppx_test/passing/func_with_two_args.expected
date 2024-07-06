@@ -7,6 +7,10 @@ include
     type ty =
       | IntT 
     let gen_expr ty =
-      let open Core.Quickcheck.Generator in
-        let open Let_syntax in size >>= (fun x -> return x)
+      let open Core in
+        let open Quickcheck.Generator in
+          let open Let_syntax in
+            size >>=
+              (fun x ->
+                 match ty with | IntT -> of_list [F (int__001_, expr__002_)])
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

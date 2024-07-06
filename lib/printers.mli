@@ -38,4 +38,4 @@ val monomorphize : core_type -> core_type
     not supported by this function.  
     - Note: this function is slightly different from [Ppxlib.string_of_core_type]
     due to its capitalization, camel-case & monomorphization functionalities. *)
-val string_of_core_ty : core_type -> string
+val string_of_monomorphized_ty : core_type -> string

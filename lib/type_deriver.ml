@@ -54,7 +54,9 @@ let mk_cstr_aux (sig_items : signature)
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
     List.sort_uniq ret_tys ~cmp:(fun t1 t2 ->
-        String.compare (string_of_core_ty t1) (string_of_core_ty t2)) in
+        String.compare
+          (string_of_monomorphized_ty t1)
+          (string_of_monomorphized_ty t2)) in
   List.map uniq_ret_tys ~f
 
 (** Constructs the definition of the [ty] algebraic data type
@@ -62,14 +64,16 @@ let mk_cstr_aux (sig_items : signature)
     the module signature *)
 let mk_ty_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:(fun ty ->
-      mk_cstr ~name:(string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+      mk_cstr ~name:(string_of_monomorphized_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
 (** [mk_val_cstr ty] constructors the corresponding constructor declaration
     for the [value] datatype, given some [core_type] [ty]
     - e.g. if [ty = Int], [mk_val_cstr] returns the declaration for 
       the [ValInt] constructor *)
 let mk_val_cstr (ty : core_type) : constructor_declaration =
-  mk_cstr ~name:("Val" ^ string_of_core_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[ ty ]
+  mk_cstr
+    ~name:("Val" ^ string_of_monomorphized_ty ty)
+    ~loc:ty.ptyp_loc ~arg_tys:[ ty ]
 
 (** Constructs the definition of the [value] algebraic data type
       based on the inhabitants of the [ty] ADT *)
@@ -150,7 +154,8 @@ let gen_expr_case_skeleton (sig_items : signature) :
   let expr_cstrs =
     inverse (mk_expr_cstrs sig_items)
     |> List.map ~f:(fun (ty, ({ pcd_loc; pcd_args; _ } as cstr_decl)) ->
-           ( lident_loc_of_string ~loc:ty.ptyp_loc (string_of_core_ty ty),
+           ( lident_loc_of_string ~loc:ty.ptyp_loc
+               (string_of_monomorphized_ty ty),
              mk_spine cstr_decl (evars_of_cstr_args ~loc:pcd_loc pcd_args) ))
     |> List.sort ~cmp:(fun (t1, _) (t2, _) -> Longident.compare t1.txt t2.txt)
   in

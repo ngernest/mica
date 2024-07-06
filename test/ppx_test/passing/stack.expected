@@ -28,8 +28,18 @@ include
       | IntTOption 
       | Unit 
     let gen_expr ty =
-      let open Core.Quickcheck.Generator in
-        let open Let_syntax in size >>= (fun x -> return x)
+      let open Core in
+        let open Quickcheck.Generator in
+          let open Let_syntax in
+            size >>=
+              (fun x ->
+                 match ty with
+                 | Bool -> of_list [Is_empty expr__006_]
+                 | Int -> of_list [Length expr__007_]
+                 | IntOption -> of_list [Peek expr__004_]
+                 | IntT -> of_list [Empty (); Push (int__001_, expr__002_)]
+                 | IntTOption -> of_list [Pop expr__003_]
+                 | Unit -> of_list [Clear expr__005_])
     module TestHarness(M:StackInterface) =
       struct
         include M
@@ -43,30 +53,30 @@ include
         let rec interp e =
           match e with
           | Empty -> ValIntT M.empty
-          | Push (int__001_, expr__002_) ->
-              (match interp expr__002_ with
-               | ValIntT expr__002_' ->
-                   ValIntT (M.push int__001_ expr__002_')
+          | Push (int__008_, expr__009_) ->
+              (match interp expr__009_ with
+               | ValIntT expr__009_' ->
+                   ValIntT (M.push int__008_ expr__009_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Pop expr__003_ ->
-              (match interp expr__003_ with
-               | ValIntT expr__003_' -> ValIntTOption (M.pop expr__003_')
+          | Pop expr__010_ ->
+              (match interp expr__010_ with
+               | ValIntT expr__010_' -> ValIntTOption (M.pop expr__010_')
                | _ -> failwith "impossible: unary constructor")
-          | Peek expr__004_ ->
-              (match interp expr__004_ with
-               | ValIntT expr__004_' -> ValIntOption (M.peek expr__004_')
+          | Peek expr__011_ ->
+              (match interp expr__011_ with
+               | ValIntT expr__011_' -> ValIntOption (M.peek expr__011_')
                | _ -> failwith "impossible: unary constructor")
-          | Clear expr__005_ ->
-              (match interp expr__005_ with
-               | ValIntT expr__005_' -> ValUnit (M.clear expr__005_')
+          | Clear expr__012_ ->
+              (match interp expr__012_ with
+               | ValIntT expr__012_' -> ValUnit (M.clear expr__012_')
                | _ -> failwith "impossible: unary constructor")
-          | Is_empty expr__006_ ->
-              (match interp expr__006_ with
-               | ValIntT expr__006_' -> ValBool (M.is_empty expr__006_')
+          | Is_empty expr__013_ ->
+              (match interp expr__013_ with
+               | ValIntT expr__013_' -> ValBool (M.is_empty expr__013_')
                | _ -> failwith "impossible: unary constructor")
-          | Length expr__007_ ->
-              (match interp expr__007_ with
-               | ValIntT expr__007_' -> ValInt (M.length expr__007_')
+          | Length expr__014_ ->
+              (match interp expr__014_ with
+               | ValIntT expr__014_' -> ValInt (M.length expr__014_')
                | _ -> failwith "impossible: unary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

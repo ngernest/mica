@@ -29,8 +29,25 @@ include
       | Int 
       | IntT 
     let gen_expr ty =
-      let open Core.Quickcheck.Generator in
-        let open Let_syntax in size >>= (fun x -> return x)
+      let open Core in
+        let open Quickcheck.Generator in
+          let open Let_syntax in
+            size >>=
+              (fun x ->
+                 match ty with
+                 | Bool ->
+                     of_list
+                       [Is_empty expr__001_;
+                       Mem (int__002_, expr__003_);
+                       Invariant expr__013_]
+                 | Int -> of_list [Size expr__008_]
+                 | IntT ->
+                     of_list
+                       [Empty ();
+                       Add (int__004_, expr__005_);
+                       Rem (int__006_, expr__007_);
+                       Union (expr__009_, expr__010_);
+                       Intersect (expr__011_, expr__012_)])
     module TestHarness(M:SetInterface) =
       struct
         include M
@@ -41,39 +58,39 @@ include
         let rec interp e =
           match e with
           | Empty -> ValIntT M.empty
-          | Is_empty expr__001_ ->
-              (match interp expr__001_ with
-               | ValIntT expr__001_' -> ValBool (M.is_empty expr__001_')
+          | Is_empty expr__014_ ->
+              (match interp expr__014_ with
+               | ValIntT expr__014_' -> ValBool (M.is_empty expr__014_')
                | _ -> failwith "impossible: unary constructor")
-          | Mem (int__002_, expr__003_) ->
-              (match interp expr__003_ with
-               | ValIntT expr__003_' -> ValBool (M.mem int__002_ expr__003_')
+          | Mem (int__015_, expr__016_) ->
+              (match interp expr__016_ with
+               | ValIntT expr__016_' -> ValBool (M.mem int__015_ expr__016_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Add (int__004_, expr__005_) ->
-              (match interp expr__005_ with
-               | ValIntT expr__005_' -> ValIntT (M.add int__004_ expr__005_')
+          | Add (int__017_, expr__018_) ->
+              (match interp expr__018_ with
+               | ValIntT expr__018_' -> ValIntT (M.add int__017_ expr__018_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Rem (int__006_, expr__007_) ->
-              (match interp expr__007_ with
-               | ValIntT expr__007_' -> ValIntT (M.rem int__006_ expr__007_')
+          | Rem (int__019_, expr__020_) ->
+              (match interp expr__020_ with
+               | ValIntT expr__020_' -> ValIntT (M.rem int__019_ expr__020_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Size expr__008_ ->
-              (match interp expr__008_ with
-               | ValIntT expr__008_' -> ValInt (M.size expr__008_')
+          | Size expr__021_ ->
+              (match interp expr__021_ with
+               | ValIntT expr__021_' -> ValInt (M.size expr__021_')
                | _ -> failwith "impossible: unary constructor")
-          | Union (expr__009_, expr__010_) ->
-              (match ((interp expr__009_), (interp expr__010_)) with
-               | (ValIntT expr__009_', ValIntT expr__010_') ->
-                   ValIntT (M.union expr__009_' expr__010_')
+          | Union (expr__022_, expr__023_) ->
+              (match ((interp expr__022_), (interp expr__023_)) with
+               | (ValIntT expr__022_', ValIntT expr__023_') ->
+                   ValIntT (M.union expr__022_' expr__023_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Intersect (expr__011_, expr__012_) ->
-              (match ((interp expr__011_), (interp expr__012_)) with
-               | (ValIntT expr__011_', ValIntT expr__012_') ->
-                   ValIntT (M.intersect expr__011_' expr__012_')
+          | Intersect (expr__024_, expr__025_) ->
+              (match ((interp expr__024_), (interp expr__025_)) with
+               | (ValIntT expr__024_', ValIntT expr__025_') ->
+                   ValIntT (M.intersect expr__024_' expr__025_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Invariant expr__013_ ->
-              (match interp expr__013_ with
-               | ValIntT expr__013_' -> ValBool (M.invariant expr__013_')
+          | Invariant expr__026_ ->
+              (match interp expr__026_ with
+               | ValIntT expr__026_' -> ValBool (M.invariant expr__026_')
                | _ -> failwith "impossible: unary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

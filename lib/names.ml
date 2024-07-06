@@ -28,7 +28,7 @@ let update_expr_arg_names (expr_args : string list) (args : string list) :
        and a [string] to form the desired identifier type. *)
 let mk_fresh ~(loc : Location.t) ~(f : loc:Location.t -> string -> 'a)
   (ty : core_type) : 'a =
-  let prefix = uncapitalize (string_of_core_ty ty) in
+  let prefix = uncapitalize (string_of_monomorphized_ty ty) in
   f ~loc (gen_symbol ~prefix ())
 
 (** Makes a fresh identifier of type [pattern] (a [Ppat_var]) for type [ty]

@@ -55,7 +55,9 @@ let pp_constr_decl (ppf : Stdlib.Format.formatter)
   (cd : constructor_declaration) : unit =
   match cd.pcd_args with
   | Pcstr_tuple tys ->
-    let args = String.concat ~sep:" * " (List.map ~f:string_of_core_type tys) in
+    let args =
+      String.concat ~sep:" * " (List.map ~f:string_of_monomorphized_ty tys)
+    in
     Fmt.pf ppf "%s of %s\n" (no_loc cd.pcd_name) args
   | Pcstr_record _ -> failwith "Pcstr_record not supported"
 

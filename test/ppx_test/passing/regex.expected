@@ -26,8 +26,24 @@ include
       | Bool 
       | T 
     let gen_expr ty =
-      let open Core.Quickcheck.Generator in
-        let open Let_syntax in size >>= (fun x -> return x)
+      let open Core in
+        let open Quickcheck.Generator in
+          let open Let_syntax in
+            size >>=
+              (fun x ->
+                 match ty with
+                 | Bool ->
+                     of_list
+                       [MatchString (expr__007_, string__008_);
+                       AcceptsEmpty expr__009_]
+                 | T ->
+                     of_list
+                       [Void ();
+                       Empty ();
+                       Lit char__001_;
+                       Alt (expr__002_, expr__003_);
+                       Cat (expr__004_, expr__005_);
+                       Star expr__006_])
     module TestHarness(M:RegexMatcher) =
       struct
         include M
@@ -38,29 +54,29 @@ include
           match e with
           | Void -> ValT M.void
           | Empty -> ValT M.empty
-          | Lit char__001_ -> ValT (M.lit char__001_)
-          | Alt (expr__002_, expr__003_) ->
-              (match ((interp expr__002_), (interp expr__003_)) with
-               | (ValT expr__002_', ValT expr__003_') ->
-                   ValT (M.alt expr__002_' expr__003_')
+          | Lit char__010_ -> ValT (M.lit char__010_)
+          | Alt (expr__011_, expr__012_) ->
+              (match ((interp expr__011_), (interp expr__012_)) with
+               | (ValT expr__011_', ValT expr__012_') ->
+                   ValT (M.alt expr__011_' expr__012_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Cat (expr__004_, expr__005_) ->
-              (match ((interp expr__004_), (interp expr__005_)) with
-               | (ValT expr__004_', ValT expr__005_') ->
-                   ValT (M.cat expr__004_' expr__005_')
+          | Cat (expr__013_, expr__014_) ->
+              (match ((interp expr__013_), (interp expr__014_)) with
+               | (ValT expr__013_', ValT expr__014_') ->
+                   ValT (M.cat expr__013_' expr__014_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Star expr__006_ ->
-              (match interp expr__006_ with
-               | ValT expr__006_' -> ValT (M.star expr__006_')
+          | Star expr__015_ ->
+              (match interp expr__015_ with
+               | ValT expr__015_' -> ValT (M.star expr__015_')
                | _ -> failwith "impossible: unary constructor")
-          | MatchString (expr__007_, string__008_) ->
-              (match interp expr__007_ with
-               | ValT expr__007_' ->
-                   ValBool (M.matchString expr__007_' string__008_)
+          | MatchString (expr__016_, string__017_) ->
+              (match interp expr__016_ with
+               | ValT expr__016_' ->
+                   ValBool (M.matchString expr__016_' string__017_)
                | _ -> failwith "impossible: n-ary constructor")
-          | AcceptsEmpty expr__009_ ->
-              (match interp expr__009_ with
-               | ValT expr__009_' -> ValBool (M.acceptsEmpty expr__009_')
+          | AcceptsEmpty expr__018_ ->
+              (match interp expr__018_ with
+               | ValT expr__018_' -> ValBool (M.acceptsEmpty expr__018_')
                | _ -> failwith "impossible: unary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

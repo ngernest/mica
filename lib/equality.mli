@@ -4,7 +4,7 @@ open Ppxlib
 
 (** Checks if a [constructor_declaration] for the [ty] ADT and 
     (its corresponding) [core_type] are equal with respect to their string 
-    representations using [string_of_core_ty].
+    representations using [string_of_monomorphized_ty ].
     - e.g. this function returns [true] when [core_ty = bool]
     and [constructor_declaration = Bool]. *)
 val equal_ty_cstr_core_type : constructor_declaration -> core_type -> bool

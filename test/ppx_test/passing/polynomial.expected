@@ -29,8 +29,25 @@ include
       | Int 
       | T 
     let gen_expr ty =
-      let open Core.Quickcheck.Generator in
-        let open Let_syntax in size >>= (fun x -> return x)
+      let open Core in
+        let open Quickcheck.Generator in
+          let open Let_syntax in
+            size >>=
+              (fun x ->
+                 match ty with
+                 | Bool -> of_list [Equal (expr__012_, expr__013_)]
+                 | Int ->
+                     of_list
+                       [Power (int__001_, int__002_);
+                       Eval (expr__010_, int__011_)]
+                 | T ->
+                     of_list
+                       [Zero ();
+                       One ();
+                       Monomial (int__003_, int__004_);
+                       Add (expr__005_, expr__006_);
+                       Mult (expr__007_, expr__008_);
+                       Create intIntProductList__009_])
     module TestHarness(M:PolyInterface) =
       struct
         include M
@@ -42,30 +59,30 @@ include
           match e with
           | Zero -> ValT M.zero
           | One -> ValT M.one
-          | Power (int__001_, int__002_) ->
-              ValInt (M.power int__001_ int__002_)
-          | Monomial (int__003_, int__004_) ->
-              ValT (M.monomial int__003_ int__004_)
-          | Add (expr__005_, expr__006_) ->
-              (match ((interp expr__005_), (interp expr__006_)) with
-               | (ValT expr__005_', ValT expr__006_') ->
-                   ValT (M.add expr__005_' expr__006_')
+          | Power (int__014_, int__015_) ->
+              ValInt (M.power int__014_ int__015_)
+          | Monomial (int__016_, int__017_) ->
+              ValT (M.monomial int__016_ int__017_)
+          | Add (expr__018_, expr__019_) ->
+              (match ((interp expr__018_), (interp expr__019_)) with
+               | (ValT expr__018_', ValT expr__019_') ->
+                   ValT (M.add expr__018_' expr__019_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Mult (expr__007_, expr__008_) ->
-              (match ((interp expr__007_), (interp expr__008_)) with
-               | (ValT expr__007_', ValT expr__008_') ->
-                   ValT (M.mult expr__007_' expr__008_')
+          | Mult (expr__020_, expr__021_) ->
+              (match ((interp expr__020_), (interp expr__021_)) with
+               | (ValT expr__020_', ValT expr__021_') ->
+                   ValT (M.mult expr__020_' expr__021_')
                | _ -> failwith "impossible: n-ary constructor")
-          | Create intIntProductList__009_ ->
-              ValT (M.create intIntProductList__009_)
-          | Eval (expr__010_, int__011_) ->
-              (match interp expr__010_ with
-               | ValT expr__010_' -> ValInt (M.eval expr__010_' int__011_)
+          | Create intIntProductList__022_ ->
+              ValT (M.create intIntProductList__022_)
+          | Eval (expr__023_, int__024_) ->
+              (match interp expr__023_ with
+               | ValT expr__023_' -> ValInt (M.eval expr__023_' int__024_)
                | _ -> failwith "impossible: n-ary constructor")
-          | Equal (expr__012_, expr__013_) ->
-              (match ((interp expr__012_), (interp expr__013_)) with
-               | (ValT expr__012_', ValT expr__013_') ->
-                   ValBool (M.equal expr__012_' expr__013_')
+          | Equal (expr__025_, expr__026_) ->
+              (match ((interp expr__025_), (interp expr__026_)) with
+               | (ValT expr__025_', ValT expr__026_') ->
+                   ValBool (M.equal expr__025_' expr__026_')
                | _ -> failwith "impossible: n-ary constructor")
       end
   end[@@ocaml.doc "@inline"][@@merlin.hide ]

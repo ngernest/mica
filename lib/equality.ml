@@ -7,12 +7,12 @@ open Miscellany
 
 (** Checks if a [constructor_declaration] for the [ty] ADT and 
     (its corresponding) [core_type] are equal with respect to their string 
-    representations using [string_of_core_ty].
+    representations using [string_of_monomorphized_ty ].
     - e.g. this function returns [true] when [core_ty = bool]
     and [constructor_declaration = Bool]. *)
 let equal_ty_cstr_core_type (ty_cstr : constructor_declaration)
   (core_ty : core_type) : bool =
-  String.equal (string_of_core_ty core_ty) ty_cstr.pcd_name.txt
+  String.equal (string_of_monomorphized_ty core_ty) ty_cstr.pcd_name.txt
 
 (** Checks two [Longident.t] values for equality *)
 let equal_longident (l1 : Longident.t) (l2 : Longident.t) : bool =

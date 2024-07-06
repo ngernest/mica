@@ -69,20 +69,23 @@ let rec monomorphize (ty : core_type) : core_type =
     not supported by this function.  
     - Note: this function is slightly different from [Ppxlib.string_of_core_type]
     due to its capitalization, camel-case & monomorphization functionalities. *)
-let rec string_of_core_ty (ty : core_type) : string =
+let rec string_of_monomorphized_ty (ty : core_type) : string =
   match ty.ptyp_desc with
-  | Ptyp_var _ | Ptyp_any -> string_of_core_ty (monomorphize ty)
+  | Ptyp_var _ | Ptyp_any -> string_of_monomorphized_ty (monomorphize ty)
   | Ptyp_constr ({ txt = ident; _ }, ty_params) ->
     let ty_constr_str =
       Astlib.Longident.flatten ident
       |> String.concat ~sep:"" |> String.capitalize_ascii in
     let params_str =
-      String.concat ~sep:"" (List.map ~f:string_of_core_ty ty_params) in
+      String.concat ~sep:"" (List.map ~f:string_of_monomorphized_ty ty_params)
+    in
     params_str ^ ty_constr_str
   | Ptyp_tuple tys ->
     let ty_strs =
       List.map tys ~f:(fun ty ->
-          string_of_core_ty ty |> String.capitalize_ascii) in
+          string_of_monomorphized_ty ty |> String.capitalize_ascii) in
     String.concat ~sep:"" ty_strs ^ "Product"
-  | Ptyp_arrow (_, t1, t2) -> string_of_core_ty t1 ^ string_of_core_ty t2
-  | _ -> failwith "type expression not supported by string_of_core_type"
+  | Ptyp_arrow (_, t1, t2) ->
+    string_of_monomorphized_ty t1 ^ string_of_monomorphized_ty t2
+  | _ ->
+    failwith "type expression not supported by string_of_monomorphized_ty pe"
