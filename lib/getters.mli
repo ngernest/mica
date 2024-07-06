@@ -67,8 +67,8 @@ val get_cstrs_of_ty_decl :
 (** Computes the arity of a constructor for an algebraic data type *)
 val get_cstr_arity : constructor_declaration -> int
 
-(** Retrieves the argument types of a constructor for an algebraic data type *)  
-val get_cstr_arg_tys : constructor_declaration -> core_type list 
+(** Retrieves the argument types of a constructor for an algebraic data type *)
+val get_cstr_arg_tys : constructor_declaration -> core_type list
 
 (******************************************************************************)
 (** {1 Working with type parameters & type declarations} *)

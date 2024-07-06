@@ -22,7 +22,8 @@ let mk_expr_cstrs (sig_items : signature) :
         let name : string = String.capitalize_ascii pval_name.txt in
         (* Exclude the return type of the function from the list of arg types
            for the [expr] constructor *)
-        let arg_tys = remove_last (get_arg_tys_of_expr_cstr pval_type abs_ty_names) in
+        let arg_tys =
+          remove_last (get_arg_tys_of_expr_cstr pval_type abs_ty_names) in
         (* Return type of the function *)
         let ret_ty = get_ret_ty pval_type in
         (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
@@ -144,17 +145,29 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
          "Unable to derive QuickCheck generator for type %s"
          (Ppxlib.string_of_core_type ty)
 
+(* temp function for producing the RHS of the pattern match in gen_expr *)
 let rhs ~(loc : Location.t) ty { cstr; args } =
-  let open Expansion_helpers in 
   let cstr_name = cstr.pcd_name.txt in
-  let gen_cstr_name = Expansion_helpers.mangle (Prefix "gen_") cstr_name in
-  let gen_cstr_decl = [%expr [%e evar ~loc gen_cstr_name]] in
-  let cstr_arg_tys = get_cstr_arg_tys cstr in 
-  let quoter = Quoter.create () in 
-  let atomic_generators = 
-    List.map ~f:(fun ty -> Quoter.quote quoter (gen_atom ~loc ty)) 
-      cstr_arg_tys in 
-  Quoter.sanitize quoter (elist ~loc atomic_generators)
+  let gen_cstr_name =
+    Expansion_helpers.mangle (Prefix "gen") (uncapitalize cstr_name) in
+  let gen_cstr_expr = evar ~loc gen_cstr_name in
+  let gen_cstr_pat = pvar ~loc gen_cstr_name in
+  let cstr_arg_tys = get_cstr_arg_tys cstr in
+  let atomic_generators : value_binding list =
+    List.map
+      ~f:(fun ty ->
+        let gen_name = pvar ~loc @@ gen_symbol ~prefix:"g" () in
+        let gen_body = gen_atom ~loc ty in
+        value_binding ~loc ~pat:gen_name ~expr:gen_body)
+      cstr_arg_tys in
+  let gen_cstr_body =
+    pexp_let ~loc Nonrecursive atomic_generators
+      (failwith
+         "TODO: need to produce the call to >>| and invoke the generator here!")
+  in
+  pexp_let Nonrecursive ~loc
+    [ value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_body ]
+    gen_cstr_expr
 
 (* TODO: figure out how to invoke [gen_atom] defined above - we want both the
    LHS & RHS to be [core_type]s - we also need to recursively produce monadic
@@ -172,14 +185,13 @@ let gen_expr_cases (sig_items : signature) : case list =
   List.map skeleton ~f:(fun (ty, rhs_elts) ->
       let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
       let rhs_exprs =
-        elist ~loc:lhs.ppat_loc (List.map ~f:(fun cstr -> rhs ~loc:Location.none ty cstr) rhs_elts) in 
-          (* (List.map
-             ~f:(fun { cstr; args } ->
-               let cstr_name = cstr.pcd_name.txt in
-               let cstr_ident = evar ~loc:cstr.pcd_loc cstr_name in
-               let cstr_args = pexp_tuple ~loc:cstr.pcd_loc args in
-               eapply ~loc:cstr.pcd_loc cstr_ident [ cstr_args ])
-             rhs_elts) in *)
+        elist ~loc:lhs.ppat_loc
+          (List.map ~f:(fun cstr -> rhs ~loc:Location.none ty cstr) rhs_elts)
+      in
+      (* (List.map ~f:(fun { cstr; args } -> let cstr_name = cstr.pcd_name.txt
+         in let cstr_ident = evar ~loc:cstr.pcd_loc cstr_name in let cstr_args =
+         pexp_tuple ~loc:cstr.pcd_loc args in eapply ~loc:cstr.pcd_loc
+         cstr_ident [ cstr_args ]) rhs_elts) in *)
       let loc = rhs_exprs.pexp_loc in
       let rhs = [%expr of_list [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
@@ -221,7 +233,8 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:ty_cstrs in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ];
-          [%stri let rec gen_expr ty = [%e derive_gen_expr ~loc ty_cstrs sig_items]]
+          [%stri
+            let rec gen_expr ty = [%e derive_gen_expr ~loc ty_cstrs sig_items]]
         ])
     | _ -> failwith "TODO: other case for mod_type")
   | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->

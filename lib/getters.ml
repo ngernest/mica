@@ -135,11 +135,11 @@ let get_cstr_arity (cstr : constructor_declaration) : int =
   | Pcstr_tuple xs -> List.length xs
   | Pcstr_record lbls -> List.length lbls
 
-(** Retrieves the argument types of a constructor for an algebraic data type *)  
-let get_cstr_arg_tys (cstr : constructor_declaration) : core_type list = 
-  match cstr.pcd_args with 
-  | Pcstr_tuple tys -> tys 
-  | Pcstr_record lbls -> List.map ~f:(fun lbl -> lbl.pld_type) lbls 
+(** Retrieves the argument types of a constructor for an algebraic data type *)
+let get_cstr_arg_tys (cstr : constructor_declaration) : core_type list =
+  match cstr.pcd_args with
+  | Pcstr_tuple tys -> tys
+  | Pcstr_record lbls -> List.map ~f:(fun lbl -> lbl.pld_type) lbls
 
 (******************************************************************************)
 (** {1 Working with type parameters & type declarations} *)
