@@ -1,7 +1,7 @@
 open Ppxlib
 
 (******************************************************************************)
-(** {1 Quoting names} *)
+(** {1 Quoting & mangling names} *)
 
 (** Turns the variable [x] into [x'] *)
 val add_prime : string -> string

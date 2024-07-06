@@ -22,7 +22,7 @@ let mk_expr_cstrs (sig_items : signature) :
         let name : string = String.capitalize_ascii pval_name.txt in
         (* Exclude the return type of the function from the list of arg types
            for the [expr] constructor *)
-        let arg_tys = remove_last (get_cstr_arg_tys pval_type abs_ty_names) in
+        let arg_tys = remove_last (get_arg_tys_of_expr_cstr pval_type abs_ty_names) in
         (* Return type of the function *)
         let ret_ty = get_ret_ty pval_type in
         (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
@@ -97,8 +97,8 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
     (* For type [expr], produce a recursive call to [gen_expr] *)
     if equal_longident ty_name.txt (Longident.parse "expr") then
       [%expr with_size ~size:(k / 2) (gen_expr T)]
-    else 
-      (* Base case: assume that [quickcheck_generator_ty] exists for any
+    else
+      (* Base case: assume that [quickcheck_generator_ty] exists for any other
          non-parameterized type [ty] *)
       unapplied_type_constr_conv ~loc ty_name ~f:mk_generator_name
   (* For parameterized types, recursively derive generators for their type
@@ -144,48 +144,40 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
          "Unable to derive QuickCheck generator for type %s"
          (Ppxlib.string_of_core_type ty)
 
+let rhs ~(loc : Location.t) ty { cstr; args } =
+  let cstr_name = cstr.pcd_name.txt in
+  let gen_name = Expansion_helpers.mangle (Prefix "gen_") cstr_name in
+  let gen_decl = [%expr [%e evar ~loc gen_name]] in
+  let atom_gen = gen_atom ~loc ty in 
+  failwith "TODO"
+
 (* TODO: figure out how to invoke [gen_atom] defined above - we want both the
    LHS & RHS to be [core_type]s - we also need to recursively produce monadic
    bind expressions using >>= *)
-let gen_expr_skeleton_alt (sig_items : signature) =
-  let tys = uniq_ret_tys sig_items in
-  failwith "TODO"
-
-(** Maps [ty]s to [expr]s (for use in [gen_expr]) *)
-let gen_expr_case_skeleton (sig_items : signature) :
-  (Longident.t Location.loc * spine list) list =
-  let open Base.List.Assoc in
-  let expr_cstrs =
-    inverse (mk_expr_cstrs sig_items)
-    |> List.map ~f:(fun (ty, ({ pcd_loc; pcd_args; _ } as cstr_decl)) ->
-           ( lident_loc_of_string ~loc:ty.ptyp_loc
-               (string_of_monomorphized_ty ty),
-             mk_spine cstr_decl (evars_of_cstr_args ~loc:pcd_loc pcd_args) ))
-    |> List.sort ~cmp:(fun (t1, _) (t2, _) -> Longident.compare t1.txt t2.txt)
-  in
-  let ty_cstrs : Longident.t Location.loc list =
-    List.map ~f:get_cstr_name (mk_ty_cstrs sig_items) in
-  merge_list_with_assoc_list ty_cstrs expr_cstrs ~eq:equal_longident_loc
-  |> group ~equal:equal_longident_loc
-
-(** Creates the main case statement in [gen_expr] *)
 let gen_expr_cases (sig_items : signature) : case list =
-  let skeleton = gen_expr_case_skeleton sig_items in
-  let guard = None in
-  List.map skeleton ~f:(fun (lhs_cstr, rhs_elts) ->
-      let lhs = ppat_construct ~loc:lhs_cstr.loc lhs_cstr None in
-
+  let open Base.List.Assoc in
+  (* Maps [ty]s to [expr]s *)
+  let skeleton : (core_type * spine list) list =
+    inverse (mk_expr_cstrs sig_items)
+    |> List.map ~f:(fun (ty, expr_cstr) ->
+           ( ty,
+             mk_spine expr_cstr
+               (evars_of_cstr_args ~loc:expr_cstr.pcd_loc expr_cstr.pcd_args) ))
+    |> group ~equal:equal_core_type in
+  List.map skeleton ~f:(fun (ty, rhs_elts) ->
+      let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
       let rhs_exprs =
         elist ~loc:lhs.ppat_loc
           (List.map
              ~f:(fun { cstr; args } ->
-               let cstr_ident = evar ~loc:cstr.pcd_loc cstr.pcd_name.txt in
+               let cstr_name = cstr.pcd_name.txt in
+               let cstr_ident = evar ~loc:cstr.pcd_loc cstr_name in
                let cstr_args = pexp_tuple ~loc:cstr.pcd_loc args in
                eapply ~loc:cstr.pcd_loc cstr_ident [ cstr_args ])
              rhs_elts) in
       let loc = rhs_exprs.pexp_loc in
       let rhs = [%expr of_list [%e rhs_exprs]] in
-      case ~lhs ~guard ~rhs)
+      case ~lhs ~guard:None ~rhs)
 
 (** Derives the [gen_expr] QuickCheck generator 
     - [ty_cstrs] is a list of constructors for the [ty] ADT *)

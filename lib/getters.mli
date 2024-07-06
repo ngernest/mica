@@ -26,7 +26,7 @@ val get_varname : pattern -> string
     an occurrence of an abstract type in an non-arrow type 
     (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
     corresponds to the nullary constructor [Empty]). *)
-val get_cstr_arg_tys :
+val get_arg_tys_of_expr_cstr :
   ?is_arrow:bool -> core_type -> string list -> core_type list
 
 (** Helper function: [get_cstr_args loc get_ty args] takes [args], 
@@ -66,6 +66,9 @@ val get_cstrs_of_ty_decl :
 
 (** Computes the arity of a constructor for an algebraic data type *)
 val get_cstr_arity : constructor_declaration -> int
+
+(** Retrieves the argument types of a constructor for an algebraic data type *)  
+val get_cstr_arg_tys : constructor_declaration -> core_type list 
 
 (******************************************************************************)
 (** {1 Working with type parameters & type declarations} *)

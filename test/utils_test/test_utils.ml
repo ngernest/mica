@@ -33,21 +33,6 @@ let core_ty_testable : core_type testable = testable pp_core_type core_type_eq
 let core_ty_list_testable : core_type list testable = list core_ty_testable
 
 (******************************************************************************)
-(* Boilerplate for [type_declaration testable] (currently unused) *)
-
-(* let pp_ty_decl = Ppxlib.Pprintast.type_declaration
-
-   (** Equality of [type_declaration]'s is based on their string representations
-   *) let ty_decl_eq ({ ptype_name = ty1; ptype_params = ty_params1; _ } :
-   type_declaration) ({ ptype_name = ty2; ptype_params = ty_params2; _ } :
-   type_declaration) : bool = let ty_args1, ty_args2 = map2 ~f:(List.map ~f:fst)
-   (ty_params1, ty_params2) in String.equal (no_loc ty1) (no_loc ty2) &&
-   List.equal ~eq:core_type_eq ty_args1 ty_args2
-
-   let ty_decl_testable : type_declaration testable = testable pp_ty_decl
-   ty_decl_eq *)
-
-(******************************************************************************)
 (* Boilerplate for [constructor_declaration testable] *)
 
 (** Pretty printer for the [constructor_declaration] type *)

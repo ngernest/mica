@@ -47,11 +47,6 @@ val mk_generator_name : string -> string
 (** Produces an atomic QuickCheck generator for the given [core_type] *)
 val gen_atom : loc:Location.t -> core_type -> expression
 
-(** Maps [ty]s to [expr]s, constructing the main case statement 
-    in [gen_expr] *)
-val gen_expr_case_skeleton :
-  signature -> (Longident.t Location.loc * spine list) list
-
 (** Creates the main case statement in [gen_expr] *)
 val gen_expr_cases : signature -> case list
 

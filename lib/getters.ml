@@ -37,7 +37,7 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
     an occurrence of an abstract type in an non-arrow type 
     (e.g. [val empty : 'a t]) should be ignored (so [val empty : 'a t] 
     corresponds to the nullary constructor [Empty]). *)
-let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type)
+let rec get_arg_tys_of_expr_cstr ?(is_arrow = false) (ty : core_type)
   (abs_ty_names : string list) : core_type list =
   let loc = ty.ptyp_loc in
   match monomorphize ty with
@@ -48,13 +48,13 @@ let rec get_cstr_arg_tys ?(is_arrow = false) (ty : core_type)
       if is_arrow then [ [%type: expr] ] else []
     else [ ty' ]
   | { ptyp_desc = Ptyp_arrow (_, t1, t2); _ } ->
-    get_cstr_arg_tys ~is_arrow:true t1 abs_ty_names
-    @ get_cstr_arg_tys ~is_arrow:true t2 abs_ty_names
+    get_arg_tys_of_expr_cstr ~is_arrow:true t1 abs_ty_names
+    @ get_arg_tys_of_expr_cstr ~is_arrow:true t2 abs_ty_names
   | { ptyp_desc = Ptyp_tuple tys; _ } ->
     List.concat_map
-      ~f:(fun ty -> get_cstr_arg_tys ~is_arrow ty abs_ty_names)
+      ~f:(fun ty -> get_arg_tys_of_expr_cstr ~is_arrow ty abs_ty_names)
       tys
-  | _ -> failwith "TODO: get_cstr_arg_tys"
+  | _ -> failwith "TODO: get_arg_tys_of_expr_cstr"
 
 (** Helper function: [get_cstr_args loc get_ty args] takes [args], 
     a list containing the {i representation} of constructor arguments, 
@@ -134,6 +134,12 @@ let get_cstr_arity (cstr : constructor_declaration) : int =
   match cstr.pcd_args with
   | Pcstr_tuple xs -> List.length xs
   | Pcstr_record lbls -> List.length lbls
+
+(** Retrieves the argument types of a constructor for an algebraic data type *)  
+let get_cstr_arg_tys (cstr : constructor_declaration) : core_type list = 
+  match cstr.pcd_args with 
+  | Pcstr_tuple tys -> tys 
+  | Pcstr_record lbls -> List.map ~f:(fun lbl -> lbl.pld_type) lbls 
 
 (******************************************************************************)
 (** {1 Working with type parameters & type declarations} *)
