@@ -9,7 +9,8 @@ module TycheUtils (Mica : sig
   val num_unique_ints : expr -> int
 
   type ty
-  val show_ty : ty -> string 
+
+  val show_ty : ty -> string
 end) =
 struct
   open Mica
