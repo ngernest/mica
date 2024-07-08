@@ -162,8 +162,9 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
       cstr_arg_tys in
   let gen_cstr_body =
     pexp_let ~loc Nonrecursive atomic_generators
-      (failwith
-         "TODO: need to produce the call to >>| and invoke the generator here!")
+      [%expr
+        return
+          "TODO: need to produce the call to >>| and invoke the generator here!"]
   in
   pexp_let Nonrecursive ~loc
     [ value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_body ]

@@ -2,12 +2,13 @@
  (name ppx_mica)
  (public_name ppx_mica)
  (kind ppx_deriver)
- (libraries base base_quickcheck core ppxlib)
+ (libraries base base_quickcheck core ppxlib yojson core_unix)
  (preprocess
   (pps ppx_jane ppxlib.metaquot bisect_ppx --conditional)))
 
 ; TODO: remove -dtimings flag after we're done measuring compilation times
+
 (env
  (dev
   (flags
-   (:standard -g -w "-26-27-32-33-34-39" -dtimings))))
+   (:standard -g -w "-26-27-32-33-34-39"))))
