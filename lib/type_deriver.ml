@@ -153,21 +153,37 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
   let gen_cstr_expr = evar ~loc gen_cstr_name in
   let gen_cstr_pat = pvar ~loc gen_cstr_name in
   let cstr_arg_tys = get_cstr_arg_tys cstr in
+  let generator_names : string list =
+    List.map ~f:(fun ty -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
+  (* [let g1 = gen_int and g2 = gen_string in ...] *)
   let atomic_generators : value_binding list =
-    List.map
-      ~f:(fun ty ->
-        let gen_name = pvar ~loc @@ gen_symbol ~prefix:"g" () in
+    List.map2
+      ~f:(fun ty gen_name ->
+        let pat = pvar ~loc gen_name in
         let gen_body = gen_atom ~loc ty in
-        value_binding ~loc ~pat:gen_name ~expr:gen_body)
-      cstr_arg_tys in
-  let gen_cstr_body =
-    pexp_let ~loc Nonrecursive atomic_generators
+        value_binding ~loc ~pat ~expr:gen_body)
+      cstr_arg_tys generator_names in
+  let gen_cstr_let_body =
+    match generator_names with
+    | [] -> [%expr return "TODO: handle nullary case"]
+    | [ g ] ->
+      (* Generate a fresh name for the random [expr] *)
+      let var = gen_symbol ~prefix:"e" () in
+      (* Then, apply the constructor to the random [expr] *)
+      [%expr
+        [%e evar ~loc g] >>| fun [%p pvar ~loc var] ->
+        [%e evar ~loc cstr.pcd_name.txt] [%e evar ~loc var]]
+    | _ ->
       [%expr
         return
           "TODO: need to produce the call to >>| and invoke the generator here!"]
   in
+
+  let gen_cstr_let_expr =
+    pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
+
   pexp_let Nonrecursive ~loc
-    [ value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_body ]
+    [ value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_let_expr ]
     gen_cstr_expr
 
 (* TODO: figure out how to invoke [gen_atom] defined above - we want both the
@@ -185,19 +201,15 @@ let gen_expr_cases (sig_items : signature) : case list =
     |> group ~equal:equal_core_type in
   List.map skeleton ~f:(fun (ty, rhs_elts) ->
       let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
+      let loc = lhs.ppat_loc in
       let rhs_exprs =
-        elist ~loc:lhs.ppat_loc
-          (List.map ~f:(fun cstr -> rhs ~loc:Location.none ty cstr) rhs_elts)
-      in
+        elist ~loc (List.map ~f:(fun cstr -> rhs ~loc ty cstr) rhs_elts) in
       (* (List.map ~f:(fun { cstr; args } -> let cstr_name = cstr.pcd_name.txt
          in let cstr_ident = evar ~loc:cstr.pcd_loc cstr_name in let cstr_args =
          pexp_tuple ~loc:cstr.pcd_loc args in eapply ~loc:cstr.pcd_loc
          cstr_ident [ cstr_args ]) rhs_elts) in *)
       let loc = rhs_exprs.pexp_loc in
-      let rhs =
-        (* TODO: fix *)
-        if list_is_empty rhs_elts then [%expr of_list []]
-        else [%expr of_list [%e rhs_exprs]] in
+      let rhs = [%expr of_list [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
 
 (** Derives the [gen_expr] QuickCheck generator 
