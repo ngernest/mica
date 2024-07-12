@@ -148,7 +148,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
 (* temp function for producing the RHS of the pattern match in gen_expr *)
 let rhs ~(loc : Location.t) ty { cstr; args } =
   let cstr_name = cstr.pcd_name.txt in
-  let cstr_name_evar = evar ~loc cstr_name in 
+  let cstr_name_evar = evar ~loc cstr_name in
   let gen_cstr_name =
     Expansion_helpers.mangle (Prefix "gen") (uncapitalize cstr_name) in
   let gen_cstr_expr = evar ~loc gen_cstr_name in
@@ -166,7 +166,7 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
       cstr_arg_tys generator_names in
   let gen_cstr_let_body =
     match generator_names with
-    | [] -> 
+    | [] ->
       (* TODO: figure out how to do nullary case *)
       [%expr return [%e cstr_name_evar]]
     | [ g ] ->
@@ -177,19 +177,19 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
         [%e evar ~loc g] >>| fun [%p pvar ~loc var] ->
         [%e cstr_name_evar] [%e evar ~loc var]]
     | gs ->
-      let n = List.length gs in 
-      if n >= 2 && n <= 6 then 
-        let tuple_gen = evar ~ loc @@ Printf.sprintf "tuple%d" n in 
-        let generator_evars = List.map ~f:(evar ~loc) gs in 
+      let n = List.length gs in
+      if n >= 2 && n <= 6 then
+        let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
+        let generators = List.map ~f:(evar ~loc) gs in
         [%expr
-        [%e eapply ~loc tuple_gen generator_evars] >>| fun _ -> 
-        return
-          "TODO: need to produce the call to >>| and invoke the generator here!"]
-      else 
-        pexp_extension ~loc @@ Location.error_extensionf ~ loc 
-          "Functions with arity %d not supported, max arity is 6\n" n
-
-  in
+          [%e eapply ~loc tuple_gen generators] >>| fun _ ->
+          return
+            "TODO: need to produce the call to >>| and invoke the generator \
+             here!"]
+      else
+        pexp_extension ~loc
+        @@ Location.error_extensionf ~loc
+             "Functions with arity %d not supported, max arity is 6\n" n in
 
   let gen_cstr_let_expr =
     pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
