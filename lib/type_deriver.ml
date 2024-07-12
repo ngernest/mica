@@ -114,7 +114,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
     (* Instantiate type variables with [int] *)
     [%expr quickcheck_generator_int]
   | Ptyp_tuple tys ->
-    (* Core.Quickcheck.Generator only supports tuples of length 2 - 6 *)
+    (* [Core.Quickcheck.Generator] only supports tuples of length 2 - 6 *)
     let n = List.length tys in
     if n >= 2 && n <= 6 then
       let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
@@ -148,6 +148,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
 (* temp function for producing the RHS of the pattern match in gen_expr *)
 let rhs ~(loc : Location.t) ty { cstr; args } =
   let cstr_name = cstr.pcd_name.txt in
+  let cstr_name_evar = evar ~loc cstr_name in 
   let gen_cstr_name =
     Expansion_helpers.mangle (Prefix "gen") (uncapitalize cstr_name) in
   let gen_cstr_expr = evar ~loc gen_cstr_name in
@@ -165,18 +166,29 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
       cstr_arg_tys generator_names in
   let gen_cstr_let_body =
     match generator_names with
-    | [] -> [%expr return "TODO: handle nullary case"]
+    | [] -> 
+      (* TODO: figure out how to do nullary case *)
+      [%expr return [%e cstr_name_evar]]
     | [ g ] ->
       (* Generate a fresh name for the random [expr] *)
       let var = gen_symbol ~prefix:"e" () in
       (* Then, apply the constructor to the random [expr] *)
       [%expr
         [%e evar ~loc g] >>| fun [%p pvar ~loc var] ->
-        [%e evar ~loc cstr.pcd_name.txt] [%e evar ~loc var]]
-    | _ ->
-      [%expr
+        [%e cstr_name_evar] [%e evar ~loc var]]
+    | gs ->
+      let n = List.length gs in 
+      if n >= 2 && n <= 6 then 
+        let tuple_gen = evar ~ loc @@ Printf.sprintf "tuple%d" n in 
+        let generator_evars = List.map ~f:(evar ~loc) gs in 
+        [%expr
+        [%e eapply ~loc tuple_gen generator_evars] >>| fun _ -> 
         return
           "TODO: need to produce the call to >>| and invoke the generator here!"]
+      else 
+        pexp_extension ~loc @@ Location.error_extensionf ~ loc 
+          "Functions with arity %d not supported, max arity is 6\n" n
+
   in
 
   let gen_cstr_let_expr =
@@ -204,12 +216,8 @@ let gen_expr_cases (sig_items : signature) : case list =
       let loc = lhs.ppat_loc in
       let rhs_exprs =
         elist ~loc (List.map ~f:(fun cstr -> rhs ~loc ty cstr) rhs_elts) in
-      (* (List.map ~f:(fun { cstr; args } -> let cstr_name = cstr.pcd_name.txt
-         in let cstr_ident = evar ~loc:cstr.pcd_loc cstr_name in let cstr_args =
-         pexp_tuple ~loc:cstr.pcd_loc args in eapply ~loc:cstr.pcd_loc
-         cstr_ident [ cstr_args ]) rhs_elts) in *)
       let loc = rhs_exprs.pexp_loc in
-      let rhs = [%expr of_list [%e rhs_exprs]] in
+      let rhs = [%expr [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
 
 (** Derives the [gen_expr] QuickCheck generator 
