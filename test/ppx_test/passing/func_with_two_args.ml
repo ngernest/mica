@@ -3,4 +3,3 @@ module type S = sig
 
   val f : int -> 'a t -> 'a t
 end
-[@@deriving mica_types]

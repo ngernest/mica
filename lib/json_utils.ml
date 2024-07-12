@@ -1,8 +1,8 @@
 open Base
 open Yojson
 
-(* TODO: figure out a way of putting the code derived by ppx_mica
-   in a module called Mica *)
+(* TODO: figure out a way of putting the code derived by ppx_mica in a module
+   called Mica *)
 module TycheUtils (Mica : sig
   type expr
 

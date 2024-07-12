@@ -9,4 +9,3 @@ module type StackInterface = sig
   val is_empty : 'a t -> bool
   val length : 'a t -> int
 end
-[@@deriving mica_types, mica]

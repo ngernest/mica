@@ -1,17 +1,1 @@
 module type S  = sig type 'a t val f : 'a t -> 'a t val g : int -> 'a t end
-[@@deriving mica_types]
-include
-  struct
-    type expr =
-      | F of expr 
-      | G of int 
-    type ty =
-      | IntT 
-    let gen_expr ty =
-      let open Core in
-        let open Quickcheck.Generator in
-          let open Let_syntax in
-            size >>=
-              (fun x ->
-                 match ty with | IntT -> of_list [F expr__001_; G int__002_])
-  end[@@ocaml.doc "@inline"][@@merlin.hide ]

@@ -11,4 +11,3 @@ module type PolyInterface = sig
   val eval : t -> int -> int
   val equal : t -> t -> bool
 end
-[@@deriving mica_types, mica]

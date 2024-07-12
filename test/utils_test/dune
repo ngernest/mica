@@ -1,12 +1,5 @@
-(test
- (name test_utils)
+(tests
+ (names test_runner)
  (libraries ppx_mica alcotest ppxlib)
  (preprocess
   (pps ppxlib.metaquot)))
-
-;; TODO: uncomment
-
-; (env
-;  (dev
-;   (flags
-;    (:standard -g -w "-32"))))

@@ -194,7 +194,10 @@ let gen_expr_cases (sig_items : signature) : case list =
          pexp_tuple ~loc:cstr.pcd_loc args in eapply ~loc:cstr.pcd_loc
          cstr_ident [ cstr_args ]) rhs_elts) in *)
       let loc = rhs_exprs.pexp_loc in
-      let rhs = [%expr of_list [%e rhs_exprs]] in
+      let rhs =
+        (* TODO: fix *)
+        if list_is_empty rhs_elts then [%expr of_list []]
+        else [%expr of_list [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
 
 (** Derives the [gen_expr] QuickCheck generator 

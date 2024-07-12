@@ -10,4 +10,3 @@ module type RegexMatcher = sig
   val matchString : t -> string -> bool
   val acceptsEmpty : t -> bool
 end
-[@@deriving mica_types, mica]
