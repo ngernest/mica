@@ -181,11 +181,12 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
       if n >= 2 && n <= 6 then
         let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
         let generators = List.map ~f:(evar ~loc) gs in
+        let vars = List.map ~f:(fun _ -> gen_symbol ~prefix:"e" ()) gs in 
+        let args_pat = ppat_tuple ~loc (List.map ~f:(pvar ~loc) vars) in 
+        let args_expr = pexp_tuple ~loc (List.map ~f:(evar ~loc) vars) in 
         [%expr
-          [%e eapply ~loc tuple_gen generators] >>| fun _ ->
-          return
-            "TODO: need to produce the call to >>| and invoke the generator \
-             here!"]
+          [%e eapply ~loc tuple_gen generators] >>| fun [%p args_pat] ->
+          [%e cstr_name_evar] [%e args_expr]]
       else
         pexp_extension ~loc
         @@ Location.error_extensionf ~loc
