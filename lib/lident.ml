@@ -29,13 +29,23 @@ let string_of_lident (lident : Longident.t) : string =
   | [ x ] -> x
   | _ -> String.concat ~sep:"." xs
 
-(** Only uncapitalizes the final [Lident] in a [Longident.t] 
+(** Maps a [string -> string] function via structural recursion over a [Longident.t] 
     (prefixes in [Ldot]s are left unchanged) *)
-let rec uncapitalize_lident (lident : Longident.t) : Longident.t =
-  match lident with
-  | Lident s -> Lident (uncapitalize s)
-  | Ldot (prefix, s) -> Ldot (prefix, uncapitalize s)
-  | Lapply (l1, l2) -> Lapply (uncapitalize_lident l1, uncapitalize_lident l2)
+let rec map_lident ~(f : string -> string) (l : Longident.t) : Longident.t =
+  match l with
+  | Lident s -> Lident (f s)
+  | Ldot (prefix, s) -> Ldot (prefix, f s)
+  | Lapply (l1, l2) -> Lapply (map_lident ~f l1, map_lident ~f l2)
+
+(** Uncapitalizes the final [Lident] in a [Longident.t] 
+    (prefixes in [Ldot]s are left unchanged) *)
+let uncapitalize_lident (l : Longident.t) : Longident.t =
+  map_lident ~f:uncapitalize l
+
+(** Capitalizes the final [Lident] in a [Longident.t] 
+    (prefixes in [Ldot]s are left unchanged) *)
+let capitalize_lident (l : Longident.t) : Longident.t =
+  map_lident ~f:String.capitalize_ascii l
 
 (** [add_lident_prefix p l] adds the prefix [p] to the identifier [l] 
     using dot notation, returning a new identifier [p.l] *)

@@ -18,11 +18,19 @@ val lident_of_string : string -> Longident.t
 (** Converts a string [x] at location [loc] to a [Longident] *)
 val lident_loc_of_string : string -> loc:Location.t -> Longident.t Location.loc
 
-(** Converts a [Longident] to a regular string *)
+(** Maps a [string -> string] function via structural recursion over a [Longident.t] 
+    (prefixes in [Ldot]s are left unchanged) *)
+val map_lident : f:(string -> string) -> Longident.t -> Longident.t 
+
+(** Uncapitalizes the final [Lident] in a [Longident.t] 
+    (prefixes in [Ldot]s are left unchanged) *)
 val uncapitalize_lident : Longident.t -> Longident.t
 
-(** Only uncapitalizes the final [Lident] in a [Longident.t] 
+(** Capitalizes the final [Lident] in a [Longident.t] 
     (prefixes in [Ldot]s are left unchanged) *)
+val capitalize_lident : Longident.t -> Longident.t 
+
+(** Converts a [Longident] to a regular string *)    
 val string_of_lident : Longident.t -> string
 
 (** [add_lident_prefix p l] adds the prefix [p] to the identifier [l] 
