@@ -97,6 +97,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
   | Ptyp_constr (ty_name, []) ->
     (* For type [expr], produce a recursive call to [gen_expr] *)
     if equal_longident ty_name.txt (Longident.parse "expr") then
+      (* TODO: figure out if its [T] or [IntT] *)
       [%expr with_size ~size:(k / 2) (gen_expr T)]
     else
       (* Base case: assume that [quickcheck_generator_ty] exists for any other
