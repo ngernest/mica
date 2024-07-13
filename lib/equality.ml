@@ -24,6 +24,10 @@ let equal_longident_loc (l1 : Longident.t Location.loc)
   (l2 : Longident.t Location.loc) : bool =
   equal_longident (no_loc l1) (no_loc l2)
 
+(* -------------------------------------------------------------------------- *)
+(*                          Handling [core_type]s                             *)
+(* -------------------------------------------------------------------------- *)
+
 (** Checks two [core_type]s for equality, ignoring location *)
 let rec equal_core_type (t1 : core_type) (t2 : core_type) : bool =
   equal_core_type_desc t1.ptyp_desc t2.ptyp_desc
@@ -54,6 +58,15 @@ and equal_core_type_desc (t1 : core_type_desc) (t2 : core_type_desc) : bool =
 (** Checks two [core_type list]s for equality, ignoring location *)
 and equal_core_type_list (xs : core_type list) (ys : core_type list) : bool =
   List.equal ~eq:equal_core_type xs ys
+
+(** Compares two [core_type]s lexicographically based on their name *)
+let rec compare_core_type (t1 : core_type) (t2 : core_type) : int =
+  let s1, s2 = map2 ~f:string_of_core_type (t1, t2) in
+  String.compare s1 s2
+
+(* -------------------------------------------------------------------------- *)
+(*                     Equality of other [Parsetree] types                    *)
+(* -------------------------------------------------------------------------- *)
 
 (** Checks two [mutable_flag]s for equality *)
 let equal_mutable_flag x y =
