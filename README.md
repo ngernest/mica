@@ -84,7 +84,9 @@ the main `mica` deriver which runs afterwards.
 
 
 ## Testing 
-1. `test/utils_test` contains `Alcotest` unit tests which test various helper functions.
+1. [`test/utils_test`](./test/utils_test/) contains `Alcotest` unit tests for various helper functinos.
+- See the [README](./test/utils_test/README.md) in [`utils_test`](./test/utils_test/) for instructions
+on how to add new tests to the Alcotest test suite.
 2. `bisect_ppx` is used to compute test coverage.
 - Run `make coverage` to generate a test coverage report.       
 (Note: before doing so, make sure `test/ppx_test/errors/dune.inc` is blank.)
