@@ -5,14 +5,9 @@ open Miscellany
 
 (** {1 Equality of [Parsetree] types} *)
 
-(** Checks if a [constructor_declaration] for the [ty] ADT and 
-    (its corresponding) [core_type] are equal with respect to their string 
-    representations using [string_of_monomorphized_ty ].
-    - e.g. this function returns [true] when [core_ty = bool]
-    and [constructor_declaration = Bool]. *)
-let equal_ty_cstr_core_type (ty_cstr : constructor_declaration)
-  (core_ty : core_type) : bool =
-  String.equal (string_of_monomorphized_ty core_ty) ty_cstr.pcd_name.txt
+(* -------------------------------------------------------------------------- *)
+(*                         Handling [Longident.t]                             *)
+(* -------------------------------------------------------------------------- *)
 
 (** Checks two [Longident.t] values for equality *)
 let equal_longident (l1 : Longident.t) (l2 : Longident.t) : bool =
@@ -60,7 +55,7 @@ and equal_core_type_list (xs : core_type list) (ys : core_type list) : bool =
   List.equal ~eq:equal_core_type xs ys
 
 (** Compares two [core_type]s lexicographically based on their name *)
-let rec compare_core_type (t1 : core_type) (t2 : core_type) : int =
+let compare_core_type (t1 : core_type) (t2 : core_type) : int =
   let s1, s2 = map2 ~f:string_of_core_type (t1, t2) in
   String.compare s1 s2
 
@@ -99,3 +94,12 @@ let rec equal_constructor_declaration (c1 : constructor_declaration)
   String.equal name1 name2
   && List.equal ~eq:String.equal vars1 vars2
   && equal_constructor_arguments c1.pcd_args c2.pcd_args
+
+(** Checks if a [constructor_declaration] for the [ty] ADT and 
+    (its corresponding) [core_type] are equal with respect to their string 
+    representations using [string_of_monomorphized_ty ].
+    - e.g. this function returns [true] when [core_ty = bool]
+    and [constructor_declaration = Bool]. *)
+let equal_ty_cstr_core_type (ty_cstr : constructor_declaration)
+  (core_ty : core_type) : bool =
+  String.equal (string_of_monomorphized_ty core_ty) ty_cstr.pcd_name.txt

@@ -83,7 +83,7 @@ let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
 
 type spine = { cstr : constructor_declaration; args : expression list }
 
-let mk_spine (cstr : constructor_declaration) (args : expression list) =
+let mk_spine (cstr : constructor_declaration) (args : expression list) : spine =
   { cstr; args }
 
 (** Takes the name of a type and produces the name of its 
@@ -123,11 +123,10 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
     else
       pexp_extension ~loc
       @@ Location.error_extensionf ~loc
-           "Unable to derive QuickCheck generator for product type %s \
-            containing %d types"
+           "Unable to derive generator for product type %s with %d types"
            (Ppxlib.string_of_core_type ty)
            n
-  (* TODO: derive QC generator for unary functions *)
+  (* TODO: derive QC generator for unary functions of type [int -> int] *)
   | Ptyp_arrow (Nolabel, arg_ty, ret_ty) ->
     pexp_extension ~loc
     @@ Location.error_extensionf ~loc
@@ -146,7 +145,8 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
          (Ppxlib.string_of_core_type ty)
 
 (* temp function for producing the RHS of the pattern match in gen_expr *)
-let rhs ~(loc : Location.t) ty { cstr; args } =
+let gen_expr_rhs ~(loc : Location.t) (ty : core_type) ({ cstr; args } : spine) :
+  expression =
   let cstr_name = cstr.pcd_name.txt in
   let cstr_name_evar = evar ~loc cstr_name in
   let gen_cstr_name =
@@ -181,9 +181,9 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
       if n >= 2 && n <= 6 then
         let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
         let generators = List.map ~f:(evar ~loc) gs in
-        let vars = List.map ~f:(fun _ -> gen_symbol ~prefix:"e" ()) gs in 
-        let args_pat = ppat_tuple ~loc (List.map ~f:(pvar ~loc) vars) in 
-        let args_expr = pexp_tuple ~loc (List.map ~f:(evar ~loc) vars) in 
+        let vars = List.map ~f:(fun _ -> gen_symbol ~prefix:"e" ()) gs in
+        let args_pat = ppat_tuple ~loc (List.map ~f:(pvar ~loc) vars) in
+        let args_expr = pexp_tuple ~loc (List.map ~f:(evar ~loc) vars) in
         [%expr
           [%e eapply ~loc tuple_gen generators] >>| fun [%p args_pat] ->
           [%e cstr_name_evar] [%e args_expr]]
@@ -199,9 +199,6 @@ let rhs ~(loc : Location.t) ty { cstr; args } =
     [ value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_let_expr ]
     gen_cstr_expr
 
-(* TODO: figure out how to invoke [gen_atom] defined above - we want both the
-   LHS & RHS to be [core_type]s - we also need to recursively produce monadic
-   bind expressions using >>= *)
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
   (* Maps [ty]s to [expr]s *)
@@ -211,12 +208,13 @@ let gen_expr_cases (sig_items : signature) : case list =
            ( ty,
              mk_spine expr_cstr
                (evars_of_cstr_args ~loc:expr_cstr.pcd_loc expr_cstr.pcd_args) ))
-    |> group ~equal:equal_core_type in
+    |> sort_and_group ~compare:compare_core_type in
   List.map skeleton ~f:(fun (ty, rhs_elts) ->
       let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
       let loc = lhs.ppat_loc in
       let rhs_exprs =
-        elist ~loc (List.map ~f:(fun cstr -> rhs ~loc ty cstr) rhs_elts) in
+        elist ~loc
+          (List.map ~f:(fun cstr -> gen_expr_rhs ~loc ty cstr) rhs_elts) in
       let loc = rhs_exprs.pexp_loc in
       let rhs = [%expr [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
