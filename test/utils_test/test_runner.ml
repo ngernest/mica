@@ -140,6 +140,10 @@ let () =
           gen_atom_tuple3 ();
           gen_atom_option_list_pair ();
           gen_atom_nested_list ();
-          gen_atom_expr_recursive_call ()
+          gen_atom_expr_T ();
+          gen_atom_expr_IntT ();
+          gen_atom_t_IntT ();
+          gen_atom_expr_IntIntT ();
+          gen_atom_expr_IntIntIntT ()
         ] )
     ]

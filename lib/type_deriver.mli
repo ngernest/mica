@@ -44,8 +44,24 @@ type spine = { cstr : constructor_declaration; args : expression list }
     corresponding QuickCheck generator *)
 val mk_generator_name : string -> string
 
-(** Produces an atomic QuickCheck generator for the given [core_type] *)
-val gen_atom : loc:Location.t -> core_type -> expression
+(** Produces an atomic QuickCheck generator for the given [core_type]
+    - [abs_tys] is an association list consisting of type names & type 
+    parameters for the abstract types in the signature  *)
+val gen_atom :
+  loc:Location.t ->
+  core_type ->
+  abs_tys:(string * core_type list) list ->
+  expression
+
+(** Helper function for producing the RHS of the pattern match in gen_expr 
+    - [abs_tys] is an association list consisting of type names & type 
+    parameters for the abstract types in the signature *)
+val gen_expr_rhs :
+  loc:Location.t ->
+  core_type ->
+  spine ->
+  abs_tys:(string * core_type list) list ->
+  expression
 
 (** Creates the main case statement in [gen_expr] *)
 val gen_expr_cases : signature -> case list

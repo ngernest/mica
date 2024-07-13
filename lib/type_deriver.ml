@@ -91,22 +91,43 @@ let mk_spine (cstr : constructor_declaration) (args : expression list) : spine =
 let mk_generator_name (s : string) : string =
   Printf.sprintf "quickcheck_generator_%s" s
 
-(** Produces an atomic QuickCheck generator for the given [core_type] *)
-let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
+let expr_to_t = []
+
+(** Produces an atomic QuickCheck generator for the given [core_type] 
+    - [abs_tys] is an association list consisting of type names & type parameters
+    for the abstract types in the signature *)
+let rec gen_atom ~(loc : Location.t) (ty : core_type)
+  ~(abs_tys : (string * core_type list) list) : expression =
   match ty.ptyp_desc with
-  | Ptyp_constr (ty_name, []) ->
-    (* For type [expr], produce a recursive call to [gen_expr] *)
-    if equal_longident ty_name.txt (Longident.parse "expr") then
-      (* TODO: figure out if its [T] or [IntT] *)
-      [%expr with_size ~size:(k / 2) (gen_expr T)]
-    else
-      (* Base case: assume that [quickcheck_generator_ty] exists for any other
-         non-parameterized type [ty] *)
-      unapplied_type_constr_conv ~loc ty_name ~f:mk_generator_name
+  | Ptyp_constr (ty_name, []) -> (
+    (* Check whether the type is an abstract type in the signature *)
+    let ty_str =
+      (* Convert [expr] to [t] by default - TODO: may want to find a better
+         representation in the future *)
+      if String.equal (string_of_lident ty_name.txt) "expr" then "t"
+      else string_of_lident ty_name.txt in
+    match List.assoc_opt ty_str abs_tys with
+    | Some [] ->
+      (* If the abstract type has no type params, produce a recursive call with
+         [T] *)
+      let ty_expr = evar ~loc "T" in
+      [%expr with_size ~size:(k / 2) (gen_expr [%e ty_expr])]
+    | Some tyvars ->
+      (* Monomorphize all type variables, obtain their string representation &
+         concat the resultant string, so [('a, 'b) t] becomes [IntIntT] *)
+      let tyvars_prefix =
+        String.concat ~sep:"" (List.map ~f:string_of_monomorphized_ty tyvars)
+      in
+      let ty_expr = evar ~loc (tyvars_prefix ^ "T") in
+      [%expr with_size ~size:(k / 2) (gen_expr [%e ty_expr])]
+    | None ->
+      (* Assume [quickcheck_generator_ty] exists for any other non-parameterized
+         type [ty] *)
+      unapplied_type_constr_conv ~loc ty_name ~f:mk_generator_name)
   (* For parameterized types, recursively derive generators for their type
      parameters *)
   | Ptyp_constr (ty_name, ty_params) ->
-    let args = List.map ~f:(gen_atom ~loc) ty_params in
+    let args = List.map ~f:(gen_atom ~loc ~abs_tys) ty_params in
     type_constr_conv ~loc ty_name ~f:mk_generator_name args
   | Ptyp_any ->
     mk_error_expr ~loc:ty.ptyp_loc
@@ -119,7 +140,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
     let n = List.length tys in
     if n >= 2 && n <= 6 then
       let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
-      let args = List.map ~f:(gen_atom ~loc) tys in
+      let args = List.map ~f:(gen_atom ~loc ~abs_tys) tys in
       eapply ~loc tuple_gen args
     else
       pexp_extension ~loc
@@ -145,9 +166,11 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type) : expression =
          "Unable to derive QuickCheck generator for type %s"
          (Ppxlib.string_of_core_type ty)
 
-(* temp function for producing the RHS of the pattern match in gen_expr *)
-let gen_expr_rhs ~(loc : Location.t) (ty : core_type) ({ cstr; args } : spine) :
-  expression =
+(** Helper function for producing the RHS of the pattern match in gen_expr
+    - [abs_tys] is an association list consisting of type names & type parameters
+    for the abstract types in the signature  *)
+let gen_expr_rhs ~(loc : Location.t) (ty : core_type) ({ cstr; args } : spine)
+  ~(abs_tys : (string * core_type list) list) : expression =
   let cstr_name = cstr.pcd_name.txt in
   let cstr_name_evar = evar ~loc cstr_name in
   let gen_cstr_name =
@@ -162,7 +185,7 @@ let gen_expr_rhs ~(loc : Location.t) (ty : core_type) ({ cstr; args } : spine) :
     List.map2
       ~f:(fun ty gen_name ->
         let pat = pvar ~loc gen_name in
-        let gen_body = gen_atom ~loc ty in
+        let gen_body = gen_atom ~loc ty ~abs_tys in
         value_binding ~loc ~pat ~expr:gen_body)
       cstr_arg_tys generator_names in
   let gen_cstr_let_body =
@@ -202,6 +225,7 @@ let gen_expr_rhs ~(loc : Location.t) (ty : core_type) ({ cstr; args } : spine) :
 
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
+  let abs_tys = get_ty_decls_from_sig sig_items in
   (* Maps [ty]s to [expr]s *)
   let skeleton : (core_type * spine list) list =
     inverse (mk_expr_cstrs sig_items)
@@ -215,7 +239,9 @@ let gen_expr_cases (sig_items : signature) : case list =
       let loc = lhs.ppat_loc in
       let rhs_exprs =
         elist ~loc
-          (List.map ~f:(fun cstr -> gen_expr_rhs ~loc ty cstr) rhs_elts) in
+          (List.map
+             ~f:(fun cstr -> gen_expr_rhs ~loc ty cstr ~abs_tys)
+             rhs_elts) in
       let loc = rhs_exprs.pexp_loc in
       let rhs = [%expr [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)

@@ -29,7 +29,7 @@ val equal_core_type_desc : core_type_desc -> core_type_desc -> bool
 val equal_core_type_list : core_type list -> core_type list -> bool
 
 (** Compares two [core_type]s lexicographically based on their name *)
-val compare_core_type : core_type -> core_type -> int 
+val compare_core_type : core_type -> core_type -> int
 
 (** Checks two [mutable_flag]s for equality *)
 val equal_mutable_flag : mutable_flag -> mutable_flag -> bool
