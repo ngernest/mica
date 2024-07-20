@@ -51,6 +51,11 @@ val gen_atom :
   abs_tys:(string * core_type list) list ->
   expression
 
+(** Produces the name of QuickCheck generators corresponding to a list of 
+    [constructor_declaration]s (by prepending the prefix "gen" to each 
+    constructor's name) *)  
+val mint_generator_names : constructor_declaration list -> string list   
+
 (** Helper function for producing the RHS of the pattern match in gen_expr 
     - [abs_tys] is an association list consisting of type names & type 
     parameters for the abstract types in the signature *)

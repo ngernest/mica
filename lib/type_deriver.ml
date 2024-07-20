@@ -95,8 +95,8 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type)
   | Ptyp_constr (ty_name, []) -> (
     (* Check whether the type is an abstract type in the signature *)
     let ty_str =
-      (* Convert [expr] to [t] by default - TODO: may want to find a better
-         representation in the future *)
+      (* Convert [expr] to [t] by default (TODO: may want to find a better
+         representation in the future) *)
       if String.equal (string_of_lident ty_name.txt) "expr" then "t"
       else string_of_lident ty_name.txt in
     match List.assoc_opt ty_str abs_tys with
@@ -159,6 +159,16 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type)
          "Unable to derive QuickCheck generator for type %s"
          (Ppxlib.string_of_core_type ty)
 
+(** Produces the name of QuickCheck generators corresponding to a list of 
+    [constructor_declaration]s (by prepending the prefix "gen" to each 
+    constructor's name) *)
+let mint_generator_names (cstrs : constructor_declaration list) : string list =
+  List.map
+    ~f:(fun cstr ->
+      let cstr_name = cstr.pcd_name.txt in
+      Expansion_helpers.mangle (Prefix "gen") cstr_name)
+    cstrs
+
 (** Helper function for producing the RHS of the pattern match in gen_expr
     - [abs_tys] is an association list consisting of type names & type parameters
     for the abstract types in the signature  *)
@@ -167,12 +177,9 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
   match cstrs with
   | [] -> failwith "impossible"
   | _ ->
-    List.map cstrs ~f:(fun cstr ->
-        let cstr_name = cstr.pcd_name.txt in
-        let cstr_name_evar = evar ~loc cstr_name in
-        let gen_cstr_name =
-          Expansion_helpers.mangle (Prefix "gen") (uncapitalize cstr_name) in
-        let gen_cstr_pat = pvar ~loc gen_cstr_name in
+    let generator_names = mint_generator_names cstrs in
+    List.map2 cstrs generator_names ~f:(fun cstr gen_name ->
+        let cstr_name_evar = evar ~loc cstr.pcd_name.txt in
         let cstr_arg_tys = get_cstr_arg_tys cstr in
         let generator_names : string list =
           List.map ~f:(fun _ -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
@@ -216,9 +223,10 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
         let gen_cstr_let_expr =
           pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
         (* [let gen_is_empty = ... ] *)
-        value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_let_expr)
+        value_binding ~loc ~pat:(pvar ~loc gen_name) ~expr:gen_cstr_let_expr)
     |> fun val_bindings ->
-    pexp_let ~loc Nonrecursive val_bindings [%expr of_list []]
+    let gen_name_evars = elist ~loc (List.map ~f:(evar ~loc) generator_names) in
+    pexp_let ~loc Nonrecursive val_bindings [%expr union [%e gen_name_evars]]
 
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
