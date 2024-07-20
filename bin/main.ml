@@ -11,6 +11,3 @@ module type SetInterface = sig
   val intersect : 'a t -> 'a t -> 'a t
   val invariant : 'a t -> bool
 end
-[@@deriving_inline mica_types]
-
-[@@@end]

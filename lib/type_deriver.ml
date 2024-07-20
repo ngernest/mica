@@ -81,11 +81,6 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
 let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:mk_val_cstr
 
-type spine = { cstr : constructor_declaration; args : expression list }
-
-let mk_spine (cstr : constructor_declaration) (args : expression list) : spine =
-  { cstr; args }
-
 (** Takes the name of a type and produces the name of its 
     corresponding QuickCheck generator *)
 let mk_generator_name (s : string) : string =
@@ -167,12 +162,12 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type)
 (** Helper function for producing the RHS of the pattern match in gen_expr
     - [abs_tys] is an association list consisting of type names & type parameters
     for the abstract types in the signature  *)
-let gen_expr_rhs ~(loc : Location.t) (spines : spine list)
+let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
   ~(abs_tys : (string * core_type list) list) : expression =
-  match spines with
+  match cstrs with
   | [] -> failwith "impossible"
   | _ ->
-    List.map spines ~f:(fun { cstr; _ } ->
+    List.map cstrs ~f:(fun cstr ->
         let cstr_name = cstr.pcd_name.txt in
         let cstr_name_evar = evar ~loc cstr_name in
         let gen_cstr_name =
@@ -229,17 +224,13 @@ let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
   let abs_tys = get_ty_decls_from_sig sig_items in
   (* Maps [ty]s to [expr]s *)
-  let skeleton : (core_type * spine list) list =
+  let skeleton : (core_type * constructor_declaration list) list =
     inverse (mk_expr_cstrs sig_items)
-    |> List.map ~f:(fun (ty, expr_cstr) ->
-           ( ty,
-             mk_spine expr_cstr
-               (evars_of_cstr_args ~loc:expr_cstr.pcd_loc expr_cstr.pcd_args) ))
     |> sort_and_group ~compare:compare_core_type in
-  List.map skeleton ~f:(fun (ty, rhs_elts) ->
+  List.map skeleton ~f:(fun (ty, rhs_cstrs) ->
       let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
       let loc = lhs.ppat_loc in
-      let rhs_exprs = gen_expr_rhs ~loc ~abs_tys rhs_elts in
+      let rhs_exprs = gen_expr_rhs ~loc ~abs_tys rhs_cstrs in
       let rhs = [%expr [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
 

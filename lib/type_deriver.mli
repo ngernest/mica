@@ -38,8 +38,6 @@ val mk_val_cstr : core_type -> constructor_declaration
     based on the inhabitants of the [ty] ADT *)
 val mk_val_cstrs : signature -> constructor_declaration list
 
-type spine = { cstr : constructor_declaration; args : expression list }
-
 (** Takes the name of a type and produces the name of its 
     corresponding QuickCheck generator *)
 val mk_generator_name : string -> string
@@ -58,7 +56,7 @@ val gen_atom :
     parameters for the abstract types in the signature *)
 val gen_expr_rhs :
   loc:Location.t ->
-  spine list ->
+  constructor_declaration list ->
   abs_tys:(string * core_type list) list ->
   expression
 
