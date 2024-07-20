@@ -58,7 +58,6 @@ val gen_atom :
     parameters for the abstract types in the signature *)
 val gen_expr_rhs :
   loc:Location.t ->
-  core_type ->
   spine list ->
   abs_tys:(string * core_type list) list ->
   expression
@@ -68,8 +67,7 @@ val gen_expr_cases : signature -> case list
 
 (** Derives the [gen_expr] QuickCheck generator 
     - [ty_cstrs] is a list of constructors for the [ty] ADT  *)
-val derive_gen_expr :
-  loc:Location.t -> constructor_declaration list -> signature -> expression
+val derive_gen_expr : loc:Location.t -> signature -> expression
 
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 

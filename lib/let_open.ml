@@ -1,5 +1,4 @@
 open Ppxlib
-open Ast_helper
 open Ast_builder.Default
 open Miscellany
 

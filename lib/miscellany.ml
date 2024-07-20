@@ -58,7 +58,7 @@ let rec get_last (lst : 'a list) : 'a =
   match lst with
   | [] -> failwith "List is empty"
   | [ x ] -> x
-  | x :: xs -> get_last xs
+  | _ :: xs -> get_last xs
 
 (** Swaps the keys & values of an association list.
     - Note: bijectivity is not guaranteed since keys may appear more than once
@@ -83,7 +83,7 @@ let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
 
 (** Returns true the abstract type declaration in a [signature] 
     is parameterized (e.g. ['a t]), else returns [false] *)
-let rec is_abs_ty_parameterized (sig_items : signature) : bool =
+let is_abs_ty_parameterized (sig_items : signature) : bool =
   List.fold_left
     ~f:(fun acc { psig_desc; _ } ->
       match psig_desc with

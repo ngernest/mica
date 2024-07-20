@@ -92,8 +92,7 @@ let mk_interp_case_rhs (params : interp_case_rhs_params) : expression =
     - The optional argument [abs_ty_parameterized] represents whether 
     the abstract type [t] in the module signature is parameterized (e.g. ['a t]) 
     or not *)
-let mk_interp ~(loc : location) (mod_ty : module_type)
-  ?(abs_ty_parameterized = false)
+let mk_interp ~(loc : location) ?(abs_ty_parameterized = false)
   (expr_cstrs :
     (Longident.t Location.loc * pattern option * inv_ctx * core_type) list) :
   structure_item =
@@ -134,7 +133,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
     mk_adt ~loc ~name:"value" ~cstrs:(mk_val_cstrs sig_items) in
   let val_adt_decl : structure_item = pstr_type ~loc Recursive [ val_adt ] in
   let abs_ty_parameterized : bool = is_abs_ty_parameterized sig_items in
-  let interp_fun_defn = mk_interp ~loc mod_ty ~abs_ty_parameterized expr_cstrs in
+  let interp_fun_defn = mk_interp ~loc ~abs_ty_parameterized expr_cstrs in
   let functor_body : structure_item list =
     [%str
       [%%i include_decl]
@@ -153,7 +152,7 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
   (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   match mt with
-  | { pmtd_type = Some mod_type; pmtd_name; pmtd_loc; _ } -> (
+  | { pmtd_type = Some mod_type; pmtd_name; _ } -> (
     let new_name = { txt = Some "M"; loc } in
     let mod_type_alias = pmty_ident ~loc { txt = Lident pmtd_name.txt; loc } in
     match mod_type.pmty_desc with
@@ -173,6 +172,6 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
       [ mk_error_pstr ~local:mod_type.pmty_loc ~global:loc
           "Expected a module type expression that was a signature"
       ])
-  | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
+  | { pmtd_type = None; _ } ->
     Location.raise_errorf ~loc
       "Can't derive for expressions that aren't module type declarations"

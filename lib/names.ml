@@ -50,7 +50,7 @@ let varnames_of_cstr_args ~(loc : Location.t) (args : constructor_arguments)
   match args with
   | Pcstr_tuple tys -> List.map ~f:(fun ty -> mk_fresh ~loc ~f ty) tys
   | Pcstr_record lbl_decls ->
-    List.map lbl_decls ~f:(fun { pld_name; pld_type; pld_loc; _ } ->
+    List.map lbl_decls ~f:(fun { pld_name; pld_loc; _ } ->
         gen_symbol ~prefix:pld_name.txt () |> f ~loc:pld_loc)
 
 (** Takes [constructor_arguments] and produces a list of fresh identifiers 

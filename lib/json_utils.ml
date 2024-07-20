@@ -91,8 +91,8 @@ struct
 
   (** End-to-end pipeline for updating the fields in the JSON object
       needed for Tyche visualization *)
-  let json_pipeline (e : expr) (ty : ty) (start_time : float)
-    (f : 'a -> Basic.t) (x : 'a) (json : Basic.t) : Basic.t =
+  let json_pipeline (e : expr) (ty : ty) (start_time : float) (json : Basic.t) :
+    Basic.t =
     let end_time = Core_unix.gettimeofday () in
     let elapsed = end_time -. start_time in
     set_start_time json |> set_args ty e |> set_prop ty |> set_features e

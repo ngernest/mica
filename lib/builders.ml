@@ -1,9 +1,6 @@
 open Ppxlib
 open Ast_builder.Default
 open StdLabels
-open Lident
-open Names
-open Printers
 open Miscellany
 
 (** [mk_adt ~loc ~name constructors] creates the definition of 

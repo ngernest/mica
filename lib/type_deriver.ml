@@ -15,7 +15,7 @@ open Utils
 let mk_expr_cstrs (sig_items : signature) :
   (constructor_declaration * core_type) list =
   let abs_ty_names = get_abs_ty_names sig_items in
-  List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
+  List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; _ } ->
       match psig_desc with
       | Psig_type (_, _) -> []
       | Psig_value { pval_name; pval_type; pval_loc; _ } ->
@@ -37,7 +37,7 @@ let mk_expr_cstrs (sig_items : signature) :
 (** Extracts the unique return types of all [val] declarations within a 
       module signature *)
 let uniq_ret_tys (sig_items : signature) : core_type list =
-  List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; psig_loc; _ } ->
+  List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; _ } ->
       match psig_desc with
       | Psig_value { pval_type; _ } ->
         let ty = get_ret_ty pval_type in
@@ -91,8 +91,6 @@ let mk_spine (cstr : constructor_declaration) (args : expression list) : spine =
 let mk_generator_name (s : string) : string =
   Printf.sprintf "quickcheck_generator_%s" s
 
-let expr_to_t = []
-
 (** Produces an atomic QuickCheck generator for the given [core_type] 
     - [abs_tys] is an association list consisting of type names & type parameters
     for the abstract types in the signature *)
@@ -132,7 +130,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type)
   | Ptyp_any ->
     mk_error_expr ~loc:ty.ptyp_loc
       "types must be instantiated in order to derive a QuickCheck generator"
-  | Ptyp_var tyvar ->
+  | Ptyp_var _ ->
     (* Instantiate type variables with [int] *)
     [%expr quickcheck_generator_int]
   | Ptyp_tuple tys ->
@@ -149,7 +147,7 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type)
            (Ppxlib.string_of_core_type ty)
            n
   (* TODO: derive QC generator for unary functions of type [int -> int] *)
-  | Ptyp_arrow (Nolabel, arg_ty, ret_ty) ->
+  | Ptyp_arrow (Nolabel, _, _) ->
     pexp_extension ~loc
     @@ Location.error_extensionf ~loc
          "Function types not supported yet (to be implemented)"
@@ -169,21 +167,20 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type)
 (** Helper function for producing the RHS of the pattern match in gen_expr
     - [abs_tys] is an association list consisting of type names & type parameters
     for the abstract types in the signature  *)
-let gen_expr_rhs ~(loc : Location.t) (ty : core_type) (spines : spine list)
+let gen_expr_rhs ~(loc : Location.t) (spines : spine list)
   ~(abs_tys : (string * core_type list) list) : expression =
   match spines with
   | [] -> failwith "impossible"
   | _ ->
-    List.map spines ~f:(fun { cstr; args } ->
+    List.map spines ~f:(fun { cstr; _ } ->
         let cstr_name = cstr.pcd_name.txt in
         let cstr_name_evar = evar ~loc cstr_name in
         let gen_cstr_name =
           Expansion_helpers.mangle (Prefix "gen") (uncapitalize cstr_name) in
-        let gen_cstr_expr = evar ~loc gen_cstr_name in
         let gen_cstr_pat = pvar ~loc gen_cstr_name in
         let cstr_arg_tys = get_cstr_arg_tys cstr in
         let generator_names : string list =
-          List.map ~f:(fun ty -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
+          List.map ~f:(fun _ -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
         (* [let g1 = gen_int and g2 = gen_string in ...] *)
         let atomic_generators : value_binding list =
           List.map2
@@ -242,16 +239,12 @@ let gen_expr_cases (sig_items : signature) : case list =
   List.map skeleton ~f:(fun (ty, rhs_elts) ->
       let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
       let loc = lhs.ppat_loc in
-      let rhs_exprs = gen_expr_rhs ~loc ty ~abs_tys rhs_elts in
-      let loc = rhs_exprs.pexp_loc in
+      let rhs_exprs = gen_expr_rhs ~loc ~abs_tys rhs_elts in
       let rhs = [%expr [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
 
-(** Derives the [gen_expr] QuickCheck generator 
-    - [ty_cstrs] is a list of constructors for the [ty] ADT *)
-let derive_gen_expr ~(loc : Location.t)
-  (ty_cstrs : constructor_declaration list) (sig_items : signature) : expression
-    =
+(** Derives the [gen_expr] QuickCheck generator *)
+let derive_gen_expr ~(loc : Location.t) (sig_items : signature) : expression =
   (* Derive [let open] expressions for the necessary modules *)
   let core_mod = module_expr_of_string ~loc "Core" in
   let qc_gen_mod = module_expr_of_string ~loc "Quickcheck.Generator" in
@@ -268,9 +261,9 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
   (mt : module_type_declaration) : structure_item list =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   match mt with
-  | { pmtd_type = Some mod_type; pmtd_name; pmtd_loc; _ } -> (
+  | { pmtd_type = Some mod_type; pmtd_loc; _ } -> (
     match mod_type with
-    | { pmty_desc = Pmty_signature sig_items; pmty_loc; _ } -> (
+    | { pmty_desc = Pmty_signature sig_items; _ } -> (
       match sig_items with
       | [] ->
         [ mk_error_pstr ~local:pmtd_loc ~global:loc "Module sig can't be empty"
@@ -284,11 +277,10 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:ty_cstrs in
         [ pstr_type ~loc Recursive [ expr_td ];
           pstr_type ~loc Recursive [ ty_td ];
-          [%stri
-            let rec gen_expr ty = [%e derive_gen_expr ~loc ty_cstrs sig_items]]
+          [%stri let rec gen_expr ty = [%e derive_gen_expr ~loc sig_items]]
         ])
     | _ -> failwith "TODO: other case for mod_type")
-  | { pmtd_type = None; pmtd_loc; pmtd_name; _ } ->
+  | { pmtd_type = None; pmtd_loc; _ } ->
     [ mk_error_pstr ~local:pmtd_loc ~global:loc
         "Can't derive for expressions that aren't module type declarations"
     ]

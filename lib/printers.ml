@@ -1,7 +1,6 @@
 open Ppxlib
 open StdLabels
 open Astlib.Pprintast
-open Miscellany
 
 (** {1 Pretty-printers} *)
 
@@ -47,7 +46,7 @@ let pp_structure_item : structure_item -> unit = structure_item err_fmt
 let rec monomorphize (ty : core_type) : core_type =
   let loc = ty.ptyp_loc in
   match ty.ptyp_desc with
-  | ty_desc when List.mem ty ~set:(base_types ~loc) -> ty
+  | _ty_desc when List.mem ty ~set:(base_types ~loc) -> ty
   | Ptyp_var _ -> [%type: int]
   | Ptyp_arrow (arg_lbl, t1, t2) ->
     { ty with

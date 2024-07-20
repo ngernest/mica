@@ -22,7 +22,6 @@ val mk_interp_case_rhs : interp_case_rhs_params -> expression
     names & arg types of the constructors for the [expr] algebraic data type *)
 val mk_interp :
   loc:location ->
-  module_type ->
   ?abs_ty_parameterized:bool ->
   (Longident.t Location.loc * pattern option * inv_ctx * core_type) list ->
   structure_item

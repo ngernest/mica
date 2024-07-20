@@ -1,6 +1,5 @@
 open Ppxlib
 open StdLabels
-open Ast_helper
 open Ast_builder.Default
 open Miscellany
 open Printers
@@ -105,11 +104,11 @@ let get_cstr_metadata_minimal (cstrs : constructor_declaration list) :
       | Pcstr_tuple [] -> (cstr_name, None)
       (* N-ary constructors (where n > 0) *)
       | Pcstr_tuple arg_tys ->
-        let (cstr_args, gamma) : pattern * inv_ctx =
+        let (cstr_args, _) : pattern * inv_ctx =
           get_cstr_args ~loc Fun.id arg_tys in
         (cstr_name, Some cstr_args)
       | Pcstr_record arg_lbls ->
-        let cstr_args, gamma =
+        let cstr_args, _ =
           get_cstr_args ~loc (fun lbl_decl -> lbl_decl.pld_type) arg_lbls in
         (cstr_name, Some cstr_args))
 

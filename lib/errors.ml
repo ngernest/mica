@@ -1,6 +1,5 @@
 open Ppxlib
 open Ast_builder.Default
-open StdLabels
 
 (** [mk_error ~loc ~f msg] produces an error extension node. 
     Note: [mk_error] is polymorphic over the type of AST node created.

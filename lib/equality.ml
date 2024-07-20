@@ -87,7 +87,7 @@ let equal_constructor_arguments (xs : constructor_arguments)
   | _ -> false
 
 (** Checks two [constructor_declaration]s for equality, ignoring location *)
-let rec equal_constructor_declaration (c1 : constructor_declaration)
+let equal_constructor_declaration (c1 : constructor_declaration)
   (c2 : constructor_declaration) : bool =
   let name1, name2 = map2 ~f:no_loc (c1.pcd_name, c2.pcd_name) in
   let vars1, vars2 = map2 ~f:(List.map ~f:no_loc) (c1.pcd_vars, c2.pcd_vars) in
