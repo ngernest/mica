@@ -182,18 +182,18 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
         let cstr_name_evar = evar ~loc cstr.pcd_name.txt in
         let cstr_arg_tys = get_cstr_arg_tys cstr in
         (* Fresh names for the generators of the constructor arguments *)
-        let generator_names : string list =
+        let arg_gen_names : string list =
           List.map ~f:(fun _ -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
         (* [let g1 = gen_int and g2 = gen_string in ...] *)
         let atomic_generators : value_binding list =
           List.map2
-            ~f:(fun ty gen_name ->
-              let pat = pvar ~loc gen_name in
+            ~f:(fun ty arg_gen ->
+              let pat = pvar ~loc arg_gen in
               let gen_body = gen_atom ~loc ty ~abs_tys in
               value_binding ~loc ~pat ~expr:gen_body)
-            cstr_arg_tys generator_names in
+            cstr_arg_tys arg_gen_names in
         let gen_cstr_let_body =
-          match generator_names with
+          match arg_gen_names with
           | [] ->
             (* TODO: figure out how to do nullary case *)
             [%expr return [%e cstr_name_evar]]
