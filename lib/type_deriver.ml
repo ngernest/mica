@@ -178,7 +178,7 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
   | [] -> failwith "impossible"
   | _ ->
     let generator_names = mint_generator_names cstrs in
-    List.map2 cstrs generator_names ~f:(fun cstr gen_name ->
+    List.map2 cstrs generator_names ~f:(fun cstr cstr_gen_name ->
         let cstr_name_evar = evar ~loc cstr.pcd_name.txt in
         let cstr_arg_tys = get_cstr_arg_tys cstr in
         (* Fresh names for the generators of the constructor arguments *)
@@ -224,7 +224,8 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
         let gen_cstr_let_expr =
           pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
         (* [let gen_is_empty = ... ] *)
-        value_binding ~loc ~pat:(pvar ~loc gen_name) ~expr:gen_cstr_let_expr)
+        value_binding ~loc ~pat:(pvar ~loc cstr_gen_name)
+          ~expr:gen_cstr_let_expr)
     |> fun val_bindings ->
     let gen_name_evars = elist ~loc (List.map ~f:(evar ~loc) generator_names) in
     pexp_let ~loc Nonrecursive val_bindings [%expr union [%e gen_name_evars]]
