@@ -181,6 +181,7 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
     List.map2 cstrs generator_names ~f:(fun cstr gen_name ->
         let cstr_name_evar = evar ~loc cstr.pcd_name.txt in
         let cstr_arg_tys = get_cstr_arg_tys cstr in
+        (* Fresh names for the generators of the constructor arguments *)
         let generator_names : string list =
           List.map ~f:(fun _ -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
         (* [let g1 = gen_int and g2 = gen_string in ...] *)
