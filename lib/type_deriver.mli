@@ -59,7 +59,7 @@ val gen_atom :
 val gen_expr_rhs :
   loc:Location.t ->
   core_type ->
-  spine ->
+  spine list ->
   abs_tys:(string * core_type list) list ->
   expression
 

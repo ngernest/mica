@@ -169,59 +169,64 @@ let rec gen_atom ~(loc : Location.t) (ty : core_type)
 (** Helper function for producing the RHS of the pattern match in gen_expr
     - [abs_tys] is an association list consisting of type names & type parameters
     for the abstract types in the signature  *)
-let gen_expr_rhs ~(loc : Location.t) (ty : core_type) ({ cstr; args } : spine)
+let gen_expr_rhs ~(loc : Location.t) (ty : core_type) (spines : spine list)
   ~(abs_tys : (string * core_type list) list) : expression =
-  let cstr_name = cstr.pcd_name.txt in
-  let cstr_name_evar = evar ~loc cstr_name in
-  let gen_cstr_name =
-    Expansion_helpers.mangle (Prefix "gen") (uncapitalize cstr_name) in
-  let gen_cstr_expr = evar ~loc gen_cstr_name in
-  let gen_cstr_pat = pvar ~loc gen_cstr_name in
-  let cstr_arg_tys = get_cstr_arg_tys cstr in
-  let generator_names : string list =
-    List.map ~f:(fun ty -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
-  (* [let g1 = gen_int and g2 = gen_string in ...] *)
-  let atomic_generators : value_binding list =
-    List.map2
-      ~f:(fun ty gen_name ->
-        let pat = pvar ~loc gen_name in
-        let gen_body = gen_atom ~loc ty ~abs_tys in
-        value_binding ~loc ~pat ~expr:gen_body)
-      cstr_arg_tys generator_names in
-  let gen_cstr_let_body =
-    match generator_names with
-    | [] ->
-      (* TODO: figure out how to do nullary case *)
-      [%expr return [%e cstr_name_evar]]
-    | [ g ] ->
-      (* Generate a fresh name for the random [expr] *)
-      let var = gen_symbol ~prefix:"e" () in
-      (* Then, apply the constructor to the random [expr] *)
-      [%expr
-        [%e evar ~loc g] >>| fun [%p pvar ~loc var] ->
-        [%e cstr_name_evar] [%e evar ~loc var]]
-    | gs ->
-      let n = List.length gs in
-      if n >= 2 && n <= 6 then
-        let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
-        let generators = List.map ~f:(evar ~loc) gs in
-        let vars = List.map ~f:(fun _ -> gen_symbol ~prefix:"e" ()) gs in
-        let args_pat = ppat_tuple ~loc (List.map ~f:(pvar ~loc) vars) in
-        let args_expr = pexp_tuple ~loc (List.map ~f:(evar ~loc) vars) in
-        [%expr
-          [%e eapply ~loc tuple_gen generators] >>| fun [%p args_pat] ->
-          [%e cstr_name_evar] [%e args_expr]]
-      else
-        pexp_extension ~loc
-        @@ Location.error_extensionf ~loc
-             "Functions with arity %d not supported, max arity is 6\n" n in
-
-  let gen_cstr_let_expr =
-    pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
-
-  pexp_let Nonrecursive ~loc
-    [ value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_let_expr ]
-    gen_cstr_expr
+  match spines with
+  | [] -> failwith "impossible"
+  | _ ->
+    List.map spines ~f:(fun { cstr; args } ->
+        let cstr_name = cstr.pcd_name.txt in
+        let cstr_name_evar = evar ~loc cstr_name in
+        let gen_cstr_name =
+          Expansion_helpers.mangle (Prefix "gen") (uncapitalize cstr_name) in
+        let gen_cstr_expr = evar ~loc gen_cstr_name in
+        let gen_cstr_pat = pvar ~loc gen_cstr_name in
+        let cstr_arg_tys = get_cstr_arg_tys cstr in
+        let generator_names : string list =
+          List.map ~f:(fun ty -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
+        (* [let g1 = gen_int and g2 = gen_string in ...] *)
+        let atomic_generators : value_binding list =
+          List.map2
+            ~f:(fun ty gen_name ->
+              let pat = pvar ~loc gen_name in
+              let gen_body = gen_atom ~loc ty ~abs_tys in
+              value_binding ~loc ~pat ~expr:gen_body)
+            cstr_arg_tys generator_names in
+        let gen_cstr_let_body =
+          match generator_names with
+          | [] ->
+            (* TODO: figure out how to do nullary case *)
+            [%expr return [%e cstr_name_evar]]
+          | [ g ] ->
+            (* Generate a fresh name for the random [expr] *)
+            let var = gen_symbol ~prefix:"e" () in
+            (* Then, apply the constructor to the random [expr] *)
+            [%expr
+              [%e evar ~loc g] >>| fun [%p pvar ~loc var] ->
+              [%e cstr_name_evar] [%e evar ~loc var]]
+          | gs ->
+            let n = List.length gs in
+            if n >= 2 && n <= 6 then
+              let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
+              let generators = List.map ~f:(evar ~loc) gs in
+              let vars = List.map ~f:(fun _ -> gen_symbol ~prefix:"e" ()) gs in
+              let args_pat = ppat_tuple ~loc (List.map ~f:(pvar ~loc) vars) in
+              let args_expr = pexp_tuple ~loc (List.map ~f:(evar ~loc) vars) in
+              [%expr
+                [%e eapply ~loc tuple_gen generators] >>| fun [%p args_pat] ->
+                [%e cstr_name_evar] [%e args_expr]]
+            else
+              pexp_extension ~loc
+              @@ Location.error_extensionf ~loc
+                   "Functions with arity %d not supported, max arity is 6\n" n
+        in
+        (* [ let g1 = ... and g2 = ... in ... ] *)
+        let gen_cstr_let_expr =
+          pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
+        (* [let gen_is_empty = ... ] *)
+        value_binding ~loc ~pat:gen_cstr_pat ~expr:gen_cstr_let_expr)
+    |> fun val_bindings ->
+    pexp_let ~loc Nonrecursive val_bindings [%expr of_list []]
 
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
@@ -237,11 +242,7 @@ let gen_expr_cases (sig_items : signature) : case list =
   List.map skeleton ~f:(fun (ty, rhs_elts) ->
       let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
       let loc = lhs.ppat_loc in
-      let rhs_exprs =
-        elist ~loc
-          (List.map
-             ~f:(fun cstr -> gen_expr_rhs ~loc ty cstr ~abs_tys)
-             rhs_elts) in
+      let rhs_exprs = gen_expr_rhs ~loc ty ~abs_tys rhs_elts in
       let loc = rhs_exprs.pexp_loc in
       let rhs = [%expr [%e rhs_exprs]] in
       case ~lhs ~guard:None ~rhs)
