@@ -5,7 +5,7 @@ We have two PPX derivers that take an module signature declaration of the form
 (in `bin/main.ml`):
 ```ocaml
 (* bin/main.ml *)
-module type SetInterface = sig
+module type S = sig
   type 'a t 
   val empty : 'a t
   val is_empty : 'a t -> bool
@@ -24,39 +24,22 @@ and produces the following type and functor definitions respectively:
 type expr =
   | Empty
   | Is_empty of expr
-  | Mem of int * expr
   ...
 
-(** Types for symbolic expressions *)
-type ty = Int | Bool | IntT 
+(** Types of symbolic expressions *)
+type ty = Int | IntT | ...
 
-(** Functor containing interpreter for symbolic expressions *)
-module TestHarness(M : SetInterface) = struct 
-  include M 
-  
-  type value = 
-    | ValBool of bool 
-    | ValInt of int 
-    | ValIntT of int t
+(** QuickCheck generator for symbolic expressions of type [ty] *)
+let rec gen_expr ty = ...
 
-  (* Currently working on generating the RHS of the pattern-matches for 
-     constructors with arguments *)
-  let rec interp e =
-    match e with
-    | Empty -> ValIntT M.empty
-    | Is_empty e1 ->
-        (match interp e1 with
-         | ValIntT e1' -> ValBool (M.is_empty e1')
-         | _ -> failwith "impossible")
-    | Mem (x1, e2) ->
-        (match interp e2 with
-         | ValIntT e2' -> ValBool (M.mem x1 e2')
-         | _ -> failwith "impossible")
-    | Union (e1, e2) ->
-        (match (interp e1, interp e2) with
-         | (ValIntT e1', ValIntT e2') -> ValIntT (M.union e1' e2')
-         | _ -> failwith "impossible")
-    ...
+
+(** Functor that interprets symbolic expressions *)
+module Interpret (M : S) = struct   
+
+  type value = ValInt of int | ValIntT of int M.t | ...
+
+  (* Interprets symbolic expressions over [M] *)
+  let rec interp (e : expr) : value = ...
 end 
 ```
 The datatype definitions are produced by the `mica_types` PPX deriver 
