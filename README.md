@@ -72,7 +72,6 @@ end
   - [errors.ml](./lib/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
   - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
   - [let_open.ml](./lib/let_open.ml): Helpers for producing `let open` expressions
-  - [bindop.ml](./lib/bindop.ml): Helpers for producing monadic bind expressions
   - [miscellany.ml](./lib/miscellany.ml): Miscellaneous helpers for working with lists & strings
 
 
