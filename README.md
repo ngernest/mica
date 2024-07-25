@@ -74,6 +74,7 @@ end
   - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
   - [let_open.ml](./lib/let_open.ml): Helpers for producing `let open` expressions
   - [miscellany.ml](./lib/miscellany.ml): Miscellaneous helpers for working with lists & strings
+- [json_utils.ml](./lib/json_utils.ml): Tyche-related JSON utilities for collecting test statistics
 
 
 ## Testing 
