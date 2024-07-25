@@ -15,6 +15,8 @@ end
 (* Suppress "unused value" compiler warnings *)
 [@@@ocaml.warning "-27-32-33-34"]
 
+open Core
+
 type expr =
   | Empty
   | Is_empty of expr
@@ -25,6 +27,7 @@ type expr =
   | Union of expr * expr
   | Intersect of expr * expr
   | Invariant of expr
+[@@deriving sexp_of]
 
 type ty = Bool | Int | IntT
 
@@ -117,4 +120,30 @@ module Interpret (M : S) = struct
       match interp expr__039_ with
       | ValIntT expr__039_' -> ValBool (M.invariant expr__039_')
       | _ -> failwith "impossible: unary constructor")
+end
+
+module TestHarness (M1 : S) (M2 : S) = struct
+  module I1 = Interpret (M1)
+  module I2 = Interpret (M2)
+  open Core.Quickcheck
+  open Core.Or_error
+
+  let test_bool () : unit Or_error.t =
+    test_or_error (gen_expr Bool) ~f:(fun e ->
+        match (I1.interp e, I2.interp e) with
+        | ValBool b1, ValBool b2 ->
+          try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
+        | _ -> error_string "failed bool")
+
+  let test_int () : unit Or_error.t =
+    test_or_error (gen_expr Int) ~f:(fun e ->
+        match (I1.interp e, I2.interp e) with
+        | ValInt i1, ValBool i2 ->
+          try_with ~backtrace:false (fun () -> [%test_eq: int] i1 i2)
+        | _ -> error_string "failed int")
+
+  let run_tests () =
+    match combine_errors_unit [ test_bool (); test_int () ] with
+    | Ok ok -> printf "succeeded!\n"
+    | Error err -> Error.pp Stdlib.Format.err_formatter err
 end
