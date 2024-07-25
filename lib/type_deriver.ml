@@ -79,7 +79,7 @@ let mk_val_cstr (ty : core_type) : constructor_declaration =
 (** Constructs the definition of the [value] algebraic data type
       based on the inhabitants of the [ty] ADT *)
 let mk_val_cstrs (sig_items : signature) : constructor_declaration list =
-  mk_cstr_aux sig_items ~f:mk_val_cstr
+  mk_cstr_aux sig_items ~f:(fun ty -> mk_val_cstr ty)
 
 (** Takes the name of a type and produces the name of its 
     corresponding QuickCheck generator *)

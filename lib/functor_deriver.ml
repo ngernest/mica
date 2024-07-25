@@ -121,13 +121,13 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (expr_cstrs :
     (Longident.t Location.loc * pattern option * inv_ctx * core_type) list) :
   module_expr =
-  (* [include M] declaration *)
+  (* [open M] declaration *)
   let m_ident : Longident.t Location.loc =
     { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
   in
   let m_expr : module_expr = pmod_ident ~loc m_ident in
-  let include_decl : structure_item =
-    pstr_include ~loc (include_infos ~loc m_expr) in
+  let open_m = open_infos ~loc ~expr:m_expr ~override:Fresh in
+  let open_decl : structure_item = pstr_open ~loc open_m in
   (* Declaration for the [value] ADT *)
   let val_adt : type_declaration =
     mk_adt ~loc ~name:"value" ~cstrs:(mk_val_cstrs sig_items) in
@@ -136,7 +136,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   let interp_fun_defn = mk_interp ~loc ~abs_ty_parameterized expr_cstrs in
   let functor_body : structure_item list =
     [%str
-      [%%i include_decl]
+      [%%i open_decl]
       [%%i val_adt_decl]
       [%%i interp_fun_defn]] in
   let functor_expr : module_expr =
