@@ -1,6 +1,5 @@
 (** Includes all helper modules in one place for convenience *)
 
-include Bindop
 include Builders
 include Equality
 include Getters
