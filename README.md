@@ -25,6 +25,7 @@ type expr =
   | Empty
   | Is_empty of expr
   ...
+[@@deriving show { with_path = false }]
 
 (** Types of symbolic expressions *)
 type ty = Int | IntT | ...
@@ -91,12 +92,10 @@ of the `.actual` file (which contains what the PPX actually generated from that 
 - Have the following installed:
   - `ppxlib`
   - `ppx_jane`
+  - `ppx_deriving.show`
   - `core`
-  - `ppx_quick_test`
   - `alcotest`
   - `bisect_ppx`
-- I recommend setting up an Opam switch for OCaml 5.1.0 and developing using 
-  that compiler version (`ppx_quick_test` only works with OCaml 5.1 or newer). 
 - Note: in this codebase, we typically rely on the OCaml standard library, 
   but in a few (limited) instances, we use Jane Street's `Base` library. 
   To avoid namespace clashes, whenever we use a function from `Base`, 

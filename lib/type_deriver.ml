@@ -282,9 +282,16 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let expr_td =
           mk_adt ~loc ~name:"expr"
             ~cstrs:(List.map ~f:fst (mk_expr_cstrs sig_items)) in
+
+        (* Attach the attribute [[@@deriving show { with_path = false }]] to the
+           [expr] type declaration *)
+        let deriving_show =
+          deriving_attribute ~loc [%expr show { with_path = false }] in
+        let annotated_expr_td =
+          { expr_td with ptype_attributes = [ deriving_show ] } in
         let ty_cstrs = mk_ty_cstrs sig_items in
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:ty_cstrs in
-        [ pstr_type ~loc Recursive [ expr_td ];
+        [ pstr_type ~loc Recursive [ annotated_expr_td ];
           pstr_type ~loc Recursive [ ty_td ];
           [%stri let rec gen_expr ty = [%e derive_gen_expr ~loc sig_items]]
         ])

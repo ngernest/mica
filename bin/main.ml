@@ -22,6 +22,7 @@ type expr =
   | Union of expr * expr
   | Intersect of expr * expr
   | Invariant of expr
+[@@deriving show { with_path = false }]
 
 type ty = Bool | Int | IntT
 
@@ -114,4 +115,6 @@ module Interpret (M : S) = struct
       match interp expr__039_ with
       | ValIntT expr__039_' -> ValBool (M.invariant expr__039_')
       | _ -> failwith "impossible: unary constructor")
+
+  let _ = interp
 end

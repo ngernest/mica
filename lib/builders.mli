@@ -35,3 +35,7 @@ val mk_scrutinees :
   post:(expression list -> expression) ->
   loc:Location.t ->
   expression
+
+(** [deriving_attribute ~loc expr] creates a [[@@deriving ...]] attribute 
+    with the payload [expr] at location [loc] *)  
+val deriving_attribute : loc:Location.t -> expression -> attribute  

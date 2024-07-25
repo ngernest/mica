@@ -24,14 +24,3 @@ let mk_error_pstr ~(local : Location.t) ~(global : Location.t)
   structure_item =
   let ext = Location.error_extensionf ~loc:local msg in
   pstr_extension ~loc:global ext []
-
-(** [attr loc name] creates an attribute called [name] at [loc] *)
-let attr ~(loc : Location.t) ~(name : string) : attribute =
-  attribute ~loc ~name:{ txt = "deriving"; loc }
-    ~payload:
-      (PStr
-         [ { pstr_desc =
-               Pstr_eval (pexp_ident ~loc { txt = Lident name; loc }, []);
-             pstr_loc = loc
-           }
-         ])

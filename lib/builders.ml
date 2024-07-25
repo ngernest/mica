@@ -60,3 +60,10 @@ let mk_scrutinees (expr_vars : string list)
   | _ ->
     let xs = List.map expr_vars ~f:(fun x -> [%expr interp [%e evar x ~loc]]) in
     if List.length xs = 1 then List.hd xs else post xs
+
+(** [deriving_attribute ~loc ~name] creates a [[@@deriving ...]] attribute 
+    with the payload [name] at location [loc] *)
+let deriving_attribute ~(loc : Location.t) (expr : expression) : attribute =
+  let payload = PStr [%str [%e expr]] in
+
+  attribute ~loc ~name:{ txt = "deriving"; loc } ~payload
