@@ -84,7 +84,7 @@ let mk_interp_case_rhs (params : interp_case_rhs_params) : expression =
     failwith "TODO: catch all case of mk_interp_case_rhs"
 
 (** Creates the definition for the [interp] function 
-    (contained inside the body of the [TestHarness] functor) 
+    (contained inside the body of the [Interpret] functor) 
     - The argument [expr_cstrs] is a list containing the 
     names & arg types of the constructors for the [expr] algebraic data type, 
     along with [inv_ctx], an "inverse typing context" that maps [core_type]'s 
@@ -115,19 +115,12 @@ let mk_interp ~(loc : location) ?(abs_ty_parameterized = false)
   let func_body : expression = pexp_match ~loc arg_ident cases in
   [%stri let rec interp e = [%e func_body]]
 
-(** Creates the body of the [TestHarness] functor *)
+(** Creates the body of the [Interpret] functor *)
 let mk_functor ~(loc : location) (arg_name : label option with_loc)
   (mod_ty : module_type) (sig_items : signature)
   (expr_cstrs :
     (Longident.t Location.loc * pattern option * inv_ctx * core_type) list) :
   module_expr =
-  (* [include M] declaration *)
-  let m_ident : Longident.t Location.loc =
-    { txt = Longident.parse (Option.value arg_name.txt ~default:"M"); loc }
-  in
-  let m_expr : module_expr = pmod_ident ~loc m_ident in
-  let include_decl : structure_item =
-    pstr_include ~loc (include_infos ~loc m_expr) in
   (* Declaration for the [value] ADT *)
   let val_adt : type_declaration =
     mk_adt ~loc ~name:"value" ~cstrs:(mk_val_cstrs sig_items) in
@@ -136,7 +129,6 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
   let interp_fun_defn = mk_interp ~loc ~abs_ty_parameterized expr_cstrs in
   let functor_body : structure_item list =
     [%str
-      [%%i include_decl]
       [%%i val_adt_decl]
       [%%i interp_fun_defn]] in
   let functor_expr : module_expr =
@@ -146,7 +138,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
     } in
   pmod_functor ~loc (Named (arg_name, mod_ty)) functor_expr
 
-(** Generates the scaffolding for the [TestHarness] functor 
+(** Generates the scaffolding for the [Interpret] functor 
     (e.g. module type declarations) *)
 let generate_functor ~(ctxt : Expansion_context.Deriver.t)
   (mt : module_type_declaration) : structure =
@@ -165,7 +157,7 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
         mk_functor ~loc new_name mod_type_alias sig_items expr_cstrs in
       let mod_binding =
         module_binding ~loc
-          ~name:{ txt = Some "TestHarness"; loc }
+          ~name:{ txt = Some "Interpret"; loc }
           ~expr:functor_expr in
       [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
     | _ ->

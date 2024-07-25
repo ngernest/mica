@@ -186,6 +186,8 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
            [gen_Empty] *)
         let cstr_gen_name_var = pvar ~loc cstr_gen_name in
 
+        (* Generators for nullary constructors are trivial, i.e. they just
+           [return] the constructor *)
         if get_cstr_arity cstr = 0 then
           value_binding ~loc ~pat:cstr_gen_name_var
             ~expr:[%expr return [%e cstr_name_evar]]
