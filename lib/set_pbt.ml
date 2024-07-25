@@ -17,6 +17,9 @@ end
 
 open Core
 
+(* TODO: figure out how to attach the [sexp_of] attribute to the derived [expr]
+   type declaration, need to also [open Core] *)
+
 type expr =
   | Empty
   | Is_empty of expr
@@ -138,7 +141,7 @@ module TestHarness (M1 : S) (M2 : S) = struct
   let test_int () : unit Or_error.t =
     test_or_error (gen_expr Int) ~f:(fun e ->
         match (I1.interp e, I2.interp e) with
-        | ValInt i1, ValBool i2 ->
+        | ValInt i1, ValInt i2 ->
           try_with ~backtrace:false (fun () -> [%test_eq: int] i1 i2)
         | _ -> error_string "failed int")
 
