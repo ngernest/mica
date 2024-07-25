@@ -1,10 +1,9 @@
 # ppx_mica (WIP)
 
 Current progress:
-We have two PPX derivers that take an module signature declaration of the form 
-(in `bin/main.ml`):
+We have two PPX derivers (`mica_types` & `mica`), which take a 
+module signature of the form 
 ```ocaml
-(* bin/main.ml *)
 module type S = sig
   type 'a t 
   val empty : 'a t
@@ -16,11 +15,11 @@ end
   (* Auto-generated code is pasted inline into the source file here *)
 [@@@end]
 ```
-and produces the following type and functor definitions respectively:
+and derives the following type, function and functor definitions:
 ```ocaml 
 (* Boilerplate omitted *)
 
-(** Symbolic expressions, monomorphized *)
+(** Symbolic expressions *)
 type expr =
   | Empty
   | Is_empty of expr
@@ -33,10 +32,9 @@ type ty = Int | IntT | ...
 (** QuickCheck generator for symbolic expressions of type [ty] *)
 let rec gen_expr ty = ...
 
-
 (** Functor that interprets symbolic expressions *)
 module Interpret (M : S) = struct   
-
+  (* Values of symbolic expressions *)
   type value = ValInt of int | ValIntT of int M.t | ...
 
   (* Interprets symbolic expressions over [M] *)
@@ -46,6 +44,17 @@ end
 The datatype definitions are produced by the `mica_types` PPX deriver 
 which is executed first, and the functor definition is produced by 
 the main `mica` deriver which runs afterwards. 
+
+**Functionality to be implemented**:
+- Automatically derive the following `TestHarness` functor:
+```ocaml
+module TestHarness (M1 : S) (M2 : S) = struct 
+   (* Tests [M1] and [M2] for observational equivalence *)
+end
+```
+- Add optimizations to `gen_expr` (e.g. when `size` = 0, return nullary constructors)
+- Generate random `int -> int` functions in `gen_expr` 
+- Automatically derive the `Seq` constructor for testing imperative code
 
 ## Directory overview
 - [ppx_mica.ml](./lib/ppx_mica.ml): Declares the PPX deriver
