@@ -55,6 +55,7 @@ end
 - Add optimizations to `gen_expr` (e.g. when `size` = 0, return nullary constructors)
 - Generate random `int -> int` functions in `gen_expr` 
 - Automatically derive the `Seq` constructor for testing imperative code
+- Automatically instrument testing code with boilerplate needed for Tyche integration
 
 ## Directory overview
 - [ppx_mica.ml](./lib/ppx_mica.ml): Declares the PPX deriver
