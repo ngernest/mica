@@ -3,7 +3,7 @@
  (name main)
  (libraries ppx_mica core)
  (preprocess
-  (pps ppx_deriving.show ppx_mica)))
+  (pps ppx_jane ppx_deriving.show ppx_mica)))
 
 (env
  (dev

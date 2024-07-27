@@ -9,16 +9,7 @@ module type S = sig
   val size : 'a t -> int
   val union : 'a t -> 'a t -> 'a t
   val intersect : 'a t -> 'a t -> 'a t
-  val invariant : 'a t -> bool
 end
-
-(* Suppress "unused value" compiler warnings *)
-[@@@ocaml.warning "-27-32-33-34"]
-
-open Core
-
-(* TODO: figure out how to attach the [sexp_of] attribute to the derived [expr]
-   type declaration, need to also [open Core] *)
 
 type expr =
   | Empty
@@ -29,8 +20,7 @@ type expr =
   | Size of expr
   | Union of expr * expr
   | Intersect of expr * expr
-  | Invariant of expr
-[@@deriving sexp_of]
+[@@deriving show { with_path = false }]
 
 type ty = Bool | Int | IntT
 
@@ -48,10 +38,8 @@ let rec gen_expr ty =
       let g__003_ = quickcheck_generator_int
       and g__004_ = with_size ~size:(k / 2) (gen_expr IntT) in
       tuple2 g__003_ g__004_ >>| fun (e__005_, e__006_) -> Mem (e__005_, e__006_)
-    and gen_invariant =
-      let g__007_ = with_size ~size:(k / 2) (gen_expr IntT) in
-      g__007_ >>| fun e__008_ -> Invariant e__008_ in
-    union [ gen_is_empty; gen_mem; gen_invariant ]
+    in
+    union [ gen_is_empty; gen_mem ]
   | Int ->
     let gen_size =
       let g__009_ = with_size ~size:(k / 2) (gen_expr IntT) in
@@ -78,8 +66,6 @@ let rec gen_expr ty =
       tuple2 g__023_ g__024_ >>| fun (e__025_, e__026_) ->
       Intersect (e__025_, e__026_) in
     union [ gen_empty; gen_add; gen_rem; gen_union; gen_intersect ]
-
-let _ = gen_expr
 
 module Interpret (M : S) = struct
   include M
@@ -119,34 +105,26 @@ module Interpret (M : S) = struct
       | ValIntT expr__037_', ValIntT expr__038_' ->
         ValIntT (M.intersect expr__037_' expr__038_')
       | _ -> failwith "impossible: n-ary constructor")
-    | Invariant expr__039_ -> (
-      match interp expr__039_ with
-      | ValIntT expr__039_' -> ValBool (M.invariant expr__039_')
-      | _ -> failwith "impossible: unary constructor")
 end
 
 module TestHarness (M1 : S) (M2 : S) = struct
   module I1 = Interpret (M1)
   module I2 = Interpret (M2)
-  open Core.Quickcheck
-  open Core.Or_error
+  open Core
 
-  let test_bool () : unit Or_error.t =
-    test_or_error (gen_expr Bool) ~f:(fun e ->
+  let test_bool () : unit =
+    Quickcheck.test (gen_expr Bool) ~f:(fun e ->
         match (I1.interp e, I2.interp e) with
-        | ValBool b1, ValBool b2 ->
-          try_with ~backtrace:false (fun () -> [%test_eq: bool] b1 b2)
-        | _ -> error_string "failed bool")
+        | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
+        | _ -> failwith "failed bool")
 
-  let test_int () : unit Or_error.t =
-    test_or_error (gen_expr Int) ~f:(fun e ->
+  let test_int () : unit =
+    Quickcheck.test (gen_expr Int) ~f:(fun e ->
         match (I1.interp e, I2.interp e) with
-        | ValInt i1, ValInt i2 ->
-          try_with ~backtrace:false (fun () -> [%test_eq: int] i1 i2)
-        | _ -> error_string "failed int")
+        | ValInt i1, ValInt i2 -> [%test_eq: int] i1 i2
+        | _ -> failwith "failed int")
 
   let run_tests () =
-    match combine_errors_unit [ test_bool (); test_int () ] with
-    | Ok ok -> printf "succeeded!\n"
-    | Error err -> Error.pp Stdlib.Format.err_formatter err
+    test_bool ();
+    test_int ()
 end
