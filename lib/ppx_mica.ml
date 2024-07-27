@@ -17,10 +17,10 @@ let type_deriver =
 
 (** Instantiates the PPX deriver for the [Interpret] functor *)
 let interp_functor_gen =
-  Deriving.Generator.V2.make_noarg Functor_deriver.generate_functor
+  Deriving.Generator.V2.make_noarg Interp_deriver.generate_functor
 
 (** Registers the PPX deriver for the [Interpret] functor *)
-let interp_functor_deriver =
+let interp_interp_deriver =
   Deriving.add "mica_functor" ~str_module_type_decl:interp_functor_gen
 
 (******************************************************************************)
@@ -31,5 +31,5 @@ let () =
   List.iter ~f:Reserved_namespaces.reserve
     [ "mica_types"; "mica_functor"; "mica" ];
   (* Add an alias so that users just need to write [[@@deriving mica]] *)
-  Deriving.add_alias "mica" [ interp_functor_deriver; type_deriver ]
+  Deriving.add_alias "mica" [ interp_interp_deriver; type_deriver ]
   |> Deriving.ignore

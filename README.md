@@ -10,7 +10,7 @@ module type S = sig
   ...
 end
 [@@deriving_inline mica] 
-(* After users run [dune build --auto-promote],  the derived PBT code is 
+(* After users run [dune build --auto-promote], the derived PBT code is 
    automatically pasted inline into the source file here *)
 ...
 [@@@end]
@@ -57,7 +57,7 @@ end
 ## Directory overview
 - [ppx_mica.ml](./lib/ppx_mica.ml): Declares the PPX deriver
 - [type_deriver.ml](./lib/type_deriver.ml): Derives type definitions + the `gen_expr` Quickcheck generator
-- [functor_deriver.ml](./lib/functor_deriver.ml): Derives the `TestHarness` functor (including the `interp` function)
+- [interp_deriver.ml](./lib/interp_deriver.ml): Derives the `Interpret` functor
 - [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
   - [builders.ml](./lib/builders.ml): Functions for creating AST nodes
     - Most functions in this file begin with the prefix `mk_` 
