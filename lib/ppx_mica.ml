@@ -31,5 +31,5 @@ let () =
   List.iter ~f:Reserved_namespaces.reserve
     [ "mica_types"; "mica_functor"; "mica" ];
   (* Add an alias so that users just need to write [[@@deriving mica]] *)
-  Deriving.add_alias "mica" [ type_deriver; interp_functor_deriver ]
+  Deriving.add_alias "mica" [ interp_functor_deriver; type_deriver ]
   |> Deriving.ignore
