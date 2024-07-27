@@ -1,18 +1,18 @@
 # ppx_mica (WIP)
 
 Current progress:
-We have two PPX derivers (`mica_types` & `mica`), which take a 
-module signature of the form 
+The `mica` PPX deriver takes a module signature of the form 
 ```ocaml
 module type S = sig
   type 'a t 
   val empty : 'a t
-  val is_empty : 'a t -> bool
-  val mem : 'a -> 'a t -> bool
+  val add : 'a -> 'a t -> 'a t
   ...
 end
-[@@deriving_inline mica_types, mica] 
-  (* Auto-generated code is pasted inline into the source file here *)
+[@@deriving_inline mica] 
+  (* After users run [dune build --auto-promote], 
+     the derived PBT code is automatically pasted inline 
+     into the source file here *)
 [@@@end]
 ```
 and derives the following type, function and functor definitions:
@@ -41,9 +41,6 @@ module Interpret (M : S) = struct
   let rec interp (e : expr) : value = ...
 end 
 ```
-The datatype definitions are produced by the `mica_types` PPX deriver 
-which is executed first, and the functor definition is produced by 
-the main `mica` deriver which runs afterwards. 
 
 **Functionality to be implemented**:
 - Automatically derive the following `TestHarness` functor:
