@@ -10,9 +10,9 @@ module type S = sig
   ...
 end
 [@@deriving_inline mica] 
-  (* After users run [dune build --auto-promote], 
-     the derived PBT code is automatically pasted inline 
-     into the source file here *)
+(* After users run [dune build --auto-promote],  the derived PBT code is 
+   automatically pasted inline into the source file here *)
+...
 [@@@end]
 ```
 and derives the following type, function and functor definitions:
