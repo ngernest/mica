@@ -1,6 +1,6 @@
-(** Auto-generated property-based testing code *)
-open Base
+(* Auto-generated property-based testing code *)
 
+open Base
 open Base_quickcheck
 
 module type RegexMatcher = sig

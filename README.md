@@ -81,14 +81,11 @@ end
 1. [`test/utils_test`](./test/utils_test/) contains `Alcotest` unit tests for various helper functinos.
 - See the [README](./test/utils_test/README.md) in [`utils_test`](./test/utils_test/) for instructions
 on how to add new tests to the Alcotest test suite.
-2. `bisect_ppx` is used to compute test coverage.
-- Run `make coverage` to generate a test coverage report.       
-(Note: before doing so, make sure `test/ppx_test/errors/dune.inc` is blank.)
-3. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
+2. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
 - To add a new test file to the corpus of test files, in either `ppx_test/passing` 
 or `ppx_test/errors`, run:
 ```bash
-$ touch test_file.{ml,expected} && dune runtest --auto-promote
+$ touch test_file.{ml,expected}; dune runtest --auto-promote
 ```
 (This automatically generates new Dune stanzas that are needed for 
 the new test files to compile.)
@@ -105,7 +102,6 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `ppx_deriving.show`
   - `core`
   - `alcotest`
-  - `bisect_ppx`
 - Note: in this codebase, we typically rely on the OCaml standard library, 
   but in a few (limited) instances, we use Jane Street's `Base` library. 
   To avoid namespace clashes, whenever we use a function from `Base`, 
