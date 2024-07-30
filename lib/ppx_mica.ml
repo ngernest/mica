@@ -18,6 +18,7 @@ let type_deriver =
 (** Instantiates the PPX deriver for the [Interpret] functor *)
 let interp_functor_gen =
   Deriving.Generator.V2.make_noarg Interp_deriver.generate_functor
+    ~deps:[ type_deriver ]
 
 (** Registers the PPX deriver for the [Interpret] functor *)
 let interp_deriver =
@@ -28,6 +29,7 @@ let interp_deriver =
 
 let test_harness_functor_gen =
   Deriving.Generator.V2.make_noarg Test_harness_deriver.generate_functor
+    ~deps:[ interp_deriver ]
 
 let test_harness_deriver =
   Deriving.add "mica_test_harness"
@@ -41,8 +43,7 @@ let () =
   List.iter ~f:Reserved_namespaces.reserve
     [ "mica_types"; "mica_interpreter"; "mica_test_harness"; "mica" ];
 
-  (* TODO: update [derivers] with the other two derivers when done with test
-     harness implementation *)
-  let derivers = [ test_harness_deriver ] in
+  (* TODO: add the other derivers when done with test harness implementation *)
+  let derivers = [ test_harness_deriver; interp_deriver; type_deriver ] in
   (* Add an alias so that users just need to write [[@@deriving mica]] *)
   Deriving.add_alias "mica" derivers |> Deriving.ignore
