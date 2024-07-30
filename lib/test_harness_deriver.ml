@@ -13,6 +13,7 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
       module TestHarness (M1 : [%m sig_name]) (M2 : [%m sig_name]) = struct
         module I1 = Interpret (M1)
         module I2 = Interpret (M2)
+        open Core
       end]
   | { pmtd_type = None; _ } ->
     Location.raise_errorf ~loc
