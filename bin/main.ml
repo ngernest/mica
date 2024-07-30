@@ -10,6 +10,3 @@ module type S = sig
   val union : 'a t -> 'a t -> 'a t
   val intersect : 'a t -> 'a t -> 'a t
 end
-[@@deriving_inline mica]
-
-[@@@end]
