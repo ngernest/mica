@@ -2,6 +2,7 @@ open Ppxlib
 open Ast_builder.Default
 open Utils
 
+(** Derives the [TestHarness] functor *)
 let generate_functor ~(ctxt : Expansion_context.Deriver.t)
   (mt_decl : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
