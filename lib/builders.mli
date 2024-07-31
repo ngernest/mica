@@ -37,5 +37,5 @@ val mk_scrutinees :
   expression
 
 (** [deriving_attribute ~loc expr] creates a [[@@deriving ...]] attribute 
-    with the payload [expr] at location [loc] *)  
-val deriving_attribute : loc:Location.t -> expression -> attribute  
+    with the payload [expr] at location [loc] *)
+val deriving_attribute : loc:Location.t -> expression -> attribute
