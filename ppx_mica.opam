@@ -16,6 +16,7 @@ depends: [
   "base_quickcheck" {>= "v0.15.0"}
   "ppx_deriving" {>= "v5.2.1"}
   "ppxlib" {>= "v0.32.0"}
+  "yojson" {>= "v2.0.0"}
 ]
 build: [
   ["dune" "subst"] {dev}

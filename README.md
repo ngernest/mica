@@ -101,6 +101,8 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `ppxlib`
   - `ppx_jane`
   - `ppx_deriving.show`
+  - `base`
+  - `base_quickcheck`
   - `core`
   - `core_unix`
   - `alcotest`
