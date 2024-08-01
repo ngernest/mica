@@ -15,40 +15,42 @@ end
 ...
 [@@@end]
 ```
-and derives the following type, function and functor definitions:
+and derives the following code:
 ```ocaml 
 (* Boilerplate omitted *)
 
-(** Symbolic expressions *)
-type expr =
-  | Empty
-  | Is_empty of expr
-  ...
-[@@deriving show { with_path = false }]
+module Mica = struct 
+  (** Symbolic expressions *)
+  type expr =
+    | Empty
+    | Is_empty of expr
+    ...
+  [@@deriving show, ...]
 
-(** Types of symbolic expressions *)
-type ty = Int | IntT | ...
+  (** Types of symbolic expressions *)
+  type ty = Int | IntT | ... [@@deriving show, ...]
 
-(** QuickCheck generator for symbolic expressions of type [ty] *)
-let rec gen_expr ty = ...
+  (** QuickCheck generator for symbolic expressions of type [ty] *)
+  let rec gen_expr ty = ...
 
-(** Functor that interprets symbolic expressions *)
-module Interpret (M : S) = struct   
-  (* Values of symbolic expressions *)
-  type value = ValInt of int | ValIntT of int M.t | ...
+  (** Functor that interprets symbolic expressions *)
+  module Interpret (M : S) = struct   
+    (* Values of symbolic expressions *)
+    type value = ValInt of int | ValIntT of int M.t | ...
 
-  (* Interprets symbolic expressions over [M] *)
-  let rec interp (e : expr) : value = ...
-end 
+    (* Interprets symbolic expressions over [M] *)
+    let rec interp (e : expr) : value = ...
+  end 
+
+  (** Functor that tests [M1] and [M2] for observational equivalence *)
+  module TestHarness (M1 : S) (M2 : S) = struct 
+    ...
+  end
+end
 ```
 
 **Functionality to be implemented**:
-- Automatically derive the following `TestHarness` functor:
-```ocaml
-module TestHarness (M1 : S) (M2 : S) = struct 
-   (* Tests [M1] and [M2] for observational equivalence *)
-end
-```
+- Finish deriving the body of the `TestHarness` functor
 - Add optimizations to `gen_expr` (e.g. when `size` = 0, return nullary constructors)
 - Generate random `int -> int` functions in `gen_expr` 
 - Automatically derive the `Seq` constructor for testing imperative code
@@ -58,6 +60,8 @@ end
 - [ppx_mica.ml](./lib/ppx_mica.ml): Declares the PPX deriver
 - [type_deriver.ml](./lib/type_deriver.ml): Derives type definitions + the `gen_expr` Quickcheck generator
 - [interp_deriver.ml](./lib/interp_deriver.ml): Derives the `Interpret` functor
+- [test_harness_deriver.ml](./lib/test_harness_deriver.ml): Derives the `TestHarness` functor
+- [overall_deriver.ml](./lib/overall_deriver.ml): Overall PPX deriver that produces a module called `Mica` containing all the automatically derived code
 - [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
   - [builders.ml](./lib/builders.ml): Functions for creating AST nodes
     - Most functions in this file begin with the prefix `mk_` 

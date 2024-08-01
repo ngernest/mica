@@ -1,10 +1,15 @@
 open Ppxlib
 open Ast_builder.Default
 
+(** Produces an [include ME] [structure_item] at location [loc] 
+    for some [module_expr] [ME] *)
 let include_mod ~(loc : Location.t) (mod_expr : module_expr) : structure_item =
   pstr_include ~loc (include_infos ~loc mod_expr)
 
-let generate_mica_module ~ctxt (mt : module_type_declaration) =
+(** Produces a module called [Mica] that contains all the automatically derived 
+    code. Note: this code derived by this function is the union of code derived 
+    by [Type_deriver], [Interp_deriver] and [Test_harness_deriver]. *)
+let generate_mica_module ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   let type_defns : module_expr =
     pmod_structure ~loc (Type_deriver.generate_types_from_sig ~ctxt mt) in
