@@ -36,6 +36,14 @@ let test_harness_deriver =
     ~str_module_type_decl:test_harness_functor_gen
 
 (******************************************************************************)
+
+let mica_module_gen =
+  Deriving.Generator.V2.make_noarg Overall_deriver.generate_mica_module
+
+let mica_module_deriver =
+  Deriving.add "mica_overall" ~str_module_type_decl:mica_module_gen
+
+(******************************************************************************)
 (* Main [mica] deriver *)
 
 (** Registers the main [mica] PPX deriver *)

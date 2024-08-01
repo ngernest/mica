@@ -1,21 +1,17 @@
 open Base
 open Yojson
 
-(* TODO: figure out a way of putting the code derived by ppx_mica in a module
-   called Mica *)
-module TycheUtils (Mica : sig
+module TycheUtils (Mica_types : sig
   type expr
-
-  val string_of_expr : expr -> string
-  val depth : expr -> int
-  val num_unique_ints : expr -> int
-
   type ty
 
+  val depth : expr -> int
+  val num_unique_ints : expr -> int
+  val show_expr : expr -> string
   val show_ty : ty -> string
 end) =
 struct
-  open Mica
+  open Mica_types
 
   (** JSON schema for Tyche visualization with initialized dummy values *)
   let json : Basic.t =
@@ -44,7 +40,7 @@ struct
 
   (** Updates the [representation] field of the json with the string [s] *)
   let set_representation (e : expr) (json : Basic.t) : Basic.t =
-    let expr_str = string_of_expr e in
+    let expr_str = show_expr e in
     update_json json "representation" (`String expr_str)
 
   (** Updates the [features] field of the json to be equal to 
@@ -78,7 +74,7 @@ struct
   (** Updates the [arguments] field of the json object with the [ty] and [expr] 
       under test *)
   let set_args (ty : ty) (e : expr) (json : Basic.t) : Basic.t =
-    let expr_str = string_of_expr e in
+    let expr_str = show_expr e in
     update_json json "arguments"
     @@ `Assoc [ ("ty", `String (show_ty ty)); ("expr", `String expr_str) ]
 
