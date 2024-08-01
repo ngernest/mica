@@ -294,10 +294,12 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let annotated_ty_td =
           { ty_td with ptype_attributes = [ deriving_show ~loc ] } in
         [%str
-          [%%i pstr_type ~loc Recursive [ annotated_expr_td ]]
-          [%%i pstr_type ~loc Recursive [ annotated_ty_td ]]
+          module Mica_types = struct
+            [%%i pstr_type ~loc Recursive [ annotated_expr_td ]]
+            [%%i pstr_type ~loc Recursive [ annotated_ty_td ]]
 
-          let rec gen_expr ty = [%e derive_gen_expr ~loc sig_items]])
+            let rec gen_expr ty = [%e derive_gen_expr ~loc sig_items]
+          end])
     | _ -> failwith "TODO: other case for mod_type")
   | { pmtd_type = None; pmtd_loc; _ } ->
     [ mk_error_pstr ~local:pmtd_loc ~global:loc
