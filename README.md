@@ -61,7 +61,7 @@ end
 - [type_deriver.ml](./lib/type_deriver.ml): Derives type definitions + the `gen_expr` Quickcheck generator
 - [interp_deriver.ml](./lib/interp_deriver.ml): Derives the `Interpret` functor
 - [test_harness_deriver.ml](./lib/test_harness_deriver.ml): Derives the `TestHarness` functor
-- [overall_deriver.ml](./lib/overall_deriver.ml): Overall PPX deriver that produces a module called `Mica` containing all the automatically derived code
+- [overall_deriver.ml](./lib/overall_deriver.ml): Produces a module called `Mica` containing all the automatically derived code
 - [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
   - [builders.ml](./lib/builders.ml): Functions for creating AST nodes
     - Most functions in this file begin with the prefix `mk_` 
@@ -102,7 +102,9 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `ppx_jane`
   - `ppx_deriving.show`
   - `core`
+  - `core_unix`
   - `alcotest`
+  - `yojson`
 - Note: in this codebase, we typically rely on the OCaml standard library, 
   but in a few (limited) instances, we use Jane Street's `Base` library. 
   To avoid namespace clashes, whenever we use a function from `Base`, 

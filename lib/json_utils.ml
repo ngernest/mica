@@ -92,9 +92,7 @@ struct
     let end_time = Core_unix.gettimeofday () in
     let elapsed = end_time -. start_time in
     set_start_time json |> set_args ty e |> set_prop ty |> set_features e
-    (* |> set_value f x *)
-    |> set_representation e
-    |> set_runtime elapsed
+    |> set_representation e |> set_runtime elapsed
 
   (** Retrieves the current time as a formatted string, in the machine's local timezone *)
   let get_current_time_str () : string =
