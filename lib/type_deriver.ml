@@ -263,8 +263,7 @@ let derive_gen_expr ~(loc : Location.t) (sig_items : signature) : expression =
   let body = [%expr size >>= fun k -> [%e match_exp]] in
   let_open ~loc core_mod (let_open_twice ~loc qc_gen_mod let_syntax_mod body)
 
-(* Attach the attribute [[@@deriving show { with_path = false }]] to the [expr]
-   type declaration *)
+(** Produces the attribute [[@@deriving show { with_path = false }]] *)
 let deriving_show ~(loc : Location.t) : attribute =
   deriving_attribute ~loc [%expr show { with_path = false }]
 
@@ -287,6 +286,7 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let expr_td =
           mk_adt ~loc ~name:"expr"
             ~cstrs:(List.map ~f:fst (mk_expr_cstrs sig_items)) in
+        (* Attach [[@@deriving show]] to the type definition *)
         let annotated_expr_td =
           { expr_td with ptype_attributes = [ deriving_show ~loc ] } in
         let ty_cstrs = mk_ty_cstrs sig_items in

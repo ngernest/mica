@@ -72,6 +72,9 @@ val gen_expr_cases : signature -> case list
     - [ty_cstrs] is a list of constructors for the [ty] ADT  *)
 val derive_gen_expr : loc:Location.t -> signature -> expression
 
+(** Produces the attribute [[@@deriving show { with_path = false }]] *)
+val deriving_show : loc:Location.t -> attribute
+
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
     the [expr] and [ty] algebraic data types *)
