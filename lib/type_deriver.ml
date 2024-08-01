@@ -263,6 +263,11 @@ let derive_gen_expr ~(loc : Location.t) (sig_items : signature) : expression =
   let body = [%expr size >>= fun k -> [%e match_exp]] in
   let_open ~loc core_mod (let_open_twice ~loc qc_gen_mod let_syntax_mod body)
 
+(* Attach the attribute [[@@deriving show { with_path = false }]] to the [expr]
+   type declaration *)
+let deriving_show ~(loc : Location.t) : attribute =
+  deriving_attribute ~loc [%expr show { with_path = false }]
+
 (** Walks over a module signature definition and extracts the 
     abstract type declaration, producing the definition 
     the [expr] and [ty] algebraic data types *)
@@ -282,17 +287,14 @@ let generate_types_from_sig ~(ctxt : Expansion_context.Deriver.t)
         let expr_td =
           mk_adt ~loc ~name:"expr"
             ~cstrs:(List.map ~f:fst (mk_expr_cstrs sig_items)) in
-
-        (* Attach the attribute [[@@deriving show { with_path = false }]] to the
-           [expr] type declaration *)
-        let deriving_show =
-          deriving_attribute ~loc [%expr show { with_path = false }] in
         let annotated_expr_td =
-          { expr_td with ptype_attributes = [ deriving_show ] } in
+          { expr_td with ptype_attributes = [ deriving_show ~loc ] } in
         let ty_cstrs = mk_ty_cstrs sig_items in
         let ty_td = mk_adt ~loc ~name:"ty" ~cstrs:ty_cstrs in
+        let annotated_ty_td =
+          { ty_td with ptype_attributes = [ deriving_show ~loc ] } in
         [ pstr_type ~loc Recursive [ annotated_expr_td ];
-          pstr_type ~loc Recursive [ ty_td ];
+          pstr_type ~loc Recursive [ annotated_ty_td ];
           [%stri let rec gen_expr ty = [%e derive_gen_expr ~loc sig_items]]
         ])
     | _ -> failwith "TODO: other case for mod_type")
