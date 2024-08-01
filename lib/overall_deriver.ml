@@ -11,17 +11,19 @@ let include_mod ~(loc : Location.t) (mod_expr : module_expr) : structure_item =
     by [Type_deriver], [Interp_deriver] and [Test_harness_deriver]. *)
 let generate_mica_module ~ctxt (mt : module_type_declaration) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
-  let type_defns : module_expr =
-    pmod_structure ~loc (Type_deriver.generate_types_from_sig ~ctxt mt) in
+  let type_defns : structure_item =
+    include_mod ~loc
+      (pmod_structure ~loc @@ Type_deriver.generate_types_from_sig ~ctxt mt)
+  in
   let interp_functor : structure_item =
     Interp_deriver.generate_functor ~ctxt mt in
-  let test_harness_functor =
+  let test_harness_functor : structure_item =
     include_mod ~loc
       (pmod_structure ~loc @@ Test_harness_deriver.generate_functor ~ctxt mt)
   in
   [%str
     module Mica = struct
-      [%%i include_mod ~loc type_defns]
+      [%%i type_defns]
       [%%i interp_functor]
       [%%i test_harness_functor]
     end]

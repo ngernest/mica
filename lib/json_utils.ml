@@ -1,7 +1,7 @@
 open Base
 open Yojson
 
-module TycheUtils (Mica_types : sig
+module TycheUtils (Mica_core : sig
   type expr
   type ty
 
@@ -11,7 +11,7 @@ module TycheUtils (Mica_types : sig
   val show_ty : ty -> string
 end) =
 struct
-  open Mica_types
+  open Mica_core
 
   (** JSON schema for Tyche visualization with initialized dummy values *)
   let json : Basic.t =
@@ -29,8 +29,9 @@ struct
         ("coverage", `Null)
       ]
 
-  (** [update_json k v] updates the field [k] in the association list [json] 
-      with the value [v], where [k] & [v] are both strings *)
+  (** [update_json json k v] updates the field [k] in the association list 
+      [json] with the value [v], where [k] & [v] are both strings 
+      - Raises an exception if [json] is not of the form [`Assoc fields] *)
   let update_json (json : Basic.t) (k : string) (v : Basic.t) : Basic.t =
     match json with
     | `Assoc fields ->
@@ -94,7 +95,7 @@ struct
     set_start_time json |> set_args ty e |> set_prop ty |> set_features e
     |> set_representation e |> set_runtime elapsed
 
-  (** Retrieves the current time as a formatted string, in the machine's local timezone *)
+  (** Retrieves the current time as a formatted string *)
   let get_current_time_str () : string =
     let open Core_unix in
     gettimeofday () |> localtime |> fun tm -> strftime tm "%Y-%m-%d--%H-%M"
