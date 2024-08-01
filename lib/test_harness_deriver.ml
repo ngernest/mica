@@ -71,6 +71,7 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
     let sig_name = pmty_ident ~loc (map_with_loc ~f:Longident.parse pmtd_name) in
     match mod_type.pmty_desc with
     | Pmty_signature _sig_items ->
+      (* TODO: uncomment the following line! *)
       (* let _ = derive_test_functions ~loc sig_items in *)
       [%str
         module TestHarness (M1 : [%m sig_name]) (M2 : [%m sig_name]) = struct

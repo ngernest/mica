@@ -39,12 +39,16 @@ let test_harness_deriver =
     ~str_module_type_decl:test_harness_functor_gen
 
 (******************************************************************************)
+(* Overall Mica PPX deriver *)
 
+(** Overall generator for all the derived code: composes all the auxiliary 
+    derivers defined in this file and produces an overall module called [Mica] 
+    that includes the rest of the derived code *)
 let mica_module_gen =
   Deriving.Generator.V2.make_noarg Overall_deriver.generate_mica_module
 
-let mica_module_deriver =
-  Deriving.add "mica_overall" ~str_module_type_decl:mica_module_gen
+let overall_mica_deriver =
+  Deriving.add "mica" ~str_module_type_decl:mica_module_gen
 
 (******************************************************************************)
 (* Main [mica] deriver *)
@@ -52,13 +56,6 @@ let mica_module_deriver =
 (** Registers the main [mica] PPX deriver *)
 let () =
   List.iter ~f:Reserved_namespaces.reserve
-    [ "mica_types";
-      "mica_interp_functor";
-      "mica_test_harness";
-      "mica_overall";
-      "mica"
-    ];
+    [ "mica_types"; "mica_interp_functor"; "mica_test_harness"; "mica" ];
 
-  let derivers = [ test_harness_deriver; interp_deriver; type_deriver ] in
-  (* Add an alias so that users just need to write [[@@deriving mica]] *)
-  Deriving.add_alias "mica" derivers |> Deriving.ignore
+  overall_mica_deriver |> Deriving.ignore
