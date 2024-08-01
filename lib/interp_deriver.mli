@@ -38,4 +38,4 @@ val mk_functor :
 (** Generates the scaffolding for the [ExprToImpl] functor 
     (e.g. module type declarations) *)
 val generate_functor :
-  ctxt:Expansion_context.Deriver.t -> module_type_declaration -> structure
+  ctxt:Expansion_context.Deriver.t -> module_type_declaration -> structure_item

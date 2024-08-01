@@ -149,7 +149,7 @@ let mk_functor ~(loc : location) (arg_name : label option with_loc)
 (** Generates the scaffolding for the [Interpret] functor 
     (e.g. module type declarations) *)
 let generate_functor ~(ctxt : Expansion_context.Deriver.t)
-  (mt : module_type_declaration) : structure =
+  (mt : module_type_declaration) : structure_item =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   match mt with
   | { pmtd_type = Some mod_type; pmtd_name; _ } -> (
@@ -167,11 +167,10 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
         module_binding ~loc
           ~name:{ txt = Some "Interpret"; loc }
           ~expr:functor_expr in
-      [ { pstr_desc = Pstr_module mod_binding; pstr_loc = loc } ]
+      { pstr_desc = Pstr_module mod_binding; pstr_loc = loc }
     | _ ->
-      [ mk_error_pstr ~local:mod_type.pmty_loc ~global:loc
-          "Expected a module type expression that was a signature"
-      ])
+      mk_error_pstr ~local:mod_type.pmty_loc ~global:loc
+        "Expected a module type expression that was a signature")
   | { pmtd_type = None; _ } ->
     Location.raise_errorf ~loc
       "Can't derive for expressions that aren't module type declarations"

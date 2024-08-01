@@ -74,48 +74,46 @@ module Mica = struct
     let _ = gen_expr
   end
 
-  include struct
-    module Interpret (M : S) = struct
-      open M
+  module Interpret (M : S) = struct
+    open M
 
-      type value = ValBool of bool | ValInt of int | ValIntT of int t
+    type value = ValBool of bool | ValInt of int | ValIntT of int t
 
-      let rec interp e =
-        match e with
-        | Empty -> ValIntT M.empty
-        | Is_empty expr__025_ -> (
-          match interp expr__025_ with
-          | ValIntT expr__025_' -> ValBool (M.is_empty expr__025_')
-          | _ -> failwith "impossible: unary constructor")
-        | Mem (int__026_, expr__027_) -> (
-          match interp expr__027_ with
-          | ValIntT expr__027_' -> ValBool (M.mem int__026_ expr__027_')
-          | _ -> failwith "impossible: n-ary constructor")
-        | Add (int__028_, expr__029_) -> (
-          match interp expr__029_ with
-          | ValIntT expr__029_' -> ValIntT (M.add int__028_ expr__029_')
-          | _ -> failwith "impossible: n-ary constructor")
-        | Rem (int__030_, expr__031_) -> (
-          match interp expr__031_ with
-          | ValIntT expr__031_' -> ValIntT (M.rem int__030_ expr__031_')
-          | _ -> failwith "impossible: n-ary constructor")
-        | Size expr__032_ -> (
-          match interp expr__032_ with
-          | ValIntT expr__032_' -> ValInt (M.size expr__032_')
-          | _ -> failwith "impossible: unary constructor")
-        | Union (expr__033_, expr__034_) -> (
-          match (interp expr__033_, interp expr__034_) with
-          | ValIntT expr__033_', ValIntT expr__034_' ->
-            ValIntT (M.union expr__033_' expr__034_')
-          | _ -> failwith "impossible: n-ary constructor")
-        | Intersect (expr__035_, expr__036_) -> (
-          match (interp expr__035_, interp expr__036_) with
-          | ValIntT expr__035_', ValIntT expr__036_' ->
-            ValIntT (M.intersect expr__035_' expr__036_')
-          | _ -> failwith "impossible: n-ary constructor")
+    let rec interp e =
+      match e with
+      | Empty -> ValIntT M.empty
+      | Is_empty expr__025_ -> (
+        match interp expr__025_ with
+        | ValIntT expr__025_' -> ValBool (M.is_empty expr__025_')
+        | _ -> failwith "impossible: unary constructor")
+      | Mem (int__026_, expr__027_) -> (
+        match interp expr__027_ with
+        | ValIntT expr__027_' -> ValBool (M.mem int__026_ expr__027_')
+        | _ -> failwith "impossible: n-ary constructor")
+      | Add (int__028_, expr__029_) -> (
+        match interp expr__029_ with
+        | ValIntT expr__029_' -> ValIntT (M.add int__028_ expr__029_')
+        | _ -> failwith "impossible: n-ary constructor")
+      | Rem (int__030_, expr__031_) -> (
+        match interp expr__031_ with
+        | ValIntT expr__031_' -> ValIntT (M.rem int__030_ expr__031_')
+        | _ -> failwith "impossible: n-ary constructor")
+      | Size expr__032_ -> (
+        match interp expr__032_ with
+        | ValIntT expr__032_' -> ValInt (M.size expr__032_')
+        | _ -> failwith "impossible: unary constructor")
+      | Union (expr__033_, expr__034_) -> (
+        match (interp expr__033_, interp expr__034_) with
+        | ValIntT expr__033_', ValIntT expr__034_' ->
+          ValIntT (M.union expr__033_' expr__034_')
+        | _ -> failwith "impossible: n-ary constructor")
+      | Intersect (expr__035_, expr__036_) -> (
+        match (interp expr__035_, interp expr__036_) with
+        | ValIntT expr__035_', ValIntT expr__036_' ->
+          ValIntT (M.intersect expr__035_' expr__036_')
+        | _ -> failwith "impossible: n-ary constructor")
 
-      let _ = interp
-    end
+    let _ = interp
   end
 
   module TestHarness (M1 : S) (M2 : S) = struct
@@ -140,6 +138,13 @@ module Mica = struct
       test_int ()
   end
 end
+
+module Tyche = Json_utils.TycheUtils (struct
+  include Mica
+
+  let depth _ = 0
+  let num_unique_ints _ = 0
+end)
 
 (******************************************************************************)
 

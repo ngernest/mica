@@ -70,8 +70,8 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
   | { pmtd_type = Some mod_type; pmtd_name; _ } -> (
     let sig_name = pmty_ident ~loc (map_with_loc ~f:Longident.parse pmtd_name) in
     match mod_type.pmty_desc with
-    | Pmty_signature sig_items ->
-      let _ = derive_test_functions ~loc sig_items in
+    | Pmty_signature _sig_items ->
+      (* let _ = derive_test_functions ~loc sig_items in *)
       [%str
         module TestHarness (M1 : [%m sig_name]) (M2 : [%m sig_name]) = struct
           module I1 = Interpret (M1)
