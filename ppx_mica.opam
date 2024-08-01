@@ -17,6 +17,7 @@ depends: [
   "ppx_deriving" {>= "v5.2.1"}
   "ppxlib" {>= "v0.32.0"}
   "yojson" {>= "v2.0.0"}
+  "alcotest" {>= "v1.7.0"}
 ]
 build: [
   ["dune" "subst"] {dev}
