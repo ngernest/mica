@@ -21,7 +21,7 @@ let get_varname ({ ppat_desc; _ } : pattern) : string =
 (** Takes [ty], the type of a [val] declaration in a signature,
     and returns the type of the arguments of the corresponding 
     constructor for the [expr] datatype. 
-    - The [abs_tys] argument is a list of abstract types
+    - The [abs_ty_names] argument is a list of abstract types
       that are defined in the module signature (to determine
       when arguments should be instantiated with the [expr] type)
 

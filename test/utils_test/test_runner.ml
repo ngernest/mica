@@ -84,6 +84,8 @@ let () =
           get_ty_decls_from_sig_two_tys ();
           get_ty_decls_from_sig_three_tys ()
         ] );
+      (* ( "get_arg_tys_of_expr_cstr", [ get_arg_tys_of_expr_cstr_hof ();
+         get_arg_tys_of_expr_cstr_map () ] ); *)
       ( "equal_core_type_ty_cstr",
         [ equal_core_ty_ty_cstr_bool_Bool ();
           equal_core_ty_ty_cstr_int_Int ();

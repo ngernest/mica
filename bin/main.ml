@@ -1,3 +1,9 @@
+module type S = sig
+  type 'a t
+
+  val map : ('a -> 'b) -> 'a t -> 'b t
+end
+
 type expr =
   | Empty
   | Is_empty of expr

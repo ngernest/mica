@@ -135,3 +135,18 @@ let get_ty_decls_from_sig_three_tys () =
       ("u", [ [%type: 'b] ]);
       ("v", [ [%type: 'c]; [%type: 'd] ])
     ]
+
+(******************************************************************************)
+(** Testing [get_arg_tys_of_expr_cstr] *)
+
+let get_arg_tys_of_expr_cstr_hof () =
+  let expected = [ [%type: int -> int]; [%type: expr] ] in
+  let actual = get_arg_tys_of_expr_cstr [%type: ('a -> 'b) -> 'a t] [ "t" ] in
+  mk_test core_ty_list_testable "('a -> 'b) -> 'a t" expected actual
+
+let get_arg_tys_of_expr_cstr_map () =
+  let expected = [ [%type: int -> int]; [%type: expr]; [%type: expr] ] in
+  let actual =
+    get_arg_tys_of_expr_cstr [%type: ('a -> 'b) -> 'a t -> 'b t] [ "t" ] in
+  mk_test core_ty_list_testable "map : ('a -> 'b) -> 'a t -> 'b t" expected
+    actual
