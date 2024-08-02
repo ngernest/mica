@@ -4,4 +4,4 @@
  (kind ppx_deriver)
  (libraries base base_quickcheck core ppxlib yojson core_unix)
  (preprocess
-  (pps ppx_jane ppxlib.metaquot ppx_deriving.show)))
+  (pps ppx_jane ppxlib.metaquot ppx_deriving.show ppx_deriving.fold)))

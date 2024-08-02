@@ -5,23 +5,26 @@
 #utop_prompt_dummy;;
 UTop.set_show_box false
 
-(* Entering [ubox();;] toggles auto-complete suggestions on and off *)
+(* Entering [ubox ();;] toggles auto-complete suggestions on and off *)
 let ubox () =
   if UTop.get_show_box ()
   then UTop.set_show_box false
   else UTop.set_show_box true;;
 
 (* Project-specific dependencies *)
+#require "ppx_deriving.show";;
+#require "ppx_deriving.fold";;
+#require "ppx_deriving";;
 #require "ppx_jane";;
 #require "ppxlib";;
 #require "ppxlib.metaquot";;
+
 
 (* Ensure that files in [lib] are visible to Utop *)
 #directory "./lib";;
 #mod_use "inv_ctx.ml";;
 #mod_use "miscellany.ml";;
 #mod_use "let_open.ml";;
-#mod_use "bindop.ml";;
 #mod_use "printers.ml";;
 #mod_use "equality.ml";;
 #mod_use "lident.ml";;
@@ -32,6 +35,7 @@ let ubox () =
 #mod_use "utils.ml";;
 #mod_use "type_deriver.ml";;
 #mod_use "interp_deriver.ml";;
+#mod_use "set_pbt.ml";;
 
 open Ppxlib
 open Astlib.Pprintast
