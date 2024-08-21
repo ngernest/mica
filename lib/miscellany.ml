@@ -26,21 +26,21 @@ let max_loc (l1 : Location.t) (l2 : Location.t) : Location.t =
 (** Maps a function component-wise over a pair *)
 let map2 ~f (a1, a2) = (f a1, f a2)
 
-(** Maps a function [f] over 3 lists that must have the same length 
+(** Maps a function [f] over 4 lists that must have the same length 
     - Implementation adapted from [List.map2] in the standard library
-    - Raises [Invalid_argument] if the 3 lists have different lengths *)
-let[@tail_mod_cons] rec list_map3 ~(f : 'a -> 'b -> 'c -> 'd) (l1 : 'a list)
-  (l2 : 'b list) (l3 : 'c list) : 'd list =
-  match (l1, l2, l3) with
-  | [], [], [] -> []
-  | [ x ], [ y ], [ z ] ->
-    let r1 = f x y z in
+    - Raises [Invalid_argument] if the 4 lists have different lengths *)
+let[@tail_mod_cons] rec list_map4 ~(f : 'a -> 'b -> 'c -> 'd -> 'e)
+  (l1 : 'a list) (l2 : 'b list) (l3 : 'c list) (l4 : 'd list) : 'e list =
+  match (l1, l2, l3, l4) with
+  | [], [], [], [] -> []
+  | [ a ], [ b ], [ c ], [ d ] ->
+    let r1 = f a b c d in
     [ r1 ]
-  | x1 :: x2 :: xs, y1 :: y2 :: ys, z1 :: z2 :: zs ->
-    let r1 = f x1 y1 z1 in
-    let r2 = f x2 y2 z2 in
-    r1 :: r2 :: list_map3 ~f xs ys zs
-  | _, _, _ -> invalid_arg "list_map3"
+  | x1 :: x2 :: xs, y1 :: y2 :: ys, z1 :: z2 :: zs, w1 :: w2 :: ws ->
+    let r1 = f x1 y1 z1 w1 in
+    let r2 = f x2 y2 z2 w2 in
+    r1 :: r2 :: list_map4 ~f xs ys zs ws
+  | _, _, _, _ -> invalid_arg "list_map3"
 
 (** Converts a triple to a pair *)
 let tuple4_to_pair (a, b, _, _) = (a, b)
