@@ -54,12 +54,8 @@ let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
   let concrete_tys = uniq_ret_tys sig_items in
   let ty_cstr_names : string list =
     List.map ~f:string_of_monomorphized_ty concrete_tys in
-  (* TODO: don't use [Expansion_helpers.mangle] since that uses snake case, just
-     append ["Val"] as a prefix *)
   let value_cstr_names : string list =
-    List.map
-      ~f:(Expansion_helpers.mangle ~fixpoint:"" (Prefix "Val"))
-      ty_cstr_names in
+    List.map ~f:(fun ty_name -> "Val" ^ ty_name) ty_cstr_names in
   let test_names : pattern list =
     List.map
       ~f:(fun ty -> pvar ~loc (Ppxlib.string_of_core_type ty))

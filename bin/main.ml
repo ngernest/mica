@@ -129,56 +129,56 @@ include struct
           let int t () =
             Quickcheck.test (gen_expr IntT) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_IntT intT__038_, Val_IntT intT__037_ -> ())
+                | ValIntT intT__038_, ValIntT intT__037_ -> ())
 
           let _ = int t
 
           let bool () =
             Quickcheck.test (gen_expr Bool) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_Bool bool__040_, Val_Bool bool__039_ -> ())
+                | ValBool bool__040_, ValBool bool__039_ -> ())
 
           let _ = bool
 
           let bool () =
             Quickcheck.test (gen_expr Bool) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_Bool bool__042_, Val_Bool bool__041_ -> ())
+                | ValBool bool__042_, ValBool bool__041_ -> ())
 
           let _ = bool
 
           let int t () =
             Quickcheck.test (gen_expr IntT) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_IntT intT__044_, Val_IntT intT__043_ -> ())
+                | ValIntT intT__044_, ValIntT intT__043_ -> ())
 
           let _ = int t
 
           let int t () =
             Quickcheck.test (gen_expr IntT) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_IntT intT__046_, Val_IntT intT__045_ -> ())
+                | ValIntT intT__046_, ValIntT intT__045_ -> ())
 
           let _ = int t
 
           let int () =
             Quickcheck.test (gen_expr Int) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_Int int__048_, Val_Int int__047_ -> ())
+                | ValInt int__048_, ValInt int__047_ -> ())
 
           let _ = int
 
           let int t () =
             Quickcheck.test (gen_expr IntT) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_IntT intT__050_, Val_IntT intT__049_ -> ())
+                | ValIntT intT__050_, ValIntT intT__049_ -> ())
 
           let _ = int t
 
           let int t () =
             Quickcheck.test (gen_expr IntT) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
-                | Val_IntT intT__052_, Val_IntT intT__051_ -> ())
+                | ValIntT intT__052_, ValIntT intT__051_ -> ())
 
           let _ = int t
         end
