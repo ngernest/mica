@@ -16,6 +16,11 @@ val mk_val_cstr_app2 :
     as a prefix *)
 val mk_fresh_cstr_arg : Ppxlib.core_type -> string
 
+(** Takes in a type and produces a [pattern] containing the name of a test 
+    function for that type.
+    - e.g. [test_function_name ~loc ty] returns [Ppat_var "test_ty"] *)  
+val test_function_name : loc:Location.t -> core_type -> pattern  
+
 (** Produces a test function (eg [test_int]), where:
    - [ty] is the concrete type at which observational equivalence is being tested
    - [ty_cstr] is the corresponding constructor in the [ty] datatype
@@ -29,10 +34,10 @@ val produce_test :
   Ppxlib.pattern ->
   Ppxlib.structure_item
 
-(** Takes in a type and produces a [pattern] containing the name of a test 
-    function for that type.
-    - e.g. [test_function_name ~loc ty] returns [Ppat_var "test_ty"] *)  
-val test_function_name : loc:Location.t -> core_type -> pattern  
+(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a concrete 
+    type based on [abs_ty_names], a list containing the names of abstract types 
+    in a signature *)  
+val check_type_is_concrete : string list -> core_type -> bool   
 
 (** Produces test functions for all the concrete return types of functions 
     exposed in the module signature [sig_items] *)  

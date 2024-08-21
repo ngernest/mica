@@ -54,21 +54,39 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
           match (I1.interp e, I2.interp e) with
           | [%p val_cstr] -> ())]
 
+(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a concrete 
+    type based on [abs_ty_names], a list containing the names of abstract types 
+    in a signature
+    
+    - TODO: this doesn't work because of type parameters and string comparison 
+    (e.g. ["int t"] is different from ["t"]) *)
+let check_type_is_concrete (abs_ty_names : string list) (ty : core_type) : bool
+    =
+  let ty_name = Ppxlib.string_of_core_type ty in
+  not (List.mem ty_name ~set:abs_ty_names)
+
 (** Produces test functions for all the concrete return types of functions 
     exposed in the module signature [sig_items] *)
 let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
   structure_item list =
-  (* TODO: need to filter out [IntT] *)
-  let concrete_tys =
+  (* Get all the unique return types of functions in the signature *)
+  let unique_tys =
     Base.List.dedup_and_sort ~compare:compare_core_type (uniq_ret_tys sig_items)
   in
-  Stdio.printf "no. of concrete types = %d\n" (List.length concrete_tys);
+  (* Filter out abstract types *)
+  let abs_ty_names = get_abs_ty_names sig_items in
+  let concrete_tys =
+    List.filter ~f:(check_type_is_concrete abs_ty_names) unique_tys in
+  (* For each type, retrieve its corresponding constructor names for the [ty] &
+     [value] datatypes *)
   let ty_cstr_names : string list =
     List.map ~f:string_of_monomorphized_ty concrete_tys in
   let value_cstr_names : string list =
     List.map ~f:(fun ty_name -> "Val" ^ ty_name) ty_cstr_names in
+  (* Create a name for the function that tests obs. equiv. at that type *)
   let test_names : pattern list =
     List.map ~f:(test_function_name ~loc) concrete_tys in
+  (* Derive the test function based on all the info above *)
   list_map4 ~f:(produce_test ~loc) concrete_tys ty_cstr_names value_cstr_names
     test_names
 
