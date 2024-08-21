@@ -51,7 +51,11 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
     exposed in the module signature [sig_items] *)
 let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
   structure_item list =
-  let concrete_tys = uniq_ret_tys sig_items in
+  (* TODO: need to filter out [IntT] *)
+  let concrete_tys =
+    Base.List.dedup_and_sort ~compare:compare_core_type (uniq_ret_tys sig_items)
+  in
+  Stdio.printf "no. of concrete types = %d\n" (List.length concrete_tys);
   let ty_cstr_names : string list =
     List.map ~f:string_of_monomorphized_ty concrete_tys in
   let value_cstr_names : string list =
@@ -72,6 +76,8 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
     let sig_name = pmty_ident ~loc (map_with_loc ~f:Longident.parse pmtd_name) in
     match mod_type.pmty_desc with
     | Pmty_signature sig_items ->
+      (* Derive the appropriate functions for testing observational equivalence
+         at concrete types *)
       let test_functions = derive_test_functions ~loc sig_items in
       [%str
         module TestHarness (M1 : [%m sig_name]) (M2 : [%m sig_name]) = struct
