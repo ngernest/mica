@@ -62,7 +62,10 @@ let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
     List.map ~f:(fun ty_name -> "Val" ^ ty_name) ty_cstr_names in
   let test_names : pattern list =
     List.map
-      ~f:(fun ty -> pvar ~loc (Ppxlib.string_of_core_type ty))
+      ~f:(fun ty ->
+        pvar ~loc
+          (Expansion_helpers.mangle ~fixpoint:"test" (Prefix "test")
+             (Ppxlib.string_of_core_type ty)))
       concrete_tys in
   list_map4 ~f:(produce_test ~loc) concrete_tys ty_cstr_names value_cstr_names
     test_names

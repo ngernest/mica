@@ -126,26 +126,26 @@ include struct
         open Core
 
         include struct
-          let bool () =
+          let test_bool () =
             Quickcheck.test (gen_expr Bool) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
                 | ValBool bool__038_, ValBool bool__037_ -> ())
 
-          let _ = bool
+          let _ = test_bool
 
-          let int () =
+          let test_int () =
             Quickcheck.test (gen_expr Int) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
                 | ValInt int__040_, ValInt int__039_ -> ())
 
-          let _ = int
+          let _ = test_int
 
-          let int t () =
+          let test_int t () =
             Quickcheck.test (gen_expr IntT) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
                 | ValIntT intT__042_, ValIntT intT__041_ -> ())
 
-          let _ = int t
+          let _ = test_int t
         end
       end
     end
