@@ -12,67 +12,63 @@ module type S = sig
 end
 
 module Mica = struct
-  include struct
-    type expr =
-      | Empty
-      | Is_empty of expr
-      | Mem of int * expr
-      | Add of int * expr
-      | Rem of int * expr
-      | Size of expr
-      | Union of expr * expr
-      | Intersect of expr * expr
-    [@@deriving show { with_path = false }]
+  type expr =
+    | Empty
+    | Is_empty of expr
+    | Mem of int * expr
+    | Add of int * expr
+    | Rem of int * expr
+    | Size of expr
+    | Union of expr * expr
+    | Intersect of expr * expr
+  [@@deriving show { with_path = false }]
 
-    type ty = Bool | Int | IntT [@@deriving show { with_path = false }]
+  type ty = Bool | Int | IntT [@@deriving show { with_path = false }]
 
-    let rec gen_expr ty =
-      let open Core in
-      let open Quickcheck.Generator in
-      let open Let_syntax in
-      size >>= fun k ->
-      match ty with
-      | Bool ->
-        let gen_is_empty =
-          let g__001_ = with_size ~size:(k / 2) (gen_expr IntT) in
-          g__001_ >>| fun e__002_ -> Is_empty e__002_
-        and gen_mem =
-          let g__003_ = quickcheck_generator_int
-          and g__004_ = with_size ~size:(k / 2) (gen_expr IntT) in
-          tuple2 g__003_ g__004_ >>| fun (e__005_, e__006_) ->
-          Mem (e__005_, e__006_) in
-        union [ gen_is_empty; gen_mem ]
-      | Int ->
-        let gen_size =
-          let g__007_ = with_size ~size:(k / 2) (gen_expr IntT) in
-          g__007_ >>| fun e__008_ -> Size e__008_ in
-        union [ gen_size ]
-      | IntT ->
-        let gen_empty = return Empty
-        and gen_add =
-          let g__009_ = quickcheck_generator_int
-          and g__010_ = with_size ~size:(k / 2) (gen_expr IntT) in
-          tuple2 g__009_ g__010_ >>| fun (e__011_, e__012_) ->
-          Add (e__011_, e__012_)
-        and gen_rem =
-          let g__013_ = quickcheck_generator_int
-          and g__014_ = with_size ~size:(k / 2) (gen_expr IntT) in
-          tuple2 g__013_ g__014_ >>| fun (e__015_, e__016_) ->
-          Rem (e__015_, e__016_)
-        and gen_union =
-          let g__017_ = with_size ~size:(k / 2) (gen_expr IntT)
-          and g__018_ = with_size ~size:(k / 2) (gen_expr IntT) in
-          tuple2 g__017_ g__018_ >>| fun (e__019_, e__020_) ->
-          Union (e__019_, e__020_)
-        and gen_intersect =
-          let g__021_ = with_size ~size:(k / 2) (gen_expr IntT)
-          and g__022_ = with_size ~size:(k / 2) (gen_expr IntT) in
-          tuple2 g__021_ g__022_ >>| fun (e__023_, e__024_) ->
-          Intersect (e__023_, e__024_) in
-        union [ gen_empty; gen_add; gen_rem; gen_union; gen_intersect ]
-
-    let _ = gen_expr
-  end
+  let rec gen_expr ty =
+    let open Core in
+    let open Quickcheck.Generator in
+    let open Let_syntax in
+    size >>= fun k ->
+    match ty with
+    | Bool ->
+      let gen_is_empty =
+        let g__001_ = with_size ~size:(k / 2) (gen_expr IntT) in
+        g__001_ >>| fun e__002_ -> Is_empty e__002_
+      and gen_mem =
+        let g__003_ = quickcheck_generator_int
+        and g__004_ = with_size ~size:(k / 2) (gen_expr IntT) in
+        tuple2 g__003_ g__004_ >>| fun (e__005_, e__006_) ->
+        Mem (e__005_, e__006_) in
+      union [ gen_is_empty; gen_mem ]
+    | Int ->
+      let gen_size =
+        let g__007_ = with_size ~size:(k / 2) (gen_expr IntT) in
+        g__007_ >>| fun e__008_ -> Size e__008_ in
+      union [ gen_size ]
+    | IntT ->
+      let gen_empty = return Empty
+      and gen_add =
+        let g__009_ = quickcheck_generator_int
+        and g__010_ = with_size ~size:(k / 2) (gen_expr IntT) in
+        tuple2 g__009_ g__010_ >>| fun (e__011_, e__012_) ->
+        Add (e__011_, e__012_)
+      and gen_rem =
+        let g__013_ = quickcheck_generator_int
+        and g__014_ = with_size ~size:(k / 2) (gen_expr IntT) in
+        tuple2 g__013_ g__014_ >>| fun (e__015_, e__016_) ->
+        Rem (e__015_, e__016_)
+      and gen_union =
+        let g__017_ = with_size ~size:(k / 2) (gen_expr IntT)
+        and g__018_ = with_size ~size:(k / 2) (gen_expr IntT) in
+        tuple2 g__017_ g__018_ >>| fun (e__019_, e__020_) ->
+        Union (e__019_, e__020_)
+      and gen_intersect =
+        let g__021_ = with_size ~size:(k / 2) (gen_expr IntT)
+        and g__022_ = with_size ~size:(k / 2) (gen_expr IntT) in
+        tuple2 g__021_ g__022_ >>| fun (e__023_, e__024_) ->
+        Intersect (e__023_, e__024_) in
+      union [ gen_empty; gen_add; gen_rem; gen_union; gen_intersect ]
 
   module Interpret (M : S) = struct
     open M
@@ -112,15 +108,11 @@ module Mica = struct
         | ValIntT expr__035_', ValIntT expr__036_' ->
           ValIntT (M.intersect expr__035_' expr__036_')
         | _ -> failwith "impossible: n-ary constructor")
-
-    let _ = interp
   end
 
-  include struct
-    module TestHarness (M1 : S) (M2 : S) = struct
-      module I1 = Interpret (M1)
-      module I2 = Interpret (M2)
-      open Core
-    end
+  module TestHarness (M1 : S) (M2 : S) = struct
+    module I1 = Interpret (M1)
+    module I2 = Interpret (M2)
+    open Core
   end
 end

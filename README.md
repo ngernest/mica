@@ -48,6 +48,7 @@ module Mica = struct
   end
 end
 ```
+- An example of the code automatically derived by Mica can be found in the [`example`](./example/) subdirectory
 
 **Functionality to be implemented**:
 - Finish deriving the body of the `TestHarness` functor
@@ -97,7 +98,8 @@ run `dune promote` to update the `.expected` file with the contents
 of the `.actual` file (which contains what the PPX actually generated from that test run). 
 
 ## Local Development
-- Have the following installed:
+- This repo has been tested with OCaml 5.1.0 on an M1 Mac.
+- We recommend having the following libraries installed:
   - `ppxlib`
   - `ppx_jane`
   - `ppx_deriving.show`
@@ -111,4 +113,5 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   but in a few (limited) instances, we use Jane Street's `Base` library. 
   To avoid namespace clashes, whenever we use a function from `Base`, 
   we always do a local `let open` within the body of the caller function.
+
 
