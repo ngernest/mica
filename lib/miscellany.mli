@@ -22,6 +22,10 @@ val map_with_loc : f:('a -> 'b) -> 'a Location.loc -> 'b Location.loc
 (** Maps a function component-wise over a pair *)
 val map2 : f:('a -> 'b) -> 'a * 'a -> 'b * 'b
 
+(** Maps a function [f] over 3 lists that must have the same length 
+    - Raises [Invalid_argument] if the 3 lists have different lengths *)
+val list_map3 : f:('a -> 'b -> 'c -> 'd) -> 'a list -> 'b list -> 'c list -> 'd list 
+
 (** Converts a triple to a pair *)
 val tuple4_to_pair : 'a * 'b * 'c * 'd -> 'a * 'b
 
