@@ -32,7 +32,7 @@ val list_map4 :
   'd list ->
   'e list
 
-(** Converts a triple to a pair *)
+(** Converts a 4-tuple to a pair *)
 val tuple4_to_pair : 'a * 'b * 'c * 'd -> 'a * 'b
 
 (** Checks if a list is empty

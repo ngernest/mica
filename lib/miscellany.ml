@@ -42,7 +42,7 @@ let[@tail_mod_cons] rec list_map4 ~(f : 'a -> 'b -> 'c -> 'd -> 'e)
     r1 :: r2 :: list_map4 ~f xs ys zs ws
   | _, _, _, _ -> invalid_arg "list_map3"
 
-(** Converts a triple to a pair *)
+(** Converts a 4-tuple to a pair *)
 let tuple4_to_pair (a, b, _, _) = (a, b)
 
 (** Checks if a list is empty

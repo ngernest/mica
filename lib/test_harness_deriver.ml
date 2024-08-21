@@ -47,11 +47,15 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
           match (I1.interp e, I2.interp e) with
           | [%p val_cstr] -> ())]
 
+(** Produces test functions for all the concrete return types of functions 
+    exposed in the module signature [sig_items] *)
 let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
   structure_item list =
   let concrete_tys = uniq_ret_tys sig_items in
   let ty_cstr_names : string list =
     List.map ~f:string_of_monomorphized_ty concrete_tys in
+  (* TODO: don't use [Expansion_helpers.mangle] since that uses snake case, just
+     append ["Val"] as a prefix *)
   let value_cstr_names : string list =
     List.map
       ~f:(Expansion_helpers.mangle ~fixpoint:"" (Prefix "Val"))
@@ -60,10 +64,8 @@ let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
     List.map
       ~f:(fun ty -> pvar ~loc (Ppxlib.string_of_core_type ty))
       concrete_tys in
-  (* list_map3 ~f:_ ty_cstr_names value_cstr_names test_names *)
-  failwith
-    "TODO: figure out how to do a [map3] over [ty_cstr_names, \
-     value_cstr_names, test_names]"
+  list_map4 ~f:(produce_test ~loc) concrete_tys ty_cstr_names value_cstr_names
+    test_names
 
 (** Derives the [TestHarness] functor *)
 let generate_functor ~(ctxt : Expansion_context.Deriver.t)
@@ -73,14 +75,15 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
   | { pmtd_type = Some mod_type; pmtd_name; _ } -> (
     let sig_name = pmty_ident ~loc (map_with_loc ~f:Longident.parse pmtd_name) in
     match mod_type.pmty_desc with
-    | Pmty_signature _sig_items ->
-      (* TODO: uncomment the following line! *)
-      (* let _ = derive_test_functions ~loc sig_items in *)
+    | Pmty_signature sig_items ->
+      let test_functions = derive_test_functions ~loc sig_items in
       [%str
         module TestHarness (M1 : [%m sig_name]) (M2 : [%m sig_name]) = struct
           module I1 = Interpret (M1)
           module I2 = Interpret (M2)
           open Core
+
+          [%%i include_structure ~loc test_functions]
         end]
     | _ ->
       Location.raise_errorf ~loc

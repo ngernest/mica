@@ -8,12 +8,12 @@ val mk_val_cstr_app :
 
 (** Produces a pattern of the form [(ValInt x1, ValInt x2)] - [x1, x2] are the
   names for the two vairables - [value_cstr] is the name of the constructor for
-  the [value] type *)  
+  the [value] type *)
 val mk_val_cstr_app2 :
   loc:Location.t -> string -> string * string -> Ppxlib.pattern
 
 (** Produces a fresh constructor argument with the name of the type 
-    as a prefix *)  
+    as a prefix *)
 val mk_fresh_cstr_arg : Ppxlib.core_type -> string
 
 (** Produces a test function (eg [test_int]), where:
@@ -24,12 +24,18 @@ val mk_fresh_cstr_arg : Ppxlib.core_type -> string
 val produce_test :
   loc:Location.t ->
   Ppxlib.core_type ->
-  string -> string -> Ppxlib.pattern -> Ppxlib.structure_item
+  string ->
+  string ->
+  Ppxlib.pattern ->
+  Ppxlib.structure_item
 
+(** Produces test functions for all the concrete return types of functions 
+    exposed in the module signature [sig_items] *)  
 val derive_test_functions :
   loc:Location.t -> Ppxlib.signature -> Ppxlib.structure_item list
 
-(** Derives the [TestHarness] functor *)  
+(** Derives the [TestHarness] functor *)
 val generate_functor :
   ctxt:Ppxlib.Expansion_context.Deriver.t ->
-  Ppxlib.module_type_declaration -> Ppxlib.structure
+  Ppxlib.module_type_declaration ->
+  Ppxlib.structure

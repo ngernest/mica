@@ -1,5 +1,4 @@
 open Ppxlib
-open Ast_builder.Default
 open Include
 
 (** Produces a module called [Mica] that contains all the automatically derived 
