@@ -57,7 +57,7 @@ end
 - Automatically derive the `Seq` constructor for testing imperative code
 - Automatically instrument testing code with boilerplate needed for Tyche integration
 
-## Directory overview
+## Directory Overview
 - [ppx_mica.ml](./lib/ppx_mica.ml): Declares the PPX deriver
 - [type_deriver.ml](./lib/type_deriver.ml): Derives type definitions + the `gen_expr` Quickcheck generator
 - [interp_deriver.ml](./lib/interp_deriver.ml): Derives the `Interpret` functor
@@ -65,9 +65,7 @@ end
 - [overall_deriver.ml](./lib/overall_deriver.ml): Produces a module called `Mica` containing all the automatically derived code
 - [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
   - [builders.ml](./lib/builders.ml): Functions for creating AST nodes
-    - Most functions in this file begin with the prefix `mk_` 
   - [getters.ml](./lib/getters.ml): Functions for inspecting AST nodes
-    - Most functions in this file begin with the prefix `get_`
   - [equality.ml](./lib/equality.ml): Location-agnostic equality functions for `Parsetree` types 
   - [lident.ml](./lib/lident.ml): Utilities for working with the `Longident` type
   - [names.ml](./lib/names.ml): Functions for generating fresh variable names & quoting expressions
@@ -75,6 +73,7 @@ end
   - [errors.ml](./lib/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
   - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
   - [let_open.ml](./lib/let_open.ml): Helpers for producing `let open` expressions
+  - [include.ml](./lib/include.ml): Helpers for producing `include` statements
   - [miscellany.ml](./lib/miscellany.ml): Miscellaneous helpers for working with lists & strings
 - [json_utils.ml](./lib/json_utils.ml): Tyche-related JSON utilities for collecting test statistics
 
