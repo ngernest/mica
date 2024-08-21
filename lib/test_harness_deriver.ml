@@ -7,15 +7,15 @@ open StdLabels
 (** Produces a single pattern of the form [ValInt x1], 
     where [val_cstr_pat] is the name of the [value] constructor 
     and [arg] is the name of the constructor argument *)
-let mk_val_cstr_app ~loc (val_cstr_pat : Longident.t Location.loc)
-  (arg : string) : pattern =
+let mk_val_cstr_app ~(loc : Location.t)
+  (val_cstr_pat : Longident.t Location.loc) (arg : string) : pattern =
   ppat_construct ~loc val_cstr_pat (Some (ppat_tuple ~loc [ pvar ~loc arg ]))
 
-(*** Produces a pattern of the form [(ValInt x1, ValInt x2)] - [x1, x2] are the
+(** Produces a pattern of the form [(ValInt x1, ValInt x2)] - [x1, x2] are the
   names for the two vairables - [value_cstr] is the name of the constructor for
   the [value] type *)
-let mk_val_cstr_app2 ~loc (value_cstr : string) ((x1, x2) : string * string) :
-  pattern =
+let mk_val_cstr_app2 ~(loc : Location.t) (value_cstr : string)
+  ((x1, x2) : string * string) : pattern =
   let val_cstr_pat = with_loc ~loc (Longident.parse value_cstr) in
   ppat_tuple ~loc
     [ mk_val_cstr_app ~loc val_cstr_pat x1;
@@ -33,8 +33,8 @@ let mk_fresh_cstr_arg (ty : core_type) : string =
    - [ty_cstr] is the corresponding constructor in the [ty] datatype
    - [value_cstr] is the corresponding constructor of the [value] datatype 
    - [test_name] is the name of the test (eg [test_int] )*)
-let produce_test ~loc (ty : core_type) (ty_cstr : string) (value_cstr : string)
-  (test_name : pattern) : structure_item =
+let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
+  (value_cstr : string) (test_name : pattern) : structure_item =
   let x1, x2 = (mk_fresh_cstr_arg ty, mk_fresh_cstr_arg ty) in
   let val_cstr = mk_val_cstr_app2 ~loc value_cstr (x1, x2) in
 
@@ -47,17 +47,20 @@ let produce_test ~loc (ty : core_type) (ty_cstr : string) (value_cstr : string)
           match (I1.interp e, I2.interp e) with
           | [%p val_cstr] -> ())]
 
-let derive_test_functions ~loc sig_items : structure_item list =
+let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
+  structure_item list =
   let concrete_tys = uniq_ret_tys sig_items in
-  let ty_cstr_names = List.map ~f:string_of_monomorphized_ty concrete_tys in
-  let _value_cstr_names =
+  let ty_cstr_names : string list =
+    List.map ~f:string_of_monomorphized_ty concrete_tys in
+  let value_cstr_names : string list =
     List.map
       ~f:(Expansion_helpers.mangle ~fixpoint:"" (Prefix "Val"))
       ty_cstr_names in
-  let _test_names =
+  let test_names : pattern list =
     List.map
       ~f:(fun ty -> pvar ~loc (Ppxlib.string_of_core_type ty))
       concrete_tys in
+  (* list_map3 ~f:_ ty_cstr_names value_cstr_names test_names *)
   failwith
     "TODO: figure out how to do a [map3] over [ty_cstr_names, \
      value_cstr_names, test_names]"
