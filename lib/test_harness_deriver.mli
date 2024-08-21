@@ -29,6 +29,11 @@ val produce_test :
   Ppxlib.pattern ->
   Ppxlib.structure_item
 
+(** Takes in a type and produces a [pattern] containing the name of a test 
+    function for that type.
+    - e.g. [test_function_name ~loc ty] returns [Ppat_var "test_ty"] *)  
+val test_function_name : loc:Location.t -> core_type -> pattern  
+
 (** Produces test functions for all the concrete return types of functions 
     exposed in the module signature [sig_items] *)  
 val derive_test_functions :

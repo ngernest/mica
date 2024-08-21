@@ -86,5 +86,9 @@ let rec string_of_monomorphized_ty (ty : core_type) : string =
     String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) ->
     string_of_monomorphized_ty t1 ^ string_of_monomorphized_ty t2
-  | _ ->
-    failwith "type expression not supported by string_of_monomorphized_ty pe"
+  | _ -> failwith "type expression not supported by string_of_monomorphized_ty"
+
+(** Retrieves the name of a type as a snake-case string 
+    - e.g. [int list] becomes ["int_list"] *)
+let snake_case_type_name (ty : core_type) : string =
+  Base.String.tr ~target:' ' ~replacement:'_' (Ppxlib.string_of_core_type ty)

@@ -140,12 +140,12 @@ include struct
 
           let _ = test_int
 
-          let test_int t () =
+          let test_int_t () =
             Quickcheck.test (gen_expr IntT) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
                 | ValIntT intT__042_, ValIntT intT__041_ -> ())
 
-          let _ = test_int t
+          let _ = test_int_t
         end
       end
     end

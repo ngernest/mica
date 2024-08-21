@@ -28,6 +28,13 @@ let mk_fresh_cstr_arg (ty : core_type) : string =
   let prefix = uncapitalize (string_of_monomorphized_ty ty) in
   gen_symbol ~prefix ()
 
+(** Takes in a type and produces a [pattern] containing the name of a test 
+    function for that type.
+    - e.g. [test_function_name ~loc ty] returns [Ppat_var "test_ty"] *)
+let test_function_name ~(loc : Location.t) (ty : core_type) : pattern =
+  let ty_name = snake_case_type_name ty in
+  pvar ~loc (Expansion_helpers.mangle ~fixpoint:"test" (Prefix "test") ty_name)
+
 (** Produces a test function (eg [test_int]), where:
    - [ty] is the concrete type at which observational equivalence is being tested
    - [ty_cstr] is the corresponding constructor in the [ty] datatype
@@ -61,12 +68,7 @@ let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
   let value_cstr_names : string list =
     List.map ~f:(fun ty_name -> "Val" ^ ty_name) ty_cstr_names in
   let test_names : pattern list =
-    List.map
-      ~f:(fun ty ->
-        pvar ~loc
-          (Expansion_helpers.mangle ~fixpoint:"test" (Prefix "test")
-             (Ppxlib.string_of_core_type ty)))
-      concrete_tys in
+    List.map ~f:(test_function_name ~loc) concrete_tys in
   list_map4 ~f:(produce_test ~loc) concrete_tys ty_cstr_names value_cstr_names
     test_names
 

@@ -39,3 +39,7 @@ val monomorphize : core_type -> core_type
     - Note: this function is slightly different from [Ppxlib.string_of_core_type]
     due to its capitalization, camel-case & monomorphization functionalities. *)
 val string_of_monomorphized_ty : core_type -> string
+
+(** Retrieves the name of a type as a snake-case string 
+    - e.g. [int list] becomes ["int_list"] *)
+val snake_case_type_name : core_type -> string 
