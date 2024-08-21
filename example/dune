@@ -1,6 +1,6 @@
 (executable
- (public_name main)
- (name main)
+ (public_name example)
+ (name example)
  (libraries ppx_mica core)
  (preprocess
   (pps ppx_jane ppx_deriving.show ppx_mica)))
@@ -9,3 +9,4 @@
  (dev
   (flags
    (:standard -g -w "-26-27-32-33-34-37-39"))))
+
