@@ -54,18 +54,42 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
           match (I1.interp e, I2.interp e) with
           | [%p val_cstr] -> ())]
 
-(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a concrete 
-    type based on [abs_ty_names], a list containing the names of abstract types 
-    in a signature
+(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a 
+    {i concrete type} based on [abs_ty_names], a list containing the names of 
+    abstract types defined in a signature. 
     
-    - TODO: this doesn't work because of type parameters and string comparison 
-    (e.g. ["int t"] is different from ["t"]) *)
-let check_type_is_concrete (abs_ty_names : string list) (ty : core_type) : bool
-    =
-  (* TODO: need to do a pattern match on [ty] to handle cases where [ty] is a
-     product type / type constructor *)
-  let ty_name = Ppxlib.string_of_core_type ty in
-  not (List.mem ty_name ~set:abs_ty_names)
+    For example, if a module signature defines an abstract type ['a t], 
+    then [int t] would {i not} be concrete, but [int] and [bool] would be 
+    considered concrete. 
+    - Note: type variables (e.g. ['a]) are considered concrete by this function
+    (since they're technically not defined inside a module signature) *)
+let rec check_type_is_concrete (abs_ty_names : string list) (ty : core_type) :
+  bool =
+  match ty.ptyp_desc with
+  (* For arrow & product types, check if all constituent types are concrete via
+     structural recursion *)
+  | Ptyp_arrow (_, t1, t2) ->
+    check_type_is_concrete abs_ty_names t1
+    && check_type_is_concrete abs_ty_names t2
+  | Ptyp_tuple tys ->
+    List.fold_left
+      ~f:(fun acc t -> acc && check_type_is_concrete abs_ty_names t)
+      ~init:true tys
+  (* For base types (nullary type constructors), check if the name of the type
+     constructor is contained in the list [abs_ty_names] *)
+  | Ptyp_constr ({ txt = tyconstr; _ }, []) ->
+    let tyconstr_name = string_of_lident tyconstr in
+    not (List.mem tyconstr_name ~set:abs_ty_names)
+  (* Do the same for parametreized types, but in addition, also check that all
+     the type parameters are concrete *)
+  | Ptyp_constr ({ txt = tyconstr; _ }, arg_tys) ->
+    let tyconstr_name = string_of_lident tyconstr in
+    (not (List.mem tyconstr_name ~set:abs_ty_names))
+    && List.fold_left
+         ~f:(fun acc arg_ty ->
+           acc && check_type_is_concrete abs_ty_names arg_ty)
+         ~init:true arg_tys
+  | _ -> true
 
 (** Produces test functions for all the concrete return types of functions 
     exposed in the module signature [sig_items] *)
