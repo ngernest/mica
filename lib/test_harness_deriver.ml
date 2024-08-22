@@ -62,6 +62,8 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
     (e.g. ["int t"] is different from ["t"]) *)
 let check_type_is_concrete (abs_ty_names : string list) (ty : core_type) : bool
     =
+  (* TODO: need to do a pattern match on [ty] to handle cases where [ty] is a
+     product type / type constructor *)
   let ty_name = Ppxlib.string_of_core_type ty in
   not (List.mem ty_name ~set:abs_ty_names)
 

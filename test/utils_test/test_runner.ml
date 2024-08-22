@@ -123,6 +123,8 @@ let () =
         [ get_abs_ty_names_empty ();
           get_abs_ty_names_t ();
           get_abs_ty_names_alpha_t ();
+          get_abs_ty_names_alpha_beta_t ();
+          get_abs_ty_names_set_abstract_type ();
           get_abs_ty_names_two_types ();
           get_abs_ty_names_three_types ()
         ] );

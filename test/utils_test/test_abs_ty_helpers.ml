@@ -60,6 +60,20 @@ let get_abs_ty_names_t () =
 let get_abs_ty_names_alpha_t () =
   mk_test (list string) "'a t" (get_abs_ty_names [%sig: type 'a t]) [ "t" ]
 
+let get_abs_ty_names_alpha_beta_t () =
+  mk_test (list string) "('a, 'b) t"
+    (get_abs_ty_names [%sig: type ('a, 'b) t])
+    [ "t" ]
+
+let get_abs_ty_names_set_abstract_type () =
+  mk_test (list string) "type set"
+    (get_abs_ty_names
+       [%sig:
+         type 'a set
+
+         val of_list : 'a list -> 'a set])
+    [ "set" ]
+
 let get_abs_ty_names_two_types () =
   mk_test (list string) "type alpha; type beta"
     (get_abs_ty_names
