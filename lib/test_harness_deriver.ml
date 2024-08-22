@@ -39,7 +39,10 @@ let test_function_name ~(loc : Location.t) (ty : core_type) : pattern =
    - [ty] is the concrete type at which observational equivalence is being tested
    - [ty_cstr] is the corresponding constructor in the [ty] datatype
    - [value_cstr] is the corresponding constructor of the [value] datatype 
-   - [test_name] is the name of the test (eg [test_int] )*)
+   - [test_name] is the name of the test (eg [test_int]) 
+   
+   - TODO: handle RHS of the test function (need to test for equality using the 
+     [[%test_eq]] Jane Street extension) *)
 let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
   (value_cstr : string) (test_name : pattern) : structure_item =
   let x1, x2 = (mk_fresh_cstr_arg ty, mk_fresh_cstr_arg ty) in
@@ -63,7 +66,9 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
     then [int t] would {i not} be concrete, but [int] and [bool] would be 
     considered concrete. 
     - Note: type variables (e.g. ['a]) are considered concrete by this function
-    (since they're technically not defined inside a module signature) *)
+    (since they're technically not defined inside a module signature) 
+    
+    - TODO: write tests for this function (maybe in [test_ty_helpers.ml]?) *)
 let rec check_type_is_concrete (abs_ty_names : string list) (ty : core_type) :
   bool =
   match ty.ptyp_desc with
