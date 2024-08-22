@@ -52,7 +52,8 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
         (gen_expr [%e evar ~loc ty_cstr])
         ~f:(fun e ->
           match (I1.interp e, I2.interp e) with
-          | [%p val_cstr] -> ())]
+          | [%p val_cstr] -> failwith "TODO: test for equality"
+          | _ -> failwith "impossible")]
 
 (** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a 
     {i concrete type} based on [abs_ty_names], a list containing the names of 
