@@ -128,6 +128,20 @@ let () =
           get_abs_ty_names_two_types ();
           get_abs_ty_names_three_types ()
         ] );
+      ( "check_type_is_concrete",
+        [ check_type_is_concrete_t_int_true ();
+          check_type_is_concrete_t_string_option_true ();
+          check_type_is_concrete_t_int_bool_true ();
+          check_type_is_concrete_t_t_false ();
+          check_type_is_concrete_t_int_t_false ();
+          check_type_is_concrete_t_alpha_t_false ();
+          check_type_is_concrete_t_t_option_false ();
+          check_type_is_concrete_t_int_t_list_false ();
+          check_type_is_concrete_t_func_arg_false ();
+          check_type_is_concrete_t_2nd_func_arg_false ();
+          check_type_is_concrete_t_func_res_false ();
+          check_type_is_concrete_t_prod_type_false ()
+        ] );
       ( "get_cstr_arity",
         [ get_cstr_arity_nullary ();
           get_cstr_arity_unary ();

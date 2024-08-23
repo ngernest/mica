@@ -66,9 +66,7 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
     then [int t] would {i not} be concrete, but [int] and [bool] would be 
     considered concrete. 
     - Note: type variables (e.g. ['a]) are considered concrete by this function
-    (since they're technically not defined inside a module signature) 
-    
-    - TODO: write tests for this function (maybe in [test_ty_helpers.ml]?) *)
+    (since they're technically not defined inside a module signature) *)
 let rec check_type_is_concrete (abs_ty_names : string list) (ty : core_type) :
   bool =
   match ty.ptyp_desc with

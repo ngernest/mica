@@ -1,4 +1,5 @@
 open Ppx_mica__Utils
+open Ppx_mica__Test_harness_deriver
 open Alcotest
 open Boilerplate
 
@@ -96,3 +97,50 @@ let get_abs_ty_names_three_types () =
 
          type v])
     [ "t"; "u"; "v" ]
+
+(******************************************************************************)
+(* Tests for [get_abs_ty_names] *)
+
+let check_type_is_concrete_t_int_true () =
+  mk_test bool "int != t" (check_type_is_concrete [ "t" ] [%type: int]) true
+
+let check_type_is_concrete_t_string_option_true () =
+  mk_test bool "int != t"
+    (check_type_is_concrete [ "t" ] [%type: string option])
+    true
+
+let check_type_is_concrete_t_int_bool_true () =
+  mk_test bool "int != t"
+    (check_type_is_concrete [ "t" ] [%type: int -> bool])
+    true
+
+let check_type_is_concrete_t_t_false () =
+  mk_test bool "t == t" (check_type_is_concrete [ "t" ] [%type: t]) false
+
+let check_type_is_concrete_t_int_t_false () =
+  mk_test bool "t == t" (check_type_is_concrete [ "t" ] [%type: int t]) false
+
+let check_type_is_concrete_t_alpha_t_false () =
+  mk_test bool "t == t" (check_type_is_concrete [ "t" ] [%type: 'a t]) false
+
+let check_type_is_concrete_t_t_option_false () =
+  mk_test bool "t == t" (check_type_is_concrete [ "t" ] [%type: t option]) false
+
+let check_type_is_concrete_t_int_t_list_false () =
+  mk_test bool "t == t"
+    (check_type_is_concrete [ "t" ] [%type: int t list])
+    false
+
+let check_type_is_concrete_t_func_arg_false () =
+  mk_test bool "t == t" (check_type_is_concrete [ "t" ] [%type: t -> int]) false
+
+let check_type_is_concrete_t_2nd_func_arg_false () =
+  mk_test bool "t == t"
+    (check_type_is_concrete [ "t" ] [%type: int -> t -> bool])
+    false
+
+let check_type_is_concrete_t_func_res_false () =
+  mk_test bool "t == t" (check_type_is_concrete [ "t" ] [%type: int -> t]) false
+
+let check_type_is_concrete_t_prod_type_false () =
+  mk_test bool "t == t" (check_type_is_concrete [ "t" ] [%type: int * t]) false
