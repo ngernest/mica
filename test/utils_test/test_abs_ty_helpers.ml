@@ -99,7 +99,7 @@ let get_abs_ty_names_three_types () =
     [ "t"; "u"; "v" ]
 
 (******************************************************************************)
-(* Tests for [get_abs_ty_names] *)
+(* Tests for [get_abs_ty_names] (in [lib/test_harness_deriver.ml]) *)
 
 let check_type_is_concrete_t_int_true () =
   mk_test bool "int != t" (check_type_is_concrete [ "t" ] [%type: int]) true

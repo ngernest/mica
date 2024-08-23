@@ -130,7 +130,7 @@ include struct
             Quickcheck.test (gen_expr Bool) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
                 | ValBool bool__038_, ValBool bool__037_ ->
-                  failwith "TODO: test for equality"
+                  [%test_eq: bool] bool__038_ bool__037_
                 | _ -> failwith "impossible")
 
           let _ = test_bool
@@ -139,7 +139,7 @@ include struct
             Quickcheck.test (gen_expr Int) ~f:(fun e ->
                 match (I1.interp e, I2.interp e) with
                 | ValInt int__040_, ValInt int__039_ ->
-                  failwith "TODO: test for equality"
+                  [%test_eq: int] int__040_ int__039_
                 | _ -> failwith "impossible")
 
           let _ = test_int

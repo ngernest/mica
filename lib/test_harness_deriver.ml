@@ -39,13 +39,14 @@ let test_function_name ~(loc : Location.t) (ty : core_type) : pattern =
    - [ty] is the concrete type at which observational equivalence is being tested
    - [ty_cstr] is the corresponding constructor in the [ty] datatype
    - [value_cstr] is the corresponding constructor of the [value] datatype 
-   - [test_name] is the name of the test (eg [test_int]) 
-   
-   - TODO: handle RHS of the test function (need to test for equality using the 
-     [[%test_eq]] Jane Street extension) *)
+   - [test_name] is the name of the test (eg [test_int]) *)
 let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
   (value_cstr : string) (test_name : pattern) : structure_item =
+  (* Generate fresh variables which will be bound to the result of [interp] *)
   let x1, x2 = (mk_fresh_cstr_arg ty, mk_fresh_cstr_arg ty) in
+  (* Convert them to [expression]s *)
+  let ex1, ex2 = map2 ~f:(evar ~loc) (x1, x2) in
+  (* Produce [pattern]s of type [value] for the LHS of the pattern match *)
   let val_cstr = mk_val_cstr_app2 ~loc value_cstr (x1, x2) in
 
   [%stri
@@ -55,7 +56,7 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
         (gen_expr [%e evar ~loc ty_cstr])
         ~f:(fun e ->
           match (I1.interp e, I2.interp e) with
-          | [%p val_cstr] -> failwith "TODO: test for equality"
+          | [%p val_cstr] -> [%test_eq: [%t ty]] [%e ex1] [%e ex2]
           | _ -> failwith "impossible")]
 
 (** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a 
