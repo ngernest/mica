@@ -42,4 +42,4 @@ val string_of_monomorphized_ty : core_type -> string
 
 (** Retrieves the name of a type as a snake-case string 
     - e.g. [int list] becomes ["int_list"] *)
-val snake_case_type_name : core_type -> string 
+val snake_case_type_name : core_type -> string

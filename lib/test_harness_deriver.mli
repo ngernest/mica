@@ -18,7 +18,7 @@ val mk_fresh_cstr_arg : Ppxlib.core_type -> string
 
 (** Takes in a type and produces a string representing the name of a test 
     function for that type.
-    - e.g. [test_function_name ty] returns ["test_ty"] *)  
+    - e.g. [test_function_name ty] returns ["test_ty"] *)
 val test_function_name : core_type -> string
 
 (** Produces a test function (eg [test_int]), where:
@@ -42,15 +42,15 @@ val produce_test :
     then [int t] would {i not} be concrete, but [int] and [bool] would be 
     considered concrete. 
     - Note: type variables (e.g. ['a]) are considered concrete by this function
-    (since they're technically not defined inside a module signature) *)  
-val check_type_is_concrete : string list -> core_type -> bool 
+    (since they're technically not defined inside a module signature) *)
+val check_type_is_concrete : string list -> core_type -> bool
 
 (** Derives the body of the [test_runner] function, which calls all 
     the functions whose names are contained in [test_names] *)
 val derive_test_runner : loc:Location.t -> string list -> structure_item
 
 (** Produces test functions for all the concrete return types of functions 
-    exposed in the module signature [sig_items] *)  
+    exposed in the module signature [sig_items] *)
 val derive_test_functions :
   loc:Location.t -> Ppxlib.signature -> Ppxlib.structure_item list
 
