@@ -48,10 +48,14 @@ module Mica = struct
   end
 end
 ```
-- An example of the code automatically derived by Mica can be found in the [`example`](./example/) subdirectory
+- To run the testing code derived by Mica, one can invoke the `run_tests : unit -> unit` function in Mica's `TestHarness` functor, like so:
+```ocaml 
+module T = Mica.TestHarness(M1)(M2)
+let () = T.run_tests ()
+```
+- An example of the code automatically derived by Mica can be found in the [`example`](./example/) subdirectory.
 
 **Functionality to be implemented**:
-- Finish deriving the body of the `TestHarness` functor
 - Add optimizations to `gen_expr` (e.g. when `size` = 0, return nullary constructors)
 - Generate random `int -> int` functions in `gen_expr` 
 - Automatically derive the `Seq` constructor for testing imperative code
