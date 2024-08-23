@@ -31,9 +31,9 @@ let mk_fresh_cstr_arg (ty : core_type) : string =
 (** Takes in a type and produces a [pattern] containing the name of a test 
     function for that type.
     - e.g. [test_function_name ~loc ty] returns [Ppat_var "test_ty"] *)
-let test_function_name ~(loc : Location.t) (ty : core_type) : pattern =
+let test_function_name (ty : core_type) : string =
   let ty_name = snake_case_type_name ty in
-  pvar ~loc (Expansion_helpers.mangle ~fixpoint:"test" (Prefix "test") ty_name)
+  Expansion_helpers.mangle ~fixpoint:"test" (Prefix "test") ty_name
 
 (** Produces a test function (eg [test_int]), where:
    - [ty] is the concrete type at which observational equivalence is being tested
@@ -96,6 +96,21 @@ let rec check_type_is_concrete (abs_ty_names : string list) (ty : core_type) :
          ~init:true arg_tys
   | _ -> true
 
+(** Derives the body of the [test_runner] function, which calls all 
+    the functions whose names are contained in [test_names] *)
+let derive_test_runner ~(loc : Location.t) (test_names : string list) :
+  structure_item =
+  (* Invoke each test function by applying it to [()] *)
+  let test_func_calls : expression list =
+    List.map
+      ~f:(fun test_name -> [%expr [%e evar ~loc test_name] [%e eunit ~loc]])
+      test_names in
+  (* Sequence all the calls to the test functions together *)
+  let test_runner_body =
+    List.fold_right ~f:(pexp_sequence ~loc) ~init:(eunit ~loc) test_func_calls
+  in
+  [%stri let run_tests [%p punit ~loc] = [%e test_runner_body]]
+
 (** Produces test functions for all the concrete return types of functions 
     exposed in the module signature [sig_items] *)
 let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
@@ -115,11 +130,14 @@ let derive_test_functions ~(loc : Location.t) (sig_items : signature) :
   let value_cstr_names : string list =
     List.map ~f:(fun ty_name -> "Val" ^ ty_name) ty_cstr_names in
   (* Create a name for the function that tests obs. equiv. at that type *)
-  let test_names : pattern list =
-    List.map ~f:(test_function_name ~loc) concrete_tys in
-  (* Derive the test function based on all the info above *)
+  let test_names = List.map ~f:test_function_name concrete_tys in
+  let test_name_pvars = List.map ~f:(pvar ~loc) test_names in
+  (* Derive body of the overall test runner *)
+  let test_runner = derive_test_runner ~loc test_names in
+  (* Derive the individual test functions based on all the info above *)
   list_map4 ~f:(produce_test ~loc) concrete_tys ty_cstr_names value_cstr_names
-    test_names
+    test_name_pvars
+  @ [ test_runner ]
 
 (** Derives the [TestHarness] functor *)
 let generate_functor ~(ctxt : Expansion_context.Deriver.t)
@@ -140,6 +158,8 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
           open Core
 
           [%%i include_structure ~loc test_functions]
+
+          (* TODO: derive [run_tests] runner function *)
         end]
     | _ ->
       Location.raise_errorf ~loc

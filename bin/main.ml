@@ -143,6 +143,13 @@ include struct
                 | _ -> failwith "impossible")
 
           let _ = test_int
+
+          let run_tests () =
+            test_bool ();
+            test_int ();
+            ()
+
+          let _ = run_tests
         end
       end
     end
