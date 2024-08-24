@@ -148,6 +148,12 @@ let () =
           get_cstr_arity_binary ();
           get_cstr_arity_ternary ()
         ] );
+      ( "is_base_case",
+        [ is_base_case_nullary_cstr ();
+          is_base_case_unary_cstr_ok ();
+          is_base_case_unary_cstr_bad ();
+          is_base_case_binary_cstr_ok ()
+        ] );
       ( "gen_atom",
         [ gen_atom_int ();
           gen_atom_char ();

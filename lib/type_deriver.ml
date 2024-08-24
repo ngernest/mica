@@ -253,6 +253,7 @@ let is_base_case (cstr : constructor_declaration) : bool =
     list_is_empty (List.filter ~f:(equal_core_type [%type: expr]) xs)
   | Pcstr_record _ -> false
 
+(** Creates the main case statement in [gen_expr] *)
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
   let abs_tys = get_ty_decls_from_sig sig_items in
