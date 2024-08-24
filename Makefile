@@ -1,4 +1,4 @@
-.PHONY: default build install uninstall test clean format coverage
+.PHONY: default build install uninstall test clean format
 .IGNORE: format
 
 default:
@@ -28,12 +28,3 @@ clean:
 
 format:
 	dune build @fmt --auto-promote
-
-# Make sure `test/ppx_test/errors/dune.inc` is blank 
-# before running `make coverage`
-coverage:
-	make clean
-	BISECT_ENABLE=yes dune build
-	dune runtest test/ppx_test/passing test/utils_test 
-	bisect-ppx-report html
-	bisect-ppx-report summary

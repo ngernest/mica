@@ -53,7 +53,7 @@ end
 module T = Mica.TestHarness(M1)(M2)
 let () = T.run_tests ()
 ```
-- An example of the code automatically derived by Mica can be found in the [`example`](./example/) subdirectory.
+- An example of the code automatically derived by Mica can be found in [`example.ml`](./example/example.ml).
 
 **Functionality to be implemented**:
 - Generate random `int -> int` functions in `gen_expr` 

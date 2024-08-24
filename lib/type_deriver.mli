@@ -84,7 +84,6 @@ val is_base_case : constructor_declaration -> bool
     (since they're technically not defined inside a module signature) *)
 val check_type_is_concrete : string list -> core_type -> bool
 
-
 (** [mk_gen_expr_case abs_tys ty rhs_cstrs] constructs a single case in the 
     pattern-match of the body of [gen_expr].
     - [abs_tys] is a list containing pairs of the form
