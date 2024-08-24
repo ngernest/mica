@@ -70,8 +70,23 @@ val gen_expr_rhs :
     - It is nullary
     - It has no arguments of type [expr] (i.e. the corresponding function
       in the signature has no arguments of type [t]) 
-    - Note: constructors with record arguments are currently unsupported. *)  
-val is_base_case : constructor_declaration -> bool   
+    - Note: constructors with record arguments are currently unsupported. *)
+val is_base_case : constructor_declaration -> bool
+
+(** [mk_gen_expr_case abs_tys ty rhs_cstrs] constructs a single case in the 
+    pattern-match of the body of [gen_expr].
+    - [abs_tys] is a list containing pairs of the form
+    [(<type_name>, <list_of_type_parameters>)]. Most likely, this list is 
+    obtained by calling [get_ty_decls_from_sig] in [getters.ml]. 
+    - [ty] is the type we are matching on in the LHS of the pattern match 
+    inside [gen_expr]
+    - [rhs_cstrs] are the constructors for [expr] that have that type (to be 
+    generated on the RHS of the pattern match). *)
+val mk_gen_expr_case :
+  (string * core_type list) list ->
+  core_type ->
+  constructor_declaration list ->
+  case
 
 (** Creates the main case statement in [gen_expr] *)
 val gen_expr_cases : signature -> case list

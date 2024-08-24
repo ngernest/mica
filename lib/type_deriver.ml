@@ -253,20 +253,39 @@ let is_base_case (cstr : constructor_declaration) : bool =
     list_is_empty (List.filter ~f:(equal_core_type [%type: expr]) xs)
   | Pcstr_record _ -> false
 
+(** [mk_gen_expr_case abs_tys ty rhs_cstrs] constructs a single case in the 
+    pattern-match of the body of [gen_expr].
+    - [abs_tys] is a list containing pairs of the form
+    [(<type_name>, <list_of_type_parameters>)]. Most likely, this list is 
+    obtained by calling [get_ty_decls_from_sig] in [getters.ml]. 
+    - [ty] is the type we are matching on in the LHS of the pattern match 
+    inside [gen_expr]
+    - [rhs_cstrs] are the constructors for [expr] that have that type (to be 
+    generated on the RHS of the pattern match). *)
+let mk_gen_expr_case (abs_tys : (string * core_type list) list) (ty : core_type)
+  (rhs_cstrs : constructor_declaration list) : case =
+  let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
+  let loc = lhs.ppat_loc in
+  let rhs_exprs = gen_expr_rhs ~loc ~abs_tys rhs_cstrs in
+  let rhs = [%expr [%e rhs_exprs]] in
+  case ~lhs ~guard:None ~rhs
+
 (** Creates the main case statement in [gen_expr] *)
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
+  let loc = Location.none in
   let abs_tys = get_ty_decls_from_sig sig_items in
   (* Maps [ty]s to [expr]s *)
   let skeleton : (core_type * constructor_declaration list) list =
     inverse (mk_expr_cstrs sig_items)
     |> sort_and_group ~compare:compare_core_type in
+  let expr_cstrs =
+    Base.List.Assoc.find_exn ~equal:equal_core_type skeleton [%type: expr] in
+  let _ = List.partition ~f:is_base_case expr_cstrs in
   List.map skeleton ~f:(fun (ty, rhs_cstrs) ->
-      let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
-      let loc = lhs.ppat_loc in
-      let rhs_exprs = gen_expr_rhs ~loc ~abs_tys rhs_cstrs in
-      let rhs = [%expr [%e rhs_exprs]] in
-      case ~lhs ~guard:None ~rhs)
+      if equal_core_type ty [%type: expr] then
+        failwith "TODO: handle base cases & non-trivial cases for [expr]"
+      else mk_gen_expr_case abs_tys ty rhs_cstrs)
 
 (** Derives the [gen_expr] QuickCheck generator *)
 let derive_gen_expr ~(loc : Location.t) (sig_items : signature) : expression =
