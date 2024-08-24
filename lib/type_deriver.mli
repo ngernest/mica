@@ -65,6 +65,14 @@ val gen_expr_rhs :
   abs_tys:(string * core_type list) list ->
   expression
 
+(** Determines if an [expr] constructor can be used as a base case for 
+    [gen_expr]. A constructor can be used as the base case if:
+    - It is nullary
+    - It has no arguments of type [expr] (i.e. the corresponding function
+      in the signature has no arguments of type [t]) 
+    - Note: constructors with record arguments are currently unsupported. *)  
+val is_base_case : constructor_declaration -> bool   
+
 (** Creates the main case statement in [gen_expr] *)
 val gen_expr_cases : signature -> case list
 

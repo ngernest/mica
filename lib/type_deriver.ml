@@ -238,6 +238,21 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
     let gen_name_evars = elist ~loc (List.map ~f:(evar ~loc) generator_names) in
     pexp_let ~loc Nonrecursive val_bindings [%expr union [%e gen_name_evars]]
 
+(** Determines if an [expr] constructor can be used as a base case for 
+    [gen_expr]. A constructor can be used as the base case if:
+    - It is nullary
+    - It has no arguments of type [expr] (i.e. the corresponding function
+      in the signature has no arguments of type [t]) 
+    - Note: constructors with record arguments are currently unsupported. *)
+let is_base_case (cstr : constructor_declaration) : bool =
+  let loc = cstr.pcd_loc in
+  match cstr.pcd_args with
+  | Pcstr_tuple [] -> true
+  | Pcstr_tuple xs ->
+    (* Check whether there are any arguments of type [expr] *)
+    list_is_empty (List.filter ~f:(equal_core_type [%type: expr]) xs)
+  | Pcstr_record _ -> false
+
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
   let abs_tys = get_ty_decls_from_sig sig_items in
