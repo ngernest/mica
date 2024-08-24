@@ -31,7 +31,7 @@ module Mica = struct
   type ty = Int | IntT | ... [@@deriving show, ...]
 
   (** QuickCheck generator for symbolic expressions of type [ty] *)
-  let rec gen_expr ty = ...
+  let rec gen_expr : ty -> Core.Quickcheck.Generator.t = ...
 
   (** Functor that interprets symbolic expressions *)
   module Interpret (M : S) = struct   
@@ -39,7 +39,7 @@ module Mica = struct
     type value = ValInt of int | ValIntT of int M.t | ...
 
     (* Interprets symbolic expressions over [M] *)
-    let rec interp (e : expr) : value = ...
+    let rec interp : expr -> value = ...
   end 
 
   (** Functor that tests [M1] and [M2] for observational equivalence *)
@@ -56,7 +56,6 @@ let () = T.run_tests ()
 - An example of the code automatically derived by Mica can be found in the [`example`](./example/) subdirectory.
 
 **Functionality to be implemented**:
-- Add optimizations to `gen_expr` (e.g. when `size` = 0, return nullary constructors)
 - Generate random `int -> int` functions in `gen_expr` 
 - Automatically derive the `Seq` constructor for testing imperative code
 - Automatically instrument testing code with boilerplate needed for Tyche integration
@@ -83,7 +82,7 @@ let () = T.run_tests ()
 
 
 ## Testing 
-1. [`test/utils_test`](./test/utils_test/) contains `Alcotest` unit tests for various helper functinos.
+1. [`test/utils_test`](./test/utils_test/) contains `Alcotest` unit tests for various helper functions.
 - See the [README](./test/utils_test/README.md) in [`utils_test`](./test/utils_test/) for instructions
 on how to add new tests to the Alcotest test suite.
 2. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
