@@ -30,8 +30,8 @@ module Mica = struct
     let open Quickcheck.Generator in
     let open Let_syntax in
     size >>= fun k ->
-    match ty with
-    | Bool ->
+    match (ty, k) with
+    | Bool, _ ->
       let gen_is_empty =
         let g__001_ = with_size ~size:(k / 2) (gen_expr IntT) in
         g__001_ >>| fun e__002_ -> Is_empty e__002_
@@ -41,14 +41,16 @@ module Mica = struct
         tuple2 g__003_ g__004_ >>| fun (e__005_, e__006_) ->
         Mem (e__005_, e__006_) in
       union [ gen_is_empty; gen_mem ]
-    | Int ->
+    | Int, _ ->
       let gen_size =
         let g__007_ = with_size ~size:(k / 2) (gen_expr IntT) in
         g__007_ >>| fun e__008_ -> Size e__008_ in
       union [ gen_size ]
-    | IntT ->
-      let gen_empty = return Empty
-      and gen_add =
+    | IntT, 0 ->
+      let gen_empty = return Empty in
+      union [ gen_empty ]
+    | IntT, _ ->
+      let gen_add =
         let g__009_ = quickcheck_generator_int
         and g__010_ = with_size ~size:(k / 2) (gen_expr IntT) in
         tuple2 g__009_ g__010_ >>| fun (e__011_, e__012_) ->
@@ -68,7 +70,7 @@ module Mica = struct
         and g__022_ = with_size ~size:(k / 2) (gen_expr IntT) in
         tuple2 g__021_ g__022_ >>| fun (e__023_, e__024_) ->
         Intersect (e__023_, e__024_) in
-      union [ gen_empty; gen_add; gen_rem; gen_union; gen_intersect ]
+      union [ gen_add; gen_rem; gen_union; gen_intersect ]
 
   module Interpret (M : S) = struct
     open M
