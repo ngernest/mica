@@ -59,43 +59,6 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
           | [%p val_cstr] -> [%test_eq: [%t ty]] [%e ex1] [%e ex2]
           | _ -> failwith "impossible")]
 
-(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a 
-    {i concrete type} based on [abs_ty_names], a list containing the names of 
-    abstract types defined in a signature. 
-    
-    For example, if a module signature defines an abstract type ['a t], 
-    then [int t] would {i not} be concrete, but [int] and [bool] would be 
-    considered concrete. 
-    - Note: type variables (e.g. ['a]) are considered concrete by this function
-    (since they're technically not defined inside a module signature) *)
-let rec check_type_is_concrete (abs_ty_names : string list) (ty : core_type) :
-  bool =
-  match ty.ptyp_desc with
-  (* For arrow & product types, check if all constituent types are concrete via
-     structural recursion *)
-  | Ptyp_arrow (_, t1, t2) ->
-    check_type_is_concrete abs_ty_names t1
-    && check_type_is_concrete abs_ty_names t2
-  | Ptyp_tuple tys ->
-    List.fold_left
-      ~f:(fun acc t -> acc && check_type_is_concrete abs_ty_names t)
-      ~init:true tys
-  (* For base types (nullary type constructors), check if the name of the type
-     constructor is contained in the list [abs_ty_names] *)
-  | Ptyp_constr ({ txt = tyconstr; _ }, []) ->
-    let tyconstr_name = string_of_lident tyconstr in
-    not (List.mem tyconstr_name ~set:abs_ty_names)
-  (* Do the same for parametreized types, but in addition, also check that all
-     the type parameters are concrete *)
-  | Ptyp_constr ({ txt = tyconstr; _ }, arg_tys) ->
-    let tyconstr_name = string_of_lident tyconstr in
-    (not (List.mem tyconstr_name ~set:abs_ty_names))
-    && List.fold_left
-         ~f:(fun acc arg_ty ->
-           acc && check_type_is_concrete abs_ty_names arg_ty)
-         ~init:true arg_tys
-  | _ -> true
-
 (** Derives the body of the [test_runner] function, which calls all 
     the functions whose names are contained in [test_names] *)
 let derive_test_runner ~(loc : Location.t) (test_names : string list) :

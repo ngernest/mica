@@ -1,5 +1,5 @@
 open Ppx_mica__Utils
-open Ppx_mica__Test_harness_deriver
+open Ppx_mica__Type_deriver
 open Alcotest
 open Boilerplate
 

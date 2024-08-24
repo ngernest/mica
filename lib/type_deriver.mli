@@ -73,6 +73,18 @@ val gen_expr_rhs :
     - Note: constructors with record arguments are currently unsupported. *)
 val is_base_case : constructor_declaration -> bool
 
+(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a concrete 
+    type based on [abs_ty_names], a list containing the names of abstract types 
+    in a signature. 
+    
+    For example, if a module signature defines an abstract type ['a t], 
+    then [int t] would {i not} be concrete, but [int] and [bool] would be 
+    considered concrete. 
+    - Note: type variables (e.g. ['a]) are considered concrete by this function
+    (since they're technically not defined inside a module signature) *)
+val check_type_is_concrete : string list -> core_type -> bool
+
+
 (** [mk_gen_expr_case abs_tys ty rhs_cstrs] constructs a single case in the 
     pattern-match of the body of [gen_expr].
     - [abs_tys] is a list containing pairs of the form
@@ -81,9 +93,14 @@ val is_base_case : constructor_declaration -> bool
     - [ty] is the type we are matching on in the LHS of the pattern match 
     inside [gen_expr]
     - [rhs_cstrs] are the constructors for [expr] that have that type (to be 
-    generated on the RHS of the pattern match). *)
+    generated on the RHS of the pattern match).
+    - [is_base_case] is an optional Boolean argument that indicates whether 
+    the constructors in [rhs_cstrs] are base cases for [gen_expr] 
+    (as determined by the [is_base_case] function). This parameter 
+    defaults to [false]. *)
 val mk_gen_expr_case :
   (string * core_type list) list ->
+  ?is_base_case:bool ->
   core_type ->
   constructor_declaration list ->
   case

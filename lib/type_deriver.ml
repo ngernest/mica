@@ -253,7 +253,44 @@ let is_base_case (cstr : constructor_declaration) : bool =
     list_is_empty (List.filter ~f:(equal_core_type [%type: expr]) xs)
   | Pcstr_record _ -> false
 
-(** [mk_gen_expr_case abs_tys ty rhs_cstrs] constructs a single case in the 
+(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a 
+    {i concrete type} based on [abs_ty_names], a list containing the names of 
+    abstract types defined in a signature. 
+    
+    For example, if a module signature defines an abstract type ['a t], 
+    then [int t] would {i not} be concrete, but [int] and [bool] would be 
+    considered concrete. 
+    - Note: type variables (e.g. ['a]) are considered concrete by this function
+    (since they're technically not defined inside a module signature) *)
+let rec check_type_is_concrete (abs_ty_names : string list) (ty : core_type) :
+  bool =
+  match ty.ptyp_desc with
+  (* For arrow & product types, check if all constituent types are concrete via
+     structural recursion *)
+  | Ptyp_arrow (_, t1, t2) ->
+    check_type_is_concrete abs_ty_names t1
+    && check_type_is_concrete abs_ty_names t2
+  | Ptyp_tuple tys ->
+    List.fold_left
+      ~f:(fun acc t -> acc && check_type_is_concrete abs_ty_names t)
+      ~init:true tys
+  (* For base types (nullary type constructors), check if the name of the type
+     constructor is contained in the list [abs_ty_names] *)
+  | Ptyp_constr ({ txt = tyconstr; _ }, []) ->
+    let tyconstr_name = string_of_lident tyconstr in
+    not (List.mem tyconstr_name ~set:abs_ty_names)
+  (* Do the same for parametreized types, but in addition, also check that all
+     the type parameters are concrete *)
+  | Ptyp_constr ({ txt = tyconstr; _ }, arg_tys) ->
+    let tyconstr_name = string_of_lident tyconstr in
+    (not (List.mem tyconstr_name ~set:abs_ty_names))
+    && List.fold_left
+         ~f:(fun acc arg_ty ->
+           acc && check_type_is_concrete abs_ty_names arg_ty)
+         ~init:true arg_tys
+  | _ -> true
+
+(** [mk_gen_expr_case abs_tys ~is_base_case ty rhs_cstrs] constructs a single case in the 
     pattern-match of the body of [gen_expr].
     - [abs_tys] is a list containing pairs of the form
     [(<type_name>, <list_of_type_parameters>)]. Most likely, this list is 
@@ -261,31 +298,47 @@ let is_base_case (cstr : constructor_declaration) : bool =
     - [ty] is the type we are matching on in the LHS of the pattern match 
     inside [gen_expr]
     - [rhs_cstrs] are the constructors for [expr] that have that type (to be 
-    generated on the RHS of the pattern match). *)
-let mk_gen_expr_case (abs_tys : (string * core_type list) list) (ty : core_type)
+    generated on the RHS of the pattern match). 
+    - [is_base_case] is an optional Boolean argument that indicates whether 
+    the constructors in [rhs_cstrs] are base cases for [gen_expr] 
+    (as determined by the [is_base_case] function). This parameter 
+    defaults to [false]. *)
+let mk_gen_expr_case (abs_tys : (string * core_type list) list)
+  ?(is_base_case = false) (ty : core_type)
   (rhs_cstrs : constructor_declaration list) : case =
-  let lhs = pvar ~loc:ty.ptyp_loc (string_of_monomorphized_ty ty) in
-  let loc = lhs.ppat_loc in
-  let rhs_exprs = gen_expr_rhs ~loc ~abs_tys rhs_cstrs in
+  let loc = ty.ptyp_loc in
+  (* When matching on base cases, we want [gen_expr]'s QuickCheck size parameter
+     to be 0. For non-trivial cases, any non-zero size is fine. *)
+  let size_pat = if is_base_case then [%pat? 0] else [%pat? _] in
+  (* The LHS of the pattern match is a pair fo the form [(ty,
+     quickcheck_size]) *)
+  let lhs =
+    ppat_tuple ~loc [ pvar ~loc (string_of_monomorphized_ty ty); size_pat ]
+  in
+  let rhs_exprs = gen_expr_rhs ~loc:lhs.ppat_loc ~abs_tys rhs_cstrs in
   let rhs = [%expr [%e rhs_exprs]] in
   case ~lhs ~guard:None ~rhs
 
 (** Creates the main case statement in [gen_expr] *)
 let gen_expr_cases (sig_items : signature) : case list =
   let open Base.List.Assoc in
-  let loc = Location.none in
   let abs_tys = get_ty_decls_from_sig sig_items in
+  let abs_ty_names = List.map ~f:fst abs_tys in
   (* Maps [ty]s to [expr]s *)
   let skeleton : (core_type * constructor_declaration list) list =
     inverse (mk_expr_cstrs sig_items)
     |> sort_and_group ~compare:compare_core_type in
-  let expr_cstrs =
-    Base.List.Assoc.find_exn ~equal:equal_core_type skeleton [%type: expr] in
-  let _ = List.partition ~f:is_base_case expr_cstrs in
-  List.map skeleton ~f:(fun (ty, rhs_cstrs) ->
-      if equal_core_type ty [%type: expr] then
-        failwith "TODO: handle base cases & non-trivial cases for [expr]"
-      else mk_gen_expr_case abs_tys ty rhs_cstrs)
+  List.concat_map skeleton ~f:(fun (ty, rhs_cstrs) ->
+      if not (check_type_is_concrete abs_ty_names ty) then
+        let base_case_cstrs, non_trivial_cstrs =
+          List.partition ~f:is_base_case rhs_cstrs in
+        let base_case =
+          mk_gen_expr_case abs_tys ty base_case_cstrs ~is_base_case:true in
+        let non_trivial_cases =
+          [ mk_gen_expr_case abs_tys ty non_trivial_cstrs ~is_base_case:false ]
+        in
+        base_case :: non_trivial_cases
+      else [ mk_gen_expr_case abs_tys ty rhs_cstrs ~is_base_case:false ])
 
 (** Derives the [gen_expr] QuickCheck generator *)
 let derive_gen_expr ~(loc : Location.t) (sig_items : signature) : expression =
@@ -293,8 +346,7 @@ let derive_gen_expr ~(loc : Location.t) (sig_items : signature) : expression =
   let core_mod = module_expr_of_string ~loc "Core" in
   let qc_gen_mod = module_expr_of_string ~loc "Quickcheck.Generator" in
   let let_syntax_mod = module_expr_of_string ~loc "Let_syntax" in
-  (* let body = [%expr size >>= fun x -> return x] in *)
-  let match_exp = pexp_match ~loc [%expr ty] (gen_expr_cases sig_items) in
+  let match_exp = pexp_match ~loc [%expr ty, k] (gen_expr_cases sig_items) in
   let body = [%expr size >>= fun k -> [%e match_exp]] in
   let_open ~loc core_mod (let_open_twice ~loc qc_gen_mod let_syntax_mod body)
 

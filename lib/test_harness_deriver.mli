@@ -34,17 +34,6 @@ val produce_test :
   Ppxlib.pattern ->
   Ppxlib.structure_item
 
-(** [check_type_is_concrete abs_ty_names ty] determines whether [ty] is a concrete 
-    type based on [abs_ty_names], a list containing the names of abstract types 
-    in a signature. 
-    
-    For example, if a module signature defines an abstract type ['a t], 
-    then [int t] would {i not} be concrete, but [int] and [bool] would be 
-    considered concrete. 
-    - Note: type variables (e.g. ['a]) are considered concrete by this function
-    (since they're technically not defined inside a module signature) *)
-val check_type_is_concrete : string list -> core_type -> bool
-
 (** Derives the body of the [test_runner] function, which calls all 
     the functions whose names are contained in [test_names] *)
 val derive_test_runner : loc:Location.t -> string list -> structure_item
