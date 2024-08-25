@@ -149,7 +149,8 @@ include struct
           let run_tests () =
             test_bool ();
             test_int ();
-            printf "passed!\n"
+            printf "Mica: OK, passed %d observational equivalence tests.\n"
+              Quickcheck.default_trial_count
 
           let _ = run_tests
         end

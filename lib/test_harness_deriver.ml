@@ -63,6 +63,11 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
     the functions whose names are contained in [test_names] *)
 let derive_test_runner ~(loc : Location.t) (test_names : string list) :
   structure_item =
+  (* Mica prints this message when all observational equivalence tests pas s*)
+  let ok_msg =
+    [%expr
+      printf "Mica: OK, passed %d observational equivalence tests.\n"
+        Quickcheck.default_trial_count] in
   (* Invoke each test function by applying it to [()] *)
   let test_func_calls : expression list =
     List.map
@@ -70,8 +75,7 @@ let derive_test_runner ~(loc : Location.t) (test_names : string list) :
       test_names in
   (* Sequence all the calls to the test functions together *)
   let test_runner_body =
-    List.fold_right ~f:(pexp_sequence ~loc) ~init:(eunit ~loc) test_func_calls
-  in
+    List.fold_right ~f:(pexp_sequence ~loc) ~init:ok_msg test_func_calls in
   [%stri let run_tests [%p punit ~loc] = [%e test_runner_body]]
 
 (** Produces test functions for all the concrete return types of functions 
