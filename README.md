@@ -61,10 +61,7 @@ let () = T.run_tests ()
 - Automatically instrument testing code with boilerplate needed for Tyche integration
 
 ## Directory Overview
-The [`lib/ppx`](./lib/ppx) subdirectory contains the code for the Mica PPX deriver. 
-The [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
-creating JSON files that are ingested by Tyche. 
-
+The [`lib/ppx`](./lib/ppx) subdirectory contains the code for the Mica PPX deriver.      
 The PPX code is organized as follows:
 - [`ppx_mica.ml`](./lib/ppx/ppx_mica.ml): Declares the main Mica PPX deriver
 - [`type_deriver.ml`](./lib/ppx/type_deriver.ml): Derives the definitions of auxiliary data types & the `gen_expr` Quickcheck generator
@@ -83,8 +80,9 @@ The PPX code is organized as follows:
   - [`let_open.ml`](./lib/ppx/let_open.ml): Helpers for producing `let open` expressions
   - [`include.ml`](./lib/ppx/include.ml): Helpers for producing `include` statements
   - [`miscellany.ml`](./lib/ppx/miscellany.ml): Miscellaneous helpers for working with lists & strings
-- [`json_utils.ml`](./lib/ppx/json_utils.ml): Tyche-related JSON utilities for collecting test statistics
 
+Additionally, the [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
+creating JSON files that are ingested by Tyche (see [`tyche_utils.ml`](./lib/tyche_utils/tyche_utils.ml)). 
 
 ## Testing 
 1. [`test/utils_test`](./test/utils_test/) contains `Alcotest` unit tests for various helper functions.
