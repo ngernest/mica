@@ -32,7 +32,7 @@ module type Tyche = sig
   val get_current_time_str : unit -> string
 end
 
-module TycheUtils (Mica : Mica_core) :
+module Tyche_utils (Mica : Mica_core) :
   Tyche with type expr := Mica.expr and type ty := Mica.ty = struct
   open Mica
 

@@ -1,7 +1,0 @@
-(library
- (name ppx_mica)
- (public_name ppx_mica)
- (kind ppx_deriver)
- (libraries base base_quickcheck core ppxlib yojson core_unix)
- (preprocess
-  (pps ppx_jane ppxlib.metaquot ppx_deriving.show ppx_deriving.fold)))

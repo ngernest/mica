@@ -29,7 +29,15 @@
     (>= v5.2.1))
    (ppxlib 
     (>= v0.32.0))
-   (yojson 
-    (>= v2.0.0))
    (alcotest
     (>= v1.7.0))))
+
+(package 
+  (name tyche_utils)
+  (depends
+    dune 
+    (yojson 
+      (>= v2.0.0))
+    (base
+      (>= v0.15.1))))
+      

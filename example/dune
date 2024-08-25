@@ -1,9 +1,10 @@
 (executable
  (public_name example)
  (name example)
- (libraries ppx_mica core)
+ (libraries ppx_mica core tyche_utils)
  (preprocess
-  (pps ppx_jane ppx_deriving.show ppx_mica)))
+  (pps ppx_jane ppx_deriving.show ppx_mica))
+ (package ppx_mica))
 
 (env
  (dev

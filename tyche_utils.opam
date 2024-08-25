@@ -7,16 +7,9 @@ homepage: "https://github.com/ngernest/ppx_mica"
 bug-reports: "https://github.com/ngernest/ppx_mica/issues"
 depends: [
   "dune" {>= "3.7"}
-  "ocaml" {>= "4.13"}
-  "odoc" {with-doc}
-  "core" {>= "v0.15.1"}
-  "ppx_jane" {>= "v0.15.0"}
-  "ppx_assert" {>= "v0.15.0"}
+  "yojson" {>= "v2.0.0"}
   "base" {>= "v0.15.1"}
-  "base_quickcheck" {>= "v0.15.0"}
-  "ppx_deriving" {>= "v5.2.1"}
-  "ppxlib" {>= "v0.32.0"}
-  "alcotest" {>= "v1.7.0"}
+  "odoc" {with-doc}
 ]
 build: [
   ["dune" "subst"] {dev}
