@@ -4,5 +4,5 @@
  (kind ppx_deriver)
  (libraries base base_quickcheck core ppxlib tyche_utils)
  (preprocess
-  (pps ppx_jane ppxlib.metaquot ppx_deriving.show ppx_deriving.fold))
- (ppx_runtime_libraries core tyche_utils))
+  (pps ppx_jane ppxlib.metaquot ppx_deriving.show))
+ (ppx_runtime_libraries core tyche_utils ppx_deriving.show))

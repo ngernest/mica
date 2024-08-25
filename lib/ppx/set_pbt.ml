@@ -22,7 +22,7 @@ module Mica = struct
       | Size of expr
       | Union of expr * expr
       | Intersect of expr * expr
-    [@@deriving show { with_path = false }, fold]
+    [@@deriving show { with_path = false }]
 
     type ty = Bool | Int | IntT [@@deriving show { with_path = false }]
 
