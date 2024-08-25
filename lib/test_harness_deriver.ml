@@ -35,7 +35,7 @@ let test_function_name (ty : core_type) : string =
   let ty_name = snake_case_type_name ty in
   Expansion_helpers.mangle ~fixpoint:"test" (Prefix "test") ty_name
 
-(** Produces a test function (eg [test_int]), where:
+(** Produces a test function (e.g. [test_int]), where:
    - [ty] is the concrete type at which observational equivalence is being tested
    - [ty_cstr] is the corresponding constructor in the [ty] datatype
    - [value_cstr] is the corresponding constructor of the [value] datatype 
@@ -63,11 +63,13 @@ let produce_test ~(loc : Location.t) (ty : core_type) (ty_cstr : string)
     the functions whose names are contained in [test_names] *)
 let derive_test_runner ~(loc : Location.t) (test_names : string list) :
   structure_item =
-  (* Mica prints this message when all observational equivalence tests pas s*)
+  (* Mica prints this message when all observational equivalence tests pass *)
+  let num_trials =
+    Core.Quickcheck.default_trial_count * List.length test_names in
   let ok_msg =
     [%expr
       printf "Mica: OK, passed %d observational equivalence tests.\n"
-        Quickcheck.default_trial_count] in
+        [%e eint ~loc num_trials]] in
   (* Invoke each test function by applying it to [()] *)
   let test_func_calls : expression list =
     List.map
@@ -125,12 +127,11 @@ let generate_functor ~(ctxt : Expansion_context.Deriver.t)
           open Core
 
           [%%i include_structure ~loc test_functions]
-
-          (* TODO: derive [run_tests] runner function *)
         end]
     | _ ->
       Location.raise_errorf ~loc
         "Expected a module signature of the form [sig ... end]")
   | { pmtd_type = None; _ } ->
     Location.raise_errorf ~loc
-      "Can't derive for expressions that aren't module type declarations"
+      "Can't derive PBT code for expressions that aren't module type \
+       declarations"
