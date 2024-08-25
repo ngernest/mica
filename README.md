@@ -61,24 +61,29 @@ let () = T.run_tests ()
 - Automatically instrument testing code with boilerplate needed for Tyche integration
 
 ## Directory Overview
-- [ppx_mica.ml](./lib/ppx_mica.ml): Declares the PPX deriver
-- [type_deriver.ml](./lib/type_deriver.ml): Derives type definitions + the `gen_expr` Quickcheck generator
-- [interp_deriver.ml](./lib/interp_deriver.ml): Derives the `Interpret` functor
-- [test_harness_deriver.ml](./lib/test_harness_deriver.ml): Derives the `TestHarness` functor
-- [overall_deriver.ml](./lib/overall_deriver.ml): Produces a module called `Mica` containing all the automatically derived code
-- [utils.ml](./lib/utils.ml): Includes all the following helper modules for convenience:
-  - [builders.ml](./lib/builders.ml): Functions for creating AST nodes
-  - [getters.ml](./lib/getters.ml): Functions for inspecting AST nodes
-  - [equality.ml](./lib/equality.ml): Location-agnostic equality functions for `Parsetree` types 
-  - [lident.ml](./lib/lident.ml): Utilities for working with the `Longident` type
-  - [names.ml](./lib/names.ml): Functions for generating fresh variable names & quoting expressions
-  - [printers.ml](./lib/printers.ml): Pretty-printers for AST types
-  - [errors.ml](./lib/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
-  - [inv_ctx.ml](./lib/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
-  - [let_open.ml](./lib/let_open.ml): Helpers for producing `let open` expressions
-  - [include.ml](./lib/include.ml): Helpers for producing `include` statements
-  - [miscellany.ml](./lib/miscellany.ml): Miscellaneous helpers for working with lists & strings
-- [json_utils.ml](./lib/json_utils.ml): Tyche-related JSON utilities for collecting test statistics
+The [`lib/ppx`](./lib/ppx) subdirectory contains the code for the Mica PPX deriver. 
+The [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
+creating JSON files that are ingested by Tyche. 
+
+The PPX code is organized as follows:
+- [`ppx_mica.ml`](./lib/ppx/ppx_mica.ml): Declares the main Mica PPX deriver
+- [`type_deriver.ml`](./lib/ppx/type_deriver.ml): Derives the definitions of auxiliary data types & the `gen_expr` Quickcheck generator
+- [`interp_deriver.ml`](./lib/ppx/interp_deriver.ml): Derives the `Interpret` functor
+- [`test_harness_deriver.ml`](./lib/ppx/test_harness_deriver.ml): Derives the `TestHarness` functor
+- [`overall_deriver.ml`](./lib/ppx/overall_deriver.ml): Produces a module called `Mica` containing all the automatically derived code
+- [`utils.ml`](./lib/ppx/utils.ml): Includes all the following helper modules for convenience:
+  - [`builders.ml`](./lib/ppx/builders.ml): Functions for creating AST nodes
+  - [`getters.ml`](./lib/ppx/getters.ml): Functions for inspecting AST nodes
+  - [`equality.ml`](./lib/ppx/equality.ml): Location-agnostic equality functions for `Parsetree` types 
+  - [`lident.ml`](./lib/ppx/lident.ml): Utilities for working with the `Longident` type
+  - [`names.ml`](./lib/ppx/names.ml): Functions for generating fresh variable names & quoting expressions
+  - [`printers.ml`](./lib/ppx/printers.ml): Pretty-printers for AST types
+  - [`errors.ml`](./lib/ppx/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
+  - [`inv_ctx.ml`](./lib/ppx/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
+  - [`let_open.ml`](./lib/ppx/let_open.ml): Helpers for producing `let open` expressions
+  - [`include.ml`](./lib/ppx/include.ml): Helpers for producing `include` statements
+  - [`miscellany.ml`](./lib/ppx/miscellany.ml): Miscellaneous helpers for working with lists & strings
+- [`json_utils.ml`](./lib/ppx/json_utils.ml): Tyche-related JSON utilities for collecting test statistics
 
 
 ## Testing 
