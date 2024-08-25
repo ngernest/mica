@@ -1,7 +1,7 @@
 open Base
 open Yojson
 
-module TycheUtils (Mica_core : sig
+module type Mica_core = sig
   type expr
   type ty
 
@@ -9,9 +9,32 @@ module TycheUtils (Mica_core : sig
   val num_unique_ints : expr -> int
   val show_expr : expr -> string
   val show_ty : ty -> string
-end) =
-struct
-  open Mica_core
+end
+
+module type Tyche = sig
+  type expr
+  type ty
+
+  val json : Yojson.Basic.t
+  val update_json : Yojson.Basic.t -> string -> Yojson.Basic.t -> Yojson.Basic.t
+  val set_representation : expr -> Yojson.Basic.t -> Yojson.Basic.t
+  val set_features : expr -> Yojson.Basic.t -> Yojson.Basic.t
+  val add_feature : string * Yojson.Basic.t -> Yojson.Basic.t -> Yojson.Basic.t
+
+  val set_value :
+    ('a -> Yojson.Basic.t) -> 'a -> Yojson.Basic.t -> Yojson.Basic.t
+
+  val set_start_time : Yojson.Basic.t -> Yojson.Basic.t
+  val set_runtime : float -> Yojson.Basic.t -> Yojson.Basic.t
+  val set_args : ty -> expr -> Yojson.Basic.t -> Yojson.Basic.t
+  val set_prop : ty -> Yojson.Basic.t -> Yojson.Basic.t
+  val json_pipeline : expr -> ty -> float -> Yojson.Basic.t -> Yojson.Basic.t
+  val get_current_time_str : unit -> string
+end
+
+module TycheUtils (Mica : Mica_core) :
+  Tyche with type expr := Mica.expr and type ty := Mica.ty = struct
+  open Mica
 
   (** JSON schema for Tyche visualization with initialized dummy values *)
   let json : Basic.t =
