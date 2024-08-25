@@ -74,7 +74,7 @@ The PPX code is organized as follows:
   - [`equality.ml`](./lib/ppx/equality.ml): Location-agnostic equality functions for `Parsetree` types 
   - [`lident.ml`](./lib/ppx/lident.ml): Utilities for working with the `Longident` type
   - [`names.ml`](./lib/ppx/names.ml): Functions for generating fresh variable names & quoting expressions
-  - [`printers.ml`](./lib/ppx/printers.ml): Pretty-printers for AST types
+  - [`printers.ml`](./lib/ppx/printers.ml): Pretty-printers for AST types + functions for monomorphizing types
   - [`errors.ml`](./lib/ppx/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
   - [`inv_ctx.ml`](./lib/ppx/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
   - [`let_open.ml`](./lib/ppx/let_open.ml): Helpers for producing `let open` expressions
