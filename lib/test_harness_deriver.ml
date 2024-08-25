@@ -70,7 +70,7 @@ let derive_test_runner ~(loc : Location.t) (test_names : string list) :
     [%expr
       printf "Mica: OK, passed %d observational equivalence tests.\n"
         [%e eint ~loc num_trials]] in
-  (* Invoke each test function by applying it to [()] *)
+  (* Invoke each test function by applying it to [unit] *)
   let test_func_calls : expression list =
     List.map
       ~f:(fun test_name -> [%expr [%e evar ~loc test_name] [%e eunit ~loc]])

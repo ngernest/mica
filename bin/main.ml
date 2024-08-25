@@ -114,7 +114,3 @@ module BSTSet : S = struct
     let commonElts = List.filter lst2 ~f:(fun x -> mem x s1) in
     List.fold commonElts ~init:empty ~f:(fun acc x -> add x acc)
 end
-
-module T = Mica.TestHarness (ListSet) (BSTSet)
-
-let () = T.run_tests ()

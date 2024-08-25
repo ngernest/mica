@@ -139,13 +139,6 @@ module Mica = struct
   end
 end
 
-module Tyche = Json_utils.TycheUtils (struct
-  include Mica
-
-  let depth _ = 0
-  let num_unique_ints _ = 0
-end)
-
 (******************************************************************************)
 
 module ListSet : S = struct
