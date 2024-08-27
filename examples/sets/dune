@@ -1,6 +1,6 @@
 (executable
- (public_name example)
- (name example)
+ (public_name mica_sets)
+ (name mica_sets)
  (libraries ppx_mica core tyche_utils)
  (preprocess
   (pps ppx_jane ppx_deriving.show ppx_mica))
