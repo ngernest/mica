@@ -1,0 +1,12 @@
+(executable
+ (public_name mica_polynomials)
+ (name mica_polynomials)
+ (libraries ppx_mica core tyche_utils)
+ (preprocess
+  (pps ppx_jane ppx_deriving.show ppx_mica))
+ (package ppx_mica))
+
+(env
+ (dev
+  (flags
+   (:standard -g -w "-26-27-32-33-34-37-39"))))
