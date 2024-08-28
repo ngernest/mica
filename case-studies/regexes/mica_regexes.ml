@@ -105,6 +105,10 @@ module Mica = struct
   end
 end
 
+(******************************************************************************)
+(* Using Mica to check observational equivalence of two implementations of
+   regular expression matchers below: *)
+
 module T = Mica.TestHarness (DFA) (Brzozowski)
 
 let () = T.run_tests ()

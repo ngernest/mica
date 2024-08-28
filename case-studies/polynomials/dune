@@ -1,7 +1,7 @@
 (executable
  (public_name mica_polynomials)
  (name mica_polynomials)
- (libraries ppx_mica core tyche_utils)
+ (libraries ppx_mica tyche_utils core base)
  (preprocess
   (pps ppx_jane ppx_deriving.show ppx_mica))
  (package ppx_mica))
