@@ -123,7 +123,8 @@ module Mica = struct
 
     let run_tests () : unit =
       test_bool ();
-      test_int ()
+      test_int ();
+      printf "Mica: OK, passed %d observational equivalence tests.\n" 20000
   end
 end
 

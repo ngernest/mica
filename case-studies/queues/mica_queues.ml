@@ -157,7 +157,8 @@ module Mica = struct
       test_bool ();
       test_int ();
       test_int_option ();
-      test_int_list ()
+      test_int_list ();
+      printf "Mica: OK, passed %d observational equivalence tests.\n" 40000
   end
 end
 
