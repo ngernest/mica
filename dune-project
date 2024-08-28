@@ -30,16 +30,23 @@
    (ppxlib 
     (>= v0.32.0))
    (alcotest
-    (>= v1.7.0))))
+    (>= v1.7.0))
+;; The following libraries are only required for the [case-studies] subdirectory
+   (stdint 
+    (>= v0.7.2))
+   (integers 
+    (>= v0.7.0))
+   (charset 
+    (>= v0.1.0))))
 
 (package 
-  (name tyche_utils)
-  (depends
-    dune 
-    (yojson 
-      (>= v2.0.0))
-    (base
-      (>= v0.15.1))
-    (core_unix
+ (name tyche_utils)
+ (depends
+   dune 
+   (yojson 
+     (>= v2.0.0))
+   (base
+     (>= v0.15.1))
+   (core_unix
      (>= v0.15.0))))
       

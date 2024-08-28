@@ -17,6 +17,9 @@ depends: [
   "ppx_deriving" {>= "v5.2.1"}
   "ppxlib" {>= "v0.32.0"}
   "alcotest" {>= "v1.7.0"}
+  "stdint" {>= "v0.7.2"}
+  "integers" {>= "v0.7.0"}
+  "charset" {>= "v0.1.0"}
 ]
 build: [
   ["dune" "subst"] {dev}

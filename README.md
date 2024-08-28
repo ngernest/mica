@@ -114,7 +114,7 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `core_unix`
   - `alcotest`
   - `yojson`
-- The `case-studies` subdirectory also requires the following libraries:
+- The [`case-studies`](./case-studies/) subdirectory also requires the following libraries:
   - `charset`
   - `ocaml-integers`
   - `stdint`
