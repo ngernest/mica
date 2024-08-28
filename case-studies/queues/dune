@@ -1,7 +1,7 @@
 (executable
  (public_name mica_queues)
  (name mica_queues)
- (libraries ppx_mica core tyche_utils)
+ (libraries ppx_mica tyche_utils base_quickcheck core)
  (preprocess
   (pps ppx_jane ppx_deriving.show ppx_mica))
  (package ppx_mica))
