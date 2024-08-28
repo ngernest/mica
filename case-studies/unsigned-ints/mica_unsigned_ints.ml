@@ -1,5 +1,8 @@
 open Unsigned_int_impls
 
+(******************************************************************************)
+(* Code automatically derived by Mica below *)
+
 module Mica = struct
   include struct
     type expr =
@@ -261,6 +264,10 @@ module Mica = struct
       test_string ()
   end
 end
+
+(******************************************************************************)
+(* Using Mica to check observational equivalence of two implementations of
+   8/16/32/64-bit unsigned integer arithmetic below: *)
 
 let () =
   let module T8 = Mica.TestHarness (U8_1) (U8_2) in

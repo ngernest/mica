@@ -1,5 +1,8 @@
 open Set_impls
 
+(******************************************************************************)
+(* Code automatically derived by Mica below *)
+
 module Mica = struct
   type expr =
     | Empty
@@ -123,6 +126,10 @@ module Mica = struct
       test_int ()
   end
 end
+
+(******************************************************************************)
+(* Using Mica to check observational equivalence of two implementations of
+   finite sets *)
 
 module T = Mica.TestHarness (ListSet) (BSTSet)
 
