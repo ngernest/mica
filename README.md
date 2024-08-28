@@ -53,7 +53,7 @@ end
 module T = Mica.TestHarness(M1)(M2)
 let () = T.run_tests ()
 ```
-- An example of the code automatically derived by Mica can be found in [`example.ml`](./example/example.ml).
+- Case studies (examples of the code automatically derived by Mica) can be found in the [`case-studies`](./case-studies/) subdirectory
 
 **Functionality to be implemented**:
 - Generate random `int -> int` functions in `gen_expr` 
@@ -114,9 +114,9 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `core_unix`
   - `alcotest`
   - `yojson`
-- Note: in this codebase, we typically rely on the OCaml standard library, 
-  but in a few (limited) instances, we use Jane Street's `Base` library. 
-  To avoid namespace clashes, whenever we use a function from `Base`, 
-  we always do a local `let open` within the body of the caller function.
-
+- The `case-studies` subdirectory also requires the following libraries:
+  - `charset`
+  - `ocaml-integers`
+  - `stdint`
+  - `base`
 

@@ -1,7 +1,7 @@
 (executable
  (public_name mica_unsigned_ints)
  (name mica_unsigned_ints)
- (libraries ppx_mica core tyche_utils)
+ (libraries ppx_mica tyche_utils core integers stdint)
  (preprocess
   (pps ppx_jane ppx_deriving.show ppx_mica))
  (package ppx_mica))
