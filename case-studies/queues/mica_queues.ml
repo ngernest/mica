@@ -2,9 +2,10 @@ open Queue_impls
 open Base_quickcheck
 
 (******************************************************************************)
-(* The following is very similar to the code that Mica would generate
-   automatically. The only manual modificaitons are: - Variable renaming - The
-   introduction of the extra [Seq] constructor for the [expr] datatype, which
+(** The following is very similar to the code that Mica would generate
+   automatically. The only manual modifications are: 
+   - Variable renaming 
+   - The introduction of the extra [Seq] constructor for the [expr] datatype, which
    represents the {i sequencing} of two symbolic expressions (see the paper for
    more details). *)
 

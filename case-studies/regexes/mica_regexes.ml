@@ -3,6 +3,14 @@ open Dfa
 open Brzozowski
 open Base_quickcheck
 
+(******************************************************************************)
+(** The following is very similar to the code that Mica would generate
+   automatically. The only manual modifications are: 
+   - Variable renaming 
+   - The use of the [char_alpha] QuickCheck generator to generate an alphabetic
+     character (instead of any arbitrary ASCII character using 
+     [quickcheck_generator_char]) *)
+
 module Mica = struct
   type expr =
     | Void
