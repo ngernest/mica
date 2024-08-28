@@ -20,8 +20,8 @@ let ubox () =
 #require "ppxlib.metaquot";;
 
 
-(* Ensure that files in [lib] are visible to Utop *)
-#directory "./lib";;
+(* Ensure that files in [lib/ppx] are visible to Utop *)
+#directory "./lib/ppx";;
 #mod_use "inv_ctx.ml";;
 #mod_use "miscellany.ml";;
 #mod_use "let_open.ml";;
@@ -32,10 +32,10 @@ let ubox () =
 #mod_use "builders.ml";;
 #mod_use "getters.ml";;
 #mod_use "errors.ml";;
+#mod_use "include.ml";;
 #mod_use "utils.ml";;
 #mod_use "type_deriver.ml";;
 #mod_use "interp_deriver.ml";;
-#mod_use "set_pbt.ml";;
 
 open Ppxlib
 open Astlib.Pprintast

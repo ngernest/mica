@@ -119,4 +119,5 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `ocaml-integers`
   - `stdint`
   - `base`
+- You can also run `dune utop` to see the output of functions in the codebase in a REPL.
 
