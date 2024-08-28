@@ -6,6 +6,8 @@ open Poly2
 (** The following is very similar to the code that Mica would generate
    automatically. The only manual modifications are: 
    - Variable renaming
+   - The use of [Base_quickcheck]'s [small_positive_or_zero_int] generator
+   (to generate non-negative integers when raising polynomials to a power)
    - certain [let open] statements to prevent namespace clashes *)
 
 module Mica = struct
@@ -38,13 +40,13 @@ module Mica = struct
         union [ gen_equal ]
       | Int, _ ->
         let gen_power =
-          let g__005_ = Core.quickcheck_generator_int
-          and g__006_ = Core.quickcheck_generator_int in
+          let g__005_ = Base_quickcheck.Generator.small_positive_or_zero_int
+          and g__006_ = Base_quickcheck.Generator.small_positive_or_zero_int in
           tuple2 g__005_ g__006_ >>| fun (e__007_, e__008_) ->
           Power (e__007_, e__008_)
         and gen_eval =
           let g__009_ = with_size ~size:(k / 2) (gen_expr T)
-          and g__010_ = Core.quickcheck_generator_int in
+          and g__010_ = Base_quickcheck.Generator.small_positive_or_zero_int in
           tuple2 g__009_ g__010_ >>| fun (e__011_, e__012_) ->
           Eval (e__011_, e__012_) in
         union [ gen_power; gen_eval ]
@@ -52,15 +54,15 @@ module Mica = struct
         let gen_zero = return Zero
         and gen_one = return One
         and gen_monomial =
-          let g__013_ = Core.quickcheck_generator_int
-          and g__014_ = Core.quickcheck_generator_int in
+          let g__013_ = Base_quickcheck.Generator.small_positive_or_zero_int
+          and g__014_ = Base_quickcheck.Generator.small_positive_or_zero_int in
           tuple2 g__013_ g__014_ >>| fun (e__015_, e__016_) ->
           Monomial (e__015_, e__016_)
         and gen_create =
           let g__017_ =
             Core.quickcheck_generator_list
-              (tuple2 Core.quickcheck_generator_int
-                 Core.quickcheck_generator_int) in
+              (tuple2 Base_quickcheck.Generator.small_positive_or_zero_int
+                 Base_quickcheck.Generator.small_positive_or_zero_int) in
           g__017_ >>| fun e__018_ -> Create e__018_ in
         union [ gen_zero; gen_one; gen_monomial; gen_create ]
       | T, _ ->
