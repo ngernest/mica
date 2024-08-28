@@ -1,7 +1,7 @@
 (executable
  (public_name mica_maps)
  (name mica_maps)
- (libraries ppx_mica core tyche_utils)
+ (libraries ppx_mica tyche_utils core base base_quickcheck)
  (preprocess
   (pps ppx_jane ppx_deriving.show ppx_mica))
  (package ppx_mica))
