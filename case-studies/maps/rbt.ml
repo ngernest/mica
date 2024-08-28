@@ -9,11 +9,7 @@
     The implementation of red-black tree deletion follows
     the approach taken by Germane & Might's (2014) functional pearl
     {i Deletion: The curse of the red-black tree}. *)
-
 open Map_signature
-
-(* Disable "unused-values" compiler warnings *)
-[@@@ocaml.warning "-32-34-27"]
 
 (** The color of each red-black tree node. 
         - Note that [BB] represents the {i double-black} transitory color, 
@@ -120,8 +116,8 @@ let rec bal_del_r (t : rbtree) : rbtree =
 
 (** Implementation of maps with (int, string) key-value pairs, 
         implemented using red-black trees *)
-module RedBlackMap : MapInterface = struct
-  type t = rbtree [@@deriving sexp]
+module RedBlackMap : S = struct
+  type t = rbtree
 
   let empty = Empty Black
 
