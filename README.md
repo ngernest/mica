@@ -66,16 +66,27 @@ let () = T.run_tests ()
 ```
 
 ## Case Studies
-Code for the following case studies (along with the code automatically derived by Mica) can be found in the [`case-studies`](./case_studies/) subdirectory:
-- John Hughes's *How to Specify It* (catching bugs in BST implementations) ([link](./case_studies/how_to_specify_it/))
-- UPenn CIS 1200 student homework submissions ([link](./case_studies/student_submissions/))
+Code for the following case studies (along with the code automatically derived by Mica) can be found in the [`case-studies`](./case_studies/) subdirectory. For each example (where possible), we have included an 
+executable which runs the PBT code automatically produced by Mica.
+
+Here are the case studies:
 - Finite Sets (lists & BSTs)  ([link](./case_studies/sets/))
+  - Executable: Run `dune exec -- mica_sets`
 - Regular Expression Matchers (Brzozowski Derivatives & DFAs) ([link](./case_studies/regexes/))
+  - Executable: Run `dune exec -- mica_regexes`
 - Polynomials (Horner schema & monomial-based representations) ([link](./case_studies/polynomials/))
+  - Executable: Run `dune exec -- mica_polynomials`
 - Ephemeral Queues (`Base.Queue` & `Base.Linked_queue`) ([link](./case_studies/queues/))
+  - Executable: Run `dune exec -- mica_queues`
 - Unsigned integer arithmetic (the `stdint` and `ocaml-integer` libraries) ([link](./case_studies/unsigned_ints/))
+  - Executable: Run `dune exec -- mica_unsigned_ints`
 - Character sets (the `charset` library & the standard library's `Set.Make(Char)` module) 
 - Persistent maps (red-black trees & association lists) ([link](./case_studies/maps/))
+  - Executable: Run `dune exec -- mica_maps`
+- John Hughes's *How to Specify It* (catching bugs in BST implementations) ([link](./case_studies/how_to_specify_it/))
+  - Executable: Run `dune exec -- mica_how_to_specify_it` (note: the executable will terminate after finding the first bug)
+- UPenn CIS 1200 student homework submissions ([link](./case_studies/student_submissions/))
+  - Note: no executable is available for this case study (to avoid posting homework solutions online)
 
 ## An overview of the codebase
 The [`lib/ppx`](./lib/ppx) subdirectory contains the code for the Mica PPX deriver.      
