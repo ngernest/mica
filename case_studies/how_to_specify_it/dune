@@ -4,7 +4,7 @@
  (libraries core base_quickcheck ppx_mica)
  (preprocess
   (pps ppx_jane ppx_deriving.show))
- (package ppx_mica))
+ (package mica_case_studies))
 
 (env
  (dev

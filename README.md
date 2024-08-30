@@ -146,7 +146,7 @@ run `dune promote` to update the `.expected` file with the contents
 of the `.actual` file (which contains what the PPX actually generated from that test run). 
 
 ### Dependencies
-- This repo has been tested with OCaml 5.1.0 on an M1 Mac.
+- This repo has been tested with OCaml 5.0.0 on an M1 Mac.
 - We recommend having the following libraries installed:
   - `ppxlib`
   - `ppx_jane`

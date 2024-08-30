@@ -4,7 +4,7 @@
  (libraries ppx_mica tyche_utils base core base_quickcheck)
  (preprocess
   (pps ppx_jane ppx_deriving.show ppx_mica))
- (package ppx_mica))
+ (package mica_case_studies))
 
 (env
  (dev
