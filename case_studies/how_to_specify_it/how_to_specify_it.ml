@@ -1,4 +1,3 @@
-open Core_bench
 open Core
 open Quickcheck
 open All_bsts
@@ -151,35 +150,14 @@ let bug_test (module M : BST) : unit =
   let module T = Mica.TestHarness (BST0) (M) in 
   T.run_tests ()
 
-(** Uses [Core_bench] to perform differential testing of all 8 buggy 
+(** The main executable code: performs differential testing of all 8 buggy 
     BST implementations with [BST0] (an implementation known to be correct) *)  
 let () =
-  let start, stop = (`inclusive, `inclusive) in
-  Command_unix.run
-    (Bench.make_command
-       [ Bench.Test.create_indexed ~name:"bug_1"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST1));
-         Bench.Test.create_indexed ~name:"bug_2"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST2));
-         Bench.Test.create_indexed ~name:"bug_3"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST3));
-         Bench.Test.create_indexed ~name:"bug_4"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST4));
-         Bench.Test.create_indexed ~name:"bug_5"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST5));
-         Bench.Test.create_indexed ~name:"bug_6"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST6));
-         Bench.Test.create_indexed ~name:"bug_7"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST7));
-         Bench.Test.create_indexed ~name:"bug_8"
-           ~args:(List.range ~start ~stop 1 10) (fun i ->
-             Staged.stage @@ fun () -> bug_test (module BST8))
-       ])
-
+  bug_test (module BST1);
+  bug_test (module BST2);
+  bug_test (module BST3);
+  bug_test (module BST4);
+  bug_test (module BST5);
+  bug_test (module BST6);
+  bug_test (module BST7);
+  bug_test (module BST8);
