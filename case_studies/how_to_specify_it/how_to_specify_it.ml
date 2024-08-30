@@ -12,8 +12,7 @@ open Bst
    size parameter of Mica's internal QuickCheck generator)
    - certain [let open] statements to prevent namespace clashes *)
 
-
-module Mica = struct 
+module Mica = struct
   type expr =
     | Nil
     | Find of int * expr
@@ -42,7 +41,8 @@ module Mica = struct
       let%map t = with_size ~size:(k / 2) (gen_expr T) in
       ToList t
     | IntOption, _ ->
-      let%map k = int_inclusive 0 k and t = with_size ~size:(k / 2) (gen_expr T) in
+      let%map k = int_inclusive 0 k
+      and t = with_size ~size:(k / 2) (gen_expr T) in
       Find (k, t)
     | T, 0 -> return Nil
     | T, _ ->
@@ -64,9 +64,9 @@ module Mica = struct
   module Interpret (M : BST) = struct
     type value =
       | ValInt of int
-      | ValIntOption of int option 
-      | ValIntList of int list 
-      | ValIntIntList of (int * int) list 
+      | ValIntOption of int option
+      | ValIntList of int list
+      | ValIntIntList of (int * int) list
       | ValT of (int, int) Bst.t
     [@@deriving show { with_path = false }]
 
@@ -107,26 +107,23 @@ module Mica = struct
     module I1 = Interpret (M1)
     module I2 = Interpret (M2)
     open Core
-    
+
     let test_int () : unit =
       Quickcheck.test (gen_expr Int) ~f:(fun e ->
           match (I1.interp e, I2.interp e) with
-          | ValInt n1, ValInt n2 ->
-            [%test_eq: int] n1 n2
+          | ValInt n1, ValInt n2 -> [%test_eq: int] n1 n2
           | v1, v2 -> failwith "failed int")
 
     let test_int_option () : unit =
       Quickcheck.test (gen_expr IntOption) ~f:(fun e ->
           match (I1.interp e, I2.interp e) with
-          | ValIntOption n1, ValIntOption n2 ->
-            [%test_eq: int option] n1 n2
+          | ValIntOption n1, ValIntOption n2 -> [%test_eq: int option] n1 n2
           | v1, v2 -> failwith "failed int option")
 
     let test_int_list () : unit =
       Quickcheck.test (gen_expr IntList) ~f:(fun e ->
           match (I1.interp e, I2.interp e) with
-          | ValIntList xs, ValIntList ys ->
-            [%test_eq: int list] xs ys
+          | ValIntList xs, ValIntList ys -> [%test_eq: int list] xs ys
           | _ -> failwith "failed int list")
 
     let test_int_int_list () : unit =
@@ -137,7 +134,10 @@ module Mica = struct
           | _ -> failwith "failed (int * int) list")
 
     let run_tests () : unit =
-      test_int (); test_int_option (); test_int_list (); test_int_int_list ()
+      test_int ();
+      test_int_option ();
+      test_int_list ();
+      test_int_int_list ()
   end
 end
 
@@ -146,12 +146,12 @@ end
 
 (** Wrapper function that takes some (possibly buggy) BST module [M] and 
     tests it against the module [BST0], which is known to be correct *)
-let bug_test (module M : BST) : unit = 
-  let module T = Mica.TestHarness (BST0) (M) in 
+let bug_test (module M : BST) : unit =
+  let module T = Mica.TestHarness (BST0) (M) in
   T.run_tests ()
 
 (** The main executable code: performs differential testing of all 8 buggy 
-    BST implementations with [BST0] (an implementation known to be correct) *)  
+    BST implementations with [BST0] (an implementation known to be correct) *)
 let () =
   bug_test (module BST1);
   bug_test (module BST2);
@@ -160,4 +160,4 @@ let () =
   bug_test (module BST5);
   bug_test (module BST6);
   bug_test (module BST7);
-  bug_test (module BST8);
+  bug_test (module BST8)
