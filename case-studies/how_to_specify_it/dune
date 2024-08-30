@@ -1,0 +1,12 @@
+(executable
+ (public_name how_to_specify_it)
+ (name how_to_specify_it)
+ (libraries core core_unix.command_unix core_bench ppx_mica)
+ (preprocess
+  (pps ppx_jane ppx_deriving.show))
+ (package ppx_mica))
+
+(env
+ (dev
+  (flags
+   (:standard -g -w "-26-27-32-33-34-37-39"))))
