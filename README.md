@@ -80,7 +80,8 @@ Here are the case studies:
   - Executable: Run `dune exec -- mica_queues`
 - Unsigned integer arithmetic (the `stdint` and `ocaml-integer` libraries) ([link](./case_studies/unsigned_ints/))
   - Executable: Run `dune exec -- mica_unsigned_ints`
-- Character sets (the `charset` library & the standard library's `Set.Make(Char)` module) 
+- Character sets (the `charset` library & the standard library's `Set.Make(Char)` module) ([link](./case_studies/charsets/))
+  - Executable: Run `dune exec -- mica_charsets`
 - Persistent maps (red-black trees & association lists) ([link](./case_studies/maps/))
   - Executable: Run `dune exec -- mica_maps`
 - John Hughes's *How to Specify It* (catching bugs in BST implementations) ([link](./case_studies/how_to_specify_it/))
