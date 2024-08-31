@@ -1,206 +1,164 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
-[![view - Documentation](https://img.shields.io/badge/view-Documentation-blue?style=for-the-badge)](https://ngernest.github.io/mica/mica/index.html)
+(**Note**: Mica is a research prototype and is not production-ready at the moment.)
 
-## Update (May 2024)
-We are currently working on re-implementing Mica as a PPX compiler extension, 
-and we aim to have the PPX implementation ready for the OCaml Workshop 2024. 
+## Overview
+Mica is a PPX extension that automates differential testing for a pair of OCaml
+modules implementing the same signature. Users annotate module signatures 
+with the directive `[@@deriving mica]`, and at compile-time, Mica derives
+specialized property-based testing code (using Jane Street's `Core.Quickcheck` library)
+that checks if two modules implementing the signature are observationally equivalent.
 
-This repo contains the artifact for a Mica prototype presented at the ICFP '23 SRC. 
-This repo will be updated with the PPX implementation when it is ready.
-
-***
-
-## Overview 
-
-**Mica** checks whether two OCaml modules implementing the same signature are observationally 
-equivalent. Mica does this by parsing the signature & *automatically* generating 
-property-based testing (PBT) code specialised to the signature. 
-
-Received 2nd prize at the [ICFP '23 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition).
-
-ICFP SRC documents:              
-- [Extended Abstract](./talks/icfp_src_abstract.pdf) 
-- [Poster](./talks/icfp_src_poster.pdf)
-- [Talk](./talks/mica_icfp_talk.pdf) 
-
-Other talks on Mica:                 
-- [Penn PLClub talk](./talks/mica_plclub_talk.pdf) (~45 mins) 
-- [OPLSS '23 talk](./talks/mica_oplss_slides.pdf) (~10 mins)
-        
-## Description of source files 
-Core components of Mica:
-- [`Parser.ml`](./lib/Parser.ml): parser utility functions, modified from the Angstrom parser-combinator library
-- [`ParserTypes.ml`](./lib/ParserTypes.ml): Datatypes defining an AST for OCaml module signatures
-- [`ModuleParser.ml`](./lib/ModuleParser.ml): Parser for OCaml module signatures
-- [`CodeGenerator.ml`](./lib/CodeGenerator.ml): Takes a parsed AST representing a module signature & generates specialized PBT code 
-- [`CmdLineParser.ml`](./lib/CmdLineParser.ml): Parses user input from the command line
-
-Auxiliary utility files:
-- [`Utils.ml`](./lib/Utils.ml): Utility functions for the code generator
-- [`Stats.ml`](./lib/Stats.ml): Functions for examining the distribution of randomly generated symbolic expressions
-- [`Latin.ml`](./lib/Latin.ml): QuickCheck generator for Latin words (taken from [Lorem Ipsum](https://en.wikipedia.org/wiki/Lorem_ipsum) placeholder text)
-
-Benchmark suites: 
-- [`Mica_QC_Bench.ml`](./bin/mica_qc_bench.ml): Benchmarks Mica's parser, code generator & the auto-generated PBT executables
-- [`Mica_Bench.ml`](./bin/mica_bench.ml): Benchmarks Mica's parser & code generator only 
-
-## Examples 
-The [`lib`](./lib) directory also contains five example module signatures, 
-each of which has two different implementations. Mica has been tested
-extensively with these five pairs of modules. 
-
-The code for these example modules has been adapted from various sources, 
-listed in the [references](#references) section of this README.
-
-**1. Finite Sets** (Lists & BSTs)
-  - Signature: [`SetInterface.ml`](./lib/sets/SetInterface.ml)
-  - List implementation: [`ListSet.ml`](./lib/sets/ListSet.ml)
-  - BST implementation: [`BSTSet.ml`](./lib/sets/BSTSet.ml)
-  - Running the auto-generated code: `dune exec -- sets`
-    - Example auto-generated code: [`GeneratedSetPBTCode.ml`](./lib/sets/GeneratedSetPBTCode.ml) & 
-      [`GeneratedSetExecutable.ml`](./bin/GeneratedSetExecutable.ml)
-
-**2. Regex matchers** ([Brzozowski derivatives](https://en.wikipedia.org/wiki/Brzozowski_derivative) & DFAs)
-  - Signature: [`RegexMatcher.mli`](./lib/regexes/RegexMatcher.mli) (Commented version: [`RegexMatcher.ml`](./lib/regexes/RegexMatcher.ml))
-  - Brzozowski derivatives: [`Brzozowski.ml`](./lib/regexes/Brzozowski.ml)
-  - DFAs: [`DFA.ml`](./lib/regexes/DFA.ml)
-  - Running the auto-generated code: `dune exec -- regexes`
-    - Example auto-generated code: [`GeneratedRegexPBTCode.ml`](./lib/regexes/GeneratedRegexPBTCode.ml) & 
-      [`GeneratedRegexExecutable.ml`](./bin/GeneratedRegexExecutable.ml)
-
-**3. Polynomials** ([Horner schema](https://en.wikipedia.org/wiki/Horner%27s_method) & list folds)
-  - Signature: [`PolyInterface.ml`](./lib/polynomials/PolyInterface.ml)
-  - Polynomial evaluation using list folds: [`Poly1.ml`](./lib/polynomials/Poly1.ml) 
-  - Polynomial evaluation using Horner's algorithm: [`Poly2.ml`]((./lib/polynomials/Poly2.ml))
-  - Running the auto-generated code: `dune exec -- polynomials`
-    - Example auto-generated code: [`GeneratedPolyPBTCode.ml`](./lib/polynomials/GeneratedPolyPBTCode.ml) &
-      [`GeneratedPolyExecutable.ml`](./bin/GeneratedPolyExecutable.ml)
-
-**4. Functional Maps** (Association lists & Red-black trees)
-  - Signature: [`MapInterface.ml`](./lib/maps/MapInterface.ml) (Commented version: [`MapInterface.mli`](./lib/maps/MapInterface.mli))
-  - Association lists: [`AssocListMap.ml`](./lib/maps/AssocListMap.ml)
-    - See [`AssocList.ml`](./lib/maps/AssocList.ml) for the definition of the `AssocList` type & its QuickCheck generator
-  - Red-Black tree maps: [`RedBlackMap.ml`](./lib/maps/RedBlackMap.ml)
-  - Running the auto-generated code: `dune exec -- maps`
-    - Example auto-generated code: [`GeneratedMapPBTCode.ml`](./lib/maps/GeneratedMapPBTCode.ml) &
-      [`GeneratedMapExecutable.ml`](./bin/GeneratedMapExecutable.ml)
-
-**5. Stacks** (List & algebraic data type representations)
-  - Signature: [`StackInterface.ml`](./lib/stacks/StackInterface.ml)
-  - List implementation: [`ListStack.ml`](./lib/stacks/ListStack.ml)
-  - Implementation using custom ADT: [`VariantStack.ml`](./lib/stacks/VariantStack.ml)
-  - Running the auto-generated code: `dune exec -- stacks`
-    - Example auto-generated code: [`GeneratedStackPBTCode.ml`](./lib/stacks/GeneratedStackPBTCode.ml) &
-     [`GeneratedStackExecutable.ml`](./bin/GeneratedStackExecutable.ml)
-
-## Building & running
-Run `make` (or `dune build`) to build and compile the library.         
-Run `make install` to install dependencies. 
-
-**Usage**:       
+Here is how we envisage users interacting with Mica. Suppose multiple modules
+implement the module signature `S`. Users insert the directive `[@@deriving_inline mica]`
+beneath the definition of `S`, like so:
+```ocaml
+module type S = sig
+  type 'a t 
+  val empty : 'a t
+  val add : 'a -> 'a t -> 'a t
+  ...
+end
+[@@deriving_inline mica] 
+(* After users run [dune build --auto-promote], the derived PBT code is 
+   automatically pasted inline into the source file here *)
+...
+[@@@end]
 ```
-dune exec -- mica [.ml file containing signature] [.ml file containing 1st module] [.ml file containing 2nd module]
+
+Then, after running `dune build`, Mica derives the following PBT code:
+```ocaml 
+module Mica = struct 
+  (** Symbolic expressions *)
+  type expr =
+    | Empty
+    | Is_empty of expr
+    ...
+  [@@deriving show, ...]
+
+  (** Types of symbolic expressions *)
+  type ty = Int | IntT | ... [@@deriving show, ...]
+
+  (** QuickCheck generator for symbolic expressions of type [ty] *)
+  let rec gen_expr : ty -> Core.Quickcheck.Generator.t = ...
+
+  (** Functor that interprets symbolic expressions *)
+  module Interpret (M : S) = struct   
+    (* Values of symbolic expressions *)
+    type value = ValInt of int | ValIntT of int M.t | ...
+
+    (* Interprets symbolic expressions over [M] *)
+    let rec interp : expr -> value = ...
+  end 
+
+  (** Functor that tests [M1] and [M2] for observational equivalence *)
+  module TestHarness (M1 : S) (M2 : S) = struct 
+    ...
+  end
+end
 ```
-This command runs Mica and creates two new files:
-1. `lib/Generated.ml` (contains PBT code for testing an OCaml module)
-2. `bin/compare_impls.ml` (code for an executable that tests two modules for observational equivalence)
-
-To run the generated executable, run `dune exec -- compare_impls`. 
-
-### Example (finite sets)
+- Now suppose modules `M1` and `M2` both implement `S`. To run Mica's testing code
+  and check whether `M1` & `M2` are observationally equivalent with respect to `S`, 
+  one can invoke the `run_tests : unit -> unit` function in Mica's `TestHarness` functor, like so:
+```ocaml 
+module T = Mica.TestHarness(M1)(M2)
+let () = T.run_tests ()
 ```
-  dune exec -- mica lib/sets/SetInterface.ml lib/sets/ListSet.ml lib/sets/BSTSet.ml
+
+## Case Studies
+Code for the following case studies (along with the code automatically derived by Mica) can be found in the [`case-studies`](./case_studies/) subdirectory. For each example (where possible), we have included an 
+executable which runs the PBT code automatically produced by Mica.
+
+Here are the case studies:
+- Finite Sets (lists & BSTs)  ([link](./case_studies/sets/))
+  - Executable: Run `dune exec -- mica_sets`
+- Regular Expression Matchers (Brzozowski Derivatives & DFAs) ([link](./case_studies/regexes/))
+  - Executable: Run `dune exec -- mica_regexes`
+- Polynomials (Horner schema & monomial-based representations) ([link](./case_studies/polynomials/))
+  - Executable: Run `dune exec -- mica_polynomials`
+- Ephemeral Queues (`Base.Queue` & `Base.Linked_queue`) ([link](./case_studies/queues/))
+  - Executable: Run `dune exec -- mica_queues`
+- Unsigned integer arithmetic (the `stdint` and `ocaml-integer` libraries) ([link](./case_studies/unsigned_ints/))
+  - Executable: Run `dune exec -- mica_unsigned_ints`
+- Character sets (the `charset` library & the standard library's `Set.Make(Char)` module) ([link](./case_studies/charsets/))
+  - Executable: Run `dune exec -- mica_charsets`
+- Persistent maps (red-black trees & association lists) ([link](./case_studies/maps/))
+  - Executable: Run `dune exec -- mica_maps`
+- John Hughes's *How to Specify It* (catching bugs in BST implementations) ([link](./case_studies/how_to_specify_it/))
+  - Executable: Run `dune exec -- mica_how_to_specify_it` (note: the executable will terminate after finding the first bug)
+- UPenn CIS 1200 student homework submissions ([link](./case_studies/student_submissions/))
+  - Note: no executable is available for this case study (to avoid posting homework solutions online)
+
+## An overview of the codebase
+The [`lib/ppx`](./lib/ppx) subdirectory contains the code for the Mica PPX deriver.      
+The PPX code is organized as follows:
+- [`ppx_mica.ml`](./lib/ppx/ppx_mica.ml): Declares the main Mica PPX deriver
+- [`type_deriver.ml`](./lib/ppx/type_deriver.ml): Derives the definitions of auxiliary data types & the `gen_expr` Quickcheck generator
+- [`interp_deriver.ml`](./lib/ppx/interp_deriver.ml): Derives the `Interpret` functor
+- [`test_harness_deriver.ml`](./lib/ppx/test_harness_deriver.ml): Derives the `TestHarness` functor
+- [`overall_deriver.ml`](./lib/ppx/overall_deriver.ml): Produces a module called `Mica` containing all the automatically derived code
+- [`utils.ml`](./lib/ppx/utils.ml): Includes all the following helper modules for convenience:
+  - [`builders.ml`](./lib/ppx/builders.ml): Functions for creating AST nodes
+  - [`getters.ml`](./lib/ppx/getters.ml): Functions for inspecting AST nodes
+  - [`equality.ml`](./lib/ppx/equality.ml): Location-agnostic equality functions for `Parsetree` types 
+  - [`lident.ml`](./lib/ppx/lident.ml): Utilities for working with the `Longident` type
+  - [`names.ml`](./lib/ppx/names.ml): Functions for generating fresh variable names & quoting expressions
+  - [`printers.ml`](./lib/ppx/printers.ml): Pretty-printers for AST types + functions for monomorphizing types
+  - [`errors.ml`](./lib/ppx/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
+  - [`inv_ctx.ml`](./lib/ppx/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
+  - [`let_open.ml`](./lib/ppx/let_open.ml): Helpers for producing `let open` expressions
+  - [`include.ml`](./lib/ppx/include.ml): Helpers for producing `include` statements
+  - [`miscellany.ml`](./lib/ppx/miscellany.ml): Miscellaneous helpers for working with lists & strings
+
+Additionally, the [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
+creating JSON files that are ingested by Tyche (see [`tyche_utils.ml`](./lib/tyche_utils/tyche_utils.ml)). 
+
+## Differences between the OCaml Workshop & ICFP SRC artifacts
+- The OCaml Workshop artifact (2024) includes a version of Mica that has been  
+  re-implemented from scratch as a PPX deriver (using `Ppxlib`). This artifact
+  derives code at compile-time and is more feature rich (e.g. is compatible with Tyche). 
+  - The `main` branch of this repo currently contains the OCaml Workshop artifact.
+
+- The ICFP SRC artifact (2023) contains a Mica prototype that was implemented 
+  as a command-line script. This prototype contains a parser for ML module signatures
+  (written using `Angstrom`) and pretty-prints the derived PBT code to a new `.ml` file
+  (using `PPrint`). This artifact derives code at runtime and is less robust compared to 
+  the OCaml Workshop artifact.
+  - [Link to SRC prototype artifact](https://github.com/ngernest/mica/releases/tag/icfp23src_artifact)).
+
+## Notes for Implementors
+### Testing 
+1. [`test/utils_test`](./test/utils_test/) contains `Alcotest` unit tests for various helper functions.
+- See the [README](./test/utils_test/README.md) in [`utils_test`](./test/utils_test/) for instructions
+on how to add new tests to the Alcotest test suite.
+2. `test/ppx_test` contains `.ml` test files used to test the PPX functionality
+- To add a new test file to the corpus of test files, in either `ppx_test/passing` 
+or `ppx_test/errors`, run:
+```bash
+$ touch test_file.{ml,expected}; dune runtest --auto-promote
 ```
-This runs Mica on the Set example above, checking if the [`ListSet`](./lib/sets/ListSet.ml) and [`BSTSet`](./lib/sets/BSTSet.ml) modules 
-both correctly implement the interface [`SetInterface`](./lib/sets/SetInterface.ml).       
-The files [`GeneratedSetPBTCode.ml`](./lib/sets/GeneratedSetPBTCode.ml) and [`GeneratedSetExecutable.ml`](./bin/GeneratedSetExecutable.ml) contain PBT code that is 
-automatically generated by Mica. 
-
-### Performance Benchmarks
-- Run `dune exec -- mica_qc_bench` to benchmark *both* Mica's code-generation executable 
-& the auto-generated PBT executables on all example modules
-- Run `dune exec -- mica_bench` to benchmark *only* the main Mica executable
-  - When this option is selected, the auto-generated PBT executables will not be benchmarked
-
-The following table contains performance benchmarks for Mica on the five example module signatures.       
-Benchmarks were conducted on an 2023 M2 Macbook Pro using Jane Street's [Core_bench](https://github.com/janestreet/core_bench) library, 
-which estimates Mica's runtime over a large no. of runs (~1000) using linear regression ([link](https://blog.janestreet.com/core_bench-micro-benchmarking-for-ocaml/)). 
-
-| **Example Module Signature** | **Runtime of Mica Parser & Code Generator** | **Runtime of Auto-Generated PBT executable** |
-| :--------------------------: | :-----------------------------------------: | :------------------------------------------: |
-|             Sets             |                  309.25 μs                  |                   2.55 ns                    |
-|            Stacks            |                  361.08 μs                  |                   2.54 ns                    |
-|         Polynomials          |                  302.82 μs                  |                   2.57 ns                    |
-|             Maps             |                  262.84 μs                  |                   2.56 ns                    |
-|           Regexes            |                  266.61 μs                  |                   2.57 ns                    |
-
-
+(This automatically generates new Dune stanzas that are needed for 
+the new test files to compile.)
+- Then fill in the newly-created `.ml` and `.expected` files with the 
+module signature under test (plus relevant PPX annotations), 
+and execute `dune runtest`. If the test output from Dune looks good, 
+run `dune promote` to update the `.expected` file with the contents 
+of the `.actual` file (which contains what the PPX actually generated from that test run). 
 
 ### Dependencies
-Please see `mica.opam` for a full list of dependencies. 
-Mica has been tested primarily with versions 4.13.1 & 5.0.0 of the OCaml base compiler (on an M1 Mac). 
-- [Base](https://github.com/janestreet/base) & [Base_quickcheck](https://github.com/janestreet/base_quickcheck)
-- [Core](https://github.com/janestreet/core) & [Core.Quickcheck](https://blog.janestreet.com/quickcheck-for-core/)
-- [Angstrom](https://github.com/inhabitedtype/angstrom)
-- [PPrint](https://github.com/fpottier/pprint)
-- [Stdio](https://github.com/janestreet/stdio)
-- [Re](https://github.com/ocaml/ocaml-re)
-- [Odoc](https://github.com/ocaml/ocaml-re) (for generating documentation)
-- [Core_bench](https://github.com/janestreet/core_bench) (for running benchmarks)
-- [OCaml-CI](https://github.com/ocurrent/ocaml-ci) (for CI)
-
-## Acknowledgements
-I'm incredibly fortunate to have two fantastic advisors: [Harry Goldstein](https://harrisongoldste.in) & Prof. [Benjamin Pierce](https://www.cis.upenn.edu/~bcpierce/). Harry & Benjamin have 
-provided lots of useful feedback on the design of Mica, and I'm extremely grateful for 
-their mentorship. 
-
-I'd also like to thank:
-- Penn's [PLClub](https://www.cis.upenn.edu/~plclub/) for their feedback on my presentation slides
-- [Jan Midtggard](http://janmidtgaard.dk) (Tarides) & Carl Eastlund (Jane Street) for answering 
-my questions about QCSTM and Core.Quickcheck
-- [Cassia Torczon](https://cassiatorczon.github.io) for the idea behind the name Mica
-
-
-## Origin of name
-Mica stands for "Module-Implementation Comparison Automation". Mica is also a type
-[mineral](https://en.wikipedia.org/wiki/Mica) commonly found in rocks -- this name was inspired 
-by several relevant OCaml libraries that are also named after stones/rocks:         
-- [Monolith](https://gitlab.inria.fr/fpottier/monolith) (Randomised testing tool for OCaml modules)
-- [Opal](https://github.com/pyrocat101/opal) (parser combinator library)
-- [Menhir](http://gallium.inria.fr/~fpottier/menhir/) (parser library)
-- [Obelisk](https://github.com/Lelio-Brun/Obelisk) (pretty-printer for Menhir)
-
-## References
-- Jane Street's [Base_quickcheck](https://opensource.janestreet.com/base_quickcheck/) & [Core.Quickcheck](https://blog.janestreet.com/quickcheck-for-core/)
-- [QuviQ QuickCheck](https://dl.acm.org/doi/10.1145/1159789.1159792)
-- [QCSTM](https://github.com/jmid/qcstm)   
-- [Model_quickcheck](https://github.com/suttonshire/model_quickcheck)
-- [Monolith](https://gitlab.inria.fr/fpottier/monolith)
-- [Articheck](http://www.lix.polytechnique.fr/Labo/Gabriel.Scherer/doc/articheck-long.pdf)
-- [*Advanced Topics in Types & Programming Languages*](https://www.cis.upenn.edu/~bcpierce/attapl/), Chapter 8
-- [*Real World OCaml*](https://dev.realworldocaml.org/index.html)
-
-The code for the example modules has been adapted from the following sources:
-
-Finite Sets:
-- [Cornell CS 3110 OCaml textbook](https://cs3110.github.io/textbook/chapters/ds/hash_tables.html#maps-as-hash-tables)
-- [Penn CIS 1200 lecture notes](https://www.seas.upenn.edu/~cis120/23su/files/120notes.pdf#page=3)
-- [Yale-NUS YSC2229 website](https://ilyasergey.net/YSC2229/week-11-bst.html)         
-
-Regex matchers:
-- Harry Goldstein's [livestream](https://www.youtube.com/watch?v=QaMU0wMMczU&t=2199s) on regex derivatives & DFAs
-
-Polynomials:
-- [Jean-Christophe Filliatre's implementation](https://www.lri.fr/~filliatr/ftp/ocaml/ds/poly.ml.html)
-- [Shayne Fletcher's implementation](https://blog.shaynefletcher.org/2017/03/polynomials-over-rings.html)
-
-Functional maps:  
-- [Colin Shaw's RB tree implementation](https://github.com/CompScienceClub/ocaml-red-black-trees)
-- [Benedikt Meurer RB tree implementation](https://github.com/bmeurer/ocaml-rbtrees/blob/master/src/rbset.ml)
-- [Cornell CS 3110 textbook, chapter 8](https://cs3110.github.io/textbook/chapters/ds/rb.html#id1)            
-- The implementation of red-black tree deletion follows the approach taken by 
-[Germane & Might (2014)](https://matt.might.net/papers/germane2014deletion.pdf).
-
-Stacks:
-- [Cornell CS 3110 textbook, chapter 5](https://cs3110.github.io/textbook/chapters/modules/functional_data_structures.html#stacks)
+- This repo has been tested with OCaml 5.0.0 on an M1 Mac.
+- We recommend having the following libraries installed:
+  - `ppxlib`
+  - `ppx_jane`
+  - `ppx_deriving.show`
+  - `base`
+  - `base_quickcheck`
+  - `core`
+  - `core_unix`
+  - `alcotest`
+  - `yojson`
+- The [`case-studies`](./case_studies/) subdirectory also requires the following libraries:
+  - `charset`
+  - `ocaml-integers`
+  - `stdint`
+- You can also run `dune utop` to see the output of functions in the codebase in a REPL.

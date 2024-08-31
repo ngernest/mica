@@ -1,53 +1,75 @@
-(lang dune 2.9)
-
-(name mica)
+(lang dune 3.7)
+(name ppx_mica)
 
 (generate_opam_files true)
+(source (github ngernest/ppx_mica))
 
-(source
- (github ngernest/mica))
-
-(authors "Ernest Ng <ngernest@seas.upenn.edu>")
-
-(maintainers "Ernest Ng <ngernest@seas.upenn.edu>")
-
+(authors "Ernest Ng <eyn5@cornell.edu>")
+(maintainers "Ernest Ng <eyn5@cornell.edu>")
 (license ISC)
 
-(documentation https://ngernest.github.io/mica/)
+(package
+ (name ppx_mica)
+ (synopsis "PPX deriver that automates differential testing for OCaml modules")
+ (depends
+   dune
+   (ocaml
+     (>= 4.13))
+   (odoc :with-doc)
+   (core
+     (>= v0.15.1))
+   (ppx_jane
+    (>= v0.15.0))
+   (ppx_assert
+    (>= v0.15.0))
+   (base
+    (>= v0.15.1))
+   (base_quickcheck
+    (>= v0.15.0))
+   (ppx_deriving 
+    (>= v5.2.1))
+   (ppxlib 
+    (>= v0.32.0))
+   (alcotest
+    (>= v1.7.0))))
+
+(package 
+ (name tyche_utils)
+ (synopsis "Utilities for Tyche to visualize results produced from tests run by Mica")
+ (depends
+   dune 
+   (yojson 
+     (>= v2.0.0))
+   (base
+     (>= v0.15.1))
+   (core_unix
+     (>= v0.15.0))))
 
 (package
- (name mica)
- (synopsis "Automated Differential Testing for OCaml Modules")
- (description
-  "Mica parses any generic OCaml module signature, and checks whether two modules implementing the signature are observationally equivalent by generating random sequences of commands using Core.QuickCheck.")
+ (name mica_case_studies)
+ (synopsis "Mica case studies (for OCaml Workshop 2024 talk)")
  (depends
-  (stdio
-   (>= v0.15.0))
-  (re
-   (>= 1.10.4))
-  (ppx_sexp_conv
-   (>= v0.15.1))
-  (ppx_jane
-   (>= v0.15.0))
-  (ppx_assert
-   (>= v0.15.0))
-  (core_unix
-   (>= v0.15.2))
-  (ocaml
-   (>= 4.13))
-  dune
-  (odoc :with-doc)
-  (angstrom
-   (>= 0.15.0))
-  (base
-   (>= v0.15.1))
-  (base_quickcheck
-   (>= v0.15.0))
-  (pprint
-   (>= 20220103))
-  (core
-   (>= v0.15.1))
-  (core_unix
-   (>= v0.15.0))
-  (core_bench
-   (>= v0.15.0))))
+   dune
+   (ocaml
+     (>= 4.13))
+   (odoc :with-doc)
+   (core
+     (>= v0.15.1))
+   (ppx_jane
+    (>= v0.15.0))
+   (ppx_assert
+    (>= v0.15.0))
+   (base
+    (>= v0.15.1))
+   (base_quickcheck
+    (>= v0.15.0))
+   (ppx_deriving 
+    (>= v5.2.1))
+   (ppxlib 
+    (>= v0.32.0))
+   (stdint 
+    (>= v0.7.2))
+   (integers 
+    (>= v0.7.0))
+   (charset 
+    (>= v0.1.0))))

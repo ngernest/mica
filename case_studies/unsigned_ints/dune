@@ -1,0 +1,12 @@
+(executable
+ (public_name mica_unsigned_ints)
+ (name mica_unsigned_ints)
+ (libraries ppx_mica tyche_utils core integers stdint)
+ (preprocess
+  (pps ppx_jane ppx_deriving.show ppx_mica))
+ (package mica_case_studies))
+
+(env
+ (dev
+  (flags
+   (:standard -g -w "-26-27-32-33-34-37-39"))))
