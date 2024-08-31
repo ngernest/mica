@@ -1,5 +1,2 @@
-.DS_Store
 _build
-*.txt
-.vscode/
-lib/Generated.ml
+.DS_Store

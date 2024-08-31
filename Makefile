@@ -1,27 +1,30 @@
-# Frontend to dune
-# Adapted from https://github.com/mjambon/dune-starter/tree/master
+.PHONY: default build install uninstall test clean format
+.IGNORE: format
 
-.PHONY: default build install uninstall clean
-
-default: build
+default:
+	opam update
+	opam install . --deps-only
+	dune build
 
 build:
 	dune build
 
 install:
-	opam install ./ --deps-only
+	opam update
+	opam install --yes . --deps-only
 
 uninstall:
-	dune uninstall
+	dune uninstall	
 
-# Remove any files that were automatically produced by Mica on a previous run
-clean-mica:
-	rm -f lib/generated.ml
-	rm -f bin/compare_impls.ml
-	touch bin/compare_impls.ml
+test:
+	dune runtest 
+
+unit_test: 
+	dune runtest test/utils_test	
 
 clean:
-	rm -f lib/generated.ml
-	rm -f bin/compare_impls.ml
-	touch bin/compare_impls.ml
 	dune clean
+	git clean -dfX
+
+format:
+	dune build @fmt --auto-promote
