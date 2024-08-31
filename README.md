@@ -129,7 +129,8 @@ The PPX code is organized as follows:
 
 Additionally, the [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
 creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/) (see [`tyche_utils.ml`](./lib/tyche_utils/tyche_utils.ml)). 
-- For more details about Tyche, we refer the reader to the [UIST '24 paper by Goldstein et al.](https://harrisongoldste.in/papers/uist24-tyche.pdf). 
+- Note: the Tyche-Mica integration is still work in progress (contact [Ernest Ng](mailto:eyn5@cornell.edu) for more details).
+- For more details about Tyche, we refer the reader to the [UIST '24 paper by Goldstein et al](https://harrisongoldste.in/papers/uist24-tyche.pdf). 
 
 ## Differences between the OCaml Workshop & ICFP SRC artifacts
 - The OCaml Workshop artifact (2024) includes a version of Mica that has been  
