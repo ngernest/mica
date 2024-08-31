@@ -16,7 +16,7 @@ let add_prime : string -> string = fun x -> x ^ "\'"
 let update_expr_arg_names (expr_args : string list) (args : string list) :
   string list =
   List.map args ~f:(fun x ->
-      if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
+    if List.mem (add_prime x) ~set:expr_args then add_prime x else x)
 
 (******************************************************************************)
 (** {1 Producing fresh identifiers} *)
@@ -51,7 +51,7 @@ let varnames_of_cstr_args ~(loc : Location.t) (args : constructor_arguments)
   | Pcstr_tuple tys -> List.map ~f:(fun ty -> mk_fresh ~loc ~f ty) tys
   | Pcstr_record lbl_decls ->
     List.map lbl_decls ~f:(fun { pld_name; pld_loc; _ } ->
-        gen_symbol ~prefix:pld_name.txt () |> f ~loc:pld_loc)
+      gen_symbol ~prefix:pld_name.txt () |> f ~loc:pld_loc)
 
 (** Takes [constructor_arguments] and produces a list of fresh identifiers 
     which each have type [pattern] 

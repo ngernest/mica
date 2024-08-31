@@ -132,27 +132,27 @@ module Mica = struct
 
     let test_bool () : unit =
       Quickcheck.test (gen_expr Bool) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
-          | _ -> failwith "failed bool")
+        match (I1.interp e, I2.interp e) with
+        | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
+        | _ -> failwith "failed bool")
 
     let test_int () : unit =
       Quickcheck.test (gen_expr Int) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValInt i1, ValInt i2 -> [%test_eq: int] i1 i2
-          | _ -> failwith "failed int")
+        match (I1.interp e, I2.interp e) with
+        | ValInt i1, ValInt i2 -> [%test_eq: int] i1 i2
+        | _ -> failwith "failed int")
 
     let test_int_option () : unit =
       Quickcheck.test (gen_expr IntOption) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValIntOption i1, ValIntOption i2 -> [%test_eq: int option] i1 i2
-          | _ -> failwith "failed int")
+        match (I1.interp e, I2.interp e) with
+        | ValIntOption i1, ValIntOption i2 -> [%test_eq: int option] i1 i2
+        | _ -> failwith "failed int")
 
     let test_int_list () : unit =
       Quickcheck.test (gen_expr IntList) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValIntList l1, ValIntList l2 -> [%test_eq: int list] l1 l2
-          | _ -> failwith "failed int")
+        match (I1.interp e, I2.interp e) with
+        | ValIntList l1, ValIntList l2 -> [%test_eq: int list] l1 l2
+        | _ -> failwith "failed int")
 
     let run_tests () : unit =
       test_bool ();

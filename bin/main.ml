@@ -132,19 +132,19 @@ include struct
         include struct
           let test_bool () =
             Quickcheck.test (gen_expr Bool) ~f:(fun e ->
-                match (I1.interp e, I2.interp e) with
-                | ValBool bool__038_, ValBool bool__037_ ->
-                  [%test_eq: bool] bool__038_ bool__037_
-                | _ -> failwith "impossible")
+              match (I1.interp e, I2.interp e) with
+              | ValBool bool__038_, ValBool bool__037_ ->
+                [%test_eq: bool] bool__038_ bool__037_
+              | _ -> failwith "impossible")
 
           let _ = test_bool
 
           let test_int () =
             Quickcheck.test (gen_expr Int) ~f:(fun e ->
-                match (I1.interp e, I2.interp e) with
-                | ValInt int__040_, ValInt int__039_ ->
-                  [%test_eq: int] int__040_ int__039_
-                | _ -> failwith "impossible")
+              match (I1.interp e, I2.interp e) with
+              | ValInt int__040_, ValInt int__039_ ->
+                [%test_eq: int] int__040_ int__039_
+              | _ -> failwith "impossible")
 
           let _ = test_int
 
@@ -273,4 +273,3 @@ module BSTSet : S = struct
     let commonElts = List.filter lst2 ~f:(fun x -> mem x s1) in
     List.fold commonElts ~init:empty ~f:(fun acc x -> add x acc)
 end
-

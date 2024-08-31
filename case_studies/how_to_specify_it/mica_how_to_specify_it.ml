@@ -110,28 +110,28 @@ module Mica = struct
 
     let test_int () : unit =
       Quickcheck.test (gen_expr Int) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValInt n1, ValInt n2 -> [%test_eq: int] n1 n2
-          | v1, v2 -> failwith "failed int")
+        match (I1.interp e, I2.interp e) with
+        | ValInt n1, ValInt n2 -> [%test_eq: int] n1 n2
+        | v1, v2 -> failwith "failed int")
 
     let test_int_option () : unit =
       Quickcheck.test (gen_expr IntOption) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValIntOption n1, ValIntOption n2 -> [%test_eq: int option] n1 n2
-          | v1, v2 -> failwith "failed int option")
+        match (I1.interp e, I2.interp e) with
+        | ValIntOption n1, ValIntOption n2 -> [%test_eq: int option] n1 n2
+        | v1, v2 -> failwith "failed int option")
 
     let test_int_list () : unit =
       Quickcheck.test (gen_expr IntList) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValIntList xs, ValIntList ys -> [%test_eq: int list] xs ys
-          | _ -> failwith "failed int list")
+        match (I1.interp e, I2.interp e) with
+        | ValIntList xs, ValIntList ys -> [%test_eq: int list] xs ys
+        | _ -> failwith "failed int list")
 
     let test_int_int_list () : unit =
       Quickcheck.test (gen_expr IntIntList) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValIntIntList xs, ValIntIntList ys ->
-            [%test_eq: (int * int) list] xs ys
-          | _ -> failwith "failed (int * int) list")
+        match (I1.interp e, I2.interp e) with
+        | ValIntIntList xs, ValIntIntList ys ->
+          [%test_eq: (int * int) list] xs ys
+        | _ -> failwith "failed (int * int) list")
 
     let run_tests () : unit =
       test_int ();

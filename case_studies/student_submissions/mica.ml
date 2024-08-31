@@ -208,8 +208,8 @@ module Mica = struct
       | Ok _ -> ()
       | Error errs ->
         List.iter errs ~f:(fun (e, (ty, v1, v2, num_trials)) ->
-            Out_channel.fprintf chan "%d,%s,%s,%s,%s,%d\n" i ty
-              (Sexp.to_string (sexp_of_expr e))
-              v1 v2 num_trials)
+          Out_channel.fprintf chan "%d,%s,%s,%s,%s,%d\n" i ty
+            (Sexp.to_string (sexp_of_expr e))
+            v1 v2 num_trials)
   end
 end

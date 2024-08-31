@@ -126,19 +126,19 @@ module Mica = struct
       include struct
         let test_bool () =
           Quickcheck.test (gen_expr Bool) ~f:(fun e ->
-              match (I1.interp e, I2.interp e) with
-              | ValBool bool__041_, ValBool bool__040_ ->
-                [%test_eq: bool] bool__041_ bool__040_
-              | _ -> failwith "impossible")
+            match (I1.interp e, I2.interp e) with
+            | ValBool bool__041_, ValBool bool__040_ ->
+              [%test_eq: bool] bool__041_ bool__040_
+            | _ -> failwith "impossible")
 
         let _ = test_bool
 
         let test_int () =
           Quickcheck.test (gen_expr Int) ~f:(fun e ->
-              match (I1.interp e, I2.interp e) with
-              | ValInt int__043_, ValInt int__042_ ->
-                [%test_eq: int] int__043_ int__042_
-              | _ -> failwith "impossible")
+            match (I1.interp e, I2.interp e) with
+            | ValInt int__043_, ValInt int__042_ ->
+              [%test_eq: int] int__043_ int__042_
+            | _ -> failwith "impossible")
 
         let _ = test_int
 

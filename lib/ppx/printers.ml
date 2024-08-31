@@ -82,7 +82,7 @@ let rec string_of_monomorphized_ty (ty : core_type) : string =
   | Ptyp_tuple tys ->
     let ty_strs =
       List.map tys ~f:(fun ty ->
-          string_of_monomorphized_ty ty |> String.capitalize_ascii) in
+        string_of_monomorphized_ty ty |> String.capitalize_ascii) in
     String.concat ~sep:"" ty_strs ^ "Product"
   | Ptyp_arrow (_, t1, t2) ->
     string_of_monomorphized_ty t1 ^ string_of_monomorphized_ty t2

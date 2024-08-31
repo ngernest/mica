@@ -91,10 +91,10 @@ module Mica = struct
 
     let test_string_option () : unit =
       Quickcheck.test (gen_expr StringOption) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValStringOption s1, ValStringOption s2 ->
-            [%test_eq: string option] s1 s2
-          | _ -> failwith "failed bool")
+        match (I1.interp e, I2.interp e) with
+        | ValStringOption s1, ValStringOption s2 ->
+          [%test_eq: string option] s1 s2
+        | _ -> failwith "failed bool")
 
     let run_tests () : unit =
       test_string_option ();

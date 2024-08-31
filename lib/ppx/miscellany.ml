@@ -92,10 +92,10 @@ let invert_assoc_list (lst : ('a * 'b) list) : ('b * 'a) list =
 let merge_list_with_assoc_list (xs : 'a list) (yzs : ('b * 'c) list)
   ~(eq : 'a -> 'b -> bool) : ('a * 'c) list =
   List.map yzs ~f:(fun (y, z) ->
-      match List.find_opt ~f:(fun x -> eq x y) xs with
-      | Some x' -> (x', z)
-      | None ->
-        failwith "failed to match an element of ['a] with an element of ['b]")
+    match List.find_opt ~f:(fun x -> eq x y) xs with
+    | Some x' -> (x', z)
+    | None ->
+      failwith "failed to match an element of ['a] with an element of ['b]")
 
 (** Returns true the abstract type declaration in a [signature] 
     is parameterized (e.g. ['a t]), else returns [false] *)

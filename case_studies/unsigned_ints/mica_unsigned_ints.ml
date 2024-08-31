@@ -235,27 +235,27 @@ module Mica = struct
 
     let test_bool () : unit =
       Quickcheck.test (gen_expr Bool) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
-          | _ -> failwith "failed bool")
+        match (I1.interp e, I2.interp e) with
+        | ValBool b1, ValBool b2 -> [%test_eq: bool] b1 b2
+        | _ -> failwith "failed bool")
 
     let test_int () : unit =
       Quickcheck.test (gen_expr Int) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValInt i1, ValInt i2 -> [%test_eq: int] i1 i2
-          | _ -> failwith "failed int")
+        match (I1.interp e, I2.interp e) with
+        | ValInt i1, ValInt i2 -> [%test_eq: int] i1 i2
+        | _ -> failwith "failed int")
 
     let test_int64 () : unit =
       Quickcheck.test (gen_expr Int64) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValInt64 i1, ValInt64 i2 -> [%test_eq: int64] i1 i2
-          | _ -> failwith "failed int")
+        match (I1.interp e, I2.interp e) with
+        | ValInt64 i1, ValInt64 i2 -> [%test_eq: int64] i1 i2
+        | _ -> failwith "failed int")
 
     let test_string () : unit =
       Quickcheck.test (gen_expr String) ~f:(fun e ->
-          match (I1.interp e, I2.interp e) with
-          | ValString s1, ValString s2 -> [%test_eq: string] s1 s2
-          | _ -> failwith "failed int")
+        match (I1.interp e, I2.interp e) with
+        | ValString s1, ValString s2 -> [%test_eq: string] s1 s2
+        | _ -> failwith "failed int")
 
     let run_tests () : unit =
       test_bool ();
