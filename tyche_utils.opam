@@ -9,7 +9,7 @@ homepage: "https://github.com/ngernest/ppx_mica"
 bug-reports: "https://github.com/ngernest/ppx_mica/issues"
 depends: [
   "dune" {>= "3.7"}
-  "yojson" {>= "v2.0.0"}
+  "yojson"
   "base" {>= "v0.15.1"}
   "core_unix" {>= "v0.15.0"}
   "odoc" {with-doc}

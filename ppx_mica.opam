@@ -15,9 +15,9 @@ depends: [
   "ppx_assert" {>= "v0.15.0"}
   "base" {>= "v0.15.1"}
   "base_quickcheck" {>= "v0.15.0"}
-  "ppx_deriving" {>= "v5.2.1"}
-  "ppxlib" {>= "v0.32.0"}
-  "alcotest" {>= "v1.7.0"}
+  "ppx_deriving"
+  "ppxlib"
+  "alcotest"
 ]
 build: [
   ["dune" "subst"] {dev}
