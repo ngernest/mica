@@ -131,8 +131,6 @@ module Mica = struct
               [%test_eq: bool] bool__041_ bool__040_
             | _ -> failwith "impossible")
 
-        let _ = test_bool
-
         let test_int () =
           Quickcheck.test (gen_expr Int) ~f:(fun e ->
             match (I1.interp e, I2.interp e) with
@@ -140,14 +138,10 @@ module Mica = struct
               [%test_eq: int] int__043_ int__042_
             | _ -> failwith "impossible")
 
-        let _ = test_int
-
         let run_tests () =
           test_bool ();
           test_int ();
           printf "Mica: OK, passed %d observational equivalence tests.\n" 20000
-
-        let _ = run_tests
       end
     end
   end

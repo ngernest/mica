@@ -124,7 +124,7 @@ creating JSON files that are ingested by Tyche (see [`tyche_utils.ml`](./lib/tyc
   (written using `Angstrom`) and pretty-prints the derived PBT code to a new `.ml` file
   (using `PPrint`). This artifact derives code at runtime and is less robust compared to 
   the OCaml Workshop artifact.
-  - [Link to SRC prototype artifact](https://github.com/ngernest/mica/releases/tag/icfp23src_artifact)).
+  - [Link to SRC prototype artifact](https://github.com/ngernest/mica/releases/tag/icfp23src_artifact).
 
 ## Notes for Implementors
 ### Testing 

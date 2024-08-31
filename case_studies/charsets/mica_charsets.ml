@@ -5,6 +5,12 @@ open Generator
 module M1 = Stdlib_Charset
 module M2 = Yallop_Charset
 
+(******************************************************************************)
+(** The following is very similar to the code that Mica would generate
+   automatically. The only manual modifications are that we annotate the 
+   [expr] type with [@@deriving sexp_of] and pass [sexp_of_expr] as an optional
+   argument to [Quickcheck.test] (to aid debugging).   *)
+
 module Mica = struct
   type expr =
     (* T *)
@@ -25,7 +31,7 @@ module Mica = struct
     | Min_elt_opt of expr
     | Max_elt_opt of expr
     | Choose_opt of expr
-  [@@deriving sexp_of]
+  [@@deriving show { with_path = false }, sexp_of]
 
   type ty = Bool | Int | CharOption | CharList | T
 
