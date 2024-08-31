@@ -1,4 +1,4 @@
-module type CharsetSig = sig
+module type S = sig
   type t
 
   val empty : t
@@ -11,14 +11,11 @@ module type CharsetSig = sig
   val diff : t -> t -> t
   val cardinal : t -> int
   val elements : t -> char list
-  val min_elt : t -> char
   val min_elt_opt : t -> char option
-  val max_elt : t -> char
   val max_elt_opt : t -> char option
-  val choose : t -> char
   val choose_opt : t -> char option
   val is_empty : t -> bool
 end
 
-module Stdlib_Charset : CharsetSig = Set.Make (Char)
-module Yallop_Charset : CharsetSig = Charset
+module Stdlib_Charset : S = Set.Make (Char)
+module Yallop_Charset : S = Charset
