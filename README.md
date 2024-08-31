@@ -75,6 +75,9 @@ module T = Mica.TestHarness(M1)(M2)
 let () = T.run_tests ()
 ```
 
+A minimum working example of how to use Mica can be found in the [`bin`](./bin) subdirectory. 
+Also, the [case studies](#case-studies) section of this README contains many more examples!
+
 ## Compilation notes
 There is a known issue with Ppxlib ([#338](https://github.com/ocaml-ppx/ppxlib/issues/338), [#342](https://github.com/ocaml-ppx/ppxlib/issues/342)) which causes Ppxlib to error when Dune is promoting changes (i.e. after one runs `dune build --auto-promote`, during which Dune inserts the code derived by Mica into the source file). 
 
@@ -125,7 +128,8 @@ The PPX code is organized as follows:
   - [`miscellany.ml`](./lib/ppx/miscellany.ml): Miscellaneous helpers for working with lists & strings
 
 Additionally, the [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
-creating JSON files that are ingested by Tyche (see [`tyche_utils.ml`](./lib/tyche_utils/tyche_utils.ml)). 
+creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/) (see [`tyche_utils.ml`](./lib/tyche_utils/tyche_utils.ml)). 
+- For more details about Tyche, we refer the reader to the [UIST '24 paper by Goldstein et al.](https://harrisongoldste.in/papers/uist24-tyche.pdf). 
 
 ## Differences between the OCaml Workshop & ICFP SRC artifacts
 - The OCaml Workshop artifact (2024) includes a version of Mica that has been  
