@@ -18,6 +18,9 @@ modules implementing the same signature. Users annotate module signatures
 with the directive `[@@deriving mica]`, and at compile-time, Mica derives
 specialized [property-based testing](https://www.youtube.com/watch?v=qmA9qhaECcE) (PBT) code that checks if two modules implementing the signature are observationally equivalent. (Under the hood, Mica uses Jane Street's [`Core.Quickcheck`](https://blog.janestreet.com/quickcheck-for-core/) PBT library.)
 
+Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The [OCaml Workshop paper](https://www.arxiv.org/abs/2408.14561) contains a lot more 
+details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact. 
+
 Here is how we envisage users interacting with Mica:      
 Suppose modules `M1` & `M2` both implement the module signature `S`. Users insert the directive `[@@deriving_inline mica]` beneath the definition of `S`, like so:
 ```ocaml
@@ -36,7 +39,14 @@ Then, after users run `dune build --auto-promote`, the derived PBT code is autom
 Then, after running `dune build`, Mica derives the following PBT code:
 ```ocaml 
 module Mica = struct 
-  (** Symbolic expressions *)
+  (** [expr] is an inductively-defined algebraic data type 
+      representing {i symbolic expressions}. 
+      
+      Each [val] declaration in the module signature [S] corresponds to a 
+      cosntructor for [expr] that shares the same name, arity & argument types. 
+      - Type variables ['a] are instantiated with [int]
+      - Function arguments of type ['a t] correpond to
+        constructor arguments of type [expr] *)
   type expr =
     | Empty
     | Is_empty of expr
@@ -63,7 +73,8 @@ module Mica = struct
 
   (** Functor that tests [M1] and [M2] for observational equivalence *)
   module TestHarness (M1 : S) (M2 : S) = struct 
-    ...
+    (* Runs all observational equivalence tests *)
+    let run_tests : unit -> unit = ... 
   end
 end
 ```
@@ -74,6 +85,9 @@ end
 module T = Mica.TestHarness(M1)(M2)
 let () = T.run_tests ()
 ```
+- **Note**: Mica only tests for observational equivalence at *concrete types* (e.g. `int`, `string option`), 
+and not abstract types defined in a module (e.g. `'a M.t`), since abstract types have a more abstract notion 
+of equality different from OCaml's standard notion of polymorphic equality. 
 
 A minimum working example of how to use Mica can be found in the [`bin`](./bin) subdirectory. 
 Also, the [case studies](#case-studies) section of this README contains many more examples!
