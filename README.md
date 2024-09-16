@@ -1,6 +1,6 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
-> **Note**: Mica is a research prototype and is not production-ready at the moment. Please contact Ernest Ng (`eyn5@cornell.edu`) if you'd like to contribute to Mica or have any questions!
+> **Note**: Mica is a research prototype and is not production-ready at the moment. Please contact Ernest Ng (`ernest@cs.cornell.edu`) if you'd like to contribute to Mica or have any questions!
 
 **README Contents:**
 - [Overview](#overview)
@@ -143,7 +143,7 @@ The PPX code is organized as follows:
 
 Additionally, the [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
 creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/) (see [`tyche_utils.ml`](./lib/tyche_utils/tyche_utils.ml)). 
-- Note: the Tyche-Mica integration is still work in progress (contact [Ernest Ng](mailto:eyn5@cornell.edu) for more details).
+- Note: the Tyche-Mica integration is still work in progress (contact [Ernest Ng](mailto:ernest@cs.cornell.edu) for more details).
 - For more details about Tyche, we refer the reader to the [UIST '24 paper by Goldstein et al](https://harrisongoldste.in/papers/uist24-tyche.pdf). 
 
 ## Differences between the OCaml Workshop & ICFP SRC artifacts
