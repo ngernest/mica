@@ -18,6 +18,8 @@ modules implementing the same signature. Users annotate module signatures
 with the directive `[@@deriving mica]`, and at compile-time, Mica derives
 specialized [property-based testing](https://www.youtube.com/watch?v=qmA9qhaECcE) (PBT) code that checks if two modules implementing the signature are observationally equivalent. (Under the hood, Mica uses Jane Street's [`Core.Quickcheck`](https://blog.janestreet.com/quickcheck-for-core/) PBT library.)
 
+An online demo of Mica is available [**here**](https://ngernest.github.io/mica/).
+
 Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The [OCaml Workshop paper](https://www.arxiv.org/abs/2408.14561) contains a lot more 
 details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact. 
 
