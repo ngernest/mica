@@ -2,10 +2,10 @@
 (name ppx_mica)
 
 (generate_opam_files true)
-(source (github ngernest/ppx_mica))
+(source (github ngernest/mica))
 
-(authors "Ernest Ng <eyn5@cornell.edu>")
-(maintainers "Ernest Ng <eyn5@cornell.edu>")
+(authors "Ernest Ng <ernest@cs.cornell.edu>")
+(maintainers "Ernest Ng <ernest@cs.cornell.edu>")
 (license ISC)
 
 (package
