@@ -1,5 +1,7 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
+(backup branch with non-empty contents in `/bin`)
+
 > **Note**: Mica is a research prototype and is not production-ready at the moment. Please contact Ernest Ng (`ernest@cs.cornell.edu`) if you'd like to contribute to Mica or have any questions!
 
 **README Contents:**
