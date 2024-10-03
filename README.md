@@ -172,9 +172,4 @@ of the `.actual` file (which contains what the PPX actually generated from that 
   - `core`
   - `core_unix`
   - `alcotest`
-  - `yojson`
-- The [`case-studies`](./case_studies/) subdirectory also requires the following libraries:
-  - `charset`
-  - `ocaml-integers`
-  - `stdint`
 - You can also run `dune utop` to see the output of functions in the codebase in a REPL.
