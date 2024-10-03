@@ -100,7 +100,7 @@ There is a known issue with Ppxlib ([#338](https://github.com/ocaml-ppx/ppxlib/i
 To fix this issue, remove `[@@deriving_inline mica]` and `[@@@end]` from the source file while keeping the code inserted by Dune/Mica. Then, recompile by running `dune build again`. This second compilation run should complete successfully!
 
 ## Case Studies
-Code for the following case studies (along with the code automatically derived by Mica) is located in the ancillary [`mica_case_studies`]([./case_studies/](https://github.com/ngernest/mica_case_studies)) repo.      
+Code for the following case studies (along with the code automatically derived by Mica) is located in the ancillary [`mica_case_studies`](https://github.com/ngernest/mica_case_studies) repo.      
 
 ## An overview of the codebase
 The [`lib`](./lib) subdirectory contains the code for the Mica PPX deriver.      
