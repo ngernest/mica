@@ -29,15 +29,4 @@
    ppx_deriving 
    ppxlib 
    alcotest))
-
-(package 
- (name tyche_utils)
- (synopsis "Utilities for Tyche to visualize results produced from tests run by Mica")
- (depends
-   dune 
-   yojson 
-   (base
-     (>= v0.15.1))
-   (core_unix
-     (>= v0.15.0))))
-     
+   
