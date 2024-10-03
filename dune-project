@@ -40,27 +40,4 @@
      (>= v0.15.1))
    (core_unix
      (>= v0.15.0))))
-
-(package
- (name mica_case_studies)
- (synopsis "Mica case studies (for OCaml Workshop 2024 talk)")
- (depends
-   dune
-   (ocaml
-     (>= 4.13))
-   (odoc :with-doc)
-   (core
-     (>= v0.15.1))
-   (ppx_jane
-    (>= v0.15.0))
-   (ppx_assert
-    (>= v0.15.0))
-   (base
-    (>= v0.15.1))
-   (base_quickcheck
-    (>= v0.15.0))
-   ppx_deriving
-   ppxlib 
-   stdint 
-   integers 
-   charset))
+     
