@@ -2,7 +2,7 @@
  (name ppx_mica)
  (public_name ppx_mica)
  (kind ppx_deriver)
- (libraries base base_quickcheck core ppxlib tyche_utils)
+ (libraries base base_quickcheck core ppxlib)
  (preprocess
   (pps ppx_jane ppxlib.metaquot ppx_deriving.show))
- (ppx_runtime_libraries core tyche_utils ppx_deriving.show))
+ (ppx_runtime_libraries core ppx_deriving.show))

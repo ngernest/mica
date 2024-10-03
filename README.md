@@ -100,51 +100,31 @@ There is a known issue with Ppxlib ([#338](https://github.com/ocaml-ppx/ppxlib/i
 To fix this issue, remove `[@@deriving_inline mica]` and `[@@@end]` from the source file while keeping the code inserted by Dune/Mica. Then, recompile by running `dune build again`. This second compilation run should complete successfully!
 
 ## Case Studies
-Code for the following case studies (along with the code automatically derived by Mica) can be found in the [`case-studies`](./case_studies/) subdirectory. For each example (where possible), we have included an executable which runs the PBT code automatically produced by Mica.
-
-Here are the case studies:
-- Finite Sets (lists & BSTs)  ([link](./case_studies/sets/))
-  - Executable: Run `dune exec -- mica_sets`
-- Regular Expression Matchers (Brzozowski Derivatives & DFAs) ([link](./case_studies/regexes/))
-  - Executable: Run `dune exec -- mica_regexes`
-- Polynomials (Horner schema & monomial-based representations) ([link](./case_studies/polynomials/))
-  - Executable: Run `dune exec -- mica_polynomials`
-- Ephemeral Queues (`Base.Queue` & `Base.Linked_queue`) ([link](./case_studies/queues/))
-  - Executable: Run `dune exec -- mica_queues`
-- Unsigned integer arithmetic (the `stdint` and `ocaml-integer` libraries) ([link](./case_studies/unsigned_ints/))
-  - Executable: Run `dune exec -- mica_unsigned_ints`
-- Character sets (the `charset` library & the standard library's `Set.Make(Char)` module) ([link](./case_studies/charsets/))
-  - Executable: Run `dune exec -- mica_charsets`
-- Persistent maps (red-black trees & association lists) ([link](./case_studies/maps/))
-  - Executable: Run `dune exec -- mica_maps`
-- John Hughes's *How to Specify It* (catching bugs in BST implementations) ([link](./case_studies/how_to_specify_it/))
-  - Executable: Run `dune exec -- mica_how_to_specify_it` (note: the executable will terminate after finding the first bug)
-- UPenn CIS 1200 student homework submissions ([link](./case_studies/student_submissions/))
-  - Note: no executable is available for this case study (to avoid posting homework solutions online)
+Code for the following case studies (along with the code automatically derived by Mica) is located in the ancillary [`mica_case_studies`]([./case_studies/](https://github.com/ngernest/mica_case_studies)) repo.      
 
 ## An overview of the codebase
-The [`lib/ppx`](./lib/ppx) subdirectory contains the code for the Mica PPX deriver.      
+The [`lib`](./lib) subdirectory contains the code for the Mica PPX deriver.      
 The PPX code is organized as follows:
-- [`ppx_mica.ml`](./lib/ppx/ppx_mica.ml): Declares the main Mica PPX deriver
-- [`type_deriver.ml`](./lib/ppx/type_deriver.ml): Derives the definitions of auxiliary data types & the `gen_expr` Quickcheck generator
-- [`interp_deriver.ml`](./lib/ppx/interp_deriver.ml): Derives the `Interpret` functor
-- [`test_harness_deriver.ml`](./lib/ppx/test_harness_deriver.ml): Derives the `TestHarness` functor
-- [`overall_deriver.ml`](./lib/ppx/overall_deriver.ml): Produces a module called `Mica` containing all the automatically derived code
-- [`utils.ml`](./lib/ppx/utils.ml): Includes all the following helper modules for convenience:
-  - [`builders.ml`](./lib/ppx/builders.ml): Functions for creating AST nodes
-  - [`getters.ml`](./lib/ppx/getters.ml): Functions for inspecting AST nodes
-  - [`equality.ml`](./lib/ppx/equality.ml): Location-agnostic equality functions for `Parsetree` types 
-  - [`lident.ml`](./lib/ppx/lident.ml): Utilities for working with the `Longident` type
-  - [`names.ml`](./lib/ppx/names.ml): Functions for generating fresh variable names & quoting expressions
-  - [`printers.ml`](./lib/ppx/printers.ml): Pretty-printers for AST types + functions for monomorphizing types
-  - [`errors.ml`](./lib/ppx/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
-  - [`inv_ctx.ml`](./lib/ppx/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
-  - [`let_open.ml`](./lib/ppx/let_open.ml): Helpers for producing `let open` expressions
-  - [`include.ml`](./lib/ppx/include.ml): Helpers for producing `include` statements
-  - [`miscellany.ml`](./lib/ppx/miscellany.ml): Miscellaneous helpers for working with lists & strings
+- [`ppx_mica.ml`](./lib/ppx_mica.ml): Declares the main Mica PPX deriver
+- [`type_deriver.ml`](./lib/type_deriver.ml): Derives the definitions of auxiliary data types & the `gen_expr` Quickcheck generator
+- [`interp_deriver.ml`](./lib/interp_deriver.ml): Derives the `Interpret` functor
+- [`test_harness_deriver.ml`](./lib/test_harness_deriver.ml): Derives the `TestHarness` functor
+- [`overall_deriver.ml`](./lib/overall_deriver.ml): Produces a module called `Mica` containing all the automatically derived code
+- [`utils.ml`](./lib/utils.ml): Includes all the following helper modules for convenience:
+  - [`builders.ml`](./lib/builders.ml): Functions for creating AST nodes
+  - [`getters.ml`](./lib/getters.ml): Functions for inspecting AST nodes
+  - [`equality.ml`](./lib/equality.ml): Location-agnostic equality functions for `Parsetree` types 
+  - [`lident.ml`](./lib/lident.ml): Utilities for working with the `Longident` type
+  - [`names.ml`](./lib/names.ml): Functions for generating fresh variable names & quoting expressions
+  - [`printers.ml`](./lib/printers.ml): Pretty-printers for AST types + functions for monomorphizing types
+  - [`errors.ml`](./lib/errors.ml): Functions for error handling (embedding errors as extension nodes in the derived code)
+  - [`inv_ctx.ml`](./lib/inv_ctx.ml): The "inverse typing context", mapping types `ty` to expressions of type `ty`
+  - [`let_open.ml`](./lib/let_open.ml): Helpers for producing `let open` expressions
+  - [`include.ml`](./lib/include.ml): Helpers for producing `include` statements
+  - [`miscellany.ml`](./lib/miscellany.ml): Miscellaneous helpers for working with lists & strings
 
-Additionally, the [`lib/tyche_utils`](./lib/tyche_utils) subdirectory contains a small library for 
-creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/) (see [`tyche_utils.ml`](./lib/tyche_utils/tyche_utils.ml)). 
+The ancillary [`mica_tyche_utils`](https://github.com/ngernest/mica_tyche_utils) repo contains a small library for 
+creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/).
 - Note: the Tyche-Mica integration is still work in progress (contact [Ernest Ng](mailto:ernest@cs.cornell.edu) for more details).
 - For more details about Tyche, we refer the reader to the [UIST '24 paper by Goldstein et al](https://harrisongoldste.in/papers/uist24-tyche.pdf). 
 
@@ -154,12 +134,12 @@ creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/) 
   derives code at compile-time and is more feature rich (e.g. is compatible with Tyche). 
   - The `main` branch of this repo currently contains the OCaml Workshop artifact.
 
-- The ICFP SRC artifact (2023) contains a Mica prototype that was implemented 
-  as a command-line script. This prototype contains a parser for ML module signatures
-  (written using `Angstrom`) and pretty-prints the derived PBT code to a new `.ml` file
-  (using `PPrint`). This artifact derives code at runtime and is less robust compared to 
-  the OCaml Workshop artifact.
-  - [Link to SRC prototype artifact](https://github.com/ngernest/mica/releases/tag/icfp23src_artifact).
+- The ICFP SRC artifact (2023) contained a Mica prototype that was implemented 
+  as a command-line script. This prototype contained a parser for ML module signatures
+  (written using `Angstrom`) and pretty-printed the derived PBT code to a new `.ml` file
+  (using `PPrint`). This artifact derived code at runtime and is less robust compared to 
+  the newer OCaml Workshop artifact.
+  - Contact Ernest (`ernest@cs.cornell.edu`) for access to the (now-deprecated) ICFP '23 SRC artifact. 
 
 ## Notes for Implementors
 ### Testing changes locally

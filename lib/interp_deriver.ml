@@ -99,18 +99,18 @@ let mk_interp ~(loc : location) ?(abs_ty_parameterized = false)
   (* Each [expr] constructor corresponds to the LHS of a pattern match case *)
   let cases : case list =
     List.map expr_cstrs ~f:(fun (expr_cstr, args, gamma, ret_ty) ->
-      let lhs : pattern = ppat_construct ~loc expr_cstr args in
-      let params : interp_case_rhs_params =
-        { loc;
-          gamma;
-          mod_name = "M";
-          abs_ty_parameterized;
-          expr_cstr;
-          args;
-          ret_ty
-        } in
-      let rhs : expression = mk_interp_case_rhs params in
-      case ~lhs ~guard:None ~rhs) in
+        let lhs : pattern = ppat_construct ~loc expr_cstr args in
+        let params : interp_case_rhs_params =
+          { loc;
+            gamma;
+            mod_name = "M";
+            abs_ty_parameterized;
+            expr_cstr;
+            args;
+            ret_ty
+          } in
+        let rhs : expression = mk_interp_case_rhs params in
+        case ~lhs ~guard:None ~rhs) in
   let arg_ident = evar "e" ~loc in
   let func_body : expression = pexp_match ~loc arg_ident cases in
   [%stri let rec interp e = [%e func_body]]

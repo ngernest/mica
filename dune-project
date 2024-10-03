@@ -26,41 +26,9 @@
     (>= v0.15.1))
    (base_quickcheck
     (>= v0.15.0))
-   ppx_deriving 
-   ppxlib 
-   alcotest))
-
-(package 
- (name tyche_utils)
- (synopsis "Utilities for Tyche to visualize results produced from tests run by Mica")
- (depends
-   dune 
-   yojson 
-   (base
-     (>= v0.15.1))
-   (core_unix
-     (>= v0.15.0))))
-
-(package
- (name mica_case_studies)
- (synopsis "Mica case studies (for OCaml Workshop 2024 talk)")
- (depends
-   dune
-   (ocaml
-     (>= 4.13))
-   (odoc :with-doc)
-   (core
-     (>= v0.15.1))
-   (ppx_jane
-    (>= v0.15.0))
-   (ppx_assert
-    (>= v0.15.0))
-   (base
-    (>= v0.15.1))
-   (base_quickcheck
-    (>= v0.15.0))
-   ppx_deriving
-   ppxlib 
-   stdint 
-   integers 
-   charset))
+   (ppx_deriving 
+    (>= 6.0.2))
+   (ppxlib 
+    (>= 0.33.0))
+   (alcotest 
+    (>= 1.8.0))))
