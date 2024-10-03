@@ -16,33 +16,33 @@ let mk_expr_cstrs (sig_items : signature) :
   (constructor_declaration * core_type) list =
   let abs_ty_names = get_abs_ty_names sig_items in
   List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; _ } ->
-    match psig_desc with
-    | Psig_type (_, _) -> []
-    | Psig_value { pval_name; pval_type; pval_loc; _ } ->
-      let name : string = String.capitalize_ascii pval_name.txt in
-      (* Exclude the return type of the function from the list of arg types for
-         the [expr] constructor *)
-      let arg_tys =
-        remove_last (get_arg_tys_of_expr_cstr pval_type abs_ty_names) in
-      (* Return type of the function *)
-      let ret_ty = get_ret_ty pval_type in
-      (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
-    | Psig_attribute _ -> failwith "TODO: handle attribute [@@@id]"
-    | Psig_extension (_, _) -> failwith "TODO: handle extensions"
-    | _ ->
-      failwith
-        "TODO: not sure how to handle other kinds of [signature_item_desc]")
+      match psig_desc with
+      | Psig_type (_, _) -> []
+      | Psig_value { pval_name; pval_type; pval_loc; _ } ->
+        let name : string = String.capitalize_ascii pval_name.txt in
+        (* Exclude the return type of the function from the list of arg types
+           for the [expr] constructor *)
+        let arg_tys =
+          remove_last (get_arg_tys_of_expr_cstr pval_type abs_ty_names) in
+        (* Return type of the function *)
+        let ret_ty = get_ret_ty pval_type in
+        (mk_cstr ~name ~loc:pval_loc ~arg_tys, ret_ty) :: acc
+      | Psig_attribute _ -> failwith "TODO: handle attribute [@@@id]"
+      | Psig_extension (_, _) -> failwith "TODO: handle extensions"
+      | _ ->
+        failwith
+          "TODO: not sure how to handle other kinds of [signature_item_desc]")
   |> List.rev
 
 (** Extracts the unique return types of all [val] declarations within a 
       module signature *)
 let uniq_ret_tys (sig_items : signature) : core_type list =
   List.fold_left sig_items ~init:[] ~f:(fun acc { psig_desc; _ } ->
-    match psig_desc with
-    | Psig_value { pval_type; _ } ->
-      let ty = get_ret_ty pval_type in
-      if List.mem ty ~set:acc then acc else ty :: acc
-    | _ -> acc)
+      match psig_desc with
+      | Psig_value { pval_type; _ } ->
+        let ty = get_ret_ty pval_type in
+        if List.mem ty ~set:acc then acc else ty :: acc
+      | _ -> acc)
   |> List.rev
 
 (** Helper function for creating the constructors of the [ty] and [value] 
@@ -55,9 +55,9 @@ let mk_cstr_aux (sig_items : signature)
   let ret_tys = uniq_ret_tys sig_items in
   let uniq_ret_tys =
     List.sort_uniq ret_tys ~cmp:(fun t1 t2 ->
-      String.compare
-        (string_of_monomorphized_ty t1)
-        (string_of_monomorphized_ty t2)) in
+        String.compare
+          (string_of_monomorphized_ty t1)
+          (string_of_monomorphized_ty t2)) in
   List.map uniq_ret_tys ~f
 
 (** Constructs the definition of the [ty] algebraic data type
@@ -65,7 +65,7 @@ let mk_cstr_aux (sig_items : signature)
     the module signature *)
 let mk_ty_cstrs (sig_items : signature) : constructor_declaration list =
   mk_cstr_aux sig_items ~f:(fun ty ->
-    mk_cstr ~name:(string_of_monomorphized_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
+      mk_cstr ~name:(string_of_monomorphized_ty ty) ~loc:ty.ptyp_loc ~arg_tys:[])
 
 (** [mk_val_cstr ty] constructors the corresponding constructor declaration
     for the [value] datatype, given some [core_type] [ty]
@@ -179,61 +179,61 @@ let gen_expr_rhs ~(loc : Location.t) (cstrs : constructor_declaration list)
   | _ ->
     let generator_names = mint_generator_names cstrs in
     List.map2 cstrs generator_names ~f:(fun cstr cstr_gen_name ->
-      let cstr_name_evar = evar ~loc cstr.pcd_name.txt in
-      let cstr_arg_tys = get_cstr_arg_tys cstr in
+        let cstr_name_evar = evar ~loc cstr.pcd_name.txt in
+        let cstr_arg_tys = get_cstr_arg_tys cstr in
 
-      (* The name of the generator for the symbolic expression, e.g.
-         [gen_Empty] *)
-      let cstr_gen_name_var = pvar ~loc cstr_gen_name in
+        (* The name of the generator for the symbolic expression, e.g.
+           [gen_Empty] *)
+        let cstr_gen_name_var = pvar ~loc cstr_gen_name in
 
-      (* Generators for nullary constructors are trivial, i.e. they just
-         [return] the constructor *)
-      if get_cstr_arity cstr = 0 then
-        value_binding ~loc ~pat:cstr_gen_name_var
-          ~expr:[%expr return [%e cstr_name_evar]]
-      else
-        (* Fresh names for the generators of the constructor arguments *)
-        let arg_gen_names : string list =
-          List.map ~f:(fun _ -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
-        (* [let g1 = gen_int and g2 = gen_string in ...] *)
-        let atomic_generators : value_binding list =
-          List.map2
-            ~f:(fun ty arg_gen ->
-              let pat = pvar ~loc arg_gen in
-              let gen_body = gen_atom ~loc ty ~abs_tys in
-              value_binding ~loc ~pat ~expr:gen_body)
-            cstr_arg_tys arg_gen_names in
-        let gen_cstr_let_body =
-          match arg_gen_names with
-          | [] -> failwith "impossible, arity must be > 0"
-          | [ g ] ->
-            (* Generate a fresh name for the random [expr] *)
-            let var = gen_symbol ~prefix:"e" () in
-            (* Then, apply the constructor to the random [expr] *)
-            [%expr
-              [%e evar ~loc g] >>| fun [%p pvar ~loc var] ->
-              [%e cstr_name_evar] [%e evar ~loc var]]
-          | gs ->
-            let n = List.length gs in
-            if n >= 2 && n <= 6 then
-              let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
-              let generators = List.map ~f:(evar ~loc) gs in
-              let vars = List.map ~f:(fun _ -> gen_symbol ~prefix:"e" ()) gs in
-              let args_pat = ppat_tuple ~loc (List.map ~f:(pvar ~loc) vars) in
-              let args_expr = pexp_tuple ~loc (List.map ~f:(evar ~loc) vars) in
+        (* Generators for nullary constructors are trivial, i.e. they just
+           [return] the constructor *)
+        if get_cstr_arity cstr = 0 then
+          value_binding ~loc ~pat:cstr_gen_name_var
+            ~expr:[%expr return [%e cstr_name_evar]]
+        else
+          (* Fresh names for the generators of the constructor arguments *)
+          let arg_gen_names : string list =
+            List.map ~f:(fun _ -> gen_symbol ~prefix:"g" ()) cstr_arg_tys in
+          (* [let g1 = gen_int and g2 = gen_string in ...] *)
+          let atomic_generators : value_binding list =
+            List.map2
+              ~f:(fun ty arg_gen ->
+                let pat = pvar ~loc arg_gen in
+                let gen_body = gen_atom ~loc ty ~abs_tys in
+                value_binding ~loc ~pat ~expr:gen_body)
+              cstr_arg_tys arg_gen_names in
+          let gen_cstr_let_body =
+            match arg_gen_names with
+            | [] -> failwith "impossible, arity must be > 0"
+            | [ g ] ->
+              (* Generate a fresh name for the random [expr] *)
+              let var = gen_symbol ~prefix:"e" () in
+              (* Then, apply the constructor to the random [expr] *)
               [%expr
-                [%e eapply ~loc tuple_gen generators] >>| fun [%p args_pat] ->
-                [%e cstr_name_evar] [%e args_expr]]
-            else
-              pexp_extension ~loc
-              @@ Location.error_extensionf ~loc
-                   "Functions with arity %d not supported, max arity is 6\n" n
-        in
-        (* [ let g1 = ... and g2 = ... in ... ] *)
-        let gen_cstr_let_expr =
-          pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
-        (* [let gen_is_empty = ... ] *)
-        value_binding ~loc ~pat:cstr_gen_name_var ~expr:gen_cstr_let_expr)
+                [%e evar ~loc g] >>| fun [%p pvar ~loc var] ->
+                [%e cstr_name_evar] [%e evar ~loc var]]
+            | gs ->
+              let n = List.length gs in
+              if n >= 2 && n <= 6 then
+                let tuple_gen = evar ~loc @@ Printf.sprintf "tuple%d" n in
+                let generators = List.map ~f:(evar ~loc) gs in
+                let vars = List.map ~f:(fun _ -> gen_symbol ~prefix:"e" ()) gs in
+                let args_pat = ppat_tuple ~loc (List.map ~f:(pvar ~loc) vars) in
+                let args_expr = pexp_tuple ~loc (List.map ~f:(evar ~loc) vars) in
+                [%expr
+                  [%e eapply ~loc tuple_gen generators] >>| fun [%p args_pat] ->
+                  [%e cstr_name_evar] [%e args_expr]]
+              else
+                pexp_extension ~loc
+                @@ Location.error_extensionf ~loc
+                     "Functions with arity %d not supported, max arity is 6\n" n
+          in
+          (* [ let g1 = ... and g2 = ... in ... ] *)
+          let gen_cstr_let_expr =
+            pexp_let ~loc Nonrecursive atomic_generators gen_cstr_let_body in
+          (* [let gen_is_empty = ... ] *)
+          value_binding ~loc ~pat:cstr_gen_name_var ~expr:gen_cstr_let_expr)
     |> fun val_bindings ->
     let gen_name_evars = elist ~loc (List.map ~f:(evar ~loc) generator_names) in
     pexp_let ~loc Nonrecursive val_bindings [%expr union [%e gen_name_evars]]
@@ -329,16 +329,16 @@ let gen_expr_cases (sig_items : signature) : case list =
     inverse (mk_expr_cstrs sig_items)
     |> sort_and_group ~compare:compare_core_type in
   List.concat_map skeleton ~f:(fun (ty, rhs_cstrs) ->
-    if not (check_type_is_concrete abs_ty_names ty) then
-      let base_case_cstrs, non_trivial_cstrs =
-        List.partition ~f:is_base_case rhs_cstrs in
-      let base_case =
-        mk_gen_expr_case abs_tys ty base_case_cstrs ~is_base_case:true in
-      let non_trivial_cases =
-        [ mk_gen_expr_case abs_tys ty non_trivial_cstrs ~is_base_case:false ]
-      in
-      base_case :: non_trivial_cases
-    else [ mk_gen_expr_case abs_tys ty rhs_cstrs ~is_base_case:false ])
+      if not (check_type_is_concrete abs_ty_names ty) then
+        let base_case_cstrs, non_trivial_cstrs =
+          List.partition ~f:is_base_case rhs_cstrs in
+        let base_case =
+          mk_gen_expr_case abs_tys ty base_case_cstrs ~is_base_case:true in
+        let non_trivial_cases =
+          [ mk_gen_expr_case abs_tys ty non_trivial_cstrs ~is_base_case:false ]
+        in
+        base_case :: non_trivial_cases
+      else [ mk_gen_expr_case abs_tys ty rhs_cstrs ~is_base_case:false ])
 
 (** Derives the [gen_expr] QuickCheck generator *)
 let derive_gen_expr ~(loc : Location.t) (sig_items : signature) : expression =
