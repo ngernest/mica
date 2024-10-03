@@ -26,7 +26,9 @@
     (>= v0.15.1))
    (base_quickcheck
     (>= v0.15.0))
-   ppx_deriving 
-   ppxlib 
-   alcotest))
-   
+   (ppx_deriving 
+    (>= 6.0.2))
+   (ppxlib 
+    (>= 0.33.0))
+   (alcotest 
+    (>= 1.8.0))))
