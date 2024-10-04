@@ -1,5 +1,7 @@
 # Mica: Automated Differential Testing for OCaml Modules 
 
+<!-- [![view - Documentation](https://img.shields.io/badge/view-Documentation-blue?style=for-the-badge)](https://ngernest.github.io/mica/ppx_mica/index.html) -->
+
 > **Note**: Mica is a research prototype and is not production-ready at the moment. Please contact Ernest Ng (`ernest@cs.cornell.edu`) if you'd like to contribute to Mica or have any questions!
 
 **README Contents:**
@@ -18,7 +20,7 @@ modules implementing the same signature. Users annotate module signatures
 with the directive `[@@deriving mica]`, and at compile-time, Mica derives
 specialized [property-based testing](https://www.youtube.com/watch?v=qmA9qhaECcE) (PBT) code that checks if two modules implementing the signature are observationally equivalent. (Under the hood, Mica uses Jane Street's [`Core.Quickcheck`](https://blog.janestreet.com/quickcheck-for-core/) PBT library.)
 
-An online demo of Mica is available [**here**](https://ngernest.github.io/mica/).
+Mica docs can be found [here](https://ngernest.github.io/mica/ppx_mica/index.html). A simple webapp demonstrating Mica is  available [here](https://ngernest.github.io/mica/demo.html). 
 
 Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The [OCaml Workshop paper](https://www.arxiv.org/abs/2408.14561) contains a lot more 
 details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact. 
