@@ -91,9 +91,10 @@ let () = T.run_tests ()
 and not abstract types defined in a module (e.g. `'a M.t`), since abstract types have a more abstract notion 
 of equality different from OCaml's standard notion of polymorphic equality. 
 
-A minimum working example of how to use Mica can be found in the [`bin`](./bin) subdirectory. 
-Also, the [case studies](#case-studies) section of this README contains many more examples!
-
+## Limitations
+At the moment, Mica only works with module signatures that define one abstract type (e.g. `t` or `'a t`) and only contain pure functions. 
+Modules with multiple abstract types and/or abstract types with multiple type parameters are not supported at the moment. 
+ 
 ## Compilation notes
 There is a known issue with Ppxlib ([#338](https://github.com/ocaml-ppx/ppxlib/issues/338), [#342](https://github.com/ocaml-ppx/ppxlib/issues/342)) which causes Ppxlib to error when Dune is promoting changes (i.e. after one runs `dune build --auto-promote`, during which Dune inserts the code derived by Mica into the source file). 
 
@@ -101,6 +102,22 @@ To fix this issue, remove `[@@deriving_inline mica]` and `[@@@end]` from the sou
 
 ## Case Studies
 Code for the following case studies (along with the code automatically derived by Mica) is located in the ancillary [`mica_case_studies`](https://github.com/ngernest/mica_case_studies) repo.      
+
+We have tested Mica with the following module signatures, each of which is implemented by two different modules:
+
+- Finite Sets (lists & BSTs) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/sets))
+- Regular Expression Matchers (Brzozowski Derivatives & DFAs) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/regexes/))
+- Polynomials (Horner schema & monomial-based representations) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/polynomials/))
+- Ephemeral Queues ([`Base.Queue`](https://ocaml.janestreet.com/ocaml-core/v0.13/doc/base/Base/Queue/index.html) & [`Base.Linked_queue`](https://ocaml.janestreet.com/ocaml-core/v0.12/doc/base/Base/Linked_queue/index.html)) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/queues/))
+- Unsigned integer arithmetic (the [`stdint`](https://github.com/andrenth/ocaml-stdint/tree/master) and [`ocaml-integers`](https://github.com/yallop/ocaml-integers) libraries) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/unsigned_ints/))
+- Character sets (the [`charset`](https://github.com/yallop/ocaml-charset) library & the standard library's `Set.Make(Char)` module) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/charsets/))
+- Persistent maps (red-black trees & association lists) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/maps/))
+- John Hughes's *How to Specify It* (catching bugs in BST implementations) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/how_to_specify_it/))
+- UPenn CIS 1200 student homework submissions ([link](./lib/student_submissions/))
+  - Note: no student code is available for this case study (to avoid posting homework solutions online)
+
+For more details regarding these case studies, we refer the reader to the [`mica_case_studies`](https://github.com/ngernest/mica_case_studies) repo as well as the [OCaml Workshop paper](https://www.arxiv.org/abs/2408.14561).
+
 
 ## An overview of the codebase
 The [`lib`](./lib) subdirectory contains the code for the Mica PPX deriver.      

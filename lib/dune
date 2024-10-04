@@ -6,3 +6,6 @@
  (preprocess
   (pps ppx_jane ppxlib.metaquot ppx_deriving.show))
  (ppx_runtime_libraries core ppx_deriving.show))
+
+(documentation
+ (package ppx_mica))
