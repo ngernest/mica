@@ -1,6 +1,4 @@
 profile = default
-version = ignore
-version-check = false
 margin = 80
 break-cases = toplevel
 max-indent = 2
