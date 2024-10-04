@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mica Demo</title>
+    <style>
+        body {
+            font-family: Helvectica, sans-serif;
+            background-color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .loading {
+            color: light blue;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
+    <!-- Load syntax highlighting package for OCaml -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/languages/ocaml.min.js"></script>
+
+    <h1>Mica Demo</h1>
+
+    <select id="fileSelect" onchange="displayFiles()">
+        <option value="">Select an example module signature</option>
+    </select>
+
+    <h2>Module Signature:</h2>
+    <pre id="moduleSig"><code class="language-ocaml"></code></pre>
+
+    <h2>Property-based testing code (produced by Mica automatically):</h2>
+    <pre id="micaContent"><code class="language-ocaml"></code></pre>
+
+    <script>
+        const SUBDIR = "case_studies"
+
+        const originalFileMap = {
+            'set': `${SUBDIR}/sets/set_signature.ml`,
+            'regex': `${SUBDIR}/regexes/regex_signature.ml`,
+            'polynomial': `${SUBDIR}/polynomials/polynomial_signature.ml`,
+            'map': `${SUBDIR}/maps/map_signature.ml`,
+            'queue': `${SUBDIR}/queues/queue_signature.ml`,
+            'charset': `${SUBDIR}/charsets/charset_signature.ml`,
+            'bst': `${SUBDIR}/how_to_specify_it/bst_signature.ml`,
+            'cis1200': `${SUBDIR}/student_submissions/setInterface.ml`,
+        }
+
+        const micaFileMap = {
+            'set': `${SUBDIR}/sets/mica_sets.ml`,
+            'regex': `${SUBDIR}/regexes/mica_regexes.ml`,
+            'polynomial': `${SUBDIR}/polynomials/mica_polynomials.ml`,
+            'map': `${SUBDIR}/maps/mica_maps.ml`,
+            'queue': `${SUBDIR}/queues/mica_queues.ml`,
+            'charset': `${SUBDIR}/charsets/mica_charsets.ml`,
+            'bst': `${SUBDIR}/how_to_specify_it/mica_how_to_specify_it.ml`,
+            'cis1200': `${SUBDIR}/student_submissions/mica.ml`,
+        }
+
+        const displayNameMap = {
+            'set': 'Finite Set',
+            'regex': 'Regex Matcher',
+            'polynomial': 'Polynomial',
+            'map': 'Persistent Map',
+            'queue': 'Ephemeral Queue',
+            'charset': 'Character Set',
+            'bst': 'How to Specify It (Hughes \'19) Binary Search Tree Example',
+            'cis1200': 'Penn CIS 1200 Student Homework Submissions'
+        }
+        
+        // Populate the select element
+        const select = document.getElementById('fileSelect');
+        for (const [key, displayName] of Object.entries(displayNameMap)) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = displayName;
+            select.appendChild(option);
+        }
+
+        async function fetchContent(file) {
+            const response = await fetch(`https://raw.githubusercontent.com/ngernest/mica/web/${file}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.text();
+        }
+
+        async function displayFiles() {
+            const select = document.getElementById('fileSelect');
+            const moduleSig = document.getElementById('moduleSig');
+            const micaContent = document.getElementById('micaContent');
+            const selectedKey = select.value;
+
+            if (selectedKey) {
+                moduleSig.innerHTML = '<span class="loading">Loading module signature...</span>';
+                micaContent.innerHTML = '<span class="loading">Loading code produced by Mica...</span>';
+
+                try {
+                    // Refresh syntax highlighting
+                    hljs.highlightAll();
+
+                    const originalFileName = originalFileMap[selectedKey];
+                    const micaFileName = micaFileMap[selectedKey];
+
+                    if (!originalFileName || !micaFileName) {
+                        throw new Error('File not found for the selected implementation');
+                    }
+
+                    const [originalFileContent, optimizedFileContent] = await Promise.all([
+                        fetchContent(originalFileName),
+                        fetchContent(micaFileName)
+                    ]);
+
+                    moduleSig.textContent = originalFileContent;
+                    micaContent.textContent = optimizedFileContent;
+
+                    // Enable syntax highlighting
+                    hljs.highlightElement(moduleSig);
+                    hljs.highlightElement(micaContent);
+                } catch (error) {
+                    console.error('Error fetching files:', error);
+                    moduleSig.textContent = error.message || 'Error loading original file';
+                    micaContent.textContent = error.message || 'Error loading optimized file';
+                }
+            } else {
+                moduleSig.textContent = '';
+                micaContent.textContent = '';
+            }
+        }
+    </script>
+</body>
+</html>
