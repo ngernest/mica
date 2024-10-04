@@ -18,7 +18,8 @@ depends: [
   "base_quickcheck" {>= "v0.15.0"}
   "ppx_deriving" {>= "6.0.2"}
   "ppxlib" {>= "0.33.0"}
-  "alcotest" {>= "1.8.0"}
+  "alcotest" {with-test & >= "1.8.0"}
+  "core_unix" {>= "v0.17.0"}
 ]
 build: [
   ["dune" "subst"] {dev}
