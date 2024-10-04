@@ -90,6 +90,10 @@ let () = T.run_tests ()
 - **Note**: Mica only tests for observational equivalence at *concrete types* (e.g. `int`, `string option`), 
 and not abstract types defined in a module (e.g. `'a M.t`), since abstract types have a more abstract notion 
 of equality different from OCaml's standard notion of polymorphic equality. 
+
+## Limitations
+At the moment, Mica only works with module signatures that define one abstract type (e.g. `t` or `'a t`) and only contain pure functions. 
+Modules with multiple abstract types and/or abstract types with multiple type parameters are not supported at the moment. 
  
 ## Compilation notes
 There is a known issue with Ppxlib ([#338](https://github.com/ocaml-ppx/ppxlib/issues/338), [#342](https://github.com/ocaml-ppx/ppxlib/issues/342)) which causes Ppxlib to error when Dune is promoting changes (i.e. after one runs `dune build --auto-promote`, during which Dune inserts the code derived by Mica into the source file). 
@@ -104,9 +108,9 @@ We have tested Mica with the following module signatures, each of which is imple
 - Finite Sets (lists & BSTs) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/sets))
 - Regular Expression Matchers (Brzozowski Derivatives & DFAs) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/regexes/))
 - Polynomials (Horner schema & monomial-based representations) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/polynomials/))
-- Ephemeral Queues ([Base.Queue](https://ocaml.janestreet.com/ocaml-core/v0.13/doc/base/Base/Queue/index.html) & [Base.Linked_queue](https://ocaml.janestreet.com/ocaml-core/v0.12/doc/base/Base/Linked_queue/index.html)) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/queues/))
-- Unsigned integer arithmetic (the [stdint](https://github.com/andrenth/ocaml-stdint/tree/master) and [ocaml-integers](https://github.com/yallop/ocaml-integers) libraries) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/unsigned_ints/))
-- Character sets (the [charset](https://github.com/yallop/ocaml-charset) library & the standard library's `Set.Make(Char)` module) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/charsets/))
+- Ephemeral Queues ([`Base.Queue`](https://ocaml.janestreet.com/ocaml-core/v0.13/doc/base/Base/Queue/index.html) & [`Base.Linked_queue`](https://ocaml.janestreet.com/ocaml-core/v0.12/doc/base/Base/Linked_queue/index.html)) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/queues/))
+- Unsigned integer arithmetic (the [`stdint`](https://github.com/andrenth/ocaml-stdint/tree/master) and [`ocaml-integers`](https://github.com/yallop/ocaml-integers) libraries) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/unsigned_ints/))
+- Character sets (the [`charset`](https://github.com/yallop/ocaml-charset) library & the standard library's `Set.Make(Char)` module) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/charsets/))
 - Persistent maps (red-black trees & association lists) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/maps/))
 - John Hughes's *How to Specify It* (catching bugs in BST implementations) ([link](https://github.com/ngernest/mica_case_studies/tree/main/lib/how_to_specify_it/))
 - UPenn CIS 1200 student homework submissions ([link](./lib/student_submissions/))
