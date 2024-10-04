@@ -2,10 +2,13 @@
 
 [![view - Documentation](https://img.shields.io/badge/view-Documentation-blue?style=for-the-badge)](https://ngernest.github.io/mica/ppx_mica/index.html)
 
-> **Note**: Mica is a research prototype and is not production-ready at the moment. Please contact Ernest Ng (`ernest@cs.cornell.edu`) if you'd like to contribute to Mica or have any questions!
+> **Note**: Mica is a research tool and should not be used in production code. Please contact Ernest Ng (`ernest@cs.cornell.edu`) if you'd like to contribute to Mica or have any questions!
 
 **README Contents:**
 - [Overview](#overview)
+- [Installation](#installation)
+- [Using Mica](#using-mica)
+  - [Limitations](#limitations)
 - [Compilation notes](#compilation-notes)
 - [Case studies](#case-studies)
 - [An overview of the codebase](#an-overview-of-the-codebase)
@@ -22,6 +25,20 @@ specialized [property-based testing](https://www.youtube.com/watch?v=qmA9qhaECcE
 
 Mica docs can be found [here](https://ngernest.github.io/mica/ppx_mica/index.html). A simple webapp demonstrating Mica is  available [here](https://ngernest.github.io/mica/demo.html). 
 
+## Installation 
+Mica is available on [`opam`](https://opam.ocaml.org). To install, run:
+```
+opam install ppx_mica
+```
+
+To use Mica, add `ppx_mica` to the `preprocess` field in your [`dune`](https://dune.build) file:
+```
+(library 
+ ...
+ (preprocess (pps ppx_mica)))
+```
+
+## Using Mica 
 Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The [OCaml Workshop paper](https://www.arxiv.org/abs/2408.14561) contains a lot more 
 details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact. 
 
@@ -93,7 +110,7 @@ let () = T.run_tests ()
 and not abstract types defined in a module (e.g. `'a M.t`), since abstract types have a more abstract notion 
 of equality different from OCaml's standard notion of polymorphic equality. 
 
-## Limitations
+### Limitations
 At the moment, Mica only works with module signatures that define one abstract type (e.g. `t` or `'a t`) and only contain pure functions. 
 Modules with multiple abstract types and/or abstract types with multiple type parameters are not supported at the moment. 
  
