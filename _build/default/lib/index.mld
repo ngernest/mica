@@ -1,0 +1,128 @@
+{0 Mica: Automated Differential Testing for OCaml Modules}
+
+{b Note}: Mica is a research prototype and should not be used in production code.     
+(We have made Mica available on Opam so that others may try it out & contribute to Mica if they wish.)        
+Please contact Ernest Ng ([ernest@cs.cornell.edu]) if you'd like to contribute to Mica or have any questions!
+
+{1 Overview}
+Mica is a PPX extension that automates differential testing for a pair of OCaml
+modules implementing the same signature. Users annotate module signatures
+with the directive [[@@deriving mica]], and at compile-time, Mica derives
+specialized {{: https://www.youtube.com/watch?v=qmA9qhaECcE} property-based testing} (PBT) code that checks if two modules implementing the signature are observationally equivalent. (Under the hood, Mica uses Jane Street's {{: https://blog.janestreet.com/quickcheck-for-core/} [Core.Quickcheck]} PBT library.)
+
+Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The {{: https://www.arxiv.org/abs/2408.14561} OCaml Workshop paper} contains a lot more
+details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact.
+
+An online demo of Mica is available {{: https://ngernest.github.io/mica/demo.html} {b here}}. 
+
+{1 Using Mica}
+
+Here is how we envisage users interacting with Mica:
+
+Suppose modules [M1] & [M2] both implement the module signature [S]. Users insert the directive [[@@deriving_inline mica]] beneath the definition of [S], like so:
+
+{@ocaml[
+module type S = sig
+  type 'a t 
+  val empty : 'a t
+  val add : 'a -> 'a t -> 'a t
+  ...
+end
+[@@deriving_inline mica] 
+...
+[@@@end]
+]}
+
+Then, after users run [dune build --auto-promote], the derived PBT code is automatically inserted in-line in the source file in-between [[@@deriving_inline mica]] and [[@@@end]]. (Note: this doesn't work fully out of the box at the moment -- see {{: #compilation-notes} compilation notes} for details.)
+
+Then, after running [dune build], Mica derives the following PBT code:
+
+{@ocaml[
+module Mica = struct 
+  (** [expr] is an inductively-defined algebraic data type 
+      representing {i symbolic expressions}. 
+      
+      Each [val] declaration in the module signature [S] corresponds to a 
+      cosntructor for [expr] that shares the same name, arity & argument types. 
+      - Type variables ['a] are instantiated with [int]
+      - Function arguments of type ['a t] correpond to
+        constructor arguments of type [expr] *)
+  type expr =
+    | Empty
+    | Is_empty of expr
+    ...
+  [@@deriving show, ...]
+
+  (** Types of symbolic expressions *)
+  type ty = Int | IntT | ... [@@deriving show, ...]
+
+  (** QuickCheck generator for symbolic expressions. 
+      [gen_expr ty] generates random [expr]s of type [ty]. *)
+  let rec gen_expr : ty -> Core.Quickcheck.Generator.t = ...
+
+  (** Functor that interprets symbolic expressions *)
+  module Interpret (M : S) = struct   
+    (** Values of symbolic expressions *)
+    type value = ValInt of int | ValIntT of int M.t | ...
+
+    (** Big-step interpreter for symbolic expressions: 
+        [interp] takes an [expr] and interprets it over the module 
+        [M], evaluating the [expr] to a [value] *)
+    let rec interp : expr -> value = ...
+  end 
+
+  (** Functor that tests [M1] and [M2] for observational equivalence *)
+  module TestHarness (M1 : S) (M2 : S) = struct 
+    (* Runs all observational equivalence tests *)
+    let run_tests : unit -> unit = ... 
+  end
+end
+]}
+{ul {- Now suppose modules [M1] and [M2] both implement [S]. To run Mica's testing code
+and check whether [M1] & [M2] are observationally equivalent with respect to [S],
+one can invoke the [run_tests : unit -> unit] function in Mica's [TestHarness] functor, like so:
+}}
+
+{@ocaml[
+module T = Mica.TestHarness(M1)(M2)
+let () = T.run_tests ()
+]}
+{ul {- {b Note}: Mica only tests for observational equivalence at {e concrete types} (e.g. [int], [string option]),
+and not abstract types defined in a module (e.g. ['a M.t]), since abstract types have a more abstract notion
+of equality different from OCaml's standard notion of polymorphic equality.
+}}
+
+{2 Limitations}
+
+At the moment, Mica only works with module signatures that define one abstract type (e.g. [t] or ['a t]) and only contain pure functions. 
+Modules with multiple abstract types and/or abstract types with multiple type parameters are not supported at the moment. 
+
+
+{1 Compilation notes}
+
+There is a known issue with Ppxlib ({{: https://github.com/ocaml-ppx/ppxlib/issues/338} #338}, {{: https://github.com/ocaml-ppx/ppxlib/issues/342} #342}) which causes Ppxlib to error when Dune is promoting changes (i.e. after one runs [dune build --auto-promote], during which Dune inserts the code derived by Mica into the source file).
+
+To fix this issue, remove [[@@deriving_inline mica]] and [[@@@end]] from the source file while keeping the code inserted by Dune/Mica. Then, recompile by running [dune build again]. This second compilation run should complete successfully!
+
+{1 Case Studies}
+
+Code for the following case studies (along with the code automatically derived by Mica) is located in the ancillary {{: https://github.com/ngernest/mica_case_studies} [mica_case_studies]} repo.
+
+We have tested Mica with the following module signatures, each of which is implemented by two different modules:
+
+{ul 
+    {- Finite Sets (lists & Binary Search Trees)  ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/sets} link})}
+    {- Regular Expression Matchers (Brzozowski Derivatives & Deterministic Finite Automata) ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/regexes/} link})}
+    {- Polynomials (Horner schema & monomial-based representations) ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/polynomials/} link})}
+    {- Ephemeral Queues ({{: https://ocaml.janestreet.com/ocaml-core/v0.13/doc/base/Base/Queue/index.html} [Base.Queue]} & {{: https://ocaml.janestreet.com/ocaml-core/v0.12/doc/base/Base/Linked_queue/index.html}[Base.Linked_queue]}) ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/queues/} link})}
+    {- Unsigned integer arithmetic (the {{: https://github.com/andrenth/ocaml-stdint/tree/master} [stdint]} and {{: https://github.com/yallop/ocaml-integers} [ocaml-integers]} libraries) ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/unsigned_ints/} link})}
+    {- Character sets (the {{: https://github.com/yallop/ocaml-charset} [charset]} library & the standard library's [Set.Make(Char)] module) ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/charsets/} link})}
+    {- Persistent maps (red-black trees & association lists) ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/maps/} link})}
+    {- John Hughes's {e How to Specify It} (catching bugs in BST implementations) ({{: https://github.com/ngernest/mica_case_studies/tree/main/lib/how_to_specify_it/} link})}
+    {- UPenn CIS 1200 student homework submissions ({{: ./lib/student_submissions/} link})}
+}
+
+For more details regarding these case studies, we refer the reader to the {{: https://github.com/ngernest/mica_case_studies} [mica_case_studies]} repo as well as the {{: https://www.arxiv.org/abs/2408.14561} OCaml Workshop paper}.
+
+
+

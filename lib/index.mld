@@ -13,7 +13,7 @@ specialized {{: https://www.youtube.com/watch?v=qmA9qhaECcE} property-based test
 Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The {{: https://www.arxiv.org/abs/2408.14561} OCaml Workshop paper} contains a lot more
 details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact.
 
-An online demo of Mica is available {{: https://ngernest.github.io/mica/} {b here}}. 
+An online demo of Mica is available {{: https://ngernest.github.io/mica/demo.html} {b here}}. 
 
 {1 Using Mica}
 

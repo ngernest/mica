@@ -1,0 +1,38 @@
+# dune build @doc
+# OCAMLPARAM: unset
+# Shared cache: disabled
+# Shared cache location: /Users/eyn5/.cache/dune/db
+# Workspace root: /Users/eyn5/Documents/mica
+# Auto-detected concurrency: 8
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /Users/eyn5/.opam/5.0.0/bin/ocamlc.opt -config > /var/folders/9d/9rzwc45s133chvk4691gt9d40000gp/T/dune_888213_output
+$ (cd _build/default/_doc/_odoc/pkg/ppx_mica && /Users/eyn5/.opam/5.0.0/bin/odoc compile --pkg ppx_mica -o page-index.odoc ../../../../lib/index.mld)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__.odoc ppx_mica__.cmt)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Builders.odoc ppx_mica__Builders.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Equality.odoc ppx_mica__Equality.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Errors.odoc ppx_mica__Errors.cmt)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Inv_ctx.odoc ppx_mica__Inv_ctx.cmt)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Miscellany.odoc ppx_mica__Miscellany.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Names.odoc ppx_mica__Names.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Include.odoc ppx_mica__Include.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Printers.odoc ppx_mica__Printers.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Lident.odoc ppx_mica__Lident.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Type_deriver.odoc ppx_mica__Type_deriver.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Let_open.odoc ppx_mica__Let_open.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Test_harness_deriver.odoc ppx_mica__Test_harness_deriver.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Getters.odoc ppx_mica__Getters.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Utils.odoc ppx_mica__Utils.cmt)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Interp_deriver.odoc ppx_mica__Interp_deriver.cmti)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica__Overall_deriver.odoc ppx_mica__Overall_deriver.cmt)
+$ (cd _build/default/lib/.ppx_mica.objs/byte && /Users/eyn5/.opam/5.0.0/bin/odoc compile -I . -I ../../../_doc/_odoc/pkg/ppx_mica --pkg ppx_mica -o ppx_mica.odoc ppx_mica.cmt)
+$ (cd _build/default/_doc/_html && /Users/eyn5/.opam/5.0.0/bin/odoc link -I ../_odoc/pkg/ppx_mica -I ../../lib/.ppx_mica.objs/byte -o ../_odocls/ppx_mica/page-index.odocl ../_odoc/pkg/ppx_mica/page-index.odoc)
+$ (cd _build/default/_doc/_html && /Users/eyn5/.opam/5.0.0/bin/odoc link -I ../_odoc/pkg/ppx_mica -I ../../lib/.ppx_mica.objs/byte -o ../_odocls/ppx_mica/ppx_mica.odocl ../../lib/.ppx_mica.objs/byte/ppx_mica.odoc)
+$ (cd _build/default/_doc/_html && /Users/eyn5/.opam/5.0.0/bin/odoc html-generate -o . --support-uri odoc.support --theme-uri odoc.support ../_odocls/ppx_mica/page-index.odocl)
