@@ -10,7 +10,7 @@
 (authors "Ernest Ng <ernest@cs.cornell.edu>")
 
 (maintainers "Ernest Ng <ernest@cs.cornell.edu>")
-
+(documentation "https://ngernest.github.io/mica")
 (license ISC)
 
 (package
