@@ -5,6 +5,7 @@ maintainer: ["Ernest Ng <ernest@cs.cornell.edu>"]
 authors: ["Ernest Ng <ernest@cs.cornell.edu>"]
 license: "ISC"
 homepage: "https://github.com/ngernest/mica"
+doc: "https://ngernest.github.io/mica"
 bug-reports: "https://github.com/ngernest/mica/issues"
 depends: [
   "dune" {>= "3.7"}
