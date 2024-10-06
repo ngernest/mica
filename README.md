@@ -43,8 +43,7 @@ produced by Mica to compile.)
 ```
 
 ## Using Mica 
-Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The [OCaml Workshop paper](https://www.arxiv.org/abs/2408.14561) contains a lot more 
-details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact. 
+Mica was presented at the [OCaml Workshop 2024](https://icfp24.sigplan.org/home/ocaml-2024#About) and the [ICFP 2023 Student Research Competition](https://icfp23.sigplan.org/track/icfp-2023-student-research-competition). The [OCaml Workshop paper](https://www.arxiv.org/abs/2408.14561) contains a lot more details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact. 
 
 Here is how we envisage users interacting with Mica:      
 Suppose modules `M1` & `M2` both implement the module signature `S`. Users insert the directive `[@@deriving_inline mica]` beneath the definition of `S`, like so:
