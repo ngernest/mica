@@ -28,14 +28,17 @@ Mica docs can be found [here](https://ngernest.github.io/mica/ppx_mica/index.htm
 ## Installation 
 Mica is available on [`opam`](https://opam.ocaml.org). To install, run:
 ```
+opam update
 opam install ppx_mica
 ```
 
-To use Mica, add `ppx_mica` to the `preprocess` field in your [`dune`](https://dune.build) file:
+To use Mica, add `ppx_mica`, `ppx_deriving.show` and `ppx_jane` to the `preprocess` field in your [`dune`](https://dune.build) file:
+(Mica produces code that uses `ppx_deriving` and `ppx_jane` under the hood, so these two PPXes are also required in order for the code 
+produced by Mica to compile.)
 ```
 (library 
  ...
- (preprocess (pps ppx_mica)))
+ (preprocess (pps ppx_mica ppx_deriving.show ppx_jane)))
 ```
 
 ## Using Mica 
