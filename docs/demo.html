@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mica Demo</title>
+    <link href='https://fonts.googleapis.com/css?family=Fira Code' rel='stylesheet'>
     <style>
         body {
             font-family: Helvectica, sans-serif;
@@ -21,6 +22,7 @@
             padding: 15px;
             border-radius: 5px;
             overflow-x: auto;
+            font-family: 'Fira Code';
         }
         .loading {
             color: light blue;
@@ -35,6 +37,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/languages/ocaml.min.js"></script>
 
     <h1>Mica Demo</h1>
+
+    <p>
+        Mica is a PPX extension that automates differential testing for a pair of OCaml
+        modules implementing the same signature. Users annotate module signatures 
+        with the directive <code>[@@deriving mica]</code>, and at compile-time, Mica derives
+        specialized <a href="https://www.youtube.com/watch?v=qmA9qhaECcE">property-based testing</a> (PBT) code 
+        that checks if two modules implementing the signature are observationally equivalent. 
+    </p>
 
     <select id="fileSelect" onchange="displayFiles()">
         <option value="">Select an example module signature</option>
