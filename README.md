@@ -23,7 +23,7 @@ modules implementing the same signature. Users annotate module signatures
 with the directive `[@@deriving mica]`, and at compile-time, Mica derives
 specialized [property-based testing](https://www.youtube.com/watch?v=qmA9qhaECcE) (PBT) code that checks if two modules implementing the signature are observationally equivalent. (Under the hood, Mica uses Jane Street's [`Core.Quickcheck`](https://blog.janestreet.com/quickcheck-for-core/) PBT library.)
 
-Mica docs can be found [here](https://ngernest.github.io/mica/ppx_mica/index.html). A simple webapp demonstrating Mica is  available [here](https://ngernest.github.io/mica/demo.html). 
+Mica docs can be found [here](https://ngernest.github.io/mica/ppx_mica/index.html). A simple webapp demonstrating Mica is available [here](https://ngernest.github.io/mica/demo.html). 
 
 ## Installation 
 Mica is available on [`opam`](https://opam.ocaml.org). To install, run:
@@ -163,8 +163,7 @@ The PPX code is organized as follows:
   - [`include.ml`](./lib/include.ml): Helpers for producing `include` statements
   - [`miscellany.ml`](./lib/miscellany.ml): Miscellaneous helpers for working with lists & strings
 
-The ancillary [`mica_tyche_utils`](https://github.com/ngernest/mica_tyche_utils) repo contains a small library for 
-creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/).
+The ancillary [`mica_tyche_utils`](https://github.com/ngernest/mica_tyche_utils) repo contains a small library for creating JSON files that are ingested by [Tyche](https://github.com/tyche-pbt/), a VS Code extension for visualizing property-based testing effectiveness.
 - Note: the Tyche-Mica integration is still work in progress (contact [Ernest Ng](mailto:ernest@cs.cornell.edu) for more details).
 - For more details about Tyche, we refer the reader to the [UIST '24 paper by Goldstein et al](https://harrisongoldste.in/papers/uist24-tyche.pdf). 
 
@@ -201,7 +200,7 @@ run `dune promote` to update the `.expected` file with the contents
 of the `.actual` file (which contains what the PPX actually generated from that test run). 
 
 ### Dependencies
-- This repo has been tested with OCaml 5.0.0 on an M1 Mac.
+- This repo has been tested with OCaml 5.1.0 on an M1 Mac.
 - To install all dependencies required for local development, run `make install`
 - We recommend having the following libraries installed:
   - `ppxlib`
