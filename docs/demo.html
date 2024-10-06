@@ -45,11 +45,20 @@
     <h1>Mica Demo</h1>
 
     <p>
-        Mica is a PPX extension that automates differential testing for a pair of OCaml
+        <a href="https://github.com/ngernest/mica">Mica</a> is a PPX extension that automates differential testing for a pair of OCaml
         modules implementing the same signature. Users annotate module signatures 
         with the directive <code>[@@deriving mica]</code>, and at compile-time, Mica derives
         specialized <a href="https://www.youtube.com/watch?v=qmA9qhaECcE">property-based testing</a> (PBT) code 
         that checks if two modules implementing the signature are observationally equivalent. 
+    </p>
+    <p>
+        For more details about Mica, we refer the reader to our <a href="https://arxiv.org/abs/2408.14561">OCaml Workshop '24 paper</a>.
+    </p>
+    <p>
+        This webapp (statically) displays the code produced by Mica for a few pre-prepared module signature examples.
+        <br>These examples are taken from our <a href="https://arxiv.org/abs/2408.14561">OCaml Workshop paper</a>, and are also available in 
+        the ancillary <a href="https://github.com/ngernest/mica_case_studies/tree/main"><code>mica_case_studies</code></a> GitHub repo.
+        <br>Feel free to contact <a href="mailto:ernest@cs.cornell.edu">Ernest Ng</a> with any questions!
     </p>
 
     <select id="fileSelect" onchange="displayFiles()">
@@ -88,12 +97,12 @@
         }
 
         const displayNameMap = {
-            'set': 'Finite Set',
-            'regex': 'Regex Matcher',
-            'polynomial': 'Polynomial',
-            'map': 'Persistent Map',
-            'queue': 'Ephemeral Queue',
-            'charset': 'Character Set',
+            'set': 'Finite Sets',
+            'regex': 'Regular Expression Matchers',
+            'polynomial': 'Polynomials',
+            'map': 'Persistent Maps',
+            'queue': 'Ephemeral Queues',
+            'charset': 'Character Sets',
             'bst': 'How to Specify It (Hughes \'19) Binary Search Tree Example',
             'cis1200': 'Penn CIS 1200 Student Homework Submissions'
         }
