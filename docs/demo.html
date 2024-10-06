@@ -47,7 +47,7 @@
     <pre id="micaContent"><code class="language-ocaml"></code></pre>
 
     <script>
-        const SUBDIR = "case_studies"
+        const SUBDIR = "lib"
 
         const originalFileMap = {
             'set': `${SUBDIR}/sets/set_signature.ml`,
@@ -92,7 +92,7 @@
         }
 
         async function fetchContent(file) {
-            const response = await fetch(`https://raw.githubusercontent.com/ngernest/mica_case_studies/main/lib/${file}`);
+            const response = await fetch(`https://raw.githubusercontent.com/ngernest/mica_case_studies/main/${file}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
