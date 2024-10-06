@@ -13,7 +13,24 @@ specialized {{: https://www.youtube.com/watch?v=qmA9qhaECcE} property-based test
 Mica was presented at the OCaml Workshop '24 and the ICFP '23 SRC. The {{: https://www.arxiv.org/abs/2408.14561} OCaml Workshop paper} contains a lot more
 details about Mica's design -- this README focuses on describing how to interact with our OCaml artifact.
 
-An online demo of Mica is available {{: https://ngernest.github.io/mica/} {b here}}. 
+An simple webapp demonstrating Mica is available {{: https://ngernest.github.io/mica/demo.html} {b here}}. 
+
+{1 Installation}
+Mica is available on opam. To install, run:
+{[
+opam update 
+opam install ppx_mica
+]}
+(Note that OCaml 5.1 or newer is required.)
+
+To use Mica, add [ppx_mica], [ppx_deriving.show] and [ppx_jane] to the [preprocess] field in your [dune] file.
+(Mica produces code that uses [ppx_deriving] and [ppx_jane] under the hood, so these two PPXes are also required in order for the code produced by Mica to compile.)
+{[
+(library 
+ ...
+ (preprocess (pps ppx_mica ppx_deriving.show ppx_jane)))
+]}
+
 
 {1 Using Mica}
 
@@ -123,6 +140,5 @@ We have tested Mica with the following module signatures, each of which is imple
 }
 
 For more details regarding these case studies, we refer the reader to the {{: https://github.com/ngernest/mica_case_studies} [mica_case_studies]} repo as well as the {{: https://www.arxiv.org/abs/2408.14561} OCaml Workshop paper}.
-
 
 
