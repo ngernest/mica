@@ -92,7 +92,7 @@
         }
 
         async function fetchContent(file) {
-            const response = await fetch(`https://raw.githubusercontent.com/ngernest/mica/web/${file}`);
+            const response = await fetch(`https://raw.githubusercontent.com/ngernest/mica_case_studies/main/lib/${file}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
