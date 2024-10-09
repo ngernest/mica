@@ -21,7 +21,7 @@ let ubox () =
 
 
 (* Ensure that files in [lib/ppx] are visible to Utop *)
-#directory "./lib/ppx";;
+#directory "./lib";;
 #mod_use "inv_ctx.ml";;
 #mod_use "miscellany.ml";;
 #mod_use "let_open.ml";;
