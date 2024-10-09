@@ -60,7 +60,7 @@ end
 ```
 Then, after users run `dune build --auto-promote`, the derived PBT code is automatically inserted in-line in the source file in-between `[@@deriving_inline mica]` and `[@@@end]`. (Note: this doesn't work fully out of the box at the moment -- see [compilation notes](#compilation-notes) for details.)
 
-Then, after running `dune build`, Mica derives the following PBT code:
+Specifically, Mica derives the following PBT code:
 ```ocaml 
 module Mica = struct 
   (** [expr] is an inductively-defined algebraic data type 
