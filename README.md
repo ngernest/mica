@@ -31,7 +31,7 @@ Mica is available on [`opam`](https://opam.ocaml.org). To install, run:
 opam update
 opam install ppx_mica
 ```
-(Note that OCaml 5.1 or newer is required.)
+**Note that OCaml 5.1 or newer is required. We recommend using OCaml 5.1.0 or 5.2.0** -- some [build issues](https://github.com/ngernest/mica/issues/6) have been observed with OCaml 5.2.1.
 
 To use Mica, add `ppx_mica`, `ppx_deriving.show` and `ppx_jane` to the `preprocess` field in your [`dune`](https://dune.build) file:
 (Mica produces code that uses `ppx_deriving` and `ppx_jane` under the hood, so these two PPXes are also required in order for the code 
